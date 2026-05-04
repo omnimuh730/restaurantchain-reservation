@@ -56,3 +56,11 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
+
+tasks.register("unitTestClasses") {
+    dependsOn(tasks.matching { it.name.endsWith("UnitTestSources") })
+}
+
+tasks.register("androidTestClasses") {
+    dependsOn(tasks.matching { it.name.endsWith("AndroidTestSources") })
+}
