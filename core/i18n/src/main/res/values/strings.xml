@@ -6,6 +6,9 @@
     <string name="tab_dining">Dining</string>
     <string name="tab_profile">Profile</string>
     <string name="tab_qrpay">QR Pay</string>
+    <string name="qr_pay_aria">QR Pay</string>
+    <string name="brand_name">Tonight</string>
+    <string name="brand_tagline">Restaurant Reservations</string>
 
     <string name="title_login">Login</string>
     <string name="title_register">Register</string>

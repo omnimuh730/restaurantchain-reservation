@@ -38,18 +38,24 @@ private fun lightScheme(): ColorScheme = lightColorScheme(
     surface = RestaurantColorTokens.LightSurface,
     onSurface = RestaurantColorTokens.LightForeground,
     surfaceVariant = RestaurantColorTokens.LightSurfaceVariant,
+    onSurfaceVariant = RestaurantColorTokens.LightMutedForeground,
     outline = RestaurantColorTokens.LightBorder,
+    error = RestaurantColorTokens.LightDestructive,
+    onError = Color.White,
 )
 
 private fun darkScheme(): ColorScheme = darkColorScheme(
     primary = RestaurantColorTokens.BrandPrimaryDark,
-    onPrimary = Color.Black,
+    onPrimary = Color.White,
     background = RestaurantColorTokens.DarkBackground,
     onBackground = RestaurantColorTokens.DarkForeground,
     surface = RestaurantColorTokens.DarkSurface,
     onSurface = RestaurantColorTokens.DarkForeground,
     surfaceVariant = RestaurantColorTokens.DarkSurfaceVariant,
+    onSurfaceVariant = RestaurantColorTokens.DarkMutedForeground,
     outline = RestaurantColorTokens.DarkBorder,
+    error = RestaurantColorTokens.DarkDestructive,
+    onError = Color.White,
 )
 
 private fun readThemePreference(context: Context): ThemePreference {

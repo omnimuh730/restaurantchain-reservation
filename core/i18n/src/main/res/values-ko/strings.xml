@@ -1,11 +1,14 @@
 <resources>
     <string name="app_name">레스토랑 체인 예약</string>
 
-    <string name="tab_discover">탐색</string>
+    <string name="tab_discover">발견</string>
     <string name="tab_wishlist">위시리스트</string>
     <string name="tab_dining">다이닝</string>
     <string name="tab_profile">프로필</string>
     <string name="tab_qrpay">QR 결제</string>
+    <string name="qr_pay_aria">QR 결제</string>
+    <string name="brand_name">Tonight</string>
+    <string name="brand_tagline">레스토랑 예약</string>
 
     <string name="title_login">로그인</string>
     <string name="title_register">회원가입</string>
