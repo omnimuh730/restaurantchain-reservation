@@ -54,4 +54,122 @@
     <string name="action_switch_to_korean">Switch to Korean</string>
     <string name="action_switch_to_english">Switch to English</string>
     <string name="action_open_qrpay">Open QR Pay</string>
+
+    <!-- Common actions -->
+    <string name="common_action_back">Back</string>
+    <string name="common_action_close">Close</string>
+    <string name="common_action_done">Done</string>
+
+    <!-- Profile hub -->
+    <string name="profile_hub_title">Profile</string>
+    <string name="profile_hub_notifications_aria">Notifications</string>
+    <string name="profile_quick_topup">Top up</string>
+    <string name="profile_quick_gift">Gift</string>
+    <string name="profile_quick_activity">Activity</string>
+    <string name="profile_daily_reward_title">Today\'s daily reward</string>
+    <string name="profile_daily_badge">Daily</string>
+    <string name="profile_daily_reward_subtitle">Tap to pick a gift box and reveal your extra points.</string>
+    <string name="profile_refer_title">Refer a friend</string>
+    <string name="profile_refer_subtitle">You both get $10 in rewards.</string>
+    <string name="profile_account_settings">Account settings</string>
+    <string name="profile_menu_location">Location</string>
+    <string name="profile_menu_subscription">Subscription</string>
+    <string name="profile_menu_pro">PRO</string>
+    <string name="profile_menu_free">Free</string>
+    <string name="profile_menu_friends">Friends &amp; contacts</string>
+    <string name="profile_menu_settings">Settings</string>
+    <string name="profile_menu_help">Get help</string>
+    <string name="profile_menu_contact_support">Contact support</string>
+    <string name="profile_menu_language">Language</string>
+    <string name="profile_lang_korean">한국어</string>
+    <string name="profile_lang_english">English</string>
+    <string name="profile_version">App version %1$s</string>
+    <string name="profile_last_released">Last released: %1$s</string>
+
+    <!-- Top card -->
+    <string name="profile_display_name">Alex Chen</string>
+    <string name="profile_handle">\@alexchen</string>
+    <string name="profile_tier_pro">Pro</string>
+    <string name="profile_tier_free">Free</string>
+    <string name="profile_gold_tier">Gold tier</string>
+    <string name="profile_points_to_platinum">660 pts to Platinum</string>
+    <string name="profile_avatar_aria">Profile photo of %1$s</string>
+
+    <!-- Wallet -->
+    <string name="profile_wallet_title">Tonight Wallet</string>
+    <string name="profile_wallet_show">Show</string>
+    <string name="profile_wallet_hide">Hide</string>
+    <string name="profile_wallet_show_aria">Show balance</string>
+    <string name="profile_wallet_hide_aria">Hide balance</string>
+    <string name="profile_wallet_domestic_krw">Domestic · KRW</string>
+    <string name="profile_wallet_foreign_usd">Foreign · USD</string>
+    <string name="profile_wallet_bonus">+₩330,000 bonus</string>
+    <string name="profile_wallet_label">Tonight Wallet</string>
+    <string name="profile_wallet_card_line">TONIGHT  WALLET  ·  ALEX CHEN</string>
+    <string name="profile_wallet_masked">••••••</string>
+    <string name="profile_wallet_krw_value">₩13,330,000</string>
+    <string name="profile_wallet_usd_value">$5,000.00</string>
+
+    <!-- Default location -->
+    <string name="profile_default_location_name">Gangnam Station</string>
+    <string name="profile_default_location_address">Gangnam-gu, Seoul</string>
+
+    <!-- Avatar picker -->
+    <string name="profile_avatar_picker_title">Choose photo</string>
+    <string name="profile_avatar_picker_subtitle">Pick from our curated collection</string>
+    <string name="profile_avatar_picker_reset">Reset</string>
+    <string name="profile_avatar_picker_save">Save photo</string>
+
+    <!-- Tier modal -->
+    <string name="profile_tier_modal_title">Tier benefits</string>
+    <string name="profile_tier_modal_current">Current tier</string>
+    <string name="profile_tier_modal_gold_level">GOLD · Level 2</string>
+    <string name="profile_tier_modal_to_platinum">660 to Platinum</string>
+    <string name="profile_tier_modal_current_badge">Current</string>
+    <string name="profile_tier_modal_pts_suffix">%1$d+ pts</string>
+    <string name="profile_tier_silver_name">Silver</string>
+    <string name="profile_tier_gold_name">Gold</string>
+    <string name="profile_tier_platinum_name">Platinum</string>
+    <string name="profile_tier_diamond_name">Diamond</string>
+    <string name="profile_tier_silver_perk_1">Earn base points on every booking</string>
+    <string name="profile_tier_silver_perk_2">Standard customer support</string>
+    <string name="profile_tier_silver_perk_3">Welcome ₩2,000 reward</string>
+    <string name="profile_tier_gold_perk_1">+10% bonus points on every booking</string>
+    <string name="profile_tier_gold_perk_2">Priority restaurant seating</string>
+    <string name="profile_tier_gold_perk_3">Birthday treat from chef</string>
+    <string name="profile_tier_gold_perk_4">Faster customer support</string>
+    <string name="profile_tier_platinum_perk_1">+20% bonus points on every booking</string>
+    <string name="profile_tier_platinum_perk_2">Concierge reservation team</string>
+    <string name="profile_tier_platinum_perk_3">Exclusive chef experiences</string>
+    <string name="profile_tier_platinum_perk_4">Free no-show forgiveness once a year</string>
+    <string name="profile_tier_diamond_perk_1">+30% bonus points on every booking</string>
+    <string name="profile_tier_diamond_perk_2">Invite-only Tonight events</string>
+    <string name="profile_tier_diamond_perk_3">Personal dining concierge</string>
+    <string name="profile_tier_diamond_perk_4">Surprise welcome gifts</string>
+
+    <!-- Daily bonus -->
+    <string name="profile_daily_drop_label">Daily Drop</string>
+    <string name="profile_daily_pick_title">Pick a gift</string>
+    <string name="profile_daily_won_title">You won!</string>
+    <string name="profile_daily_pick_subtitle">Tap one of the boxes to reveal today\'s prize.</string>
+    <string name="profile_daily_won_subtitle">Here\'s your daily reward.</string>
+    <string name="profile_daily_claim">Claim Reward</string>
+    <string name="profile_daily_reward_pts">%1$s pts</string>
+    <string name="profile_daily_reward_50">50 pts</string>
+    <string name="profile_daily_reward_100">100 pts</string>
+    <string name="profile_daily_reward_200">200 pts</string>
+    <string name="profile_daily_reward_500">500 pts</string>
+    <string name="profile_daily_reward_jackpot">Jackpot 1,000 pts</string>
+    <string name="profile_daily_reward_coupon">10% coupon</string>
+    <string name="profile_daily_reward_dining">Dining coupon</string>
+    <string name="profile_daily_reward_fx">Free FX upgrade</string>
+    <string name="profile_daily_reward_any_order">Any-order ticket</string>
+
+    <!-- Settings page -->
+    <string name="profile_settings_appearance">Appearance</string>
+    <string name="profile_settings_theme">Theme</string>
+    <string name="profile_settings_language">Language</string>
+    <string name="profile_settings_theme_light">Light</string>
+    <string name="profile_settings_theme_dark">Dark</string>
+    <string name="profile_settings_theme_system">System</string>
 </resources>

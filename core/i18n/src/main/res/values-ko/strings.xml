@@ -54,4 +54,122 @@
     <string name="action_switch_to_korean">한국어로 변경</string>
     <string name="action_switch_to_english">영어로 변경</string>
     <string name="action_open_qrpay">QR 결제 열기</string>
+
+    <!-- Common actions -->
+    <string name="common_action_back">뒤로</string>
+    <string name="common_action_close">닫기</string>
+    <string name="common_action_done">완료</string>
+
+    <!-- Profile hub -->
+    <string name="profile_hub_title">프로필</string>
+    <string name="profile_hub_notifications_aria">알림</string>
+    <string name="profile_quick_topup">충전</string>
+    <string name="profile_quick_gift">선물</string>
+    <string name="profile_quick_activity">활동 내역</string>
+    <string name="profile_daily_reward_title">오늘의 데일리 리워드</string>
+    <string name="profile_daily_badge">데일리</string>
+    <string name="profile_daily_reward_subtitle">선물 상자를 열어 추가 포인트를 확인하세요.</string>
+    <string name="profile_refer_title">친구 초대</string>
+    <string name="profile_refer_subtitle">초대하면 둘 다 1만 원 리워드를 받아요.</string>
+    <string name="profile_account_settings">계정 설정</string>
+    <string name="profile_menu_location">위치</string>
+    <string name="profile_menu_subscription">구독</string>
+    <string name="profile_menu_pro">PRO</string>
+    <string name="profile_menu_free">무료</string>
+    <string name="profile_menu_friends">친구 및 연락처</string>
+    <string name="profile_menu_settings">설정</string>
+    <string name="profile_menu_help">도움말</string>
+    <string name="profile_menu_contact_support">고객센터 문의</string>
+    <string name="profile_menu_language">언어</string>
+    <string name="profile_lang_korean">한국어</string>
+    <string name="profile_lang_english">English</string>
+    <string name="profile_version">앱 버전 %1$s</string>
+    <string name="profile_last_released">최근 업데이트: %1$s</string>
+
+    <!-- Top card -->
+    <string name="profile_display_name">알렉스 첸</string>
+    <string name="profile_handle">\@alexchen</string>
+    <string name="profile_tier_pro">프로</string>
+    <string name="profile_tier_free">무료</string>
+    <string name="profile_gold_tier">골드 등급</string>
+    <string name="profile_points_to_platinum">플래티넘까지 660pt</string>
+    <string name="profile_avatar_aria">%1$s의 프로필 사진</string>
+
+    <!-- Wallet -->
+    <string name="profile_wallet_title">투나잇 월렛</string>
+    <string name="profile_wallet_show">보기</string>
+    <string name="profile_wallet_hide">숨기기</string>
+    <string name="profile_wallet_show_aria">잔액 보기</string>
+    <string name="profile_wallet_hide_aria">잔액 숨기기</string>
+    <string name="profile_wallet_domestic_krw">국내 · KRW</string>
+    <string name="profile_wallet_foreign_usd">해외 · USD</string>
+    <string name="profile_wallet_bonus">+₩330,000 보너스</string>
+    <string name="profile_wallet_label">투나잇 월렛</string>
+    <string name="profile_wallet_card_line">TONIGHT  WALLET  ·  ALEX CHEN</string>
+    <string name="profile_wallet_masked">••••••</string>
+    <string name="profile_wallet_krw_value">₩13,330,000</string>
+    <string name="profile_wallet_usd_value">$5,000.00</string>
+
+    <!-- Default location -->
+    <string name="profile_default_location_name">강남역</string>
+    <string name="profile_default_location_address">서울 강남구</string>
+
+    <!-- Avatar picker -->
+    <string name="profile_avatar_picker_title">사진 선택</string>
+    <string name="profile_avatar_picker_subtitle">큐레이션된 컬렉션에서 선택하세요</string>
+    <string name="profile_avatar_picker_reset">초기화</string>
+    <string name="profile_avatar_picker_save">사진 저장</string>
+
+    <!-- Tier modal -->
+    <string name="profile_tier_modal_title">등급 혜택</string>
+    <string name="profile_tier_modal_current">현재 등급</string>
+    <string name="profile_tier_modal_gold_level">GOLD · 레벨 2</string>
+    <string name="profile_tier_modal_to_platinum">플래티넘까지 660pt</string>
+    <string name="profile_tier_modal_current_badge">현재</string>
+    <string name="profile_tier_modal_pts_suffix">%1$dpt 이상</string>
+    <string name="profile_tier_silver_name">실버</string>
+    <string name="profile_tier_gold_name">골드</string>
+    <string name="profile_tier_platinum_name">플래티넘</string>
+    <string name="profile_tier_diamond_name">다이아몬드</string>
+    <string name="profile_tier_silver_perk_1">예약마다 기본 포인트 적립</string>
+    <string name="profile_tier_silver_perk_2">표준 고객 지원</string>
+    <string name="profile_tier_silver_perk_3">웰컴 ₩2,000 리워드</string>
+    <string name="profile_tier_gold_perk_1">예약마다 +10% 보너스 포인트</string>
+    <string name="profile_tier_gold_perk_2">우선 좌석 배정</string>
+    <string name="profile_tier_gold_perk_3">생일 특별 메뉴</string>
+    <string name="profile_tier_gold_perk_4">빠른 고객 지원</string>
+    <string name="profile_tier_platinum_perk_1">예약마다 +20% 보너스 포인트</string>
+    <string name="profile_tier_platinum_perk_2">컨시어지 예약 지원</string>
+    <string name="profile_tier_platinum_perk_3">독점 셰프 다이닝</string>
+    <string name="profile_tier_platinum_perk_4">연 1회 노쇼 면책</string>
+    <string name="profile_tier_diamond_perk_1">예약마다 +30% 보너스 포인트</string>
+    <string name="profile_tier_diamond_perk_2">초청제 투나잇 이벤트</string>
+    <string name="profile_tier_diamond_perk_3">전용 다이닝 컨시어지</string>
+    <string name="profile_tier_diamond_perk_4">서프라이즈 웰컴 기프트</string>
+
+    <!-- Daily bonus -->
+    <string name="profile_daily_drop_label">데일리 드롭</string>
+    <string name="profile_daily_pick_title">선물 고르기</string>
+    <string name="profile_daily_won_title">당첨!</string>
+    <string name="profile_daily_pick_subtitle">상자 하나를 눌러 오늘의 선물을 확인하세요.</string>
+    <string name="profile_daily_won_subtitle">오늘의 데일리 리워드입니다.</string>
+    <string name="profile_daily_claim">리워드 받기</string>
+    <string name="profile_daily_reward_pts">%1$spt</string>
+    <string name="profile_daily_reward_50">50pt</string>
+    <string name="profile_daily_reward_100">100pt</string>
+    <string name="profile_daily_reward_200">200pt</string>
+    <string name="profile_daily_reward_500">500pt</string>
+    <string name="profile_daily_reward_jackpot">잭팟 1,000pt</string>
+    <string name="profile_daily_reward_coupon">10% 쿠폰</string>
+    <string name="profile_daily_reward_dining">다이닝 쿠폰</string>
+    <string name="profile_daily_reward_fx">환전 무료 업그레이드</string>
+    <string name="profile_daily_reward_any_order">자유 주문권</string>
+
+    <!-- Settings page -->
+    <string name="profile_settings_appearance">화면</string>
+    <string name="profile_settings_theme">테마</string>
+    <string name="profile_settings_language">언어</string>
+    <string name="profile_settings_theme_light">라이트</string>
+    <string name="profile_settings_theme_dark">다크</string>
+    <string name="profile_settings_theme_system">시스템</string>
 </resources>

@@ -7,7 +7,7 @@ import androidx.core.os.LocaleListCompat
 object LocaleManager {
     private const val LocalePrefsName = "restaurant_locale_prefs"
     private const val LocalePrefsKey = "locale_tag"
-    private const val DefaultLocale = "ko"
+    private const val DefaultLocale = "en"
 
     fun initialize(context: Context) {
         val stored = context.getSharedPreferences(LocalePrefsName, Context.MODE_PRIVATE)
