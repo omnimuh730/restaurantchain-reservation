@@ -1,0 +1,60 @@
+package com.mh.restaurantchainreservation.feature.profile.subpages
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import com.mh.restaurantchainreservation.core.designsystem.components.PageHeader
+import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.i18n.R as I18nR
+
+@Composable
+fun SubpageScaffold(
+    title: String,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    horizontalPadding: Int = 20,
+    scrollable: Boolean = true,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val backLabel = stringResource(I18nR.string.common_action_back)
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(palette.cardSurface)
+            .statusBarsPadding()
+            .padding(top = 16.dp),
+    ) {
+        PageHeader(
+            title = title,
+            onBack = onBack,
+            backContentDescription = backLabel,
+            modifier = Modifier.padding(horizontal = horizontalPadding.dp),
+        )
+        if (scrollable) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = horizontalPadding.dp),
+                content = content,
+            )
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = horizontalPadding.dp),
+                content = content,
+            )
+        }
+    }
+}

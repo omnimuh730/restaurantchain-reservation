@@ -53,9 +53,20 @@ import com.mh.restaurantchainreservation.feature.discover.DiscoverHomeScreen
 import com.mh.restaurantchainreservation.feature.discover.DiscoverRoutes
 import com.mh.restaurantchainreservation.feature.notifications.NotificationsRoutes
 import com.mh.restaurantchainreservation.feature.notifications.NotificationsScreen
+import com.mh.restaurantchainreservation.feature.profile.ContactSupportScreen
+import com.mh.restaurantchainreservation.feature.profile.FriendsScreen
+import com.mh.restaurantchainreservation.feature.profile.HelpCenterScreen
+import com.mh.restaurantchainreservation.feature.profile.HistoryScreen
+import com.mh.restaurantchainreservation.feature.profile.LocationScreen
+import com.mh.restaurantchainreservation.feature.profile.ProfileEditScreen
 import com.mh.restaurantchainreservation.feature.profile.ProfileHomeScreen
+import com.mh.restaurantchainreservation.feature.profile.ProfileNotificationsScreen
 import com.mh.restaurantchainreservation.feature.profile.ProfileRoutes
+import com.mh.restaurantchainreservation.feature.profile.ReferScreen
+import com.mh.restaurantchainreservation.feature.profile.SendGiftScreen
 import com.mh.restaurantchainreservation.feature.profile.SettingsScreen
+import com.mh.restaurantchainreservation.feature.profile.SubscriptionScreen
+import com.mh.restaurantchainreservation.feature.profile.TopUpScreen
 import com.mh.restaurantchainreservation.feature.qrpay.QrPayRoutes
 import com.mh.restaurantchainreservation.feature.qrpay.QrPayScreen
 import com.mh.restaurantchainreservation.feature.search.SearchResultsScreen
@@ -166,7 +177,7 @@ private fun resolveActiveTab(hierarchyRoutes: List<String>): BottomNavTabId? {
         hierarchyRoutes.any { it == DiscoverRoutes.Home || it.startsWith("discover/") || it == SearchRoutes.Results || it.startsWith("booking/") || it == BookingRoutes.RestaurantDetail || it == BookingRoutes.BookTable } -> BottomNavTabId.Discover
         hierarchyRoutes.any { it == WishlistRoutes.Home } -> BottomNavTabId.Wishlist
         hierarchyRoutes.any { it == DiningRoutes.Home || it == DiningRoutes.Detail || it == DiningRoutes.Enjoy } -> BottomNavTabId.Dining
-        hierarchyRoutes.any { it == ProfileRoutes.Home || it == ProfileRoutes.Settings || it == NotificationsRoutes.Home } -> BottomNavTabId.Profile
+        hierarchyRoutes.any { route -> route == ProfileRoutes.Home || route in ProfileRoutes.AllProfileSubRoutes || route == NotificationsRoutes.Home } -> BottomNavTabId.Profile
         else -> null
     }
 }
@@ -216,13 +227,58 @@ private fun AppGraph(
             composable(ProfileRoutes.Home) {
                 ProfileHomeScreen(
                     onOpenSettings = { navController.navigate(ProfileRoutes.Settings) },
-                    onOpenNotifications = { navController.navigate(NotificationsRoutes.Home) },
+                    onOpenNotifications = { navController.navigate(ProfileRoutes.Notifications) },
+                    onOpenLocation = { navController.navigate(ProfileRoutes.Location) },
+                    onOpenSubscription = { navController.navigate(ProfileRoutes.Subscription) },
+                    onOpenFriends = { navController.navigate(ProfileRoutes.Friends) },
+                    onOpenHelp = { navController.navigate(ProfileRoutes.Help) },
+                    onOpenContactSupport = { navController.navigate(ProfileRoutes.ContactSupport) },
+                    onOpenTopUp = { navController.navigate(ProfileRoutes.TopUp) },
+                    onOpenSendGift = { navController.navigate(ProfileRoutes.SendGift) },
+                    onOpenHistory = { navController.navigate(ProfileRoutes.History) },
+                    onOpenRefer = { navController.navigate(ProfileRoutes.Refer) },
                     onSwitchKorean = { LocaleManager.setLocale(context, "ko") },
                     onSwitchEnglish = { LocaleManager.setLocale(context, "en") },
                 )
             }
             composable(ProfileRoutes.Settings) {
-                SettingsScreen()
+                SettingsScreen(onBack = { navController.popBackStack() })
+            }
+            composable(ProfileRoutes.Edit) {
+                ProfileEditScreen(onBack = { navController.popBackStack() })
+            }
+            composable(ProfileRoutes.Notifications) {
+                ProfileNotificationsScreen(onBack = { navController.popBackStack() })
+            }
+            composable(ProfileRoutes.TopUp) {
+                TopUpScreen(onBack = { navController.popBackStack() })
+            }
+            composable(ProfileRoutes.SendGift) {
+                SendGiftScreen(onBack = { navController.popBackStack() })
+            }
+            composable(ProfileRoutes.History) {
+                HistoryScreen(onBack = { navController.popBackStack() })
+            }
+            composable(ProfileRoutes.Refer) {
+                ReferScreen(onBack = { navController.popBackStack() })
+            }
+            composable(ProfileRoutes.Friends) {
+                FriendsScreen(onBack = { navController.popBackStack() })
+            }
+            composable(ProfileRoutes.Location) {
+                LocationScreen(onBack = { navController.popBackStack() })
+            }
+            composable(ProfileRoutes.Subscription) {
+                SubscriptionScreen(onBack = { navController.popBackStack() })
+            }
+            composable(ProfileRoutes.Help) {
+                HelpCenterScreen(
+                    onBack = { navController.popBackStack() },
+                    onContactSupport = { navController.navigate(ProfileRoutes.ContactSupport) },
+                )
+            }
+            composable(ProfileRoutes.ContactSupport) {
+                ContactSupportScreen(onBack = { navController.popBackStack() })
             }
             composable(NotificationsRoutes.Home) {
                 NotificationsScreen()

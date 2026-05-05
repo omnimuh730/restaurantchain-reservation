@@ -1,9 +1,9 @@
 package com.mh.restaurantchainreservation
 
 import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import com.mh.restaurantchainreservation.core.designsystem.theme.RestaurantTheme
@@ -12,11 +12,11 @@ import com.mh.restaurantchainreservation.core.i18n.LocaleManager
 import com.mh.restaurantchainreservation.core.model.DailyBonusStore
 import com.mh.restaurantchainreservation.core.navigation.RestaurantNavHost
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         LocaleManager.initialize(applicationContext)
+        super.onCreate(savedInstanceState)
         DailyBonusStore.init(applicationContext)
         enableEdgeToEdge()
         setContent {

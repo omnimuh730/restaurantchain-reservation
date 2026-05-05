@@ -172,4 +172,315 @@
     <string name="profile_settings_theme_light">Light</string>
     <string name="profile_settings_theme_dark">Dark</string>
     <string name="profile_settings_theme_system">System</string>
+    <string name="settings_color_theme">Color theme</string>
+    <string name="settings_color_theme_desc">Select your preferred app style</string>
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="settings_section_sound_haptics">Sound &amp; haptics</string>
+    <string name="settings_section_privacy">Privacy &amp; data</string>
+    <string name="settings_section_security">Security</string>
+    <string name="settings_change_password">Change password</string>
+    <string name="settings_update_password">Update password</string>
+    <string name="settings_current_password">Current password</string>
+    <string name="settings_new_password">New password</string>
+    <string name="settings_confirm_new_password">Confirm new password</string>
+    <string name="settings_save_new_password">Save new password</string>
+    <string name="settings_delete_account">Delete account</string>
+    <string name="settings_delete_modal_title">Delete account</string>
+    <string name="settings_delete_modal_body">This action permanently deletes your account and removes your profile data. This cannot be undone.</string>
+    <string name="settings_volume_aria">Volume adjustment</string>
+    <string name="settings_row_order_updates">Order updates</string>
+    <string name="settings_row_order_updates_desc">Status changes and delivery tracking</string>
+    <string name="settings_row_promotions">Promotions</string>
+    <string name="settings_row_promotions_desc">Deals, coupons, and special offers</string>
+    <string name="settings_row_reservation_reminders">Reservation reminders</string>
+    <string name="settings_row_reservation_reminders_desc">Upcoming booking reminders</string>
+    <string name="settings_row_rewards_points">Rewards &amp; points</string>
+    <string name="settings_row_rewards_points_desc">Points earned and tier updates</string>
+    <string name="settings_row_new_restaurants">New restaurants</string>
+    <string name="settings_row_new_restaurants_desc">Openings near you</string>
+    <string name="settings_row_sound">In-app sounds</string>
+    <string name="settings_row_sound_desc">Play sounds for actions and alerts</string>
+    <string name="settings_row_location">Location tracking</string>
+    <string name="settings_row_location_desc">Allow app to use your location</string>
+    <string name="settings_row_order_history">Order history visible</string>
+    <string name="settings_row_order_history_desc">Show past orders on your profile</string>
+    <string name="settings_row_personalized_ads">Personalized ads</string>
+    <string name="settings_row_personalized_ads_desc">Show ads based on your activity</string>
+    <string name="settings_row_data_sharing">Data sharing</string>
+    <string name="settings_row_data_sharing_desc">Share data with restaurant partners</string>
+
+    <!-- Profile edit -->
+    <string name="profile_edit_title">Edit profile</string>
+    <string name="profile_edit_change_photo">Change photo</string>
+    <string name="profile_edit_full_name">Full name</string>
+    <string name="profile_edit_phone">Phone number</string>
+    <string name="profile_edit_username">Username</string>
+    <string name="profile_edit_save_changes">Save changes</string>
+    <string name="profile_edit_tier_benefits">Tier benefits</string>
+    <string name="profile_edit_pts_summary">2,340 pts · 660 to Platinum</string>
+
+    <!-- Subscription -->
+    <string name="subscription_title">Upgrade</string>
+    <string name="subscription_active_title">Subscription</string>
+    <string name="subscription_pay_title">Confirm and pay</string>
+    <string name="subscription_processing_title">Confirming</string>
+    <string name="subscription_brand">Tonight Pro</string>
+    <string name="subscription_subtitle">Unlock the ultimate dining experience.</string>
+    <string name="subscription_pro_benefits">Pro benefits</string>
+    <string name="subscription_choose_plan">Choose your plan</string>
+    <string name="subscription_monthly_label">Monthly</string>
+    <string name="subscription_quarterly_label">Quarterly</string>
+    <string name="subscription_yearly_label">Yearly</string>
+    <string name="subscription_save_pct">Save %1$d%%</string>
+    <string name="subscription_per_month">$%1$.2f / month</string>
+    <string name="subscription_continue_to_payment">Continue to Payment</string>
+    <string name="subscription_cancel_anytime">Cancel anytime. No hidden fees.</string>
+    <string name="subscription_pay_with">Pay with</string>
+    <string name="subscription_available_balance">Available Balance</string>
+    <string name="subscription_available_amount">$24.50 available</string>
+    <string name="subscription_secure">Your payment is secure. By confirming, you agree to our terms of service and acknowledge that your subscription will auto-renew.</string>
+    <string name="subscription_pay_amount">Pay $%1$.2f</string>
+    <string name="subscription_insufficient">Insufficient balance. Please top up first.</string>
+    <string name="subscription_includes_discount">Includes %1$d%% discount</string>
+    <string name="subscription_processing_payment">Processing Payment</string>
+    <string name="subscription_please_wait">Please wait while we confirm your subscription</string>
+    <string name="subscription_welcome_pro">Welcome to Pro</string>
+    <string name="subscription_now_active">Your subscription is now active.</string>
+    <string name="subscription_start_exploring">Start Exploring</string>
+    <string name="subscription_active_badge">Active</string>
+    <string name="subscription_plan_label">Plan</string>
+    <string name="subscription_price_label">Price</string>
+    <string name="subscription_next_billing">Next billing</string>
+    <string name="subscription_member_since">Member since</string>
+    <string name="subscription_cancel_subscription">Cancel Subscription</string>
+    <string name="subscription_cancel_modal_title">Cancel Subscription</string>
+    <string name="subscription_cancel_modal_body">Are you sure you want to cancel your PRO subscription? You\'ll lose access to all premium features at the end of your current billing period.</string>
+    <string name="subscription_keep_plan">Keep Plan</string>
+    <string name="subscription_yes_cancel">Yes, Cancel</string>
+    <string name="subscription_benefit_unlimited_label">Unlimited Reservations</string>
+    <string name="subscription_benefit_unlimited_desc">Book as many tables as you want</string>
+    <string name="subscription_benefit_priority_label">Priority Booking</string>
+    <string name="subscription_benefit_priority_desc">Earlier access to limited reservations</string>
+    <string name="subscription_benefit_no_fees_label">No Booking Fees</string>
+    <string name="subscription_benefit_no_fees_desc">Save on every reservation</string>
+    <string name="subscription_benefit_deals_label">Exclusive Deals</string>
+    <string name="subscription_benefit_deals_desc">Members-only discounts &amp; offers</string>
+
+    <!-- Notifications -->
+    <string name="notifications_tab_all">All</string>
+    <string name="notifications_tab_unread">Unread</string>
+    <string name="notifications_tab_read">Read</string>
+    <string name="notifications_mark_all_read">Mark all read</string>
+    <string name="notifications_clear_all">Clear all</string>
+    <string name="notifications_clear_unread">Clear unread</string>
+    <string name="notifications_clear_read">Clear read</string>
+    <string name="notifications_digest_caught_up">All caught up</string>
+    <string name="notifications_digest_new">%1$d new updates waiting</string>
+    <string name="notifications_digest_subtitle">Reservations, rewards, and replies</string>
+    <string name="notifications_empty_title_all">No notifications</string>
+    <string name="notifications_empty_title_unread">No unread notifications</string>
+    <string name="notifications_empty_title_read">No read notifications</string>
+    <string name="notifications_empty_body_all">Reservation updates, rewards, and restaurant replies will appear here.</string>
+    <string name="notifications_empty_body_unread">You are all caught up. New table updates will show here first.</string>
+    <string name="notifications_empty_body_read">Read notifications stay here after you open them.</string>
+
+    <!-- Top up -->
+    <string name="topup_title">Top up</string>
+    <string name="topup_select_amount">Select amount</string>
+    <string name="topup_custom_amount">Custom amount</string>
+    <string name="topup_payment_method">Payment method</string>
+    <string name="topup_continue">Continue</string>
+    <string name="topup_confirm_pay">Confirm &amp; pay</string>
+    <string name="topup_processing_title">Processing top up</string>
+    <string name="topup_processing_subtitle">Securely loading your wallet…</string>
+    <string name="topup_done_title">Top up complete</string>
+    <string name="topup_done_subtitle">Your wallet has been credited.</string>
+    <string name="topup_error_title">Something went wrong</string>
+    <string name="topup_error_subtitle">We could not complete your top up. Try again or use another method.</string>
+    <string name="topup_retry">Retry</string>
+    <string name="topup_done_action">Done</string>
+    <string name="topup_amount_format">₩%1$s</string>
+
+    <!-- History -->
+    <string name="history_title">Activity</string>
+    <string name="history_filter_all">All</string>
+    <string name="history_filter_income">Income</string>
+    <string name="history_filter_expense">Expense</string>
+    <string name="history_period_today">Today</string>
+    <string name="history_period_this_week">This week</string>
+    <string name="history_period_this_month">This month</string>
+    <string name="history_period_3_months">Last 3 months</string>
+    <string name="history_empty_title">No activity yet</string>
+    <string name="history_empty_subtitle">Your wallet activity will appear here.</string>
+    <string name="history_invoice_title">Invoice</string>
+
+    <!-- Refer -->
+    <string name="refer_title">Refer a friend</string>
+    <string name="refer_hero_title">Share the love</string>
+    <string name="refer_hero_subtitle">Give $10, get $10. Share your code and you both earn rewards when they place their first order.</string>
+    <string name="refer_your_code">Your code</string>
+    <string name="refer_code_value">ALEX2024</string>
+    <string name="refer_copy">Copy</string>
+    <string name="refer_copied">Copied</string>
+    <string name="refer_share_invite">Share invite link</string>
+    <string name="refer_stats_referred">Referred</string>
+    <string name="refer_stats_earned">Earned</string>
+    <string name="refer_stats_pending">Pending</string>
+    <string name="refer_stat_referred_value">5</string>
+    <string name="refer_stat_earned_value">$50</string>
+    <string name="refer_stat_pending_value">3</string>
+    <string name="refer_how_title">How it works</string>
+    <string name="refer_step_1">Share your code or QR with friends</string>
+    <string name="refer_step_2">They sign up and book a table</string>
+    <string name="refer_step_3">You both earn $10 in wallet rewards</string>
+
+    <!-- Friends -->
+    <string name="friends_title">Friends &amp; contacts</string>
+    <string name="friends_search_hint">Search friends</string>
+    <string name="friends_tab_friends">Friends</string>
+    <string name="friends_tab_requests">Requests</string>
+    <string name="friends_tab_blocked">Blocked</string>
+    <string name="friends_add_friend">Add friend</string>
+    <string name="friends_accept">Accept</string>
+    <string name="friends_decline">Decline</string>
+    <string name="friends_remove">Remove</string>
+    <string name="friends_block">Block</string>
+    <string name="friends_unblock">Unblock</string>
+    <string name="friends_empty_friends">No friends yet</string>
+    <string name="friends_empty_friends_body">Invite friends to share reservations and split bills.</string>
+    <string name="friends_empty_requests">No friend requests</string>
+    <string name="friends_empty_requests_body">When someone wants to add you, you\'ll see them here.</string>
+    <string name="friends_empty_blocked">No blocked contacts</string>
+    <string name="friends_empty_blocked_body">Blocked contacts won\'t see your activity.</string>
+
+    <!-- Send gift -->
+    <string name="send_gift_title">Send a gift</string>
+    <string name="send_gift_recipient">Recipient</string>
+    <string name="send_gift_recipient_hint">Search by name or phone</string>
+    <string name="send_gift_amount">Amount</string>
+    <string name="send_gift_message">Message</string>
+    <string name="send_gift_message_hint">Add a personal note (optional)</string>
+    <string name="send_gift_send">Send gift</string>
+    <string name="send_gift_preview">Preview</string>
+    <string name="send_gift_preview_subtitle">A virtual envelope is on its way.</string>
+
+    <!-- Location -->
+    <string name="location_title">Set location</string>
+    <string name="location_search_hint">Search neighborhood or address</string>
+    <string name="location_use_current">Use my current location</string>
+    <string name="location_recent">Recent</string>
+    <string name="location_saved_places">Saved places</string>
+    <string name="location_no_recent">No recent places</string>
+
+    <!-- Help center -->
+    <string name="help_title">Help center</string>
+    <string name="help_search_hint">Search articles</string>
+    <string name="help_popular_topics">Popular topics</string>
+    <string name="help_topic_booking">Reservations</string>
+    <string name="help_topic_account">Account</string>
+    <string name="help_topic_payment">Payment</string>
+    <string name="help_topic_security">Security</string>
+    <string name="help_topic_app">App issues</string>
+    <string name="help_faqs">Frequently asked questions</string>
+    <string name="help_contact_cta">Still need help? Contact support</string>
+    <string name="help_faq_1_q">How do I cancel a reservation?</string>
+    <string name="help_faq_1_a">Open the booking from Dining and tap Cancel. Free cancellations are available up to 2 hours before your booking.</string>
+    <string name="help_faq_2_q">When do my points expire?</string>
+    <string name="help_faq_3_q">Why was my reservation rejected?</string>
+    <string name="help_faq_4_q">How do I claim my daily reward?</string>
+
+    <!-- Contact support -->
+    <string name="contact_title">Contact support</string>
+    <string name="contact_email">Email us</string>
+    <string name="contact_email_value">support@tonight.example</string>
+    <string name="contact_call">Call us</string>
+    <string name="contact_call_value">+82 (0)2-1234-5678</string>
+    <string name="contact_chat">Chat with us</string>
+    <string name="contact_chat_value">Mon–Fri · 9:00 – 18:00 KST</string>
+    <string name="contact_subject">Subject</string>
+    <string name="contact_subject_hint">What can we help with?</string>
+    <string name="contact_message">Message</string>
+    <string name="contact_message_hint">Tell us a bit more (optional)</string>
+    <string name="contact_send">Send message</string>
+    <string name="contact_hours_label">Support hours</string>
+    <string name="contact_hours_value">24/7 chat · Mon–Fri 9–6 calls</string>
+    <string name="contact_thanks_title">Message sent</string>
+    <string name="contact_thanks_body">We typically reply within 1 business day.</string>
+
+    <!-- Common -->
+    <string name="common_save">Save</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_continue">Continue</string>
+    <string name="common_search">Search</string>
+
+    <!-- Dining list page -->
+    <string name="dining_page_title">My Dining</string>
+    <string name="dining_next_up">Next Up</string>
+    <string name="dining_no_upcoming_plans">No upcoming plans</string>
+    <string name="dining_zero_upcoming">0 upcoming</string>
+    <string name="dining_discover_prompt">Time to discover a new favorite spot.</string>
+    <string name="dining_places_visited">Places visited</string>
+    <string name="dining_total_bookings">Total bookings</string>
+    <string name="dining_add_by_code">Add by booking code</string>
+    <string name="dining_tab_list_aria">Dining booking status</string>
+
+    <string name="dining_tab_upcoming_label">Upcoming</string>
+    <string name="dining_tab_upcoming_short">Upcoming</string>
+    <string name="dining_tab_upcoming_title">Upcoming reservations</string>
+    <string name="dining_tab_upcoming_desc">Pending requests and confirmed reservations before you arrive.</string>
+
+    <string name="dining_tab_visited_label">Visited</string>
+    <string name="dining_tab_visited_short">Visited</string>
+    <string name="dining_tab_visited_title">Visited places</string>
+    <string name="dining_tab_visited_desc">Your completed meals with receipts, ratings, and quick rebooking.</string>
+
+    <string name="dining_tab_cancel_label">Cancelled</string>
+    <string name="dining_tab_cancel_short">Cancelled</string>
+    <string name="dining_tab_cancel_title">Cancelled bookings</string>
+    <string name="dining_tab_cancel_desc">Past cancellations and no-shows, kept here for reference.</string>
+
+    <string name="dining_empty_upcoming_title">No upcoming reservations</string>
+    <string name="dining_empty_upcoming_desc">Pending and confirmed reservations will appear here.</string>
+    <string name="dining_empty_visited_title">No visited places yet</string>
+    <string name="dining_empty_visited_desc">Your completed dining experiences will appear here.</string>
+    <string name="dining_empty_cancel_title">No cancellations</string>
+    <string name="dining_empty_cancel_desc">You haven\'t cancelled any bookings. Great dining streak!</string>
+    <string name="dining_empty_find_restaurant">Find a restaurant</string>
+
+    <!-- Booking card -->
+    <string name="booking_status_now">Now</string>
+    <string name="booking_status_pending">Pending</string>
+    <string name="booking_status_confirmed">Confirmed</string>
+    <string name="booking_status_rejected">Rejected</string>
+    <string name="booking_status_visited">Visited</string>
+    <string name="booking_status_cancelled">Cancelled</string>
+    <string name="booking_status_no_show">No-show</string>
+
+    <string name="booking_confirmation_label">Confirmation</string>
+    <string name="booking_copy_label">Copy confirmation code</string>
+    <string name="booking_copied_toast">Copied</string>
+
+    <string name="booking_waiting_title">Waiting for approval</string>
+    <string name="booking_waiting_desc">The restaurant is reviewing this reservation request.</string>
+    <string name="booking_rejected_title">Request not approved</string>
+    <string name="booking_rejected_desc">Try a new time or remove this request from your list.</string>
+
+    <string name="booking_rating_label">Rating</string>
+    <string name="booking_paid_label">Paid</string>
+    <string name="booking_points_label">Points</string>
+
+    <string name="booking_action_enjoy">Enjoy</string>
+    <string name="booking_action_scan">Scan</string>
+    <string name="booking_action_receipt">Receipt</string>
+    <string name="booking_action_details">Details</string>
+    <string name="booking_action_request_again">Request again</string>
+    <string name="booking_action_book_again">Book again</string>
+    <string name="booking_action_manage">Manage</string>
+    <string name="booking_action_invite">Invite friends</string>
+    <string name="booking_action_show_qr">Show QR</string>
+    <string name="booking_action_delete">Delete</string>
+
+    <string name="booking_guests_one">%1$d guest</string>
+    <string name="booking_guests_many">%1$d guests</string>
 </resources>

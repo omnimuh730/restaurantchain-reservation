@@ -1,6 +1,5 @@
 package com.mh.restaurantchainreservation.feature.dining
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -14,6 +13,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.DsButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DsCard
 import com.mh.restaurantchainreservation.core.designsystem.components.DsTopBar
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
+import com.mh.restaurantchainreservation.feature.dining.ui.DiningListScreen
 
 object DiningRoutes {
     const val Home = "dining"
@@ -26,18 +26,10 @@ fun DiningHomeScreen(
     onOpenDetail: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        DsTopBar(title = stringResource(I18nR.string.title_dining))
-        DsCard {
-            Text(stringResource(I18nR.string.desc_dining_tabs), style = MaterialTheme.typography.bodyLarge)
-            DsButton(text = stringResource(I18nR.string.action_open_booking_detail), onClick = onOpenDetail, modifier = Modifier.padding(top = 12.dp))
-        }
-    }
+    DiningListScreen(
+        onOpenDetail = { onOpenDetail() },
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -49,7 +41,6 @@ fun DiningDetailScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         DsTopBar(title = stringResource(I18nR.string.title_dining_detail))
         DsCard {

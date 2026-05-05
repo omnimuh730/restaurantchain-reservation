@@ -172,4 +172,74 @@
     <string name="profile_settings_theme_light">라이트</string>
     <string name="profile_settings_theme_dark">다크</string>
     <string name="profile_settings_theme_system">시스템</string>
+
+    <!-- Dining list page -->
+    <string name="dining_page_title">나의 다이닝</string>
+    <string name="dining_next_up">다음 일정</string>
+    <string name="dining_no_upcoming_plans">예정된 일정 없음</string>
+    <string name="dining_zero_upcoming">예정 0건</string>
+    <string name="dining_discover_prompt">새로운 단골을 찾아보세요.</string>
+    <string name="dining_places_visited">방문한 곳</string>
+    <string name="dining_total_bookings">전체 예약</string>
+    <string name="dining_add_by_code">예약 코드로 추가</string>
+    <string name="dining_tab_list_aria">다이닝 예약 상태</string>
+
+    <string name="dining_tab_upcoming_label">예정</string>
+    <string name="dining_tab_upcoming_short">예정</string>
+    <string name="dining_tab_upcoming_title">예정된 예약</string>
+    <string name="dining_tab_upcoming_desc">대기 중인 요청과 도착 전 확정된 예약입니다.</string>
+
+    <string name="dining_tab_visited_label">방문</string>
+    <string name="dining_tab_visited_short">방문</string>
+    <string name="dining_tab_visited_title">방문한 곳</string>
+    <string name="dining_tab_visited_desc">완료된 식사의 영수증, 평점, 빠른 재예약을 확인하세요.</string>
+
+    <string name="dining_tab_cancel_label">취소</string>
+    <string name="dining_tab_cancel_short">취소</string>
+    <string name="dining_tab_cancel_title">취소된 예약</string>
+    <string name="dining_tab_cancel_desc">참고용으로 보관된 과거 취소와 노쇼입니다.</string>
+
+    <string name="dining_empty_upcoming_title">예정된 예약이 없어요</string>
+    <string name="dining_empty_upcoming_desc">대기 중이거나 확정된 예약이 여기 표시됩니다.</string>
+    <string name="dining_empty_visited_title">아직 방문한 곳이 없어요</string>
+    <string name="dining_empty_visited_desc">완료된 다이닝 경험이 여기 표시됩니다.</string>
+    <string name="dining_empty_cancel_title">취소 내역이 없어요</string>
+    <string name="dining_empty_cancel_desc">취소된 예약이 없어요. 멋진 다이닝 기록이에요!</string>
+    <string name="dining_empty_find_restaurant">레스토랑 찾기</string>
+
+    <!-- Booking card -->
+    <string name="booking_status_now">진행 중</string>
+    <string name="booking_status_pending">대기</string>
+    <string name="booking_status_confirmed">확정</string>
+    <string name="booking_status_rejected">거절</string>
+    <string name="booking_status_visited">방문</string>
+    <string name="booking_status_cancelled">취소</string>
+    <string name="booking_status_no_show">노쇼</string>
+
+    <string name="booking_confirmation_label">예약 코드</string>
+    <string name="booking_copy_label">예약 코드 복사</string>
+    <string name="booking_copied_toast">복사됨</string>
+
+    <string name="booking_waiting_title">승인 대기 중</string>
+    <string name="booking_waiting_desc">레스토랑이 예약 요청을 검토하고 있어요.</string>
+    <string name="booking_rejected_title">요청이 승인되지 않음</string>
+    <string name="booking_rejected_desc">새로운 시간을 시도하거나 목록에서 삭제하세요.</string>
+
+    <string name="booking_rating_label">평점</string>
+    <string name="booking_paid_label">결제</string>
+    <string name="booking_points_label">포인트</string>
+
+    <string name="booking_action_enjoy">식사하기</string>
+    <string name="booking_action_scan">스캔</string>
+    <string name="booking_action_receipt">영수증</string>
+    <string name="booking_action_details">상세</string>
+    <string name="booking_action_request_again">다시 요청</string>
+    <string name="booking_action_book_again">다시 예약</string>
+    <string name="booking_action_manage">관리</string>
+    <string name="booking_action_invite">친구 초대</string>
+    <string name="booking_action_show_qr">QR 보기</string>
+    <string name="booking_action_delete">삭제</string>
+
+    <string name="booking_guests_one">%1$d명</string>
+    <string name="booking_guests_many">%1$d명</string>
 </resources>
