@@ -1,0 +1,54 @@
+<resources>
+    <string name="app_name">레스토랑 체인 예약</string>
+
+    <string name="tab_discover">탐색</string>
+    <string name="tab_wishlist">위시리스트</string>
+    <string name="tab_dining">다이닝</string>
+    <string name="tab_profile">프로필</string>
+    <string name="tab_qrpay">QR 결제</string>
+
+    <string name="title_login">로그인</string>
+    <string name="title_register">회원가입</string>
+    <string name="title_forgot_password">비밀번호 찾기</string>
+    <string name="title_discover">탐색</string>
+    <string name="title_search_results">검색 결과</string>
+    <string name="title_restaurant_detail">레스토랑 상세</string>
+    <string name="title_book_table">테이블 예약</string>
+    <string name="title_dining">다이닝</string>
+    <string name="title_dining_detail">예약 상세</string>
+    <string name="title_enjoy_meal">식사 즐기기</string>
+    <string name="title_wishlist">위시리스트</string>
+    <string name="title_profile">프로필</string>
+    <string name="title_settings">설정</string>
+    <string name="title_notifications">알림</string>
+    <string name="title_qrpay">QR 결제</string>
+
+    <string name="desc_sign_in">계속하려면 로그인하세요</string>
+    <string name="desc_discover_subtitle">레스토랑을 찾아보세요</string>
+    <string name="desc_discover_search_hint">지역, 음식, 분위기로 검색하세요</string>
+    <string name="desc_search_sheet">어디서 / 언제 / 몇 명</string>
+    <string name="desc_filter_placeholder">필터 내용 자리 표시자</string>
+    <string name="desc_booking_detail">상세 정보, 메뉴, 리뷰</string>
+    <string name="desc_booking_steps">날짜, 정보, 선호도, 결제 단계</string>
+    <string name="desc_dining_tabs">예정, 방문, 취소 예약 탭</string>
+    <string name="desc_dining_manage">예약 관리, 수정, 취소 상태</string>
+    <string name="desc_wishlist_saved">저장한 레스토랑과 음식</string>
+    <string name="desc_profile_wallet">지갑, 리워드, 프로필 액션</string>
+    <string name="desc_notifications_inbox">받은 알림 및 업데이트</string>
+    <string name="desc_qrpay">스캔하여 결제</string>
+
+    <string name="action_create_account">계정 만들기</string>
+    <string name="action_forgot_password">비밀번호 찾기</string>
+    <string name="action_open_search">검색 열기</string>
+    <string name="action_open_restaurant_detail">레스토랑 상세 보기</string>
+    <string name="action_filter">필터</string>
+    <string name="action_book_table">테이블 예약</string>
+    <string name="action_complete_booking">예약 완료</string>
+    <string name="action_open_booking_detail">예약 상세 보기</string>
+    <string name="action_open_enjoy_mode">식사 모드 열기</string>
+    <string name="action_settings">설정</string>
+    <string name="action_notifications">알림</string>
+    <string name="action_switch_to_korean">한국어로 변경</string>
+    <string name="action_switch_to_english">영어로 변경</string>
+    <string name="action_open_qrpay">QR 결제 열기</string>
+</resources>

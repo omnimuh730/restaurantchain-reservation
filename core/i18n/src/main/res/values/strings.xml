@@ -1,0 +1,54 @@
+<resources>
+    <string name="app_name">Restaurantchain Reservation</string>
+
+    <string name="tab_discover">Discover</string>
+    <string name="tab_wishlist">Wishlist</string>
+    <string name="tab_dining">Dining</string>
+    <string name="tab_profile">Profile</string>
+    <string name="tab_qrpay">QR Pay</string>
+
+    <string name="title_login">Login</string>
+    <string name="title_register">Register</string>
+    <string name="title_forgot_password">Forgot Password</string>
+    <string name="title_discover">Discover</string>
+    <string name="title_search_results">Search Results</string>
+    <string name="title_restaurant_detail">Restaurant Detail</string>
+    <string name="title_book_table">Book Table</string>
+    <string name="title_dining">Dining</string>
+    <string name="title_dining_detail">Dining Detail</string>
+    <string name="title_enjoy_meal">Enjoy Meal</string>
+    <string name="title_wishlist">Wishlist</string>
+    <string name="title_profile">Profile</string>
+    <string name="title_settings">Settings</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="title_qrpay">QR Pay</string>
+
+    <string name="desc_sign_in">Sign in to continue</string>
+    <string name="desc_discover_subtitle">Find restaurants</string>
+    <string name="desc_discover_search_hint">Search by location, cuisine, or vibe</string>
+    <string name="desc_search_sheet">Where / When / Who</string>
+    <string name="desc_filter_placeholder">Filter content placeholder</string>
+    <string name="desc_booking_detail">Detail overview, menu, and reviews</string>
+    <string name="desc_booking_steps">Date, details, preferences, and payment steps</string>
+    <string name="desc_dining_tabs">Upcoming, visited, and canceled booking tabs</string>
+    <string name="desc_dining_manage">Manage, modify, and cancel reservation states</string>
+    <string name="desc_wishlist_saved">Saved restaurants and foods</string>
+    <string name="desc_profile_wallet">Wallet, rewards, and profile actions</string>
+    <string name="desc_notifications_inbox">Inbox digest and updates</string>
+    <string name="desc_qrpay">Scan to pay entry point</string>
+
+    <string name="action_create_account">Create account</string>
+    <string name="action_forgot_password">Forgot password</string>
+    <string name="action_open_search">Open Search</string>
+    <string name="action_open_restaurant_detail">Open Restaurant Detail</string>
+    <string name="action_filter">Filter</string>
+    <string name="action_book_table">Book Table</string>
+    <string name="action_complete_booking">Complete Booking</string>
+    <string name="action_open_booking_detail">Open Booking Detail</string>
+    <string name="action_open_enjoy_mode">Open Enjoy Mode</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_notifications">Notifications</string>
+    <string name="action_switch_to_korean">Switch to Korean</string>
+    <string name="action_switch_to_english">Switch to English</string>
+    <string name="action_open_qrpay">Open QR Pay</string>
+</resources>

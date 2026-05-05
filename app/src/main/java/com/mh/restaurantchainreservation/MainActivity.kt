@@ -4,44 +4,25 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.mh.restaurantchainreservation.ui.theme.RestaurantchainReservationTheme
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import com.mh.restaurantchainreservation.core.designsystem.theme.RestaurantTheme
+import com.mh.restaurantchainreservation.core.i18n.LocaleManager
+import com.mh.restaurantchainreservation.core.designsystem.theme.rememberThemeController
+import com.mh.restaurantchainreservation.core.navigation.RestaurantNavHost
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        LocaleManager.initialize(applicationContext)
         enableEdgeToEdge()
         setContent {
-            RestaurantchainReservationTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding),
-                    )
-                }
+            val themeController = rememberThemeController(applicationContext)
+            val windowSizeClass = calculateWindowSizeClass(this)
+            RestaurantTheme(preference = themeController.preference) {
+                RestaurantNavHost(windowSizeClass = windowSizeClass)
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    RestaurantchainReservationTheme {
-        Greeting("Android")
     }
 }

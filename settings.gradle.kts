@@ -24,4 +24,17 @@ dependencyResolutionManagement {
 
 rootProject.name = "Restaurantchain Reservation"
 include(":app")
+include(":core:designsystem")
+include(":core:i18n")
+include(":core:model")
+include(":core:navigation")
+include(":feature:auth")
+include(":feature:discover")
+include(":feature:search")
+include(":feature:booking")
+include(":feature:dining")
+include(":feature:profile")
+include(":feature:wishlist")
+include(":feature:notifications")
+include(":feature:qrpay")
  
