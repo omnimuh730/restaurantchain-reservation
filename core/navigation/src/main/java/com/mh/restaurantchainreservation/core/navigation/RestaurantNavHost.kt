@@ -213,13 +213,24 @@ private fun AppGraph(
                 BookTableScreen(onComplete = { navController.popBackStack() })
             }
             composable(DiningRoutes.Home) {
-                DiningHomeScreen(onOpenDetail = { navController.navigate("dining/sample") })
+                DiningHomeScreen(
+                    onOpenDetail = { id -> navController.navigate(DiningRoutes.detail(id)) },
+                )
             }
-            composable(DiningRoutes.Detail) {
-                DiningDetailScreen(onOpenEnjoy = { navController.navigate("dining/sample/enjoy") })
+            composable(DiningRoutes.Detail) { entry ->
+                val bookingId = entry.arguments?.getString("bookingId").orEmpty()
+                DiningDetailScreen(
+                    bookingId = bookingId,
+                    onBack = { navController.popBackStack() },
+                    onOpenEnjoy = { id -> navController.navigate(DiningRoutes.enjoy(id)) },
+                )
             }
-            composable(DiningRoutes.Enjoy) {
-                DiningEnjoyScreen()
+            composable(DiningRoutes.Enjoy) { entry ->
+                val bookingId = entry.arguments?.getString("bookingId").orEmpty()
+                DiningEnjoyScreen(
+                    bookingId = bookingId,
+                    onBack = { navController.popBackStack() },
+                )
             }
             composable(WishlistRoutes.Home) {
                 WishlistScreen()

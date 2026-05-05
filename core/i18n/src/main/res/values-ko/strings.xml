@@ -242,4 +242,221 @@
 
     <string name="booking_guests_one">%1$d명</string>
     <string name="booking_guests_many">%1$d명</string>
+
+    <!-- Booking detail page -->
+    <string name="detail_header_title">예약</string>
+    <string name="detail_header_back">다이닝으로 돌아가기</string>
+    <string name="detail_header_share">예약 공유</string>
+    <string name="detail_save">저장</string>
+    <string name="detail_unsave">저장 해제</string>
+    <string name="detail_party">인원</string>
+    <string name="detail_section_restaurant">레스토랑</string>
+    <string name="detail_action_browse_menu">메뉴 보기</string>
+    <string name="detail_action_browse_menu_desc">방문 전에 메뉴를 확인해보세요</string>
+    <string name="detail_action_directions">길찾기</string>
+    <string name="detail_action_call">레스토랑 전화</string>
+    <string name="detail_section_details">상세</string>
+    <string name="detail_section_location">위치</string>
+    <string name="detail_dining_points">다이닝 포인트</string>
+    <string name="detail_dining_points_earned">%1$d 포인트 적립됨</string>
+    <string name="detail_dining_points_pending">%1$d 포인트 적립 예정</string>
+    <string name="detail_dining_points_none">이 예약은 포인트가 없습니다</string>
+    <string name="detail_your_rating">나의 평점</string>
+    <string name="detail_pending_title">승인 대기 중</string>
+    <string name="detail_pending_desc">레스토랑이 예약을 검토 중입니다. 승인 또는 거절되면 알림을 받습니다.</string>
+    <string name="detail_request_code">요청 코드</string>
+    <string name="detail_rejected_title">요청이 거절됨</string>
+    <string name="detail_rejected_desc">이 시간은 승인되지 않았어요. 다른 시간을 요청하거나 목록에서 삭제하세요.</string>
+    <string name="detail_share_hint">이 코드를 친구에게 공유하면 예약에 함께 참여할 수 있어요.</string>
+    <string name="detail_view_receipt">영수증 보기</string>
+    <string name="detail_book_again">다시 예약</string>
+    <string name="detail_show_qr">QR 보기</string>
+    <string name="detail_invite">초대</string>
+    <string name="detail_occasion_birthday">생일</string>
+    <string name="detail_occasion_anniversary">기념일</string>
+    <string name="detail_occasion_date">데이트</string>
+    <string name="detail_occasion_special">스페셜</string>
+
+    <!-- Manage sheet -->
+    <string name="manage_title">예약 관리</string>
+    <string name="manage_subtitle">변경하거나 자리를 반환하세요.</string>
+    <string name="manage_modify">예약 수정</string>
+    <string name="manage_modify_desc">인원, 좌석, 시간 또는 요청을 변경하세요.</string>
+    <string name="manage_cancel">예약 취소</string>
+    <string name="manage_cancel_desc">반환된 자리는 레스토랑이 받게 됩니다.</string>
+    <string name="manage_close">닫기</string>
+
+    <!-- Cancel confirm -->
+    <string name="cancel_confirm_title">이 예약을 취소할까요?</string>
+    <string name="cancel_confirm_body">%1$s의 자리를 반환합니다.</string>
+    <string name="cancel_confirm_warning">되돌릴 수 없습니다</string>
+    <string name="cancel_confirm_keep">유지</string>
+    <string name="cancel_confirm_cancel">취소</string>
+
+    <!-- Modify modal -->
+    <string name="modify_title_chip">예약 수정</string>
+    <string name="modify_label_guests">인원</string>
+    <string name="modify_label_time">시간</string>
+    <string name="modify_label_seating">좌석</string>
+    <string name="modify_label_note">메모</string>
+    <string name="modify_note_hint">알레르기, 기념일 또는 특별 요청…</string>
+    <string name="modify_save">저장</string>
+
+    <!-- Show QR modal -->
+    <string name="show_qr_title">도착 QR</string>
+    <string name="show_qr_subtitle">호스트 스탠드에서 보여주세요.</string>
+    <string name="show_qr_close">QR 닫기</string>
+    <string name="show_qr_save">저장</string>
+    <string name="show_qr_share">공유</string>
+
+    <!-- Add booking code modal -->
+    <string name="add_code_title">예약 코드 추가</string>
+    <string name="add_code_subtitle">공유된 예약 코드로 예약에 참여하세요.</string>
+    <string name="add_code_done_title">예약이 확인됨</string>
+    <string name="add_code_done_subtitle">이 예약 카드가 다이닝 일정에 추가되었어요.</string>
+    <string name="add_code_label">예약 코드</string>
+    <string name="add_code_placeholder">CT-2026-0418A</string>
+    <string name="add_code_verify">확인</string>
+    <string name="add_code_done">완료</string>
+    <string name="add_code_view">보기</string>
+    <string name="add_code_verified_title">코드 확인됨</string>
+    <string name="add_code_verified_subtitle">%1$s가 예정된 초대장이 되었어요.</string>
+    <string name="add_code_error_not_found">예약 코드를 찾을 수 없어요. 글자와 숫자를 확인하세요.</string>
+    <string name="add_code_error_not_active">활성화된 확정 예약만 코드로 참여할 수 있어요.</string>
+
+    <!-- Menu modal -->
+    <string name="menu_modal_title_order">오늘의 추천</string>
+    <string name="menu_modal_title_preview">미리 계획하기</string>
+    <string name="menu_modal_chip_order">메뉴</string>
+    <string name="menu_modal_chip_preview">메뉴 미리보기</string>
+    <string name="menu_modal_subtitle">참고용입니다. 주문은 서버가 받아요.</string>
+    <string name="menu_modal_dishes_count">%1$d개 메뉴</string>
+    <string name="menu_modal_done">완료</string>
+
+    <!-- Order receipt modal -->
+    <string name="receipt_title">주문 영수증</string>
+    <string name="receipt_paid_chip">결제 완료</string>
+    <string name="receipt_subtotal">소계</string>
+    <string name="receipt_tax">세금</string>
+    <string name="receipt_tip">팁</string>
+    <string name="receipt_total">합계</string>
+    <string name="receipt_paid_with">결제 수단</string>
+    <string name="receipt_qty">수량 %1$d</string>
+    <string name="receipt_none">이 방문에 대한 영수증이 없어요.</string>
+    <string name="receipt_save">저장</string>
+    <string name="receipt_share">공유</string>
+    <string name="receipt_rating_label">나의 평점</string>
+
+    <!-- Invite friends -->
+    <string name="invite_title">친구 초대</string>
+    <string name="invite_subtitle">예약을 일행과 공유하세요.</string>
+    <string name="invite_share_link">링크 공유</string>
+    <string name="invite_copy_code">코드 복사</string>
+    <string name="invite_copied">복사됨</string>
+    <string name="invite_invited">초대됨 (%1$d)</string>
+    <string name="invite_done">완료</string>
+    <string name="invite_quick">빠른 초대</string>
+
+    <!-- Enjoy meal page -->
+    <string name="enjoy_back">뒤로</string>
+    <string name="enjoy_now_dining">현재 식사 중</string>
+    <string name="enjoy_upcoming_reservation">예정된 예약</string>
+    <string name="enjoy_status_live">진행 중</string>
+    <string name="enjoy_status_upcoming">예정</string>
+    <string name="enjoy_seated_for">착석 %1$s</string>
+    <string name="enjoy_starts_in">%1$s 후 시작</string>
+    <string name="enjoy_session_active_title">테이블 세션 활성화됨</string>
+    <string name="enjoy_session_active_desc">QR 세션, 영수증, 테이블 액션을 여기서 사용하세요.</string>
+    <string name="enjoy_ready_title">도착 준비 완료</string>
+    <string name="enjoy_ready_desc">예약 %1$s에 연결되어 있습니다.</string>
+    <string name="enjoy_at_the_table">테이블에서</string>
+    <string name="enjoy_before_arrive">도착 전에</string>
+    <string name="enjoy_action_pay">스캔 후 결제</string>
+    <string name="enjoy_action_pay_desc">테이블에서 영수증을 결제하세요</string>
+    <string name="enjoy_action_menu">메뉴 보기</string>
+    <string name="enjoy_action_menu_desc">오늘의 메뉴를 확인하세요</string>
+    <string name="enjoy_action_server">서버 호출</string>
+    <string name="enjoy_action_server_desc">테이블에서 도움을 요청하세요</string>
+    <string name="enjoy_action_show_qr">QR 보기</string>
+    <string name="enjoy_action_show_qr_desc">빠른 도착 체크인</string>
+    <string name="enjoy_action_invite">친구 초대</string>
+    <string name="enjoy_action_invite_desc">예약을 공유하세요</string>
+    <string name="enjoy_action_directions">길찾기</string>
+    <string name="enjoy_action_scanqr">도착 QR 스캔</string>
+    <string name="enjoy_action_scanqr_desc">호스트 스탠드에서 인증</string>
+    <string name="enjoy_action_preview_menu">메뉴 미리보기</string>
+    <string name="enjoy_action_preview_menu_desc">미리 주문을 계획하세요</string>
+    <string name="enjoy_checklist_title">도착 체크리스트</string>
+    <string name="enjoy_checklist_qr">QR 코드 준비</string>
+    <string name="enjoy_checklist_share">예약 코드를 일행과 공유</string>
+    <string name="enjoy_checklist_early">몇 분 일찍 도착</string>
+
+    <!-- Scan QR flow -->
+    <string name="scan_title">QR 다이닝</string>
+    <string name="scan_progress_label">진행 상황</string>
+    <string name="scan_progress_complete">완료</string>
+    <string name="scan_step_scan">스캔</string>
+    <string name="scan_step_arrived">도착</string>
+    <string name="scan_step_dining">식사</string>
+    <string name="scan_step_bill">영수증</string>
+    <string name="scan_step_pay">결제</string>
+    <string name="scan_step_review">리뷰</string>
+    <string name="scan_intro_scan_title">레스토랑 QR 스캔</string>
+    <string name="scan_intro_scan_desc">테이블 또는 호스트 스탠드의 코드로 도착을 인증하세요.</string>
+    <string name="scan_status_scanning">스캔 중…</string>
+    <string name="scan_status_detected">QR 코드 감지됨</string>
+    <string name="scan_button_simulate">QR 스캔 시뮬레이션</string>
+    <string name="scan_button_detected">감지됨</string>
+    <string name="scan_intro_arrived_title">환영합니다</string>
+    <string name="scan_intro_arrived_desc">테이블이 준비되었고 레스토랑에서 체크인되었습니다.</string>
+    <string name="scan_arrived_table">테이블</string>
+    <string name="scan_arrived_party">인원</string>
+    <string name="scan_arrived_continue">식사로 계속</string>
+    <string name="scan_intro_dining_title">맛있게 드세요</string>
+    <string name="scan_intro_dining_desc">레스토랑이 항목을 추가하면 영수증이 업데이트됩니다.</string>
+    <string name="scan_chip_dining">식사 중</string>
+    <string name="scan_request_bill">영수증 요청</string>
+    <string name="scan_intro_bill_title">영수증 확인</string>
+    <string name="scan_intro_bill_desc">결제 전에 항목과 팁을 확인하세요.</string>
+    <string name="scan_continue_payment">결제로 계속</string>
+    <string name="scan_intro_pay_done_title">결제 완료</string>
+    <string name="scan_intro_pay_done_desc">Tonight Wallet으로 결제됨. 리뷰로 이동합니다.</string>
+    <string name="scan_intro_review_title">어떠셨나요?</string>
+    <string name="scan_intro_review_desc">간단한 평점은 추천 향상에 도움이 됩니다.</string>
+    <string name="scan_review_taste">맛</string>
+    <string name="scan_review_ambience">분위기</string>
+    <string name="scan_review_service">서비스</string>
+    <string name="scan_review_value">가성비</string>
+    <string name="scan_review_overall">전체 %1$d/5 – %2$s</string>
+    <string name="scan_review_placeholder">경험을 다른 사람과 나눠주세요…</string>
+    <string name="scan_review_submit">리뷰 제출</string>
+    <string name="scan_review_skip">건너뛰기</string>
+    <string name="scan_review_thanks_title">감사합니다</string>
+    <string name="scan_review_thanks_desc">리뷰가 제출되었어요.</string>
+    <string name="scan_done_title">모두 완료</string>
+    <string name="scan_done_subtitle">%1$s에서 식사해주셔서 감사합니다.</string>
+    <string name="scan_done_receipt">디지털 영수증</string>
+    <string name="scan_done_paid_chip">결제 완료</string>
+    <string name="scan_done_items">%1$d개 항목</string>
+    <string name="scan_done_total_paid">총 결제액</string>
+    <string name="scan_done_reward_points">+%1$d 리워드 포인트</string>
+    <string name="scan_done_reward_desc">이번 방문에서 적립</string>
+    <string name="scan_done_discover_more">더 많은 레스토랑 둘러보기</string>
+    <string name="scan_done_back">나의 다이닝으로</string>
+    <string name="scan_rating_label_1">아쉬움</string>
+    <string name="scan_rating_label_2">개선 필요</string>
+    <string name="scan_rating_label_3">괜찮음</string>
+    <string name="scan_rating_label_4">즐거움</string>
+    <string name="scan_rating_label_5">최고</string>
+    <string name="scan_pay_slide">슬라이드 결제 – %1$s</string>
+    <string name="scan_pay_complete">결제 완료!</string>
+    <string name="scan_bill_running_total">실시간 합계</string>
+    <string name="scan_bill_tax_at_checkout">결제 시 세금 계산</string>
+    <string name="scan_bill_live">실시간 영수증</string>
+    <string name="scan_bill_yours">영수증</string>
+    <string name="scan_bill_updating">업데이트 중</string>
+
+    <!-- Toast / generic -->
+    <string name="toast_server_notified_title">서버 호출됨</string>
+    <string name="toast_server_notified_body">직원이 곧 옵니다.</string>
 </resources>

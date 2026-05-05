@@ -126,7 +126,7 @@ fun DiningListScreen(
             )
             DiningListHeader(
                 tab = currentTab,
-                onAddByCode = { /* TODO: open AddBookingCodeModal */ },
+                onAddByCode = { DiningStore.openAddCode() },
             )
 
             AnimatedContent(
@@ -151,18 +151,18 @@ fun DiningListScreen(
                                 checkedInIds = checkedInIds,
                                 onTap = { onOpenDetail(booking.id) },
                                 onManage = if (booking.status == BookingStatus.Confirmed) {
-                                    { /* TODO: open manage modal */ }
+                                    { DiningStore.openManage(booking.id) }
                                 } else null,
                                 onScanQR = if (booking.status == BookingStatus.Confirmed) {
-                                    { /* TODO: open scan QR */ }
+                                    { DiningStore.openScan(booking.id) }
                                 } else null,
                                 onShowQR = if (booking.status == BookingStatus.Confirmed) {
-                                    { /* TODO: show QR */ }
+                                    { DiningStore.openShowQR(booking.id) }
                                 } else null,
                                 onInvite = if (booking.status == BookingStatus.Confirmed) {
-                                    { /* TODO: invite */ }
+                                    { DiningStore.openInvite(booking.id) }
                                 } else null,
-                                onBookAgain = { /* TODO: book again */ },
+                                onBookAgain = { onOpenDetail(booking.id) },
                             )
                         },
                     )
@@ -175,8 +175,8 @@ fun DiningListScreen(
                             BookingCard(
                                 booking = booking,
                                 onTap = { onOpenDetail(booking.id) },
-                                onBookAgain = { /* TODO: book again */ },
-                                onViewReceipt = { /* TODO: open receipt */ },
+                                onBookAgain = { onOpenDetail(booking.id) },
+                                onViewReceipt = { DiningStore.openReceipt(booking.id) },
                             )
                         },
                     )
@@ -189,7 +189,7 @@ fun DiningListScreen(
                             BookingCard(
                                 booking = booking,
                                 onTap = { onOpenDetail(booking.id) },
-                                onBookAgain = { /* TODO: book again */ },
+                                onBookAgain = { onOpenDetail(booking.id) },
                             )
                         },
                     )

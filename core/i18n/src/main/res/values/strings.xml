@@ -483,4 +483,221 @@
 
     <string name="booking_guests_one">%1$d guest</string>
     <string name="booking_guests_many">%1$d guests</string>
+
+    <!-- Booking detail page -->
+    <string name="detail_header_title">Reservation</string>
+    <string name="detail_header_back">Back to Dining</string>
+    <string name="detail_header_share">Share reservation</string>
+    <string name="detail_save">Save restaurant</string>
+    <string name="detail_unsave">Unsave restaurant</string>
+    <string name="detail_party">Party</string>
+    <string name="detail_section_restaurant">Restaurant</string>
+    <string name="detail_action_browse_menu">Browse menu</string>
+    <string name="detail_action_browse_menu_desc">Preview dishes before you arrive</string>
+    <string name="detail_action_directions">Get directions</string>
+    <string name="detail_action_call">Call restaurant</string>
+    <string name="detail_section_details">Details</string>
+    <string name="detail_section_location">Location</string>
+    <string name="detail_dining_points">Dining points</string>
+    <string name="detail_dining_points_earned">%1$d points earned</string>
+    <string name="detail_dining_points_pending">%1$d points pending</string>
+    <string name="detail_dining_points_none">No points for this booking</string>
+    <string name="detail_your_rating">Your rating</string>
+    <string name="detail_pending_title">Pending approval</string>
+    <string name="detail_pending_desc">The restaurant is reviewing your reservation request. You will get a notification when it is approved or rejected.</string>
+    <string name="detail_request_code">Request code</string>
+    <string name="detail_rejected_title">Request rejected</string>
+    <string name="detail_rejected_desc">This time was not approved. You can request another time or delete the request from your dining list.</string>
+    <string name="detail_share_hint">Keep this code handy. You can share it with friends so they can join the reservation.</string>
+    <string name="detail_view_receipt">View receipt</string>
+    <string name="detail_book_again">Book again</string>
+    <string name="detail_show_qr">Show QR</string>
+    <string name="detail_invite">Invite</string>
+    <string name="detail_occasion_birthday">Birthday</string>
+    <string name="detail_occasion_anniversary">Anniversary</string>
+    <string name="detail_occasion_date">Date</string>
+    <string name="detail_occasion_special">Special</string>
+
+    <!-- Manage sheet -->
+    <string name="manage_title">Manage booking</string>
+    <string name="manage_subtitle">Make a change or release the table.</string>
+    <string name="manage_modify">Modify reservation</string>
+    <string name="manage_modify_desc">Adjust guests, seating, time, or notes.</string>
+    <string name="manage_cancel">Cancel booking</string>
+    <string name="manage_cancel_desc">The restaurant will receive the released seat.</string>
+    <string name="manage_close">Close</string>
+
+    <!-- Cancel confirm -->
+    <string name="cancel_confirm_title">Cancel this booking?</string>
+    <string name="cancel_confirm_body">We will release your seat at %1$s.</string>
+    <string name="cancel_confirm_warning">This cannot be undone</string>
+    <string name="cancel_confirm_keep">Keep it</string>
+    <string name="cancel_confirm_cancel">Cancel</string>
+
+    <!-- Modify modal -->
+    <string name="modify_title_chip">Edit booking</string>
+    <string name="modify_label_guests">Guests</string>
+    <string name="modify_label_time">Time</string>
+    <string name="modify_label_seating">Seating</string>
+    <string name="modify_label_note">Note</string>
+    <string name="modify_note_hint">Allergies, occasion, or special request…</string>
+    <string name="modify_save">Save</string>
+
+    <!-- Show QR modal -->
+    <string name="show_qr_title">Arrival QR</string>
+    <string name="show_qr_subtitle">Show this at the host stand.</string>
+    <string name="show_qr_close">Close QR code</string>
+    <string name="show_qr_save">Save</string>
+    <string name="show_qr_share">Share</string>
+
+    <!-- Add booking code modal -->
+    <string name="add_code_title">Add booking code</string>
+    <string name="add_code_subtitle">Use a shared confirmation code to join a reservation.</string>
+    <string name="add_code_done_title">Verified reservation</string>
+    <string name="add_code_done_subtitle">This upcoming card was added to your Dining schedule.</string>
+    <string name="add_code_label">Booking code</string>
+    <string name="add_code_placeholder">CT-2026-0418A</string>
+    <string name="add_code_verify">Verify</string>
+    <string name="add_code_done">Done</string>
+    <string name="add_code_view">View</string>
+    <string name="add_code_verified_title">Code verified</string>
+    <string name="add_code_verified_subtitle">%1$s is now a scheduled invitation.</string>
+    <string name="add_code_error_not_found">We couldn\'t find that booking code. Check the letters and numbers.</string>
+    <string name="add_code_error_not_active">Only active confirmed reservations can be joined by code.</string>
+
+    <!-- Menu modal -->
+    <string name="menu_modal_title_order">Tonight picks</string>
+    <string name="menu_modal_title_preview">Plan ahead</string>
+    <string name="menu_modal_chip_order">Menu</string>
+    <string name="menu_modal_chip_preview">Preview menu</string>
+    <string name="menu_modal_subtitle">View only. Your server will take the order.</string>
+    <string name="menu_modal_dishes_count">%1$d dishes available</string>
+    <string name="menu_modal_done">Done</string>
+
+    <!-- Order receipt modal -->
+    <string name="receipt_title">Order receipt</string>
+    <string name="receipt_paid_chip">Paid</string>
+    <string name="receipt_subtotal">Subtotal</string>
+    <string name="receipt_tax">Tax</string>
+    <string name="receipt_tip">Tip</string>
+    <string name="receipt_total">Total</string>
+    <string name="receipt_paid_with">Paid with</string>
+    <string name="receipt_qty">Qty %1$d</string>
+    <string name="receipt_none">No receipt available for this visit.</string>
+    <string name="receipt_save">Save</string>
+    <string name="receipt_share">Share</string>
+    <string name="receipt_rating_label">Your rating</string>
+
+    <!-- Invite friends -->
+    <string name="invite_title">Invite friends</string>
+    <string name="invite_subtitle">Share this reservation with your party.</string>
+    <string name="invite_share_link">Share link</string>
+    <string name="invite_copy_code">Copy code</string>
+    <string name="invite_copied">Copied</string>
+    <string name="invite_invited">Invited (%1$d)</string>
+    <string name="invite_done">Done</string>
+    <string name="invite_quick">Quick invite</string>
+
+    <!-- Enjoy meal page -->
+    <string name="enjoy_back">Back</string>
+    <string name="enjoy_now_dining">Now dining</string>
+    <string name="enjoy_upcoming_reservation">Upcoming reservation</string>
+    <string name="enjoy_status_live">Live now</string>
+    <string name="enjoy_status_upcoming">Upcoming</string>
+    <string name="enjoy_seated_for">Seated %1$s</string>
+    <string name="enjoy_starts_in">Starts in %1$s</string>
+    <string name="enjoy_session_active_title">Table session is active</string>
+    <string name="enjoy_session_active_desc">Your QR session, bill, and table actions are available here.</string>
+    <string name="enjoy_ready_title">Ready for arrival</string>
+    <string name="enjoy_ready_desc">Confirmation %1$s is linked to this reservation.</string>
+    <string name="enjoy_at_the_table">At the table</string>
+    <string name="enjoy_before_arrive">Before you arrive</string>
+    <string name="enjoy_action_pay">Scan and pay</string>
+    <string name="enjoy_action_pay_desc">Settle the bill from your table</string>
+    <string name="enjoy_action_menu">View menu</string>
+    <string name="enjoy_action_menu_desc">Browse tonight\'s dishes</string>
+    <string name="enjoy_action_server">Call server</string>
+    <string name="enjoy_action_server_desc">Ask for help at the table</string>
+    <string name="enjoy_action_show_qr">Show QR</string>
+    <string name="enjoy_action_show_qr_desc">Fast arrival check-in</string>
+    <string name="enjoy_action_invite">Invite friends</string>
+    <string name="enjoy_action_invite_desc">Share this reservation</string>
+    <string name="enjoy_action_directions">Directions</string>
+    <string name="enjoy_action_scanqr">Scan arrival QR</string>
+    <string name="enjoy_action_scanqr_desc">Verify at the host stand</string>
+    <string name="enjoy_action_preview_menu">Preview menu</string>
+    <string name="enjoy_action_preview_menu_desc">Plan what to order</string>
+    <string name="enjoy_checklist_title">Arrival checklist</string>
+    <string name="enjoy_checklist_qr">Bring your QR code</string>
+    <string name="enjoy_checklist_share">Share booking code with guests</string>
+    <string name="enjoy_checklist_early">Arrive a few minutes early</string>
+
+    <!-- Scan QR flow -->
+    <string name="scan_title">QR dining</string>
+    <string name="scan_progress_label">Progress</string>
+    <string name="scan_progress_complete">Complete</string>
+    <string name="scan_step_scan">Scan</string>
+    <string name="scan_step_arrived">Arrived</string>
+    <string name="scan_step_dining">Dining</string>
+    <string name="scan_step_bill">Bill</string>
+    <string name="scan_step_pay">Pay</string>
+    <string name="scan_step_review">Review</string>
+    <string name="scan_intro_scan_title">Scan restaurant QR</string>
+    <string name="scan_intro_scan_desc">Use the table or host stand code to confirm your arrival.</string>
+    <string name="scan_status_scanning">Scanning…</string>
+    <string name="scan_status_detected">QR code detected</string>
+    <string name="scan_button_simulate">Simulate QR scan</string>
+    <string name="scan_button_detected">Detected</string>
+    <string name="scan_intro_arrived_title">Welcome in</string>
+    <string name="scan_intro_arrived_desc">Your table is ready and the restaurant has checked you in.</string>
+    <string name="scan_arrived_table">Table</string>
+    <string name="scan_arrived_party">Party</string>
+    <string name="scan_arrived_continue">Continue to dining</string>
+    <string name="scan_intro_dining_title">Enjoy your meal</string>
+    <string name="scan_intro_dining_desc">Your bill updates as items are added by the restaurant.</string>
+    <string name="scan_chip_dining">Dining</string>
+    <string name="scan_request_bill">Request bill</string>
+    <string name="scan_intro_bill_title">Review your bill</string>
+    <string name="scan_intro_bill_desc">Confirm the items and choose a gratuity before payment.</string>
+    <string name="scan_continue_payment">Continue to payment</string>
+    <string name="scan_intro_pay_done_title">Payment complete</string>
+    <string name="scan_intro_pay_done_desc">Paid with Tonight Wallet. Redirecting to review.</string>
+    <string name="scan_intro_review_title">How was it?</string>
+    <string name="scan_intro_review_desc">A quick rating helps improve future recommendations.</string>
+    <string name="scan_review_taste">Taste</string>
+    <string name="scan_review_ambience">Ambience</string>
+    <string name="scan_review_service">Service</string>
+    <string name="scan_review_value">Value</string>
+    <string name="scan_review_overall">Overall %1$d/5 – %2$s</string>
+    <string name="scan_review_placeholder">Tell others about your experience…</string>
+    <string name="scan_review_submit">Submit review</string>
+    <string name="scan_review_skip">Skip for now</string>
+    <string name="scan_review_thanks_title">Thank you</string>
+    <string name="scan_review_thanks_desc">Your review was submitted.</string>
+    <string name="scan_done_title">All done</string>
+    <string name="scan_done_subtitle">Thanks for dining at %1$s.</string>
+    <string name="scan_done_receipt">Digital receipt</string>
+    <string name="scan_done_paid_chip">Paid</string>
+    <string name="scan_done_items">%1$d items</string>
+    <string name="scan_done_total_paid">Total paid</string>
+    <string name="scan_done_reward_points">+%1$d reward points</string>
+    <string name="scan_done_reward_desc">Earned from this visit</string>
+    <string name="scan_done_discover_more">Discover more restaurants</string>
+    <string name="scan_done_back">Back to My Dining</string>
+    <string name="scan_rating_label_1">Not great</string>
+    <string name="scan_rating_label_2">Could be better</string>
+    <string name="scan_rating_label_3">It was okay</string>
+    <string name="scan_rating_label_4">Glad you enjoyed it</string>
+    <string name="scan_rating_label_5">Loved it</string>
+    <string name="scan_pay_slide">Slide to Pay – %1$s</string>
+    <string name="scan_pay_complete">Payment Complete!</string>
+    <string name="scan_bill_running_total">Running total</string>
+    <string name="scan_bill_tax_at_checkout">Tax calculated at checkout</string>
+    <string name="scan_bill_live">Live bill</string>
+    <string name="scan_bill_yours">Your bill</string>
+    <string name="scan_bill_updating">Updating</string>
+
+    <!-- Toast / generic -->
+    <string name="toast_server_notified_title">Server notified</string>
+    <string name="toast_server_notified_body">A staff member is on their way.</string>
 </resources>
