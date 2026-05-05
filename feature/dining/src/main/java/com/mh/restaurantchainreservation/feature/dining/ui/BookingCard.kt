@@ -16,10 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.runtime.getValue
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Chair
@@ -29,7 +27,6 @@ import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,13 +38,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -56,8 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.foundation.Canvas
-import androidx.compose.ui.draw.drawWithContent
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -95,7 +87,6 @@ fun BookingCard(
     val cardShape = RoundedCornerShape(24.dp)
 
     val borderColor = if (isLive) palette.success.copy(alpha = 0.45f) else palette.border
-    val cardAlpha = if (isCancelled) 0.9f else 1f
 
     Column(
         modifier = modifier
@@ -110,12 +101,6 @@ fun BookingCard(
             .border(1.dp, borderColor, cardShape)
             .background(palette.cardSurface)
             .clickable(onClick = onTap)
-            .drawWithContent {
-                drawContent()
-                if (cardAlpha < 1f) {
-                    // Cancelled subtle dim handled via container alpha applied per-row textually.
-                }
-            },
     ) {
         // Top row: thumbnail + title + meta pills
         Row(
@@ -328,8 +313,7 @@ private fun ConfirmationStrip(
     code: String,
 ) {
     val palette = LocalRestaurantPalette.current
-    val context = LocalContext.current
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
     var copied by remember { mutableStateOf(false) }
 
     LaunchedEffect(copied) {
