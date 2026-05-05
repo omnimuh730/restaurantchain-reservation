@@ -24,10 +24,8 @@ import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
+import com.mh.restaurantchainreservation.core.model.WishlistStore
 
 /**
  * Standard restaurant card — 16:9 hero image, title row, rating chip, price ·
@@ -52,7 +51,8 @@ fun RestaurantListCard(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    var saved by remember { mutableStateOf(false) }
+    val collections by WishlistStore.collections.collectAsState()
+    val saved = collections.any { col -> col.restaurants.any { it.id == restaurant.id } }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -80,7 +80,7 @@ fun RestaurantListCard(
                     .size(36.dp)
                     .clip(CircleShape)
                     .background(Color.Black.copy(alpha = 0.35f))
-                    .clickable { saved = !saved },
+                    .clickable { WishlistStore.openPicker(restaurant) },
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(

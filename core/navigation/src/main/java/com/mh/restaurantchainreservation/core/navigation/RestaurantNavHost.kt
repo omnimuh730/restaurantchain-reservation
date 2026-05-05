@@ -77,6 +77,7 @@ import com.mh.restaurantchainreservation.feature.qrpay.QrPayRoutes
 import com.mh.restaurantchainreservation.feature.qrpay.QrPayScreen
 import com.mh.restaurantchainreservation.feature.wishlist.WishlistRoutes
 import com.mh.restaurantchainreservation.feature.wishlist.WishlistScreen
+import com.mh.restaurantchainreservation.feature.wishlist.ui.WishlistOverlayHost
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 
 @Composable
@@ -122,12 +123,18 @@ fun RestaurantNavHost(
         },
     ) { paddingValues ->
         if (isCompact) {
-            AppGraph(
-                navController = navController,
-                context = context,
-                contentPadding = paddingValues,
-                modifier = Modifier.fillMaxSize(),
-            )
+            Box(modifier = Modifier.fillMaxSize()) {
+                AppGraph(
+                    navController = navController,
+                    context = context,
+                    contentPadding = paddingValues,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                // Wishlist overlay (sheet + toast) sits above every destination.
+                // Toast is offset up by the bottom-bar inset so it floats just
+                // above the nav bar.
+                WishlistOverlayHost(bottomInset = paddingValues)
+            }
         } else {
             Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                 NavigationRail {
@@ -141,12 +148,15 @@ fun RestaurantNavHost(
                         )
                     }
                 }
-                AppGraph(
-                    navController = navController,
-                    context = context,
-                    contentPadding = PaddingValues(0.dp),
-                    modifier = Modifier.fillMaxSize(),
-                )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    AppGraph(
+                        navController = navController,
+                        context = context,
+                        contentPadding = PaddingValues(0.dp),
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    WishlistOverlayHost()
+                }
             }
         }
     }
