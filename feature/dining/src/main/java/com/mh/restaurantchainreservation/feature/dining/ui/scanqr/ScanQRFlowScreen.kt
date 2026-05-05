@@ -581,10 +581,11 @@ private fun PayStepView(booking: Booking, amount: Double, onComplete: () -> Unit
             Text(priceFmt.format(amount), color = palette.brand, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
         }
         Spacer(Modifier.height(20.dp))
-        PrimaryFlowButton(
-            text = stringResource(I18nR.string.scan_pay_slide, priceFmt.format(amount)),
-            icon = Icons.Outlined.CreditCard,
-            onClick = onComplete,
+        SlideToPayButton(
+            label = stringResource(I18nR.string.scan_pay_slide, priceFmt.format(amount)),
+            disabledLabel = "Enter an amount",
+            enabled = amount > 0,
+            onComplete = onComplete,
         )
         Spacer(Modifier.height(12.dp))
     }

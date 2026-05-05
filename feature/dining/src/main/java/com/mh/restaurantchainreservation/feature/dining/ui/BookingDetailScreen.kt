@@ -1,10 +1,12 @@
 package com.mh.restaurantchainreservation.feature.dining.ui
 
+import android.content.ClipData
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +52,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,7 +62,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -71,6 +75,7 @@ import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
 import com.mh.restaurantchainreservation.feature.dining.data.BookingStatus
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -86,7 +91,8 @@ fun BookingDetailScreen(
     onDeleteRequest: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
     val scroll = rememberScrollState()
 
     var saved by remember { mutableStateOf(false) }
@@ -291,8 +297,10 @@ fun BookingDetailScreen(
                                 .clip(CircleShape)
                                 .background(palette.cardSurface)
                                 .clickable {
-                                    clipboard.setText(AnnotatedString(booking.confirmationNo))
-                                    copied = true
+                                    scope.launch {
+                                        clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("Confirmation Code", booking.confirmationNo)))
+                                        copied = true
+                                    }
                                 },
                             contentAlignment = Alignment.Center,
                         ) {
