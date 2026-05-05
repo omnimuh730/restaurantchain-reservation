@@ -11,9 +11,12 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.CompositionLocalProvider
+import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColorTokens
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantShapes
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantTypography
+import com.mh.restaurantchainreservation.core.designsystem.tokens.resolvePalette
 
 enum class ThemePreference {
     Light,
@@ -94,11 +97,14 @@ fun RestaurantTheme(
         ThemePreference.Dark -> true
         ThemePreference.System -> isSystemInDarkTheme()
     }
+    val palette = resolvePalette(useDark)
 
-    MaterialTheme(
-        colorScheme = if (useDark) darkScheme() else lightScheme(),
-        typography = RestaurantTypography,
-        shapes = RestaurantShapes,
-        content = content,
-    )
+    CompositionLocalProvider(LocalRestaurantPalette provides palette) {
+        MaterialTheme(
+            colorScheme = if (useDark) darkScheme() else lightScheme(),
+            typography = RestaurantTypography,
+            shapes = RestaurantShapes,
+            content = content,
+        )
+    }
 }
