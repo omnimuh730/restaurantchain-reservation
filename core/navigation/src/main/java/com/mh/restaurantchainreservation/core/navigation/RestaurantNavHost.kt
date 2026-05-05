@@ -30,10 +30,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavBar
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavTab
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavTabId
@@ -49,10 +51,14 @@ import com.mh.restaurantchainreservation.feature.dining.DiningDetailScreen
 import com.mh.restaurantchainreservation.feature.dining.DiningEnjoyScreen
 import com.mh.restaurantchainreservation.feature.dining.DiningHomeScreen
 import com.mh.restaurantchainreservation.feature.dining.DiningRoutes
-import com.mh.restaurantchainreservation.feature.discover.DiscoverHomeScreen
 import com.mh.restaurantchainreservation.feature.discover.DiscoverRoutes
-import com.mh.restaurantchainreservation.feature.notifications.NotificationsRoutes
-import com.mh.restaurantchainreservation.feature.notifications.NotificationsScreen
+import com.mh.restaurantchainreservation.feature.discover.ui.CategoryResultsScreen
+import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverHomeScreen
+import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverSearchModal
+import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverSearchResultsScreen
+import com.mh.restaurantchainreservation.feature.discover.ui.FoodResultsScreen
+import com.mh.restaurantchainreservation.feature.discover.ui.LocationResultsScreen
+import com.mh.restaurantchainreservation.feature.discover.ui.SectionListScreen
 import com.mh.restaurantchainreservation.feature.profile.ContactSupportScreen
 import com.mh.restaurantchainreservation.feature.profile.FriendsScreen
 import com.mh.restaurantchainreservation.feature.profile.HelpCenterScreen
@@ -69,8 +75,6 @@ import com.mh.restaurantchainreservation.feature.profile.SubscriptionScreen
 import com.mh.restaurantchainreservation.feature.profile.TopUpScreen
 import com.mh.restaurantchainreservation.feature.qrpay.QrPayRoutes
 import com.mh.restaurantchainreservation.feature.qrpay.QrPayScreen
-import com.mh.restaurantchainreservation.feature.search.SearchResultsScreen
-import com.mh.restaurantchainreservation.feature.search.SearchRoutes
 import com.mh.restaurantchainreservation.feature.wishlist.WishlistRoutes
 import com.mh.restaurantchainreservation.feature.wishlist.WishlistScreen
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
@@ -97,11 +101,14 @@ fun RestaurantNavHost(
     val activeTabId = destination?.let { resolveActiveTab(it.hierarchy.mapNotNull { d -> d.route }.toList()) }
         ?: BottomNavTabId.Discover
 
+    // Hide the bottom bar while the QR Pay overlay (or other full-screen flows) own the screen.
+    val showBottomBar = isCompact && shouldShowBottomBar(destination?.route)
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            if (isCompact) {
+            if (showBottomBar) {
                 BottomNavBar(
                     tabs = bottomTabs,
                     activeId = activeTabId,
@@ -174,11 +181,27 @@ private fun routeForTab(tab: BottomNavTabId): String = when (tab) {
 
 private fun resolveActiveTab(hierarchyRoutes: List<String>): BottomNavTabId? {
     return when {
-        hierarchyRoutes.any { it == DiscoverRoutes.Home || it.startsWith("discover/") || it == SearchRoutes.Results || it.startsWith("booking/") || it == BookingRoutes.RestaurantDetail || it == BookingRoutes.BookTable } -> BottomNavTabId.Discover
+        hierarchyRoutes.any { route ->
+            route == DiscoverRoutes.Home ||
+                route.startsWith("discover/") ||
+                route == BookingRoutes.RestaurantDetail ||
+                route == BookingRoutes.BookTable
+        } -> BottomNavTabId.Discover
         hierarchyRoutes.any { it == WishlistRoutes.Home } -> BottomNavTabId.Wishlist
         hierarchyRoutes.any { it == DiningRoutes.Home || it == DiningRoutes.Detail || it == DiningRoutes.Enjoy } -> BottomNavTabId.Dining
-        hierarchyRoutes.any { route -> route == ProfileRoutes.Home || route in ProfileRoutes.AllProfileSubRoutes || route == NotificationsRoutes.Home } -> BottomNavTabId.Profile
+        hierarchyRoutes.any { route -> route == ProfileRoutes.Home || route in ProfileRoutes.AllProfileSubRoutes } -> BottomNavTabId.Profile
         else -> null
+    }
+}
+
+/** QR Pay (and other full-screen overlays) own the entire viewport. */
+private fun shouldShowBottomBar(route: String?): Boolean {
+    if (route == null) return true
+    return when {
+        route == QrPayRoutes.Home -> false
+        route == DiscoverRoutes.Search -> false
+        route.startsWith("discover/search?") -> false
+        else -> true
     }
 }
 
@@ -199,18 +222,102 @@ private fun AppGraph(
         ) {
             composable(DiscoverRoutes.Home) {
                 DiscoverHomeScreen(
-                    onOpenSearch = { navController.navigate(SearchRoutes.Results) },
-                    onOpenRestaurant = { navController.navigate("discover/restaurant/sample") },
+                    onOpenSearch = { navController.navigate(DiscoverRoutes.Search) },
+                    onOpenRestaurant = { id -> navController.navigate(BookingRoutes.restaurantDetail(id)) },
+                    onOpenCategory = { id -> navController.navigate(DiscoverRoutes.category(id)) },
+                    onOpenFood = { id -> navController.navigate(DiscoverRoutes.food(id)) },
+                    onOpenLocation = { id -> navController.navigate(DiscoverRoutes.location(id)) },
+                    onOpenSection = { id -> navController.navigate(DiscoverRoutes.section(id)) },
                 )
             }
-            composable(SearchRoutes.Results) {
-                SearchResultsScreen()
+            composable(DiscoverRoutes.Search) {
+                DiscoverSearchModal(
+                    onClose = { navController.popBackStack() },
+                    onSubmit = { q ->
+                        navController.popBackStack()
+                        navController.navigate("discover/search/results?q=" + q)
+                    },
+                )
             }
-            composable(BookingRoutes.RestaurantDetail) {
-                RestaurantDetailScreen(onBookNow = { navController.navigate("discover/restaurant/sample/book") })
+            composable(
+                route = "discover/search/results?q={q}",
+                arguments = listOf(navArgument("q") { type = NavType.StringType; defaultValue = "" }),
+            ) { entry ->
+                val q = entry.arguments?.getString("q").orEmpty()
+                DiscoverSearchResultsScreen(
+                    query = q,
+                    onBack = { navController.popBackStack() },
+                    onOpenRestaurant = { id -> navController.navigate(BookingRoutes.restaurantDetail(id)) },
+                )
             }
-            composable(BookingRoutes.BookTable) {
-                BookTableScreen(onComplete = { navController.popBackStack() })
+            composable(
+                route = DiscoverRoutes.Category,
+                arguments = listOf(navArgument("categoryId") { type = NavType.StringType }),
+            ) { entry ->
+                val id = entry.arguments?.getString("categoryId").orEmpty()
+                CategoryResultsScreen(
+                    categoryId = id,
+                    onBack = { navController.popBackStack() },
+                    onOpenRestaurant = { rid -> navController.navigate(BookingRoutes.restaurantDetail(rid)) },
+                )
+            }
+            composable(
+                route = DiscoverRoutes.Food,
+                arguments = listOf(navArgument("foodId") { type = NavType.StringType }),
+            ) { entry ->
+                val id = entry.arguments?.getString("foodId").orEmpty()
+                FoodResultsScreen(
+                    foodId = id,
+                    onBack = { navController.popBackStack() },
+                    onOpenRestaurant = { rid -> navController.navigate(BookingRoutes.restaurantDetail(rid)) },
+                )
+            }
+            composable(
+                route = DiscoverRoutes.Location,
+                arguments = listOf(navArgument("locationId") { type = NavType.StringType }),
+            ) { entry ->
+                val id = entry.arguments?.getString("locationId").orEmpty()
+                LocationResultsScreen(
+                    locationId = id,
+                    onBack = { navController.popBackStack() },
+                    onOpenRestaurant = { rid -> navController.navigate(BookingRoutes.restaurantDetail(rid)) },
+                )
+            }
+            composable(
+                route = DiscoverRoutes.Section,
+                arguments = listOf(navArgument("sectionId") { type = NavType.StringType }),
+            ) { entry ->
+                val id = entry.arguments?.getString("sectionId").orEmpty()
+                SectionListScreen(
+                    sectionId = id,
+                    onBack = { navController.popBackStack() },
+                    onOpenRestaurant = { rid -> navController.navigate(BookingRoutes.restaurantDetail(rid)) },
+                )
+            }
+            composable(
+                route = BookingRoutes.RestaurantDetail,
+                arguments = listOf(navArgument("restaurantId") { type = NavType.StringType }),
+            ) { entry ->
+                val id = entry.arguments?.getString("restaurantId").orEmpty()
+                RestaurantDetailScreen(
+                    restaurantId = id,
+                    onBack = { navController.popBackStack() },
+                    onBookNow = { navController.navigate(BookingRoutes.bookTable(id)) },
+                )
+            }
+            composable(
+                route = BookingRoutes.BookTable,
+                arguments = listOf(navArgument("restaurantId") { type = NavType.StringType }),
+            ) { entry ->
+                val id = entry.arguments?.getString("restaurantId").orEmpty()
+                BookTableScreen(
+                    restaurantId = id,
+                    onBack = { navController.popBackStack() },
+                    onComplete = {
+                        // Pop back to the discover home so the user lands somewhere sensible.
+                        navController.popBackStack(DiscoverRoutes.Home, inclusive = false)
+                    },
+                )
             }
             composable(DiningRoutes.Home) {
                 DiningHomeScreen(
@@ -291,11 +398,8 @@ private fun AppGraph(
             composable(ProfileRoutes.ContactSupport) {
                 ContactSupportScreen(onBack = { navController.popBackStack() })
             }
-            composable(NotificationsRoutes.Home) {
-                NotificationsScreen()
-            }
             composable(QrPayRoutes.Home) {
-                QrPayScreen()
+                QrPayScreen(onClose = { navController.popBackStack() })
             }
             composable(AuthRoutes.Login) {
                 LoginScreen(

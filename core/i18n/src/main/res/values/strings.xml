@@ -283,6 +283,19 @@
     <string name="notifications_empty_body_all">Reservation updates, rewards, and restaurant replies will appear here.</string>
     <string name="notifications_empty_body_unread">You are all caught up. New table updates will show here first.</string>
     <string name="notifications_empty_body_read">Read notifications stay here after you open them.</string>
+    <string name="notifications_section_latest">Latest</string>
+    <string name="notifications_section_unread">Unread</string>
+    <string name="notifications_section_read">Read</string>
+    <string name="notifications_featured_update">FEATURED UPDATE</string>
+    <string name="notifications_read_label">Read</string>
+    <string name="notifications_kind_reservation">Reservation</string>
+    <string name="notifications_kind_offer">Offer</string>
+    <string name="notifications_kind_reward">Reward</string>
+    <string name="notifications_kind_update">Update</string>
+    <string name="notifications_kind_review">Review</string>
+    <string name="notifications_kind_shared">Shared</string>
+    <string name="notifications_action_mark_read_aria">Mark as read</string>
+    <string name="notifications_action_delete_aria">Delete notification</string>
 
     <!-- Top up -->
     <string name="topup_title">Top up</string>

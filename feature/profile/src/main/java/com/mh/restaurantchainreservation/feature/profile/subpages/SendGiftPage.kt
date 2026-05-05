@@ -8,20 +8,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CardGiftcard
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,216 +31,252 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
-import com.mh.restaurantchainreservation.core.i18n.R as I18nR
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.AnimatedAmountDisplay
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.Currency
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.MoneyKeypad
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.amountAsNumber
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.appendDigit
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.backspaceDigit
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.formatAmountString
 
-private val PresetAmounts = listOf(5000, 10000, 30000, 50000, 100000)
+private val GiftPresetsKRW = listOf(500_000L, 1_000_000L, 2_000_000L)
+private val GiftPresetsUSD = listOf(10L, 25L, 50L)
 
 @Composable
 fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val palette = LocalRestaurantPalette.current
+    var currency by rememberSaveable { mutableStateOf(Currency.KRW) }
+    var amountStr by rememberSaveable(currency) { mutableStateOf(if (currency == Currency.KRW) "500000" else "10") }
     var recipient by rememberSaveable { mutableStateOf("") }
-    var amount by rememberSaveable { mutableStateOf(10000) }
-    var message by rememberSaveable { mutableStateOf("") }
-    var showPreview by rememberSaveable { mutableStateOf(false) }
+    val activeAmount = amountAsNumber(amountStr)
 
-    SubpageScaffold(
-        title = stringResource(I18nR.string.send_gift_title),
-        onBack = onBack,
-        modifier = modifier,
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(palette.cardSurface)
+            .statusBarsPadding(),
     ) {
-        SectionLabel(stringResource(I18nR.string.send_gift_recipient))
-        OutlinedTextField(
-            value = recipient,
-            onValueChange = { recipient = it },
-            placeholder = { Text(stringResource(I18nR.string.send_gift_recipient_hint)) },
-            singleLine = true,
-            shape = RoundedCornerShape(14.dp),
-            colors = textFieldColors(),
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        Spacer(Modifier.height(20.dp))
-        SectionLabel(stringResource(I18nR.string.send_gift_amount))
-        AmountGrid(selected = amount, onSelect = { amount = it })
-
-        Spacer(Modifier.height(20.dp))
-        SectionLabel(stringResource(I18nR.string.send_gift_message))
-        OutlinedTextField(
-            value = message,
-            onValueChange = { message = it },
-            placeholder = { Text(stringResource(I18nR.string.send_gift_message_hint)) },
-            shape = RoundedCornerShape(14.dp),
-            colors = textFieldColors(),
-            modifier = Modifier.fillMaxWidth().height(120.dp),
-        )
-
-        Spacer(Modifier.height(28.dp))
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(palette.mutedSurface)
+                    .clickable(onClick = onBack),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = palette.foreground, modifier = Modifier.size(18.dp))
+            }
+            Spacer(Modifier.size(12.dp))
+            Text("Send a gift", color = palette.foreground, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        // Recipient input
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0xFFF3F4F6))
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Icon(Icons.Outlined.PersonOutline, null, tint = Color(0xFF9CA3AF), modifier = Modifier.size(18.dp))
+            Box(modifier = Modifier.weight(1f)) {
+                if (recipient.isEmpty()) {
+                    Text("Who is this for? (Username)", color = Color(0xFF9CA3AF), fontSize = 14.sp)
+                }
+                BasicTextField(
+                    value = recipient,
+                    onValueChange = { recipient = it },
+                    singleLine = true,
+                    cursorBrush = SolidColor(palette.brand),
+                    textStyle = TextStyle(color = palette.foreground, fontSize = 14.sp),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        // Gift card with animated amount
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            GiftCard(currency = currency, amountStr = amountStr, modifier = Modifier.weight(1f))
+            Spacer(Modifier.size(12.dp))
+            CurrencySwitchSquare(currency = currency, onToggle = {
+                currency = if (currency == Currency.KRW) Currency.USD else Currency.KRW
+            })
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        // Presets
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            val presets = if (currency == Currency.KRW) GiftPresetsKRW else GiftPresetsUSD
+            presets.forEach { p ->
+                GiftPresetChip(
+                    label = if (currency == Currency.KRW) "₩%,d".format(p) else "$%,d".format(p),
+                    selected = p.toDouble() == activeAmount,
+                    onClick = { amountStr = p.toString() },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // Keypad
+        MoneyKeypad(
+            currency = currency,
+            onDigit = { amountStr = appendDigit(amountStr, it, currency) },
+            onBackspace = { amountStr = backspaceDigit(amountStr) },
+            modifier = Modifier.padding(horizontal = 20.dp),
+        )
+
+        Spacer(Modifier.weight(1f))
+
+        // Send CTA
+        val canSend = recipient.trim().isNotEmpty() && activeAmount > 0
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .fillMaxWidth()
                 .height(52.dp)
-                .clip(RoundedCornerShape(999.dp))
-                .background(if (recipient.isBlank()) palette.brand.copy(alpha = 0.45f) else palette.brand)
-                .clickable(enabled = recipient.isNotBlank()) { showPreview = true },
+                .clip(RoundedCornerShape(percent = 50))
+                .background(if (canSend) palette.brand else palette.brand.copy(alpha = 0.3f))
+                .clickable(enabled = canSend, onClick = onBack),
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = stringResource(I18nR.string.send_gift_send),
+                text = if (canSend) "Send ${if (currency == Currency.KRW) "₩" else "$"}${formatAmountString(amountStr, currency)}" else "Send Gift",
                 color = Color.White,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.ExtraBold,
             )
         }
-        Spacer(Modifier.height(40.dp))
     }
+}
 
-    if (showPreview) {
-        PreviewDialog(
-            recipient = recipient,
-            amount = amount,
-            message = message,
-            onDismiss = { showPreview = false },
-            onConfirm = {
-                showPreview = false
-                onBack()
-            },
+@Composable
+private fun GiftCard(currency: Currency, amountStr: String, modifier: Modifier = Modifier) {
+    val gradient = if (currency == Currency.KRW) {
+        Brush.linearGradient(
+            listOf(Color(0xFF2563EB), Color(0xFF0EA5E9)),
+            start = androidx.compose.ui.geometry.Offset.Zero,
+            end = androidx.compose.ui.geometry.Offset.Infinite,
+        )
+    } else {
+        Brush.linearGradient(listOf(Color(0xFFFF5A5F), Color(0xFFE91E63)))
+    }
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(gradient)
+            .padding(20.dp),
+    ) {
+        Column {
+            Text(
+                text = "Gift Card Balance",
+                color = Color.White.copy(alpha = 0.85f),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 1.sp,
+            )
+            Spacer(Modifier.height(12.dp))
+            AnimatedAmountDisplay(
+                amount = formatAmountString(amountStr, currency),
+                symbol = if (currency == Currency.KRW) "₩" else "$",
+                symbolColor = Color.White.copy(alpha = 0.85f),
+                valueColor = Color.White,
+                fontSize = 36,
+            )
+            Spacer(Modifier.height(12.dp))
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.White.copy(alpha = 0.18f))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            ) {
+                Text("TONIGHT", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CurrencySwitchSquare(currency: Currency, onToggle: () -> Unit) {
+    val container = if (currency == Currency.KRW) Color(0xFFFFE4E6) else Color(0xFFE0F2FE)
+    val content = if (currency == Currency.KRW) Color(0xFFE91E63) else Color(0xFF1976D2)
+    Column(
+        modifier = Modifier
+            .size(width = 48.dp, height = 64.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(container)
+            .clickable(onClick = onToggle),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = if (currency == Currency.KRW) "$" else "₩",
+            color = content,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Icon(
+            imageVector = Icons.Filled.SwapHoriz,
+            contentDescription = "Switch currency",
+            tint = content,
+            modifier = Modifier.size(14.dp),
         )
     }
 }
 
 @Composable
-private fun SectionLabel(text: String) {
+private fun GiftPresetChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val palette = LocalRestaurantPalette.current
-    Text(
-        text = text,
-        color = palette.foreground,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(bottom = 10.dp),
-    )
-}
-
-@Composable
-private fun AmountGrid(selected: Int, onSelect: (Int) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        PresetAmounts.take(3).forEach { amt ->
-            AmountChip(amount = amt, selected = amt == selected, onSelect = { onSelect(amt) }, modifier = Modifier.weight(1f))
-        }
-    }
-    Spacer(Modifier.height(8.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        PresetAmounts.drop(3).forEach { amt ->
-            AmountChip(amount = amt, selected = amt == selected, onSelect = { onSelect(amt) }, modifier = Modifier.weight(1f))
-        }
-        Spacer(Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun AmountChip(amount: Int, selected: Boolean, onSelect: () -> Unit, modifier: Modifier = Modifier) {
-    val palette = LocalRestaurantPalette.current
-    val shape = RoundedCornerShape(14.dp)
-    val border = if (selected) palette.brand else palette.border.copy(alpha = 0.6f)
+    val shape = RoundedCornerShape(percent = 50)
     Box(
         modifier = modifier
-            .height(52.dp)
+            .height(40.dp)
             .clip(shape)
-            .border(if (selected) 2.dp else 1.dp, border, shape)
-            .background(if (selected) palette.brand.copy(alpha = 0.06f) else palette.cardSurface)
-            .clickable(onClick = onSelect),
+            .background(if (selected) palette.brand else palette.cardSurface)
+            .border(1.dp, if (selected) palette.brand else palette.border, shape)
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "₩${"%,d".format(amount)}",
-            color = if (selected) palette.brand else palette.foreground,
-            fontSize = 14.sp,
+            text = label,
+            color = if (selected) Color.White else palette.foreground,
+            fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
         )
     }
 }
-
-@Composable
-private fun PreviewDialog(
-    recipient: String,
-    amount: Int,
-    message: String,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    val palette = LocalRestaurantPalette.current
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(I18nR.string.send_gift_preview)) },
-        text = {
-            Column {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(palette.brand.copy(alpha = 0.10f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.CardGiftcard,
-                        contentDescription = null,
-                        tint = palette.brand,
-                        modifier = Modifier.size(28.dp),
-                    )
-                }
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = "${stringResource(I18nR.string.send_gift_recipient)}: $recipient",
-                    fontSize = 14.sp,
-                )
-                Text(
-                    text = "${stringResource(I18nR.string.send_gift_amount)}: ₩${"%,d".format(amount)}",
-                    fontSize = 14.sp,
-                )
-                if (message.isNotBlank()) {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = "“$message”",
-                        color = palette.mutedForeground,
-                        fontSize = 13.sp,
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = stringResource(I18nR.string.send_gift_preview_subtitle),
-                    color = palette.mutedForeground,
-                    fontSize = 12.sp,
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(I18nR.string.send_gift_send), color = palette.brand, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(I18nR.string.common_cancel))
-            }
-        },
-    )
-}
-
-@Composable
-private fun textFieldColors() = TextFieldDefaults.colors(
-    focusedIndicatorColor = LocalRestaurantPalette.current.brand,
-    unfocusedIndicatorColor = LocalRestaurantPalette.current.border,
-    focusedContainerColor = Color.Transparent,
-    unfocusedContainerColor = Color.Transparent,
-)
