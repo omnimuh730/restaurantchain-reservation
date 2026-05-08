@@ -1,17 +1,27 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,32 +31,37 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AlternateEmail
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.PersonAdd
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -55,6 +70,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+private enum class RequestStage { Idle, Approving, Rejecting }
 
 private data class Contact(
     val id: String,
@@ -306,15 +325,42 @@ private fun FriendRequestsSection(
                 .background(palette.cardSurface),
         ) {
             requests.forEachIndexed { idx, req ->
-                FriendRequestRow(
-                    request = req,
-                    showDivider = idx != requests.size - 1,
-                    onApprove = { onApprove(req) },
-                    onReject = { onReject(req) },
-                    onBlock = { onBlock(req) },
-                )
+                StaggeredEntry(index = idx) {
+                    FriendRequestRow(
+                        request = req,
+                        showDivider = idx != requests.size - 1,
+                        onApprove = { onApprove(req) },
+                        onReject = { onReject(req) },
+                        onBlock = { onBlock(req) },
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun StaggeredEntry(index: Int, content: @Composable () -> Unit) {
+    val offsetY = remember { Animatable(16f) }
+    val alphaAnim = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        delay((index * 30L).coerceAtLeast(0L))
+        launch {
+            offsetY.animateTo(
+                targetValue = 0f,
+                animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+            )
+        }
+        launch {
+            alphaAnim.animateTo(1f, animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing))
+        }
+    }
+    Box(
+        modifier = Modifier
+            .offset(y = offsetY.value.dp)
+            .alpha(alphaAnim.value),
+    ) {
+        content()
     }
 }
 
@@ -327,9 +373,44 @@ private fun FriendRequestRow(
     onBlock: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
+    val scope = rememberCoroutineScope()
+    var stage by remember { mutableStateOf(RequestStage.Idle) }
+    val rowAlpha by animateFloatAsState(
+        targetValue = if (stage == RequestStage.Rejecting) 0f else 1f,
+        animationSpec = tween(220, easing = FastOutSlowInEasing),
+        label = "request-alpha",
+    )
+    val approveScale = remember { Animatable(1f) }
+
+    LaunchedEffect(stage) {
+        when (stage) {
+            RequestStage.Approving -> {
+                approveScale.snapTo(1f)
+                approveScale.animateTo(
+                    targetValue = 1.18f,
+                    animationSpec = tween(140, easing = FastOutSlowInEasing),
+                )
+                approveScale.animateTo(
+                    targetValue = 1f,
+                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 320f),
+                )
+                delay(120)
+                onApprove()
+                stage = RequestStage.Idle
+            }
+            RequestStage.Rejecting -> {
+                delay(220)
+                onReject()
+                stage = RequestStage.Idle
+            }
+            RequestStage.Idle -> Unit
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .alpha(rowAlpha)
             .padding(14.dp),
     ) {
         Row(
@@ -379,18 +460,22 @@ private fun FriendRequestRow(
                     .clip(CircleShape)
                     .border(1.dp, palette.border, CircleShape)
                     .background(palette.cardSurface)
-                    .clickable(onClick = onReject),
+                    .clickable(enabled = stage == RequestStage.Idle) {
+                        scope.launch { stage = RequestStage.Rejecting }
+                    },
                 contentAlignment = Alignment.Center,
             ) {
-                Text("Reject", color = palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text("Decline", color = palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
             Row(
                 modifier = Modifier
                     .weight(1f)
                     .height(40.dp)
                     .clip(CircleShape)
-                    .background(palette.brand)
-                    .clickable(onClick = onApprove),
+                    .background(if (stage == RequestStage.Approving) palette.success else palette.brand)
+                    .clickable(enabled = stage == RequestStage.Idle) {
+                        scope.launch { stage = RequestStage.Approving }
+                    },
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -398,10 +483,17 @@ private fun FriendRequestRow(
                     imageVector = Icons.Outlined.Check,
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier
+                        .size(16.dp)
+                        .scale(approveScale.value),
                 )
                 Spacer(Modifier.width(6.dp))
-                Text("Approve", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = if (stage == RequestStage.Approving) "Added" else "Accept",
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         }
         Spacer(Modifier.height(8.dp))
@@ -592,12 +684,19 @@ private fun FriendInputField(
 ) {
     val palette = LocalRestaurantPalette.current
     val shape = RoundedCornerShape(12.dp)
+    val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val focused by interactionSource.collectIsFocusedAsState()
+    val borderColor by androidx.compose.animation.animateColorAsState(
+        targetValue = if (focused) palette.brand else palette.border,
+        animationSpec = tween(180, easing = FastOutSlowInEasing),
+        label = "input-border",
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
             .clip(shape)
-            .border(1.dp, palette.border, shape)
+            .border(1.dp, borderColor, shape)
             .background(palette.cardSurface)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -607,7 +706,7 @@ private fun FriendInputField(
             Icon(
                 imageVector = leadingIcon,
                 contentDescription = null,
-                tint = palette.mutedForeground,
+                tint = if (focused) palette.brand else palette.mutedForeground,
                 modifier = Modifier.size(16.dp),
             )
         }
@@ -628,6 +727,7 @@ private fun FriendInputField(
                     TextStyle(color = palette.foreground, fontSize = 14.sp),
                 ),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                interactionSource = interactionSource,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -674,12 +774,14 @@ private fun ContactsSection(
                 }
             } else {
                 contacts.forEachIndexed { idx, contact ->
-                    ContactRow(
-                        contact = contact,
-                        showDivider = idx != contacts.size - 1,
-                        onRemove = { onRequestRemove(contact) },
-                        onBlock = { onBlock(contact) },
-                    )
+                    StaggeredEntry(index = idx) {
+                        ContactRow(
+                            contact = contact,
+                            showDivider = idx != contacts.size - 1,
+                            onRemove = { onRequestRemove(contact) },
+                            onBlock = { onBlock(contact) },
+                        )
+                    }
                 }
             }
         }
@@ -694,24 +796,39 @@ private fun ContactRow(
     onBlock: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
+    val tierDotColor = remember(contact.id) {
+        // Deterministic tier dot per contact: even id -> gold, odd -> silver
+        val hash = contact.id.hashCode()
+        if (hash and 1 == 0) Color(0xFFEAB308) else Color(0xFF94A3B8)
+    }
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .clickable { /* TODO: open profile preview sheet */ }
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             ColoredAvatar(initials = contact.initials, color = contact.color, size = 40)
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = contact.name,
-                    color = palette.foreground,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = contact.name,
+                        color = palette.foreground,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(tierDotColor),
+                    )
+                }
                 Spacer(Modifier.height(2.dp))
                 val sub = contact.username?.let { "@$it" } ?: contact.phone.orEmpty()
                 Text(
@@ -731,6 +848,12 @@ private fun ContactRow(
                 icon = Icons.Outlined.Block,
                 onClick = onBlock,
                 ariaLabel = "Block ${contact.name}",
+            )
+            Icon(
+                imageVector = Icons.Filled.ChevronRight,
+                contentDescription = null,
+                tint = palette.mutedForeground.copy(alpha = 0.6f),
+                modifier = Modifier.size(16.dp),
             )
         }
         if (showDivider) {
@@ -934,35 +1057,124 @@ private fun RemoveContactDialog(
     onBlock: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text("Remove Contact", color = palette.foreground, fontWeight = FontWeight.Bold)
-        },
-        text = {
-            Text(
-                "Are you sure you want to remove this contact from your friends list? They won't be notified.",
-                color = palette.mutedForeground,
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
+    val backdropAlpha = remember { Animatable(0f) }
+    val cardScale = remember { Animatable(0.96f) }
+    val cardAlpha = remember { Animatable(0f) }
+
+    LaunchedEffect(Unit) {
+        launch {
+            backdropAlpha.animateTo(0.55f, animationSpec = tween(180, easing = FastOutSlowInEasing))
+        }
+        launch {
+            cardScale.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(dampingRatio = 0.78f, stiffness = 320f),
             )
-        },
-        confirmButton = {
-            TextButton(onClick = onRemove) {
-                Text("Remove", color = palette.destructive, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            Row {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(I18nR.string.common_cancel), color = palette.mutedForeground, fontWeight = FontWeight.SemiBold)
+        }
+        launch {
+            cardAlpha.animateTo(1f, animationSpec = tween(220, easing = FastOutSlowInEasing))
+        }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = backdropAlpha.value))
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    onClick = onDismiss,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            val cardShape = RoundedCornerShape(24.dp)
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 28.dp)
+                    .fillMaxWidth()
+                    .scale(cardScale.value)
+                    .alpha(cardAlpha.value)
+                    .clip(cardShape)
+                    .background(palette.cardSurface)
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                        onClick = {},
+                    )
+                    .padding(20.dp),
+            ) {
+                Text(
+                    text = "Remove contact",
+                    color = palette.foreground,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Are you sure you want to remove this contact from your friends list? They won't be notified.",
+                    color = palette.mutedForeground,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                )
+                Spacer(Modifier.height(20.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .clip(CircleShape)
+                            .clickable(onClick = onDismiss),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            stringResource(I18nR.string.common_cancel),
+                            color = palette.mutedForeground,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .clip(CircleShape)
+                            .background(palette.destructive)
+                            .clickable(onClick = onRemove),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            "Remove",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                 }
-                Spacer(Modifier.width(4.dp))
-                TextButton(onClick = onBlock) {
-                    Text("Block", color = palette.foreground, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                        .clip(CircleShape)
+                        .border(1.dp, palette.border, CircleShape)
+                        .clickable(onClick = onBlock),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        "Block",
+                        color = palette.foreground,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
                 }
             }
-        },
-        containerColor = palette.cardSurface,
-    )
+        }
+    }
 }

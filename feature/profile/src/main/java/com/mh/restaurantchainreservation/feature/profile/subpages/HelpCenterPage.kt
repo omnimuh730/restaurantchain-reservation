@@ -319,80 +319,116 @@ private fun HelpHeroCard(
     onJump: (String) -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val gradient = Brush.linearGradient(
-        colors = listOf(
-            palette.brand.copy(alpha = 0.18f),
-            palette.info.copy(alpha = 0.14f),
-        ),
-    )
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
-            .background(gradient)
-            .padding(20.dp),
-    ) {
+    val cardShape = RoundedCornerShape(28.dp)
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Box(
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(x = 40.dp, y = (-40).dp)
-                .size(160.dp)
-                .clip(CircleShape)
-                .background(palette.brand.copy(alpha = 0.15f)),
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .offset(x = (-40).dp, y = 40.dp)
-                .size(128.dp)
-                .clip(CircleShape)
-                .background(palette.brand.copy(alpha = 0.10f)),
-        )
-        Column {
+                .fillMaxWidth()
+                .height(170.dp)
+                .clip(cardShape)
+                .border(1.dp, palette.border, cardShape)
+                .background(palette.cardSurface),
+        ) {
+            AsyncImage(
+                model = "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200&h=720&fit=crop",
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(palette.brand.copy(alpha = 0.12f))
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.05f),
+                                Color.Black.copy(alpha = 0.20f),
+                                Color.Black.copy(alpha = 0.70f),
+                            ),
+                        ),
+                    ),
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Bottom,
             ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(percent = 50))
+                        .background(palette.brand.copy(alpha = 0.18f))
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                ) {
+                    Text(
+                        text = "Help center",
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "For everyone \u00B7 Kids & grown-ups",
-                    color = palette.brand,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    text = "What do you need tonight?",
+                    color = Color.White,
+                    fontSize = 26.sp,
+                    lineHeight = 30.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Fast answers for bookings, QR Pay, saved places, and account settings.",
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 13.sp,
+                    lineHeight = 17.sp,
                 )
             }
-            Spacer(Modifier.height(12.dp))
-            Text(
-                text = "How CatchTable works, in plain words.",
-                color = palette.foreground,
-                fontSize = 24.sp,
-                lineHeight = 28.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "Short steps, pictures, and tips. Tap any topic to open its own page. Need a human? Head to Contact Support from your Profile.",
-                color = palette.mutedForeground,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-            )
-            Spacer(Modifier.height(14.dp))
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .border(1.dp, palette.border, RoundedCornerShape(24.dp))
+                .background(palette.cardSurface)
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             HelpSearchInput(value = query, onValueChange = onQueryChange)
-            Spacer(Modifier.height(12.dp))
             val quickIds = listOf("book", "qrpay", "saved", "troubleshoot")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 quickIds.forEach { id ->
                     val s = sections.firstOrNull { it.id == id } ?: return@forEach
-                    Box(
+                    Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(percent = 50))
-                            .background(palette.cardSurface.copy(alpha = 0.8f))
-                            .border(1.dp, palette.border, RoundedCornerShape(percent = 50))
+                            .background(palette.brand.copy(alpha = 0.10f))
+                            .border(1.dp, palette.brand.copy(alpha = 0.20f), RoundedCornerShape(percent = 50))
                             .clickable { onJump(id) }
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        Text(s.title, color = palette.foreground, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                        Icon(
+                            imageVector = s.icon,
+                            contentDescription = null,
+                            tint = palette.brand,
+                            modifier = Modifier.size(13.dp),
+                        )
+                        Text(
+                            text = s.title,
+                            color = palette.brand,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
                 }
             }
@@ -431,33 +467,40 @@ private fun HelpSearchInput(value: String, onValueChange: (String) -> Unit) {
     }
 }
 
+private data class QuickStartItem(
+    val id: String,
+    val label: String,
+    val icon: ImageVector,
+    val meta: String,
+)
+
 @Composable
 private fun QuickStartGrid(onJump: (String) -> Unit) {
     val palette = LocalRestaurantPalette.current
     val items = listOf(
-        Triple("getting-started", "First steps", Icons.Outlined.AutoAwesome),
-        Triple("book", "Book a table", Icons.Outlined.CalendarMonth),
-        Triple("policy", "Deposit & cancel rules", Icons.Outlined.Shield),
-        Triple("qrpay", "Scan & Pay", Icons.Outlined.QrCode),
+        QuickStartItem("getting-started", "First steps", Icons.Outlined.AutoAwesome, "2 min"),
+        QuickStartItem("book", "Book a table", Icons.Outlined.CalendarMonth, "5 min"),
+        QuickStartItem("policy", "Deposits", Icons.Outlined.Shield, "Rules"),
+        QuickStartItem("qrpay", "QR Pay", Icons.Outlined.QrCode, "Scan"),
     )
     Column {
         Text(
-            text = "QUICK START",
+            text = "START HERE",
             color = palette.mutedForeground,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 1.sp,
             modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            items.subList(0, 2).forEach { (id, label, icon) ->
-                QuickStartCard(label = label, icon = icon, modifier = Modifier.weight(1f), onClick = { onJump(id) })
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            items.subList(0, 2).forEach { item ->
+                QuickStartCard(item = item, modifier = Modifier.weight(1f), onClick = { onJump(item.id) })
             }
         }
-        Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            items.subList(2, 4).forEach { (id, label, icon) ->
-                QuickStartCard(label = label, icon = icon, modifier = Modifier.weight(1f), onClick = { onJump(id) })
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            items.subList(2, 4).forEach { item ->
+                QuickStartCard(item = item, modifier = Modifier.weight(1f), onClick = { onJump(item.id) })
             }
         }
     }
@@ -465,32 +508,44 @@ private fun QuickStartGrid(onJump: (String) -> Unit) {
 
 @Composable
 private fun QuickStartCard(
-    label: String,
-    icon: ImageVector,
+    item: QuickStartItem,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
     val shape = RoundedCornerShape(20.dp)
-    Column(
+    Row(
         modifier = modifier
+            .heightIn(min = 84.dp)
             .clip(shape)
             .border(1.dp, palette.border, shape)
             .background(palette.cardSurface)
             .clickable(onClick = onClick)
             .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(palette.brand.copy(alpha = 0.15f)),
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(palette.brand.copy(alpha = 0.10f)),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(icon, null, tint = palette.brand, modifier = Modifier.size(18.dp))
+            Icon(item.icon, null, tint = palette.brand, modifier = Modifier.size(18.dp))
         }
-        Text(label, color = palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                item.label,
+                color = palette.foreground,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(item.meta, color = palette.mutedForeground, fontSize = 11.sp)
+        }
     }
 }
 
@@ -547,33 +602,40 @@ private fun TopicRow(section: HelpSection, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(palette.brand.copy(alpha = 0.12f)),
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(palette.mutedSurface),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(section.icon, null, tint = palette.brand, modifier = Modifier.size(18.dp))
+            Icon(section.icon, null, tint = palette.foreground, modifier = Modifier.size(18.dp))
         }
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = section.title,
                     color = palette.foreground,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
                 )
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Icon(Icons.Outlined.Schedule, null, tint = palette.mutedForeground, modifier = Modifier.size(11.dp))
-                    Text("${section.readMins} min", color = palette.mutedForeground, fontSize = 11.sp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(percent = 50))
+                        .background(palette.brand.copy(alpha = 0.08f))
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                ) {
+                    Icon(Icons.Outlined.Schedule, null, tint = palette.brand, modifier = Modifier.size(11.dp))
+                    Text("${section.readMins}m", color = palette.brand, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
             Text(
@@ -709,7 +771,7 @@ private fun StillNeedAHandFooter(onContactSupport: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("Still need a hand?", color = palette.foreground, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
                 Text(
-                    text = "Talk to us — Contact Support lives in your Profile.",
+                    text = "Support can help with bookings, billing, and account questions.",
                     color = palette.mutedForeground,
                     fontSize = 12.sp,
                     lineHeight = 16.sp,
@@ -718,21 +780,53 @@ private fun StillNeedAHandFooter(onContactSupport: () -> Unit) {
             }
         }
         Spacer(Modifier.height(12.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 44.dp)
-                .clip(RoundedCornerShape(percent = 50))
-                .background(palette.brand)
-                .clickable(onClick = onContactSupport)
-                .padding(vertical = 12.dp),
-            contentAlignment = Alignment.Center,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Outlined.ChatBubbleOutline, null, tint = Color.White, modifier = Modifier.size(16.dp))
-                Text("Contact support", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 44.dp)
+                    .clip(RoundedCornerShape(percent = 50))
+                    .background(palette.brand)
+                    .clickable(onClick = onContactSupport)
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(Icons.Outlined.ChatBubbleOutline, null, tint = Color.White, modifier = Modifier.size(15.dp))
+                    Text("Chat", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 44.dp)
+                    .clip(RoundedCornerShape(percent = 50))
+                    .border(1.dp, palette.brand, RoundedCornerShape(percent = 50))
+                    .clickable(onClick = onContactSupport)
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(Icons.Outlined.Email, null, tint = palette.brand, modifier = Modifier.size(15.dp))
+                    Text("Email", color = palette.brand, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+                }
             }
         }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = "Submit a request",
+            color = palette.brand,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            textDecoration = TextDecoration.Underline,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .clickable(onClick = onContactSupport)
+                .padding(vertical = 4.dp),
+        )
     }
 }
 

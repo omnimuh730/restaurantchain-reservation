@@ -2,6 +2,8 @@ package com.mh.restaurantchainreservation.feature.profile.subpages
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
@@ -19,6 +21,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,9 +31,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
@@ -870,70 +875,85 @@ private fun SemanticCategoryTabs(
     counts: Map<TxnCategory, Int>,
     onChange: (TxnCategory) -> Unit,
 ) {
-    Row(
+    val palette = LocalRestaurantPalette.current
+    val tabs = TxnCategory.entries
+    val activeIndex = tabs.indexOf(active).coerceAtLeast(0)
+    val pillShape = RoundedCornerShape(14.dp)
+
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .clip(pillShape)
+            .background(palette.mutedSurface.copy(alpha = 0.55f))
+            .padding(4.dp),
     ) {
-        TxnCategory.values().forEach { cat ->
-            SemanticTabButton(
-                option = cat,
-                isActive = active == cat,
-                count = counts[cat] ?: 0,
-                onSelect = { onChange(cat) },
-            )
+        val tabWidth = maxWidth / tabs.size
+        val targetX = tabWidth * activeIndex
+        val pillOffsetX by animateDpAsState(
+            targetValue = targetX,
+            animationSpec = spring(dampingRatio = 0.79f, stiffness = 360f),
+            label = "tab-pill-offset",
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = pillOffsetX)
+                .width(tabWidth)
+                .height(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(palette.brandSoftSurface),
+        )
+        Row(modifier = Modifier.fillMaxWidth()) {
+            tabs.forEach { cat ->
+                FullWidthTabButton(
+                    option = cat,
+                    isActive = active == cat,
+                    count = counts[cat] ?: 0,
+                    onSelect = { onChange(cat) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun SemanticTabButton(
+private fun FullWidthTabButton(
     option: TxnCategory,
     isActive: Boolean,
     count: Int,
     onSelect: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    Row(
-        modifier = Modifier
-            .height(40.dp)
-            .clip(RoundedCornerShape(percent = 50))
-            .background(if (isActive) palette.brand else Color.Transparent)
-            .border(
-                1.dp,
-                if (isActive) palette.brand else palette.border,
-                RoundedCornerShape(percent = 50),
-            )
+    val contentColor by animateColorAsState(
+        targetValue = if (isActive) palette.brand else palette.mutedForeground,
+        animationSpec = tween(180),
+        label = "tab-color",
+    )
+    Column(
+        modifier = modifier
+            .height(48.dp)
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onSelect)
-            .padding(horizontal = if (isActive) 14.dp else 11.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(if (isActive) 8.dp else 0.dp),
+            .padding(vertical = 6.dp, horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             imageVector = option.icon,
             contentDescription = option.label,
-            tint = if (isActive) Color.White else palette.mutedForeground,
+            tint = contentColor,
             modifier = Modifier.size(18.dp),
         )
-        AnimatedVisibility(
-            visible = isActive,
-            enter = expandHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 520f)) + fadeIn(tween(180)),
-            exit = shrinkHorizontally(animationSpec = tween(140)) + fadeOut(tween(120)),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(option.label, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.25f))
-                        .padding(horizontal = 6.dp, vertical = 1.dp),
-                ) {
-                    Text(count.toString(), color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
-                }
-            }
-        }
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = if (count > 0) "${option.label} $count" else option.label,
+            color = contentColor,
+            fontSize = 10.sp,
+            fontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

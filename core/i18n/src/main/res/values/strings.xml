@@ -346,6 +346,8 @@
     <string name="refer_step_1">Share your code or QR with friends</string>
     <string name="refer_step_2">They sign up and book a table</string>
     <string name="refer_step_3">You both earn $10 in wallet rewards</string>
+    <string name="refer_qr_caption">Scan to install</string>
+    <string name="refer_qr_subtitle">Friends scan to sign up with code %1$s</string>
 
     <!-- Friends -->
     <string name="friends_title">Friends &amp; contacts</string>

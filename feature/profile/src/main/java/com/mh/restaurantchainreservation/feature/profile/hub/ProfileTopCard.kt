@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -119,19 +121,23 @@ private fun AvatarBlock(
     onClick: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
+
+    // The OUTER Box is intentionally un-clipped; the avatar circle clips itself
+    // inside, while the tier chip overlays from this parent so it is never cut
+    // off. We add a tiny vertical padding so the chip's 2dp white border has
+    // room when it overhangs the bottom of the avatar circle.
     Box(
         modifier = Modifier
-            .size(112.dp)
-            .clip(CircleShape)
-            .clickable(role = Role.Button, onClick = onClick),
-        contentAlignment = Alignment.Center,
+            .size(width = 116.dp, height = 116.dp),
+        contentAlignment = Alignment.TopCenter,
     ) {
         Box(
             modifier = Modifier
                 .size(112.dp)
                 .clip(CircleShape)
                 .background(palette.mutedSurface)
-                .border(2.dp, palette.cardSurface, CircleShape),
+                .border(2.dp, palette.cardSurface, CircleShape)
+                .clickable(role = Role.Button, onClick = onClick),
             contentAlignment = Alignment.Center,
         ) {
             if (avatarUrl != null) {
@@ -158,23 +164,47 @@ private fun AvatarBlock(
             }
         }
 
-        Box(
+        TierChip(
+            isPro = isPro,
+            tierProLabel = tierProLabel,
+            tierFreeLabel = tierFreeLabel,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 4.dp, bottom = 0.dp)
-                .clip(RoundedCornerShape(999.dp))
-                .background(if (isPro) palette.brand else Color(0xFF374151))
-                .border(2.dp, palette.cardSurface, RoundedCornerShape(999.dp))
-                .padding(horizontal = 8.dp, vertical = 2.dp),
-        ) {
-            Text(
-                text = (if (isPro) tierProLabel else tierFreeLabel).uppercase(),
-                color = Color.White,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp,
-            )
-        }
+                .offset(x = (-4).dp, y = 0.dp),
+        )
+    }
+}
+
+@Composable
+private fun TierChip(
+    isPro: Boolean,
+    tierProLabel: String,
+    tierFreeLabel: String,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    val pillShape = RoundedCornerShape(999.dp)
+    val backgroundBrush = if (isPro) {
+        Brush.linearGradient(
+            colors = listOf(palette.gold, palette.gold.copy(alpha = 0.85f)),
+        )
+    } else {
+        Brush.linearGradient(colors = listOf(palette.brand, palette.brand))
+    }
+    Box(
+        modifier = modifier
+            .clip(pillShape)
+            .background(backgroundBrush, pillShape)
+            .border(2.dp, palette.cardSurface, pillShape)
+            .padding(horizontal = 9.dp, vertical = 3.dp),
+    ) {
+        Text(
+            text = (if (isPro) tierProLabel else tierFreeLabel).uppercase(),
+            color = Color.White,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.6.sp,
+        )
     }
 }
 

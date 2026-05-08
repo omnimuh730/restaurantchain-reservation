@@ -5,15 +5,19 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
@@ -61,71 +65,79 @@ fun TierStatusModal(
         contentColor = palette.foreground,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val maxSheetHeight = maxHeight * 0.85f
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 16.dp, top = 4.dp, bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .heightIn(max = maxSheetHeight),
             ) {
                 Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 20.dp, end = 16.dp, top = 4.dp, bottom = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(palette.gold.copy(alpha = 0.10f)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.WorkspacePremium,
+                                contentDescription = null,
+                                tint = palette.gold,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                        Text(
+                            text = stringResource(I18nR.string.profile_tier_modal_title),
+                            color = palette.foreground,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                     Box(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(CircleShape)
-                            .background(palette.gold.copy(alpha = 0.10f)),
+                            .background(palette.mutedSurface)
+                            .clickable(
+                                role = Role.Button,
+                                onClickLabel = stringResource(I18nR.string.common_action_close),
+                                onClick = onDismiss,
+                            ),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.WorkspacePremium,
-                            contentDescription = null,
-                            tint = palette.gold,
+                            imageVector = Icons.Outlined.Close,
+                            contentDescription = stringResource(I18nR.string.common_action_close),
+                            tint = palette.mutedForeground,
                             modifier = Modifier.size(16.dp),
                         )
                     }
-                    Text(
-                        text = stringResource(I18nR.string.profile_tier_modal_title),
-                        color = palette.foreground,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
                 }
-                Box(
+                HorizontalDivider(color = palette.border.copy(alpha = 0.5f))
+
+                Column(
                     modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(palette.mutedSurface)
-                        .clickable(
-                            role = Role.Button,
-                            onClickLabel = stringResource(I18nR.string.common_action_close),
-                            onClick = onDismiss,
-                        ),
-                    contentAlignment = Alignment.Center,
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Close,
-                        contentDescription = stringResource(I18nR.string.common_action_close),
-                        tint = palette.mutedForeground,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-            }
-            HorizontalDivider(color = palette.border.copy(alpha = 0.5f))
+                    CurrentTierHeroCard()
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                CurrentTierHeroCard()
-
-                TierKey.entries.forEach { tier ->
-                    TierPerkCard(tier = tier, isCurrent = tier == TierKey.Gold)
+                    TierKey.entries.forEach { tier ->
+                        TierPerkCard(tier = tier, isCurrent = tier == TierKey.Gold)
+                    }
                 }
             }
         }

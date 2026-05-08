@@ -17,6 +17,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -57,8 +60,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -70,6 +75,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -207,7 +213,7 @@ fun NotificationsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     filtered.forEach { n ->
                         key(n.id) {
-                            NotificationCard(notification = n)
+                            SwipeableNotificationRow(notification = n)
                         }
                     }
                 }
@@ -530,6 +536,155 @@ private fun FeaturedReservationCard(notification: AppNotification) {
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
+        }
+    }
+}
+
+@Composable
+private fun SwipeableNotificationRow(notification: AppNotification) {
+    val palette = LocalRestaurantPalette.current
+    val density = LocalDensity.current
+    val thresholdPx = with(density) { 80.dp.toPx() }
+    val scope = rememberCoroutineScope()
+    val offsetX = remember { Animatable(0f) }
+    var rowWidthPx by remember { mutableFloatStateOf(0f) }
+    var dismissed by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (dismissed) 0f else 1f)
+            .onSizeChanged { rowWidthPx = it.width.toFloat() },
+    ) {
+        val absX = kotlin.math.abs(offsetX.value)
+        val revealWidth = with(density) { absX.toDp() }
+        if (offsetX.value > 1f) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(palette.success.copy(alpha = 0.85f)),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .width(revealWidth.coerceAtLeast(0.dp))
+                        .fillMaxHeight()
+                        .padding(start = 18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    if (absX > thresholdPx * 0.8f) {
+                        Text(
+                            text = stringResource(I18nR.string.notifications_action_mark_read_aria),
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+        } else if (offsetX.value < -1f) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(palette.destructive.copy(alpha = 0.92f)),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .width(revealWidth.coerceAtLeast(0.dp))
+                        .fillMaxHeight()
+                        .padding(end = 18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (absX > thresholdPx * 0.8f) {
+                        Text(
+                            text = stringResource(I18nR.string.notifications_action_delete_aria),
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Outlined.DeleteOutline,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+        }
+
+        val cardAlpha = if (rowWidthPx > 0f) {
+            (1f - (absX / rowWidthPx).coerceIn(0f, 1f) * 0.4f).coerceAtLeast(0.6f)
+        } else {
+            1f
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset { androidx.compose.ui.unit.IntOffset(offsetX.value.toInt(), 0) }
+                .alpha(cardAlpha)
+                .draggable(
+                    orientation = Orientation.Horizontal,
+                    state = rememberDraggableState { delta ->
+                        scope.launch {
+                            val newValue = (offsetX.value + delta).coerceIn(
+                                -rowWidthPx.coerceAtLeast(0f),
+                                rowWidthPx.coerceAtLeast(0f),
+                            )
+                            offsetX.snapTo(newValue)
+                        }
+                    },
+                    onDragStopped = {
+                        scope.launch {
+                            val current = offsetX.value
+                            when {
+                                current >= thresholdPx -> {
+                                    offsetX.animateTo(
+                                        targetValue = thresholdPx,
+                                        animationSpec = spring(dampingRatio = 0.7f, stiffness = 380f),
+                                    )
+                                    if (!notification.read) {
+                                        NotificationStore.markAsRead(notification.id)
+                                    }
+                                    delay(140)
+                                    offsetX.animateTo(
+                                        targetValue = 0f,
+                                        animationSpec = spring(dampingRatio = 0.8f, stiffness = 320f),
+                                    )
+                                }
+                                current <= -thresholdPx -> {
+                                    val target = -rowWidthPx.coerceAtLeast(thresholdPx * 4f)
+                                    offsetX.animateTo(
+                                        targetValue = target,
+                                        animationSpec = tween(180),
+                                    )
+                                    dismissed = true
+                                    NotificationStore.delete(notification.id)
+                                }
+                                else -> {
+                                    offsetX.animateTo(
+                                        targetValue = 0f,
+                                        animationSpec = spring(dampingRatio = 0.7f, stiffness = 380f),
+                                    )
+                                }
+                            }
+                        }
+                    },
+                ),
+        ) {
+            NotificationCard(notification = notification)
         }
     }
 }
@@ -1068,43 +1223,153 @@ private fun EmptyNotificationsState(filter: NotifFilter) {
 @Composable
 private fun EmptyIllustration() {
     val palette = LocalRestaurantPalette.current
-    val transition = rememberInfiniteTransition(label = "empty-pulse")
-    val pulse by transition.animateFloat(
-        initialValue = 0.85f,
-        targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(animation = tween(1400), repeatMode = RepeatMode.Reverse),
-        label = "pulse",
+
+    val leftOffsetX = remember { Animatable(-60f) }
+    val leftOffsetY = remember { Animatable(-30f) }
+    val leftAlpha = remember { Animatable(0f) }
+
+    val rightOffsetX = remember { Animatable(60f) }
+    val rightOffsetY = remember { Animatable(-30f) }
+    val rightAlpha = remember { Animatable(0f) }
+
+    val centerOffsetY = remember { Animatable(30f) }
+    val centerAlpha = remember { Animatable(0f) }
+    val centerScale = remember { Animatable(0.72f) }
+
+    LaunchedEffect(Unit) {
+        coroutineScope {
+            launch {
+                leftOffsetX.animateTo(
+                    targetValue = -22f,
+                    animationSpec = spring(dampingRatio = 0.62f, stiffness = 140f),
+                )
+            }
+            launch {
+                leftOffsetY.animateTo(
+                    targetValue = 12f,
+                    animationSpec = spring(dampingRatio = 0.62f, stiffness = 140f),
+                )
+            }
+            launch {
+                leftAlpha.animateTo(0.78f, animationSpec = tween(420))
+            }
+            launch {
+                rightOffsetX.animateTo(
+                    targetValue = 22f,
+                    animationSpec = spring(dampingRatio = 0.62f, stiffness = 140f),
+                )
+            }
+            launch {
+                rightOffsetY.animateTo(
+                    targetValue = 8f,
+                    animationSpec = spring(dampingRatio = 0.62f, stiffness = 140f),
+                )
+            }
+            launch {
+                rightAlpha.animateTo(0.86f, animationSpec = tween(420))
+            }
+            launch {
+                centerOffsetY.animateTo(
+                    targetValue = 0f,
+                    animationSpec = spring(dampingRatio = 0.62f, stiffness = 140f),
+                )
+            }
+            launch { centerAlpha.animateTo(1f, animationSpec = tween(420)) }
+            launch {
+                centerScale.animateTo(
+                    targetValue = 1f,
+                    animationSpec = spring(dampingRatio = 0.62f, stiffness = 140f),
+                )
+            }
+        }
+    }
+
+    val sway = rememberInfiniteTransition(label = "empty-sway")
+    val leftRotation by sway.animateFloat(
+        initialValue = -8f,
+        targetValue = 8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "left-sway",
     )
+    val rightRotation by sway.animateFloat(
+        initialValue = 8f,
+        targetValue = -8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "right-sway",
+    )
+    val cardScale by sway.animateFloat(
+        initialValue = 1f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 3000
+                1f at 0
+                1.04f at 1500
+                1f at 3000
+            },
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "card-pulse",
+    )
+    val bellAlpha by sway.animateFloat(
+        initialValue = 0.7f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "bell-alpha",
+    )
+
     Box(
-        modifier = Modifier.size(width = 160.dp, height = 128.dp),
+        modifier = Modifier.size(width = 168.dp, height = 132.dp),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
                 .size(width = 120.dp, height = 80.dp)
-                .offset(y = 8.dp)
+                .offset(y = 14.dp)
+                .alpha(0.45f)
                 .clip(RoundedCornerShape(24.dp))
-                .background(palette.brand.copy(alpha = 0.07f)),
+                .background(palette.brand.copy(alpha = 0.10f)),
         )
-        Box(
-            modifier = Modifier
-                .size(width = 96.dp, height = 80.dp)
-                .offset(x = (-32).dp, y = 12.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(palette.mutedSurface)
-                .border(1.dp, palette.border.copy(alpha = 0.6f), RoundedCornerShape(20.dp)),
+
+        BellCard(
+            offsetX = leftOffsetX.value.dp,
+            offsetY = leftOffsetY.value.dp,
+            rotation = leftRotation,
+            scale = cardScale * 0.98f,
+            alpha = leftAlpha.value,
+            background = palette.mutedSurface,
+            borderColor = palette.border.copy(alpha = 0.7f),
+            bellTint = palette.brand.copy(alpha = 0.55f),
+            bellAlpha = bellAlpha,
         )
-        Box(
-            modifier = Modifier
-                .size(width = 96.dp, height = 80.dp)
-                .offset(x = 32.dp, y = 8.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(palette.cardSurface)
-                .border(1.dp, palette.border.copy(alpha = 0.6f), RoundedCornerShape(20.dp)),
+
+        BellCard(
+            offsetX = rightOffsetX.value.dp,
+            offsetY = rightOffsetY.value.dp,
+            rotation = rightRotation,
+            scale = cardScale * 0.98f,
+            alpha = rightAlpha.value,
+            background = palette.cardSurface,
+            borderColor = palette.border.copy(alpha = 0.7f),
+            bellTint = palette.brand.copy(alpha = 0.55f),
+            bellAlpha = bellAlpha,
         )
+
         Box(
             modifier = Modifier
                 .size(88.dp)
+                .offset(x = 0.dp, y = centerOffsetY.value.dp)
+                .alpha(centerAlpha.value)
+                .scale(centerScale.value * cardScale)
                 .clip(RoundedCornerShape(22.dp))
                 .background(palette.cardSurface)
                 .border(1.dp, palette.border.copy(alpha = 0.7f), RoundedCornerShape(22.dp)),
@@ -1112,16 +1377,53 @@ private fun EmptyIllustration() {
         ) {
             Box(
                 modifier = Modifier
-                    .size((64 * pulse).dp)
+                    .size(64.dp)
                     .clip(RoundedCornerShape(18.dp))
-                    .border(1.dp, palette.brand.copy(alpha = 0.15f), RoundedCornerShape(18.dp)),
+                    .border(1.dp, palette.brand.copy(alpha = 0.18f), RoundedCornerShape(18.dp)),
             )
             Icon(
                 imageVector = Icons.Outlined.NotificationsNone,
                 contentDescription = null,
                 tint = palette.brand,
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier
+                    .size(32.dp)
+                    .alpha(bellAlpha),
             )
         }
+    }
+}
+
+@Composable
+private fun BellCard(
+    offsetX: androidx.compose.ui.unit.Dp,
+    offsetY: androidx.compose.ui.unit.Dp,
+    rotation: Float,
+    scale: Float,
+    alpha: Float,
+    background: Color,
+    borderColor: Color,
+    bellTint: Color,
+    bellAlpha: Float,
+) {
+    Box(
+        modifier = Modifier
+            .size(width = 96.dp, height = 80.dp)
+            .offset(x = offsetX, y = offsetY)
+            .alpha(alpha)
+            .scale(scale)
+            .rotate(rotation)
+            .clip(RoundedCornerShape(20.dp))
+            .background(background)
+            .border(1.dp, borderColor, RoundedCornerShape(20.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.NotificationsNone,
+            contentDescription = null,
+            tint = bellTint,
+            modifier = Modifier
+                .size(24.dp)
+                .alpha(bellAlpha),
+        )
     }
 }

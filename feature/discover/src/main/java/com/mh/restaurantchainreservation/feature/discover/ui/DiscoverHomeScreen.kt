@@ -28,12 +28,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -54,6 +57,7 @@ import com.mh.restaurantchainreservation.core.model.FoodType
 import com.mh.restaurantchainreservation.core.model.NewsItem
 import com.mh.restaurantchainreservation.core.model.QuickCategory
 import com.mh.restaurantchainreservation.core.model.Restaurant
+import com.mh.restaurantchainreservation.core.model.WishlistStore
 import com.mh.restaurantchainreservation.core.model.mockNews
 import kotlinx.coroutines.delay
 
@@ -537,6 +541,12 @@ private fun HorizontalRestaurants(
                             )
                         }
                     }
+                    SaveHeartOverlay(
+                        restaurant = item,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp),
+                    )
                 }
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
@@ -613,6 +623,12 @@ private fun MonthlyBestGrid(
                                 contentDescription = item.name,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize(),
+                            )
+                            SaveHeartOverlay(
+                                restaurant = item,
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(8.dp),
                             )
                         }
                         Column(modifier = Modifier.padding(10.dp)) {
@@ -694,5 +710,30 @@ private fun NewsCard(item: NewsItem) {
                 fontSize = 10.sp,
             )
         }
+    }
+}
+
+@Composable
+private fun SaveHeartOverlay(
+    restaurant: Restaurant,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    val collections by WishlistStore.collections.collectAsState()
+    val saved = collections.any { col -> col.restaurants.any { it.id == restaurant.id } }
+    Box(
+        modifier = modifier
+            .size(28.dp)
+            .clip(CircleShape)
+            .background(Color.Black.copy(alpha = 0.4f))
+            .clickable { WishlistStore.openPicker(restaurant) },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = if (saved) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+            contentDescription = if (saved) "Remove from saved" else "Save",
+            tint = if (saved) palette.brand else Color.White,
+            modifier = Modifier.size(15.dp),
+        )
     }
 }

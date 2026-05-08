@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.QrCanvas
 import kotlinx.coroutines.delay
 
 @Composable
@@ -106,6 +108,9 @@ fun ReferPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 copied = true
             },
         )
+
+        Spacer(Modifier.height(12.dp))
+        ReferQrCard(code = code)
 
         Spacer(Modifier.height(16.dp))
         StatsRow(palette)
@@ -292,6 +297,63 @@ private fun ShareInviteButton(onClick: () -> Unit) {
             color = Color.White,
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun ReferQrCard(code: String) {
+    val palette = LocalRestaurantPalette.current
+    val cardShape = RoundedCornerShape(20.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(cardShape)
+            .background(palette.cardSurface)
+            .border(1.dp, palette.border.copy(alpha = 0.6f), cardShape)
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.QrCode,
+                contentDescription = null,
+                tint = palette.mutedForeground,
+                modifier = Modifier.size(14.dp),
+            )
+            Text(
+                text = stringResource(I18nR.string.refer_qr_caption).uppercase(),
+                color = palette.mutedForeground,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.4.sp,
+            )
+        }
+        Spacer(Modifier.height(14.dp))
+        Box(
+            modifier = Modifier
+                .size(200.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.White)
+                .border(1.dp, palette.border.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                .padding(14.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            QrCanvas(
+                code = "catchtable://refer/$code",
+                modifier = Modifier.size(168.dp),
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = stringResource(I18nR.string.refer_qr_subtitle, code),
+            color = palette.mutedForeground,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
         )
     }
 }

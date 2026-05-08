@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
+import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -40,8 +41,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
@@ -62,6 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantSwitch
 import com.mh.restaurantchainreservation.core.designsystem.theme.ThemePreference
 import com.mh.restaurantchainreservation.core.designsystem.theme.rememberThemeController
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -108,8 +108,11 @@ fun SettingsPageFull(onBack: () -> Unit, modifier: Modifier = Modifier) {
         LanguageGroup(
             currentLocale = currentLocale,
             onSelect = { tag ->
-                currentLocale = tag
-                LocaleManager.setLocale(context, tag)
+                if (tag != currentLocale) {
+                    currentLocale = tag
+                    LocaleManager.setLocale(context, tag)
+                    (context as? Activity)?.recreate()
+                }
             },
         )
 
@@ -281,15 +284,9 @@ private fun ToggleRow(
             Text(label, color = palette.foreground, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             Text(description, color = palette.mutedForeground, fontSize = 12.sp)
         }
-        Switch(
+        RestaurantSwitch(
             checked = checked,
             onCheckedChange = onToggle,
-            colors = SwitchDefaults.colors(
-                checkedTrackColor = palette.brand,
-                checkedThumbColor = Color.White,
-                uncheckedTrackColor = palette.mutedForeground.copy(alpha = 0.30f),
-                uncheckedBorderColor = Color.Transparent,
-            ),
         )
     }
 }

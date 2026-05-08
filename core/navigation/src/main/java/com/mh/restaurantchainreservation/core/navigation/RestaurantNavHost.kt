@@ -1,5 +1,11 @@
 package com.mh.restaurantchainreservation.core.navigation
 
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +37,8 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -369,43 +377,43 @@ private fun AppGraph(
                     onSwitchEnglish = { LocaleManager.setLocale(context, "en") },
                 )
             }
-            composable(ProfileRoutes.Settings) {
+            profileSubComposable(ProfileRoutes.Settings) {
                 SettingsScreen(onBack = { navController.popBackStack() })
             }
-            composable(ProfileRoutes.Edit) {
+            profileSubComposable(ProfileRoutes.Edit) {
                 ProfileEditScreen(onBack = { navController.popBackStack() })
             }
-            composable(ProfileRoutes.Notifications) {
+            profileSubComposable(ProfileRoutes.Notifications) {
                 ProfileNotificationsScreen(onBack = { navController.popBackStack() })
             }
-            composable(ProfileRoutes.TopUp) {
+            profileSubComposable(ProfileRoutes.TopUp) {
                 TopUpScreen(onBack = { navController.popBackStack() })
             }
-            composable(ProfileRoutes.SendGift) {
+            profileSubComposable(ProfileRoutes.SendGift) {
                 SendGiftScreen(onBack = { navController.popBackStack() })
             }
-            composable(ProfileRoutes.History) {
+            profileSubComposable(ProfileRoutes.History) {
                 HistoryScreen(onBack = { navController.popBackStack() })
             }
-            composable(ProfileRoutes.Refer) {
+            profileSubComposable(ProfileRoutes.Refer) {
                 ReferScreen(onBack = { navController.popBackStack() })
             }
-            composable(ProfileRoutes.Friends) {
+            profileSubComposable(ProfileRoutes.Friends) {
                 FriendsScreen(onBack = { navController.popBackStack() })
             }
-            composable(ProfileRoutes.Location) {
+            profileSubComposable(ProfileRoutes.Location) {
                 LocationScreen(onBack = { navController.popBackStack() })
             }
-            composable(ProfileRoutes.Subscription) {
+            profileSubComposable(ProfileRoutes.Subscription) {
                 SubscriptionScreen(onBack = { navController.popBackStack() })
             }
-            composable(ProfileRoutes.Help) {
+            profileSubComposable(ProfileRoutes.Help) {
                 HelpCenterScreen(
                     onBack = { navController.popBackStack() },
                     onContactSupport = { navController.navigate(ProfileRoutes.ContactSupport) },
                 )
             }
-            composable(ProfileRoutes.ContactSupport) {
+            profileSubComposable(ProfileRoutes.ContactSupport) {
                 ContactSupportScreen(onBack = { navController.popBackStack() })
             }
             composable(QrPayRoutes.Home) {
@@ -434,4 +442,40 @@ private fun AppGraph(
             }
         }
     }
+}
+
+private fun NavGraphBuilder.profileSubComposable(
+    route: String,
+    content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit,
+) {
+    composable(
+        route = route,
+        enterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(280, easing = FastOutSlowInEasing),
+            ) + fadeIn(tween(220))
+        },
+        exitTransition = {
+            slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(220, easing = FastOutSlowInEasing),
+                targetOffset = { it / 4 },
+            ) + fadeOut(tween(180))
+        },
+        popEnterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(220, easing = FastOutSlowInEasing),
+                initialOffset = { it / 4 },
+            ) + fadeIn(tween(180))
+        },
+        popExitTransition = {
+            slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(280, easing = FastOutSlowInEasing),
+            ) + fadeOut(tween(220))
+        },
+        content = content,
+    )
 }
