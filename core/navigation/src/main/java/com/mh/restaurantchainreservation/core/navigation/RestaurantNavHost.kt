@@ -6,9 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -28,13 +26,11 @@ import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.NavBackStackEntry
@@ -110,8 +106,9 @@ fun RestaurantNavHost(
     val activeTabId = destination?.let { resolveActiveTab(it.hierarchy.mapNotNull { d -> d.route }.toList()) }
         ?: BottomNavTabId.Discover
 
-    // Hide the bottom bar while the QR Pay overlay (or other full-screen flows) own the screen.
-    val showBottomBar = isCompact && shouldShowBottomBar(destination?.route)
+    // Hide app chrome while auth, QR Pay, or other full-screen flows own the screen.
+    val showAppChrome = shouldShowAppChrome(destination?.route)
+    val showBottomBar = isCompact && showAppChrome
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -138,12 +135,14 @@ fun RestaurantNavHost(
                     contentPadding = paddingValues,
                     modifier = Modifier.fillMaxSize(),
                 )
-                // Wishlist overlay (sheet + toast) sits above every destination.
-                // Toast is offset up by the bottom-bar inset so it floats just
-                // above the nav bar.
-                WishlistOverlayHost(bottomInset = paddingValues)
+                if (showAppChrome) {
+                    // Wishlist overlay (sheet + toast) sits above app destinations.
+                    // Toast is offset up by the bottom-bar inset so it floats just
+                    // above the nav bar.
+                    WishlistOverlayHost(bottomInset = paddingValues)
+                }
             }
-        } else {
+        } else if (showAppChrome) {
             Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                 NavigationRail {
                     bottomTabs.forEach { tab ->
@@ -166,6 +165,15 @@ fun RestaurantNavHost(
                     WishlistOverlayHost()
                 }
             }
+        } else {
+            Box(modifier = Modifier.fillMaxSize()) {
+                AppGraph(
+                    navController = navController,
+                    context = context,
+                    contentPadding = PaddingValues(0.dp),
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
     }
 }
@@ -182,7 +190,7 @@ private fun RailIconFor(tab: BottomNavTabId) {
 
 private fun NavHostController.navigateToTab(route: String) {
     navigate(route) {
-        popUpTo(graph.findStartDestination().id) {
+        popUpTo(DiscoverRoutes.Home) {
             saveState = true
         }
         launchSingleTop = true
@@ -213,9 +221,10 @@ private fun resolveActiveTab(hierarchyRoutes: List<String>): BottomNavTabId? {
 }
 
 /** QR Pay (and other full-screen overlays) own the entire viewport. */
-private fun shouldShowBottomBar(route: String?): Boolean {
-    if (route == null) return true
+private fun shouldShowAppChrome(route: String?): Boolean {
+    if (route == null) return false
     return when {
+        route.startsWith(AuthRoutes.Root) -> false
         route == QrPayRoutes.Home -> false
         route == DiscoverRoutes.Search -> false
         route.startsWith("discover/search?") -> false
@@ -233,7 +242,7 @@ private fun AppGraph(
     Box(modifier = modifier) {
         NavHost(
             navController = navController,
-            startDestination = DiscoverRoutes.Home,
+            startDestination = AuthRoutes.Login,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding),
@@ -423,22 +432,49 @@ private fun AppGraph(
                 LoginScreen(
                     onNavigateRegister = { navController.navigate(AuthRoutes.Register) },
                     onNavigateForgot = { navController.navigate(AuthRoutes.Forgot) },
+                    onAuthenticated = {
+                        navController.navigate(DiscoverRoutes.Home) {
+                            popUpTo(AuthRoutes.Login) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onClose = {},
+                    allowDismiss = false,
                 )
             }
             composable(AuthRoutes.Register) {
-                RegisterScreen()
+                RegisterScreen(
+                    onGoLogin = { navController.popBackStack(AuthRoutes.Login, inclusive = false) },
+                    onComplete = {
+                        navController.navigate(DiscoverRoutes.Home) {
+                            popUpTo(AuthRoutes.Login) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onClose = {},
+                    allowDismiss = false,
+                )
             }
             composable(AuthRoutes.Forgot) {
-                ForgotPasswordScreen()
+                ForgotPasswordScreen(
+                    onBack = { navController.popBackStack(AuthRoutes.Login, inclusive = false) },
+                    onClose = {},
+                    allowDismiss = false,
+                )
             }
             composable(AuthRoutes.Root) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text("Auth Root")
-                }
+                LoginScreen(
+                    onNavigateRegister = { navController.navigate(AuthRoutes.Register) },
+                    onNavigateForgot = { navController.navigate(AuthRoutes.Forgot) },
+                    onAuthenticated = {
+                        navController.navigate(DiscoverRoutes.Home) {
+                            popUpTo(AuthRoutes.Login) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onClose = {},
+                    allowDismiss = false,
+                )
             }
         }
     }

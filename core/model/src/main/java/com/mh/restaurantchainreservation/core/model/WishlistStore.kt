@@ -30,7 +30,7 @@ data class WishlistToastState(
 
 /**
  * Module-level singleton wishlist state. The React demo keeps an in-memory
- * `savedStore` plus per-page state — this object centralizes both the
+ * `savedStore` plus per-page state; this object centralizes both the
  * collections list and the cross-screen overlay state (sheet trigger, toast)
  * so any composable can read/write without prop drilling. Snapshots are
  * exposed as `StateFlow`s so callers can `collectAsState()` directly.
@@ -74,7 +74,7 @@ object WishlistStore {
 
     /**
      * Add `restaurant` to `collectionId`, removing it from any other collection
-     * first (a restaurant lives in at most one collection at a time — this
+     * first (a restaurant lives in at most one collection at a time; this
      * matches the React "move to <new collection>" behavior). Also fires a
      * fresh toast and clears the picker.
      */
@@ -102,7 +102,7 @@ object WishlistStore {
 
     /**
      * Append a brand-new (non-default) collection seeded with `restaurant`.
-     * Falls back to a generated id; titles are not deduped on purpose — the
+     * Falls back to a generated id; titles are not deduped on purpose; the
      * React demo allows duplicates too.
      */
     fun createCollectionAndSave(name: String, restaurant: Restaurant) {
@@ -117,6 +117,42 @@ object WishlistStore {
         )
         _collections.value = _collections.value + newCollection
         saveTo(newId, restaurant)
+    }
+
+    fun createCollection(name: String) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return
+        val newCollection = WishlistCollection(
+            id = "col-" + System.currentTimeMillis().toString(36),
+            title = trimmed,
+            restaurants = emptyList(),
+            isDefault = false,
+        )
+        _collections.value = _collections.value + newCollection
+    }
+
+    fun renameCollection(collectionId: String, name: String) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return
+        _collections.value = _collections.value.map { col ->
+            if (col.id == collectionId && !col.isDefault) col.copy(title = trimmed) else col
+        }
+    }
+
+    fun deleteCollection(collectionId: String) {
+        val removed = _collections.value.firstOrNull { it.id == collectionId && !it.isDefault } ?: return
+        val fallbackId = "recent"
+        val fallbackItems = removed.restaurants
+        _collections.value = _collections.value
+            .filterNot { it.id == collectionId }
+            .map { col ->
+                if (col.id == fallbackId) {
+                    val merged = (fallbackItems + col.restaurants).distinctBy { it.id }
+                    col.copy(restaurants = merged)
+                } else {
+                    col
+                }
+            }
     }
 
     /** Un-save a restaurant from every collection. Used by the wishlist detail

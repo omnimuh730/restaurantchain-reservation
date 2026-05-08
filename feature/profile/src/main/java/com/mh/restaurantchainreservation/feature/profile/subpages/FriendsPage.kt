@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -152,6 +153,7 @@ fun FriendsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var newName by rememberSaveable { mutableStateOf("") }
     var newIdentifier by rememberSaveable { mutableStateOf("") }
     var pendingRemoveId by remember { mutableStateOf<String?>(null) }
+    var previewContact by remember { mutableStateOf<Contact?>(null) }
 
     SubpageScaffold(
         title = stringResource(I18nR.string.friends_title),
@@ -217,6 +219,7 @@ fun FriendsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
         ContactsSection(
             contacts = contacts,
+            onPreview = { previewContact = it },
             onRequestRemove = { pendingRemoveId = it.id },
             onBlock = { contact ->
                 contacts.removeAll { it.id == contact.id }
@@ -270,6 +273,27 @@ fun FriendsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     }
                 }
                 pendingRemoveId = null
+            },
+        )
+    }
+
+    previewContact?.let { contact ->
+        FriendPreviewDialog(
+            contact = contact,
+            onDismiss = { previewContact = null },
+            onInvite = { previewContact = null },
+            onBlock = {
+                contacts.removeAll { it.id == contact.id }
+                blockedContacts.removeAll { it.contact.id == contact.id }
+                blockedContacts.add(
+                    0,
+                    BlockedContact(
+                        contact = contact,
+                        blockedAt = "Just now",
+                        reason = "Blocked from profile preview",
+                    ),
+                )
+                previewContact = null
             },
         )
     }
@@ -737,6 +761,7 @@ private fun FriendInputField(
 @Composable
 private fun ContactsSection(
     contacts: SnapshotStateList<Contact>,
+    onPreview: (Contact) -> Unit,
     onRequestRemove: (Contact) -> Unit,
     onBlock: (Contact) -> Unit,
 ) {
@@ -778,6 +803,7 @@ private fun ContactsSection(
                         ContactRow(
                             contact = contact,
                             showDivider = idx != contacts.size - 1,
+                            onPreview = { onPreview(contact) },
                             onRemove = { onRequestRemove(contact) },
                             onBlock = { onBlock(contact) },
                         )
@@ -792,6 +818,7 @@ private fun ContactsSection(
 private fun ContactRow(
     contact: Contact,
     showDivider: Boolean,
+    onPreview: () -> Unit,
     onRemove: () -> Unit,
     onBlock: () -> Unit,
 ) {
@@ -805,7 +832,7 @@ private fun ContactRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { /* TODO: open profile preview sheet */ }
+                .clickable(onClick = onPreview)
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -1047,6 +1074,134 @@ private fun ColoredAvatar(initials: String, color: Color, size: Int) {
             fontWeight = FontWeight.Bold,
             letterSpacing = 1.sp,
         )
+    }
+}
+
+@Composable
+private fun FriendPreviewDialog(
+    contact: Contact,
+    onDismiss: () -> Unit,
+    onInvite: () -> Unit,
+    onBlock: () -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val sharedBookings = (contact.id.hashCode().let { kotlin.math.abs(it) } % 9) + 1
+    val favoriteCuisine = listOf("K-BBQ", "Omakase", "Brunch", "Italian")[sharedBookings % 4]
+    val handle = contact.username?.let { "@$it" } ?: contact.phone.orEmpty()
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.50f))
+                .clickable(onClick = onDismiss),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .clip(RoundedCornerShape(30.dp))
+                    .background(palette.cardSurface)
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() },
+                        onClick = { },
+                    )
+                    .padding(22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(palette.mutedSurface)
+                            .clickable(onClick = onDismiss),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.Outlined.Close, contentDescription = "Close", tint = palette.foreground, modifier = Modifier.size(17.dp))
+                    }
+                }
+                ColoredAvatar(initials = contact.initials, color = contact.color, size = 76)
+                Spacer(Modifier.height(14.dp))
+                Text(contact.name, color = palette.foreground, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                if (handle.isNotBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Icon(
+                            imageVector = if (contact.username != null) Icons.Outlined.AlternateEmail else Icons.Outlined.Phone,
+                            contentDescription = null,
+                            tint = palette.mutedForeground,
+                            modifier = Modifier.size(14.dp),
+                        )
+                        Text(handle, color = palette.mutedForeground, fontSize = 13.sp)
+                    }
+                }
+                Spacer(Modifier.height(18.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                    PreviewStat(
+                        label = "Reservations",
+                        value = sharedBookings.toString(),
+                        modifier = Modifier.weight(1f),
+                    )
+                    PreviewStat(
+                        label = "Favorite",
+                        value = favoriteCuisine,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                Spacer(Modifier.height(18.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(palette.brand)
+                        .clickable(onClick = onInvite),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(Icons.Outlined.PersonAdd, contentDescription = null, tint = Color.White, modifier = Modifier.size(17.dp))
+                        Text("Invite to reservation", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .border(1.dp, palette.border, RoundedCornerShape(22.dp))
+                        .clickable(onClick = onBlock),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(Icons.Outlined.Block, contentDescription = null, tint = palette.foreground, modifier = Modifier.size(16.dp))
+                        Text("Block contact", color = palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreviewStat(label: String, value: String, modifier: Modifier = Modifier) {
+    val palette = LocalRestaurantPalette.current
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(palette.mutedSurface)
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(value, color = palette.foreground, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+        Spacer(Modifier.height(2.dp))
+        Text(label, color = palette.mutedForeground, fontSize = 11.sp, maxLines = 1)
     }
 }
 

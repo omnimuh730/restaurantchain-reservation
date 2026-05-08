@@ -17,9 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -35,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
+import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.WishlistStore
@@ -72,34 +72,24 @@ fun RestaurantListCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
-            // Save heart top-right.
-            Box(
+            HeartButton(
+                active = saved,
+                onClick = { WishlistStore.openPicker(restaurant) },
+                size = HeartButtonSize.Medium,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(10.dp)
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.35f))
-                    .clickable { WishlistStore.openPicker(restaurant) },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = if (saved) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    contentDescription = if (saved) "Remove from saved" else "Save",
-                    tint = if (saved) palette.brand else Color.White,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
+                    .padding(10.dp),
+            )
             // Optional tag chip top-left.
             val tag = restaurant.tag
             if (!tag.isNullOrBlank()) {
                 Row(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(10.dp)
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(palette.cardSurface.copy(alpha = 0.92f))
-                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(10.dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(palette.cardSurface.copy(alpha = 0.92f))
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(

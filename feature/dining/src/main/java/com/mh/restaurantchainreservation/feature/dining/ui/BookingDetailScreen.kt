@@ -3,6 +3,7 @@ package com.mh.restaurantchainreservation.feature.dining.ui
 import android.content.ClipData
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -57,6 +58,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -541,17 +543,7 @@ fun BookingDetailScreen(
                 )
             }
             Spacer(Modifier.height(10.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(palette.mutedSurface),
-                contentAlignment = Alignment.Center,
-            ) {
-                // Map placeholder (we don't have MapView wired)
-                Icon(Icons.Outlined.LocationOn, null, tint = palette.brand.copy(alpha = 0.4f), modifier = Modifier.size(48.dp))
-            }
+            BookingMapPreview(address = booking.address)
 
             // Dining points
             Spacer(Modifier.height(20.dp))
@@ -663,6 +655,77 @@ fun BookingDetailScreen(
             }
 
             Spacer(Modifier.height(40.dp))
+        }
+    }
+}
+
+@Composable
+private fun BookingMapPreview(address: String) {
+    val palette = LocalRestaurantPalette.current
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(palette.mutedSurface),
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val road = palette.border.copy(alpha = 0.72f)
+            repeat(5) { idx ->
+                val y = size.height * (0.18f + idx * 0.18f)
+                drawLine(
+                    color = road,
+                    start = Offset(0f, y),
+                    end = Offset(size.width, y + if (idx % 2 == 0) 38f else -30f),
+                    strokeWidth = 18f,
+                )
+            }
+            repeat(4) { idx ->
+                val x = size.width * (0.18f + idx * 0.24f)
+                drawLine(
+                    color = road.copy(alpha = 0.56f),
+                    start = Offset(x, 0f),
+                    end = Offset(x - 54f, size.height),
+                    strokeWidth = 12f,
+                )
+            }
+            drawCircle(
+                color = palette.brand.copy(alpha = 0.14f),
+                radius = 42f,
+                center = Offset(size.width * 0.56f, size.height * 0.45f),
+            )
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(palette.cardSurface)
+                .border(1.dp, palette.border, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(palette.brand),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Outlined.LocationOn, null, tint = Color.White, modifier = Modifier.size(22.dp))
+            }
+        }
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(12.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(palette.cardSurface.copy(alpha = 0.94f))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(Icons.Outlined.Navigation, null, tint = palette.brand, modifier = Modifier.size(16.dp))
+            Text(address, color = palette.foreground, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
     }
 }
@@ -821,4 +884,3 @@ private fun DetailActionButton(
         Text(text = text, color = content, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
-
