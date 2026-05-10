@@ -69,6 +69,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationCenter
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import kotlinx.coroutines.delay
@@ -138,16 +139,21 @@ fun FriendsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     }
 
     val contacts = remember {
-        mutableStateListOf(
-            Contact(id = "1", name = "Sarah Kim", username = "sarahkim", initials = "SK", color = Color(0xFFE11D48)),
-            Contact(id = "2", name = "Marcus Johnson", username = "marcusj", initials = "MJ", color = Color(0xFF2563EB)),
-            Contact(id = "3", name = "Emma Chen", username = "emmachen", initials = "EC", color = Color(0xFF059669)),
-            Contact(id = "4", name = "David Park", phone = "+1 (555) 567-8901", initials = "DP", color = Color(0xFFD97706)),
-            Contact(id = "5", name = "Olivia Tran", username = "oliviat", initials = "OT", color = Color(0xFF7C3AED)),
-        )
+        mutableStateListOf<Contact>().apply {
+            addAll(
+                listOf(
+                    Contact(id = "1", name = "Sarah Kim", username = "sarahkim", initials = "SK", color = Color(0xFFE11D48)),
+                    Contact(id = "2", name = "Marcus Johnson", username = "marcusj", initials = "MJ", color = Color(0xFF2563EB)),
+                    Contact(id = "3", name = "Emma Chen", username = "emmachen", initials = "EC", color = Color(0xFF059669)),
+                    Contact(id = "4", name = "David Park", phone = "+1 (555) 567-8901", initials = "DP", color = Color(0xFFD97706)),
+                    Contact(id = "5", name = "Olivia Tran", username = "oliviat", initials = "OT", color = Color(0xFF7C3AED)),
+                ) + generatedContacts(120),
+            )
+        }
     }
 
     val blockedContacts = remember { mutableStateListOf<BlockedContact>() }
+    val sentRequests = remember { mutableStateListOf<FriendRequest>() }
 
     var showAddForm by rememberSaveable { mutableStateOf(false) }
     var newName by rememberSaveable { mutableStateOf("") }
@@ -166,8 +172,12 @@ fun FriendsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 contacts.removeAll { it.id == req.contact.id }
                 contacts.add(0, req.contact)
                 friendRequests.removeAll { it.contact.id == req.contact.id }
+                GlobalNotificationCenter.success("Friend added", "${req.contact.name} is now in your dining circle.")
             },
-            onReject = { req -> friendRequests.removeAll { it.contact.id == req.contact.id } },
+            onReject = { req ->
+                friendRequests.removeAll { it.contact.id == req.contact.id }
+                GlobalNotificationCenter.info("Request dismissed", "${req.contact.name}'s request was removed.")
+            },
             onBlock = { req ->
                 friendRequests.removeAll { it.contact.id == req.contact.id }
                 contacts.removeAll { it.id == req.contact.id }
@@ -180,6 +190,17 @@ fun FriendsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         reason = "Blocked from pending friend requests",
                     ),
                 )
+                GlobalNotificationCenter.warning("Contact blocked", "${req.contact.name} can no longer send requests.")
+            },
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        SentRequestsSection(
+            requests = sentRequests,
+            onCancel = { req ->
+                sentRequests.removeAll { it.contact.id == req.contact.id }
+                GlobalNotificationCenter.info("Request canceled", "${req.contact.name}'s pending request was canceled.")
             },
         )
 
@@ -197,20 +218,26 @@ fun FriendsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     val initials = computeInitials(newName)
                     val isPhone = newIdentifier.startsWith("+") ||
                         newIdentifier.firstOrNull()?.isDigit() == true
-                    contacts.add(
+                    val contact = Contact(
+                        id = "pending-${System.currentTimeMillis()}",
+                        name = newName.trim(),
+                        username = if (!isPhone && newIdentifier.isNotBlank()) newIdentifier.trim() else null,
+                        phone = if (isPhone && newIdentifier.isNotBlank()) newIdentifier.trim() else null,
+                        initials = initials,
+                        color = PaletteColors.random(),
+                    )
+                    sentRequests.add(
                         0,
-                        Contact(
-                            id = "c-${System.currentTimeMillis()}",
-                            name = newName.trim(),
-                            username = if (!isPhone && newIdentifier.isNotBlank()) newIdentifier.trim() else null,
-                            phone = if (isPhone && newIdentifier.isNotBlank()) newIdentifier.trim() else null,
-                            initials = initials,
-                            color = PaletteColors.random(),
+                        FriendRequest(
+                            contact = contact,
+                            requestedAt = "Just now",
+                            note = "Waiting for approval before adding to your dining circle.",
                         ),
                     )
                     newName = ""
                     newIdentifier = ""
                     showAddForm = false
+                    GlobalNotificationCenter.success("Request sent", "${contact.name} is waiting for approval.")
                 }
             },
         )
@@ -232,6 +259,7 @@ fun FriendsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         reason = "Blocked from your contacts list",
                     ),
                 )
+                GlobalNotificationCenter.warning("Contact blocked", "${contact.name} was moved to blocked contacts.")
             },
         )
 
@@ -252,6 +280,7 @@ fun FriendsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 val id = pendingRemoveId
                 if (id != null) {
                     contacts.removeAll { it.id == id }
+                    GlobalNotificationCenter.info("Contact removed", "The contact was removed from your list.")
                 }
                 pendingRemoveId = null
             },
@@ -307,6 +336,95 @@ private fun computeInitials(name: String): String =
         .joinToString("")
         .take(2)
         .ifEmpty { "?" }
+
+private fun generatedContacts(count: Int): List<Contact> {
+    val firstNames = listOf("Aiden", "Bella", "Caleb", "Dina", "Ethan", "Farah", "Grace", "Hugo", "Iris", "Jin", "Kai", "Lena", "Mason", "Nora", "Owen", "Priya", "Quinn", "Rina", "Theo", "Uma", "Victor", "Wendy", "Xavier", "Yuna", "Zoe")
+    val lastNames = listOf("Anderson", "Baker", "Choi", "Diaz", "Evans", "Foster", "Garcia", "Han", "Ivanov", "Jones", "Kang", "Lopez", "Miller", "Nguyen", "Ortiz", "Patel", "Reed", "Singh", "Turner", "Usman", "Vega", "White", "Xu", "Young", "Zimmer")
+    return (0 until count).map { index ->
+        val name = "${firstNames[index % firstNames.size]} ${lastNames[(index * 7) % lastNames.size]}"
+        Contact(
+            id = "generated-$index",
+            name = name,
+            username = name.lowercase().replace(" ", "."),
+            initials = computeInitials(name),
+            color = PaletteColors[index % PaletteColors.size],
+        )
+    }
+}
+
+@Composable
+private fun SentRequestsSection(
+    requests: SnapshotStateList<FriendRequest>,
+    onCancel: (FriendRequest) -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    AnimatedVisibility(
+        visible = requests.isNotEmpty(),
+        enter = fadeIn(tween(180)) + androidx.compose.animation.expandVertically(tween(240)),
+        exit = fadeOut(tween(140)) + androidx.compose.animation.shrinkVertically(tween(220)),
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Pending sent requests", color = palette.foreground, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Box(
+                    modifier = Modifier.clip(CircleShape).background(palette.mutedSurface).padding(horizontal = 8.dp, vertical = 3.dp),
+                ) {
+                    Text("${requests.size} waiting", color = palette.mutedForeground, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .border(1.dp, palette.border.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
+                    .background(palette.cardSurface),
+            ) {
+                requests.forEachIndexed { index, request ->
+                    StaggeredEntry(index = index) {
+                        PendingSentRow(
+                            request = request,
+                            showDivider = index != requests.lastIndex,
+                            onCancel = { onCancel(request) },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PendingSentRow(request: FriendRequest, showDivider: Boolean, onCancel: () -> Unit) {
+    val palette = LocalRestaurantPalette.current
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            ColoredAvatar(initials = request.contact.initials, color = request.contact.color, size = 40)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(request.contact.name, color = palette.foreground, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                val handle = request.contact.username?.let { "@$it" } ?: request.contact.phone.orEmpty()
+                Text("$handle - ${request.requestedAt}", color = palette.mutedForeground, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Row(
+                modifier = Modifier.height(34.dp).clip(CircleShape).border(1.dp, palette.border, CircleShape).clickable(onClick = onCancel).padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Cancel", color = palette.foreground, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        if (showDivider) {
+            Box(Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(1.dp).background(palette.border.copy(alpha = 0.5f)))
+        }
+    }
+}
 
 @Composable
 private fun FriendRequestsSection(
@@ -455,7 +573,7 @@ private fun FriendRequestRow(
                 Spacer(Modifier.height(2.dp))
                 val handle = request.contact.username?.let { "@$it" } ?: request.contact.phone.orEmpty()
                 Text(
-                    text = "$handle · ${request.requestedAt}",
+                    text = "$handle - ${request.requestedAt}",
                     color = palette.mutedForeground,
                     fontSize = 13.sp,
                     maxLines = 1,
@@ -798,19 +916,42 @@ private fun ContactsSection(
                     )
                 }
             } else {
-                contacts.forEachIndexed { idx, contact ->
-                    StaggeredEntry(index = idx) {
-                        ContactRow(
-                            contact = contact,
-                            showDivider = idx != contacts.size - 1,
-                            onPreview = { onPreview(contact) },
-                            onRemove = { onRequestRemove(contact) },
-                            onBlock = { onBlock(contact) },
-                        )
+                val grouped = contacts.sortedBy { it.name }.groupBy { contact ->
+                    contact.name.firstOrNull()?.uppercaseChar()?.takeIf { it in 'A'..'Z' }?.toString() ?: "#"
+                }
+                var rowIndex = 0
+                grouped.forEach { (letter, group) ->
+                    ContactGroupHeader(letter = letter, count = group.size)
+                    group.forEachIndexed { idx, contact ->
+                        StaggeredEntry(index = rowIndex++) {
+                            ContactRow(
+                                contact = contact,
+                                showDivider = idx != group.size - 1,
+                                onPreview = { onPreview(contact) },
+                                onRemove = { onRequestRemove(contact) },
+                                onBlock = { onBlock(contact) },
+                            )
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ContactGroupHeader(letter: String, count: Int) {
+    val palette = LocalRestaurantPalette.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(palette.mutedSurface.copy(alpha = 0.65f))
+            .padding(horizontal = 14.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(letter, color = palette.foreground, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
+        Text("$count", color = palette.mutedForeground, fontSize = 11.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -823,11 +964,6 @@ private fun ContactRow(
     onBlock: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val tierDotColor = remember(contact.id) {
-        // Deterministic tier dot per contact: even id -> gold, odd -> silver
-        val hash = contact.id.hashCode()
-        if (hash and 1 == 0) Color(0xFFEAB308) else Color(0xFF94A3B8)
-    }
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -839,23 +975,14 @@ private fun ContactRow(
         ) {
             ColoredAvatar(initials = contact.initials, color = contact.color, size = 40)
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = contact.name,
-                        color = palette.foreground,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(tierDotColor),
-                    )
-                }
+                Text(
+                    text = contact.name,
+                    color = palette.foreground,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 Spacer(Modifier.height(2.dp))
                 val sub = contact.username?.let { "@$it" } ?: contact.phone.orEmpty()
                 Text(
@@ -1015,7 +1142,7 @@ private fun BlockedRow(
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = "${item.reason} · ${item.blockedAt}",
+                    text = "${item.reason} - ${item.blockedAt}",
                     color = palette.mutedForeground,
                     fontSize = 12.sp,
                     maxLines = 1,

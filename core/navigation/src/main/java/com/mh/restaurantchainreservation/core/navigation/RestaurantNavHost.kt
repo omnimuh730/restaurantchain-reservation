@@ -26,7 +26,9 @@ import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -44,7 +46,8 @@ import androidx.navigation.navArgument
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavBar
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavTab
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavTabId
-import com.mh.restaurantchainreservation.core.i18n.LocaleManager
+import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationHost
+import com.mh.restaurantchainreservation.core.model.AuthSessionStore
 import com.mh.restaurantchainreservation.feature.auth.AuthRoutes
 import com.mh.restaurantchainreservation.feature.auth.ForgotPasswordScreen
 import com.mh.restaurantchainreservation.feature.auth.LoginScreen
@@ -65,6 +68,7 @@ import com.mh.restaurantchainreservation.feature.discover.ui.FoodResultsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.LocationResultsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.SectionListScreen
 import com.mh.restaurantchainreservation.feature.profile.ContactSupportScreen
+import com.mh.restaurantchainreservation.feature.profile.CreditCardsScreen
 import com.mh.restaurantchainreservation.feature.profile.FriendsScreen
 import com.mh.restaurantchainreservation.feature.profile.HelpCenterScreen
 import com.mh.restaurantchainreservation.feature.profile.HistoryScreen
@@ -93,6 +97,7 @@ fun RestaurantNavHost(
     val navController = rememberNavController()
     val context = LocalContext.current
     val isCompact = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
+    val authenticated by AuthSessionStore.isAuthenticated.collectAsState()
 
     val bottomTabs = listOf(
         BottomNavTab(BottomNavTabId.Discover, stringResource(I18nR.string.tab_discover)),
@@ -111,6 +116,20 @@ fun RestaurantNavHost(
     val showAppChrome = shouldShowAppChrome(destination?.route)
     val showBottomBar = isCompact && showAppChrome
 
+    LaunchedEffect(authenticated, destination?.route) {
+        val route = destination?.route ?: return@LaunchedEffect
+        if (!authenticated && requiresAuthRoute(route)) {
+            navController.navigate(AuthRoutes.Login) {
+                launchSingleTop = true
+            }
+        } else if (authenticated && route.startsWith(AuthRoutes.Root)) {
+            navController.navigate(DiscoverRoutes.Home) {
+                popUpTo(AuthRoutes.Login) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -120,9 +139,16 @@ fun RestaurantNavHost(
                     tabs = bottomTabs,
                     activeId = activeTabId,
                     onTabSelect = { id ->
-                        navController.navigateToTab(routeForTab(id))
+                        val route = routeForTab(id)
+                        if (!authenticated && requiresAuthRoute(route)) {
+                            navController.navigate(AuthRoutes.Login) { launchSingleTop = true }
+                        } else {
+                            navController.navigateToTab(route)
+                        }
                     },
-                    onQrPay = { navController.navigate(QrPayRoutes.Home) },
+                    onQrPay = {
+                        if (authenticated) navController.navigate(QrPayRoutes.Home) else navController.navigate(AuthRoutes.Login) { launchSingleTop = true }
+                    },
                     qrPayContentDescription = qrPayLabel,
                 )
             }
@@ -132,8 +158,9 @@ fun RestaurantNavHost(
             Box(modifier = Modifier.fillMaxSize()) {
                 AppGraph(
                     navController = navController,
-                    context = context,
                     contentPadding = paddingValues,
+                    authenticated = authenticated,
+                    onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
                     modifier = Modifier.fillMaxSize(),
                 )
                 if (showAppChrome) {
@@ -142,6 +169,7 @@ fun RestaurantNavHost(
                     // above the nav bar.
                     WishlistOverlayHost(bottomInset = paddingValues)
                 }
+                GlobalNotificationHost(bottomInset = if (showAppChrome) paddingValues else PaddingValues(0.dp))
             }
         } else if (showAppChrome) {
             Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
@@ -150,7 +178,14 @@ fun RestaurantNavHost(
                         val selected = tab.id == activeTabId
                         NavigationRailItem(
                             selected = selected,
-                            onClick = { navController.navigateToTab(routeForTab(tab.id)) },
+                            onClick = {
+                                val route = routeForTab(tab.id)
+                                if (!authenticated && requiresAuthRoute(route)) {
+                                    navController.navigate(AuthRoutes.Login) { launchSingleTop = true }
+                                } else {
+                                    navController.navigateToTab(route)
+                                }
+                            },
                             icon = { RailIconFor(tab.id) },
                             label = { Text(tab.label) },
                         )
@@ -159,21 +194,25 @@ fun RestaurantNavHost(
                 Box(modifier = Modifier.fillMaxSize()) {
                     AppGraph(
                         navController = navController,
-                        context = context,
                         contentPadding = PaddingValues(0.dp),
+                        authenticated = authenticated,
+                        onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
                         modifier = Modifier.fillMaxSize(),
                     )
                     WishlistOverlayHost()
+                    GlobalNotificationHost()
                 }
             }
         } else {
             Box(modifier = Modifier.fillMaxSize()) {
                 AppGraph(
                     navController = navController,
-                    context = context,
                     contentPadding = PaddingValues(0.dp),
+                    authenticated = authenticated,
+                    onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
                     modifier = Modifier.fillMaxSize(),
                 )
+                GlobalNotificationHost()
             }
         }
     }
@@ -233,17 +272,34 @@ private fun shouldShowAppChrome(route: String?): Boolean {
     }
 }
 
+private fun requiresAuthRoute(route: String?): Boolean {
+    if (route == null) return false
+    return route == WishlistRoutes.Home ||
+        route == QrPayRoutes.Home ||
+        route == BookingRoutes.BookTable ||
+        route == DiningRoutes.Home ||
+        route == DiningRoutes.Detail ||
+        route == DiningRoutes.Enjoy ||
+        route == ProfileRoutes.Home ||
+        route in ProfileRoutes.AllProfileSubRoutes
+}
+
 @Composable
 private fun AppGraph(
     navController: NavHostController,
-    context: android.content.Context,
     contentPadding: PaddingValues,
+    authenticated: Boolean,
+    onAuthenticated: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val initialStartDestination = remember {
+        if (authenticated) DiscoverRoutes.Home else AuthRoutes.Login
+    }
+
     Box(modifier = modifier) {
         NavHost(
             navController = navController,
-            startDestination = AuthRoutes.Login,
+            startDestination = initialStartDestination,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding),
@@ -381,10 +437,9 @@ private fun AppGraph(
                     onOpenContactSupport = { navController.navigate(ProfileRoutes.ContactSupport) },
                     onOpenTopUp = { navController.navigate(ProfileRoutes.TopUp) },
                     onOpenSendGift = { navController.navigate(ProfileRoutes.SendGift) },
+                    onOpenCards = { navController.navigate(ProfileRoutes.Cards) },
                     onOpenHistory = { navController.navigate(ProfileRoutes.History) },
                     onOpenRefer = { navController.navigate(ProfileRoutes.Refer) },
-                    onSwitchKorean = { LocaleManager.setLocale(context, "ko") },
-                    onSwitchEnglish = { LocaleManager.setLocale(context, "en") },
                 )
             }
             profileSubComposable(ProfileRoutes.Settings) {
@@ -401,6 +456,9 @@ private fun AppGraph(
             }
             profileSubComposable(ProfileRoutes.SendGift) {
                 SendGiftScreen(onBack = { navController.popBackStack() })
+            }
+            profileSubComposable(ProfileRoutes.Cards) {
+                CreditCardsScreen(onBack = { navController.popBackStack() })
             }
             profileSubComposable(ProfileRoutes.History) {
                 HistoryScreen(onBack = { navController.popBackStack() })
@@ -434,6 +492,7 @@ private fun AppGraph(
                     onNavigateRegister = { navController.navigate(AuthRoutes.Register) },
                     onNavigateForgot = { navController.navigate(AuthRoutes.Forgot) },
                     onAuthenticated = {
+                        onAuthenticated()
                         navController.navigate(DiscoverRoutes.Home) {
                             popUpTo(AuthRoutes.Login) { inclusive = true }
                             launchSingleTop = true
@@ -447,6 +506,7 @@ private fun AppGraph(
                 RegisterScreen(
                     onGoLogin = { navController.popBackStack(AuthRoutes.Login, inclusive = false) },
                     onComplete = {
+                        onAuthenticated()
                         navController.navigate(DiscoverRoutes.Home) {
                             popUpTo(AuthRoutes.Login) { inclusive = true }
                             launchSingleTop = true
@@ -464,8 +524,8 @@ private fun AppGraph(
                 )
             }
             composable(AuthRoutes.Root) {
-                LaunchedEffect(Unit) {
-                    navController.navigate(AuthRoutes.Login) {
+                LaunchedEffect(authenticated) {
+                    navController.navigate(if (authenticated) DiscoverRoutes.Home else AuthRoutes.Login) {
                         popUpTo(AuthRoutes.Root) { inclusive = true }
                         launchSingleTop = true
                     }

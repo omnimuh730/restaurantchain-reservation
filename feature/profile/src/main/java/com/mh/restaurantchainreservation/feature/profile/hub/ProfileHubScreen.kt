@@ -24,22 +24,20 @@ import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.NorthEast
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.PeopleOutline
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material.icons.outlined.WorkspacePremium
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -63,13 +61,13 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestauran
 import com.mh.restaurantchainreservation.core.i18n.LocaleManager
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.core.model.DailyBonusStore
+import com.mh.restaurantchainreservation.core.model.LocationStore
 import com.mh.restaurantchainreservation.core.model.NotificationStore
 import com.mh.restaurantchainreservation.core.model.PlanType
 import com.mh.restaurantchainreservation.core.model.SubscriptionStore
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlinx.coroutines.launch
 
 private const val APP_VERSION = "2.4.1"
 private const val LAST_RELEASED_ISO = "2026-04-10"
@@ -85,16 +83,17 @@ fun ProfileHubScreen(
     onOpenContactSupport: () -> Unit = {},
     onOpenTopUp: () -> Unit = {},
     onOpenSendGift: () -> Unit = {},
+    onOpenCards: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
     onOpenRefer: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
 
     val plan by SubscriptionStore.plan.collectAsState()
     val notifications by NotificationStore.notifications.collectAsState()
+    val currentLocation by LocationStore.current.collectAsState()
     val unreadCount = remember(notifications) { notifications.count { !it.read } }
     val dailyClaimed by DailyBonusStore.claimed.collectAsState()
 
@@ -104,14 +103,6 @@ fun ProfileHubScreen(
     var pendingAvatar by rememberSaveable { mutableStateOf<String?>(null) }
     var tierStatusOpen by rememberSaveable { mutableStateOf(false) }
     var bonusOpen by rememberSaveable { mutableStateOf(false) }
-    var currentLocale by remember { mutableStateOf(LocaleManager.getLocale(context)) }
-
-    LaunchedEffect(Unit) {
-        currentLocale = LocaleManager.getLocale(context)
-    }
-
-    val locationName = stringResource(I18nR.string.profile_default_location_name)
-    val locationAddress = stringResource(I18nR.string.profile_default_location_address)
 
     Box(
         modifier = modifier
@@ -170,24 +161,16 @@ fun ProfileHubScreen(
 
             StaggerItem {
                 AccountSettingsBlock(
-                    locationName = locationName,
-                    locationAddress = locationAddress,
+                    locationName = currentLocation.name,
+                    locationAddress = currentLocation.address,
                     isPro = plan.type == PlanType.Pro,
-                    currentLocale = currentLocale,
                     onLocationClick = onOpenLocation,
                     onSubscriptionClick = onOpenSubscription,
                     onFriendsClick = onOpenFriends,
+                    onCardsClick = onOpenCards,
                     onSettingsClick = onOpenSettings,
                     onHelpClick = onOpenHelp,
                     onContactSupportClick = onOpenContactSupport,
-                    onSwitchKorean = {
-                        currentLocale = "ko"
-                        scope.launch { LocaleManager.setLocale(context, "ko") }
-                    },
-                    onSwitchEnglish = {
-                        currentLocale = "en"
-                        scope.launch { LocaleManager.setLocale(context, "en") }
-                    },
                 )
             }
 
@@ -503,19 +486,15 @@ private fun AccountSettingsBlock(
     locationName: String,
     locationAddress: String,
     isPro: Boolean,
-    currentLocale: String,
     onLocationClick: () -> Unit,
     onSubscriptionClick: () -> Unit,
     onFriendsClick: () -> Unit,
+    onCardsClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onHelpClick: () -> Unit,
     onContactSupportClick: () -> Unit,
-    onSwitchKorean: () -> Unit,
-    onSwitchEnglish: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val koLabel = stringResource(I18nR.string.profile_lang_korean)
-    val enLabel = stringResource(I18nR.string.profile_lang_english)
     val proLabel = stringResource(I18nR.string.profile_menu_pro)
     val freeLabel = stringResource(I18nR.string.profile_menu_free)
 
@@ -549,22 +528,6 @@ private fun AccountSettingsBlock(
                     onClick = onLocationClick,
                 ),
                 ListGroupItem(
-                    id = "language-ko",
-                    label = stringResource(I18nR.string.profile_menu_language),
-                    icon = { MenuIcon(Icons.Outlined.Translate) },
-                    rightContent = {
-                        Text(
-                            text = if (currentLocale.startsWith("ko")) koLabel else enLabel,
-                            color = palette.foreground,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    },
-                    onClick = {
-                        if (currentLocale.startsWith("ko")) onSwitchEnglish() else onSwitchKorean()
-                    },
-                ),
-                ListGroupItem(
                     id = "subscription",
                     label = stringResource(I18nR.string.profile_menu_subscription),
                     icon = { MenuIcon(Icons.Outlined.WorkspacePremium) },
@@ -583,6 +546,12 @@ private fun AccountSettingsBlock(
                     label = stringResource(I18nR.string.profile_menu_friends),
                     icon = { MenuIcon(Icons.Outlined.PeopleOutline) },
                     onClick = onFriendsClick,
+                ),
+                ListGroupItem(
+                    id = "cards",
+                    label = "Credit cards",
+                    icon = { MenuIcon(Icons.Outlined.CreditCard) },
+                    onClick = onCardsClick,
                 ),
                 ListGroupItem(
                     id = "settings",

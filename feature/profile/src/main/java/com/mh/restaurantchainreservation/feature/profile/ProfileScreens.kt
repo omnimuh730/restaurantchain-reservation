@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.mh.restaurantchainreservation.feature.profile.hub.ProfileHubScreen
 import com.mh.restaurantchainreservation.feature.profile.subpages.ContactSupportPage
+import com.mh.restaurantchainreservation.feature.profile.subpages.CreditCardsPage
 import com.mh.restaurantchainreservation.feature.profile.subpages.FriendsPage
 import com.mh.restaurantchainreservation.feature.profile.subpages.HelpCenterPage
 import com.mh.restaurantchainreservation.feature.profile.subpages.HistoryPage
@@ -23,6 +24,7 @@ object ProfileRoutes {
     const val Notifications = "profile/notifications"
     const val TopUp = "profile/topup"
     const val SendGift = "profile/send-gift"
+    const val Cards = "profile/cards"
     const val History = "profile/history"
     const val Refer = "profile/refer"
     const val Friends = "profile/friends"
@@ -32,7 +34,7 @@ object ProfileRoutes {
     const val ContactSupport = "profile/contact-support"
 
     val AllProfileSubRoutes: List<String> = listOf(
-        Settings, Edit, Notifications, TopUp, SendGift, History,
+        Settings, Edit, Notifications, TopUp, SendGift, Cards, History,
         Refer, Friends, Location, Subscription, Help, ContactSupport,
     )
 }
@@ -48,10 +50,9 @@ fun ProfileHomeScreen(
     onOpenContactSupport: () -> Unit = {},
     onOpenTopUp: () -> Unit = {},
     onOpenSendGift: () -> Unit = {},
+    onOpenCards: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
     onOpenRefer: () -> Unit = {},
-    @Suppress("UNUSED_PARAMETER") onSwitchKorean: () -> Unit = {},
-    @Suppress("UNUSED_PARAMETER") onSwitchEnglish: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     ProfileHubScreen(
@@ -64,6 +65,7 @@ fun ProfileHomeScreen(
         onOpenContactSupport = onOpenContactSupport,
         onOpenTopUp = onOpenTopUp,
         onOpenSendGift = onOpenSendGift,
+        onOpenCards = onOpenCards,
         onOpenHistory = onOpenHistory,
         onOpenRefer = onOpenRefer,
         modifier = modifier,
@@ -93,6 +95,11 @@ fun TopUpScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 fun SendGiftScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     SendGiftPage(onBack = onBack, modifier = modifier)
+}
+
+@Composable
+fun CreditCardsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    CreditCardsPage(onBack = onBack, modifier = modifier)
 }
 
 @Composable

@@ -1,0 +1,628 @@
+package com.mh.restaurantchainreservation.feature.profile.subpages
+
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.ArrowDownward
+import androidx.compose.material.icons.outlined.ArrowUpward
+import androidx.compose.material.icons.outlined.CreditCard
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.QrCode
+import androidx.compose.material.icons.outlined.Send
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.DeterministicQrCode
+import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationCenter
+import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.AnimatedAmountDisplay
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.Currency
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.MoneyKeypad
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.amountAsNumber
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.appendDigit
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.backspaceDigit
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.formatAmountString
+import kotlin.math.max
+import kotlin.math.min
+
+private enum class CardMode { Browse, Deposit, Withdraw, Send, Settings }
+
+private data class ProfileCreditCard(
+    val id: String,
+    val nickname: String,
+    val holder: String,
+    val number: String,
+    val expiry: String,
+    val theme: CardTheme,
+    val frozen: Boolean = false,
+    val externalUse: Boolean = true,
+    val krwBalance: Double,
+    val usdBalance: Double,
+)
+
+private enum class CardTheme(
+    val label: String,
+    val start: Color,
+    val end: Color,
+    val accent: Color,
+) {
+    Rose("Rose", Color(0xFF111827), Color(0xFFFF385C), Color(0xFFFFB4C4)),
+    Ink("Ink", Color(0xFF0F172A), Color(0xFF334155), Color(0xFFA7F3D0)),
+    Sky("Sky", Color(0xFF0C4A6E), Color(0xFF38BDF8), Color(0xFFFFF7ED)),
+}
+
+private data class CardTx(
+    val label: String,
+    val amount: String,
+    val positive: Boolean,
+)
+
+@Composable
+fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val palette = LocalRestaurantPalette.current
+    val cards = remember {
+        mutableStateListOf(
+            ProfileCreditCard(
+                id = "card-main",
+                nickname = "Tonight Black",
+                holder = "Alex Chen",
+                number = "4890123456784242",
+                expiry = "08/29",
+                theme = CardTheme.Rose,
+                krwBalance = 820000.0,
+                usdBalance = 216.45,
+            ),
+            ProfileCreditCard(
+                id = "card-travel",
+                nickname = "Travel Card",
+                holder = "Alex Chen",
+                number = "5339123411119021",
+                expiry = "11/30",
+                theme = CardTheme.Sky,
+                krwBalance = 120000.0,
+                usdBalance = 84.0,
+            ),
+        )
+    }
+    var activeIndex by rememberSaveable { mutableIntStateOf(0) }
+    var mode by rememberSaveable { mutableStateOf(CardMode.Browse) }
+    var qrCard by remember { mutableStateOf<ProfileCreditCard?>(null) }
+
+    val activeCard = cards.getOrNull(activeIndex.coerceIn(0, max(cards.lastIndex, 0)))
+
+    fun replaceActive(next: ProfileCreditCard) {
+        val index = cards.indexOfFirst { it.id == next.id }
+        if (index >= 0) cards[index] = next
+    }
+
+    AnimatedContent(
+        targetState = mode,
+        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        label = "credit-card-mode",
+        modifier = modifier,
+    ) { targetMode ->
+        when (targetMode) {
+            CardMode.Browse -> {
+                SubpageScaffold(
+                    title = "Credit cards",
+                    onBack = onBack,
+                ) {
+                    HeaderAddButton {
+                        val index = cards.size + 1
+                        cards.add(
+                            ProfileCreditCard(
+                                id = "card-$index",
+                                nickname = "Tonight ${CardTheme.entries[index % CardTheme.entries.size].label}",
+                                holder = "Alex Chen",
+                                number = "4890${(100000000000 + index * 43129).toString().takeLast(12)}",
+                                expiry = "12/${29 + index}",
+                                theme = CardTheme.entries[index % CardTheme.entries.size],
+                                krwBalance = 0.0,
+                                usdBalance = 0.0,
+                            ),
+                        )
+                        activeIndex = cards.lastIndex
+                        GlobalNotificationCenter.success("Card created", "Your new Tonight card is ready.")
+                    }
+                    Spacer(Modifier.height(18.dp))
+                    CardCarousel(
+                        cards = cards,
+                        activeIndex = activeIndex,
+                        onSelect = { activeIndex = it },
+                    )
+                    Spacer(Modifier.height(18.dp))
+                    activeCard?.let { card ->
+                        ActionGrid(
+                            frozen = card.frozen,
+                            onDeposit = { if (!card.frozen) mode = CardMode.Deposit },
+                            onWithdraw = { if (!card.frozen) mode = CardMode.Withdraw },
+                            onSend = { if (!card.frozen) mode = CardMode.Send },
+                            onReceive = { qrCard = card },
+                            onSettings = { mode = CardMode.Settings },
+                        )
+                        Spacer(Modifier.height(22.dp))
+                        TransactionsCard(card = card)
+                        Spacer(Modifier.height(22.dp))
+                        Text("Your cards", color = palette.foreground, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                        Spacer(Modifier.height(10.dp))
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(20.dp))
+                                .border(1.dp, palette.border, RoundedCornerShape(20.dp))
+                                .background(palette.cardSurface),
+                        ) {
+                            cards.forEachIndexed { index, item ->
+                                CardListRow(
+                                    card = item,
+                                    selected = index == activeIndex,
+                                    onClick = { activeIndex = index },
+                                )
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(40.dp))
+                }
+            }
+            CardMode.Deposit, CardMode.Withdraw, CardMode.Send -> {
+                activeCard?.let { card ->
+                    CardAmountAction(
+                        mode = targetMode,
+                        card = card,
+                        onBack = { mode = CardMode.Browse },
+                        onApply = { amount, currency ->
+                            val signed = if (targetMode == CardMode.Withdraw || targetMode == CardMode.Send) -amount else amount
+                            replaceActive(
+                                when (currency) {
+                                    Currency.KRW -> card.copy(krwBalance = (card.krwBalance + signed).coerceAtLeast(0.0))
+                                    Currency.USD -> card.copy(usdBalance = (card.usdBalance + signed).coerceAtLeast(0.0))
+                                },
+                            )
+                            mode = CardMode.Browse
+                            GlobalNotificationCenter.success("Card updated", "Your card balance was updated.")
+                        },
+                    )
+                }
+            }
+            CardMode.Settings -> {
+                activeCard?.let { card ->
+                    CardSettingsPanel(
+                        card = card,
+                        canRemove = cards.size > 1,
+                        onBack = { mode = CardMode.Browse },
+                        onToggleFrozen = {
+                            replaceActive(card.copy(frozen = !card.frozen))
+                            GlobalNotificationCenter.info("Card settings", if (card.frozen) "Card unfrozen." else "Card frozen.")
+                        },
+                        onToggleExternal = {
+                            replaceActive(card.copy(externalUse = !card.externalUse))
+                            GlobalNotificationCenter.info("Card settings", if (card.externalUse) "External use disabled." else "External use enabled.")
+                        },
+                        onRemove = {
+                            val removeAt = cards.indexOfFirst { it.id == card.id }
+                            if (removeAt >= 0 && cards.size > 1) {
+                                cards.removeAt(removeAt)
+                                activeIndex = min(activeIndex, cards.lastIndex)
+                                mode = CardMode.Browse
+                                GlobalNotificationCenter.warning("Card closed", "${card.nickname} was removed.")
+                            }
+                        },
+                    )
+                }
+            }
+        }
+    }
+
+    qrCard?.let { card ->
+        AlertDialog(
+            onDismissRequest = { qrCard = null },
+            title = { Text("Receive on this card") },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    DeterministicQrCode(
+                        code = "tonight-card:${card.number}",
+                        modifier = Modifier.size(190.dp),
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(card.nickname, color = palette.foreground, fontWeight = FontWeight.Bold)
+                    Text(maskCard(card.number), color = palette.mutedForeground, fontSize = 13.sp)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { qrCard = null }) {
+                    Text("Done", color = palette.brand, fontWeight = FontWeight.Bold)
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun HeaderAddButton(onClick: () -> Unit) {
+    val palette = LocalRestaurantPalette.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .border(1.dp, palette.border, RoundedCornerShape(18.dp))
+            .background(palette.cardSurface)
+            .clickable(onClick = onClick)
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(Modifier.size(42.dp).clip(CircleShape).background(palette.brand.copy(alpha = 0.10f)), contentAlignment = Alignment.Center) {
+            Icon(Icons.Outlined.Add, null, tint = palette.brand, modifier = Modifier.size(22.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Open a new card", color = palette.foreground, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Every card stays multi-currency.", color = palette.mutedForeground, fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+private fun CardCarousel(cards: List<ProfileCreditCard>, activeIndex: Int, onSelect: (Int) -> Unit) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        items(cards, key = { it.id }) { card ->
+            val index = cards.indexOf(card)
+            val selected = index == activeIndex
+            val scale by animateFloatAsState(
+                targetValue = if (selected) 1f else 0.92f,
+                animationSpec = spring(dampingRatio = 0.72f, stiffness = 360f),
+                label = "card-scale",
+            )
+            CardFace(
+                card = card,
+                reveal = selected,
+                modifier = Modifier
+                    .width(318.dp)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    }
+                    .clickable { onSelect(index) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun CardFace(card: ProfileCreditCard, reveal: Boolean, modifier: Modifier = Modifier) {
+    val gradient = Brush.linearGradient(listOf(card.theme.start, card.theme.end))
+    Box(
+        modifier = modifier
+            .aspectRatio(1.58f)
+            .clip(RoundedCornerShape(24.dp))
+            .background(gradient)
+            .padding(22.dp),
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
+                Column {
+                    Text(card.nickname, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                    Text("TONIGHT CARD", color = Color.White.copy(alpha = 0.62f), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+                if (card.frozen) {
+                    Text(
+                        "FROZEN",
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(Color.White.copy(alpha = 0.18f)).padding(horizontal = 10.dp, vertical = 5.dp),
+                    )
+                }
+            }
+            Spacer(Modifier.weight(1f))
+            Text("Balance", color = Color.White.copy(alpha = 0.66f), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text(formatKrw(card.krwBalance), color = Color.White, fontSize = 25.sp, fontWeight = FontWeight.Black)
+            Text(formatUsd(card.usdBalance), color = card.theme.accent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(14.dp))
+            Text(if (reveal) formatCardNumber(card.number) else maskCard(card.number), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(card.holder.uppercase(), color = Color.White.copy(alpha = 0.82f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                Text(if (reveal) card.expiry else "**/**", color = Color.White.copy(alpha = 0.82f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActionGrid(
+    frozen: Boolean,
+    onDeposit: () -> Unit,
+    onWithdraw: () -> Unit,
+    onSend: () -> Unit,
+    onReceive: () -> Unit,
+    onSettings: () -> Unit,
+) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        CardAction(Icons.Outlined.ArrowDownward, "Top up", frozen, onDeposit, Modifier.weight(1f))
+        CardAction(Icons.Outlined.ArrowUpward, "Withdraw", frozen, onWithdraw, Modifier.weight(1f))
+        CardAction(Icons.Outlined.Send, "Send", frozen, onSend, Modifier.weight(1f))
+        CardAction(Icons.Outlined.QrCode, "Receive", false, onReceive, Modifier.weight(1f))
+        CardAction(Icons.Outlined.Settings, "Settings", false, onSettings, Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun CardAction(icon: ImageVector, label: String, disabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val palette = LocalRestaurantPalette.current
+    Column(
+        modifier = modifier
+            .height(82.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(if (disabled) palette.mutedSurface.copy(alpha = 0.60f) else palette.mutedSurface)
+            .clickable(enabled = !disabled, onClick = onClick)
+            .padding(vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(icon, null, tint = if (disabled) palette.mutedForeground.copy(alpha = 0.5f) else palette.foreground, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.height(6.dp))
+        Text(label, color = if (disabled) palette.mutedForeground.copy(alpha = 0.5f) else palette.foreground, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+    }
+}
+
+@Composable
+private fun TransactionsCard(card: ProfileCreditCard) {
+    val palette = LocalRestaurantPalette.current
+    val txs = remember(card.id, card.krwBalance, card.usdBalance) {
+        listOf(
+            CardTx("Coffee & brunch", "-$24.80", false),
+            CardTx("Card top up", "+${formatKrw(50000.0)}", true),
+            CardTx("Sent to Travel Card", "-$12.00", false),
+            CardTx("Dining reward", "+$4.25", true),
+        )
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(22.dp))
+            .border(1.dp, palette.border, RoundedCornerShape(22.dp))
+            .background(palette.cardSurface)
+            .padding(14.dp),
+    ) {
+        Text("Recent transactions", color = palette.foreground, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+        Spacer(Modifier.height(8.dp))
+        txs.forEach { tx ->
+            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(34.dp).clip(CircleShape).background(palette.mutedSurface), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Outlined.CreditCard, null, tint = palette.foreground, modifier = Modifier.size(17.dp))
+                }
+                Text(tx.label, color = palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 10.dp).weight(1f))
+                Text(tx.amount, color = if (tx.positive) palette.success else palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CardListRow(card: ProfileCreditCard, selected: Boolean, onClick: () -> Unit) {
+    val palette = LocalRestaurantPalette.current
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier = Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(listOf(card.theme.start, card.theme.end))),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Outlined.CreditCard, null, tint = Color.White, modifier = Modifier.size(22.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(card.nickname, color = palette.foreground, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+            Text(maskCard(card.number), color = palette.mutedForeground, fontSize = 12.sp)
+        }
+        if (selected) {
+            Text("Selected", color = palette.brand, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun CardAmountAction(
+    mode: CardMode,
+    card: ProfileCreditCard,
+    onBack: () -> Unit,
+    onApply: (Double, Currency) -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    var currency by rememberSaveable { mutableStateOf(Currency.KRW) }
+    var amount by rememberSaveable(currency) { mutableStateOf("") }
+    val numeric = amountAsNumber(amount)
+    val title = when (mode) {
+        CardMode.Deposit -> "Top up card"
+        CardMode.Withdraw -> "Withdraw from card"
+        else -> "Send from card"
+    }
+    val canConfirm = numeric > 0.0
+
+    SubpageScaffold(title = title, onBack = onBack) {
+        SmallCardHeader(card)
+        Spacer(Modifier.height(24.dp))
+        AnimatedAmountDisplay(
+            amount = formatAmountString(amount.ifEmpty { "0" }, currency),
+            symbol = if (currency == Currency.KRW) "W" else "$",
+            symbolColor = palette.brand,
+            valueColor = palette.foreground,
+            modifier = Modifier.fillMaxWidth(),
+            fontSize = 48,
+        )
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            CurrencyChip("KRW", currency == Currency.KRW, Modifier.weight(1f)) {
+                currency = Currency.KRW
+                amount = ""
+            }
+            CurrencyChip("USD", currency == Currency.USD, Modifier.weight(1f)) {
+                currency = Currency.USD
+                amount = ""
+            }
+        }
+        Spacer(Modifier.height(18.dp))
+        MoneyKeypad(
+            currency = currency,
+            onDigit = { amount = appendDigit(amount, it, currency) },
+            onBackspace = { amount = backspaceDigit(amount) },
+        )
+        Spacer(Modifier.height(18.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(54.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(if (canConfirm) palette.brand else palette.mutedSurface)
+                .clickable(enabled = canConfirm) { onApply(numeric, currency) },
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("Confirm", color = if (canConfirm) Color.White else palette.mutedForeground, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+        }
+    }
+}
+
+@Composable
+private fun CurrencyChip(label: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val palette = LocalRestaurantPalette.current
+    Box(
+        modifier = modifier
+            .height(42.dp)
+            .clip(RoundedCornerShape(999.dp))
+            .background(if (selected) palette.foreground else palette.mutedSurface)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, color = if (selected) palette.cardSurface else palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun SmallCardHeader(card: ProfileCreditCard) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Box(Modifier.size(48.dp).clip(RoundedCornerShape(15.dp)).background(Brush.linearGradient(listOf(card.theme.start, card.theme.end))), contentAlignment = Alignment.Center) {
+            Icon(Icons.Outlined.CreditCard, null, tint = Color.White, modifier = Modifier.size(23.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(card.nickname, color = LocalRestaurantPalette.current.foreground, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+            Text(maskCard(card.number), color = LocalRestaurantPalette.current.mutedForeground, fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+private fun CardSettingsPanel(
+    card: ProfileCreditCard,
+    canRemove: Boolean,
+    onBack: () -> Unit,
+    onToggleFrozen: () -> Unit,
+    onToggleExternal: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    var reveal by rememberSaveable { mutableStateOf(false) }
+    SubpageScaffold(title = "Card settings", onBack = onBack) {
+        CardFace(card = card, reveal = reveal, modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(18.dp))
+        SettingsRow(Icons.Outlined.Visibility, "Reveal card details", if (reveal) formatCardNumber(card.number) else "Hidden") {
+            reveal = !reveal
+        }
+        SettingsRow(Icons.Outlined.Lock, if (card.frozen) "Unfreeze card" else "Freeze card", if (card.frozen) "Payments are paused" else "Pause external use") {
+            onToggleFrozen()
+        }
+        SettingsRow(Icons.Outlined.CreditCard, "External card use", if (card.externalUse) "Enabled" else "Disabled") {
+            onToggleExternal()
+        }
+        Spacer(Modifier.height(18.dp))
+        AnimatedVisibility(visible = canRemove, enter = fadeIn(), exit = fadeOut()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xFFFF385C).copy(alpha = 0.10f))
+                    .clickable(onClick = onRemove),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text("Close card", color = palette.brand, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsRow(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
+    val palette = LocalRestaurantPalette.current
+    Row(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick).padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(Modifier.size(38.dp).clip(CircleShape).background(palette.mutedSurface), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = palette.foreground, modifier = Modifier.size(18.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, color = palette.foreground, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(subtitle, color = palette.mutedForeground, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
+private fun formatKrw(value: Double): String = "W" + "%,.0f".format(value)
+
+private fun formatUsd(value: Double): String = "$" + "%,.2f".format(value)
+
+private fun maskCard(number: String): String = "**** **** **** " + number.takeLast(4)
+
+private fun formatCardNumber(number: String): String = number.chunked(4).joinToString(" ")

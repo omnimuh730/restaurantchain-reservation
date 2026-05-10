@@ -148,7 +148,8 @@ fun TopUpPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     onCurrencyToggle = {
                         currency = if (currency == Currency.KRW) Currency.USD else Currency.KRW
                     },
-                    onAmountChange = { amountStr = it },
+                    onDigit = { amountStr = appendDigit(amountStr, it, currency) },
+                    onBackspace = { amountStr = backspaceDigit(amountStr) },
                     onPickPreset = { amountStr = it.toString() },
                     onPickProvider = { providerSheetOpen = true },
                     onContinue = { step = TopUpStep.Confirm },
@@ -258,7 +259,8 @@ private fun SelectView(
     provider: PaymentProvider?,
     onBack: () -> Unit,
     onCurrencyToggle: () -> Unit,
-    onAmountChange: (String) -> Unit,
+    onDigit: (String) -> Unit,
+    onBackspace: () -> Unit,
     onPickPreset: (Long) -> Unit,
     onPickProvider: () -> Unit,
     onContinue: () -> Unit,
@@ -318,8 +320,8 @@ private fun SelectView(
         // Numeric keypad
         MoneyKeypad(
             currency = currency,
-            onDigit = { onAmountChange(appendDigit(amountStr, it, currency)) },
-            onBackspace = { onAmountChange(backspaceDigit(amountStr)) },
+            onDigit = onDigit,
+            onBackspace = onBackspace,
             modifier = Modifier.padding(horizontal = 20.dp),
         )
 

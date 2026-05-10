@@ -41,6 +41,27 @@ object NotificationStore {
 
     fun currentUnreadCount(): Int = state.value.count { !it.read }
 
+    fun add(
+        title: String,
+        message: String,
+        kind: NotificationKind = NotificationKind.System,
+        bookingId: String? = null,
+        tab: String? = null,
+    ) {
+        state.value = listOf(
+            AppNotification(
+                id = "n-${System.currentTimeMillis()}",
+                title = title,
+                message = message,
+                time = "Just now",
+                read = false,
+                kind = kind,
+                bookingId = bookingId,
+                tab = tab,
+            ),
+        ) + state.value
+    }
+
     fun markAsRead(id: String) {
         state.value = state.value.map { if (it.id == id) it.copy(read = true) else it }
     }

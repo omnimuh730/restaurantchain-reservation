@@ -8,8 +8,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,10 +26,16 @@ import androidx.compose.material.icons.outlined.Backspace
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -50,6 +57,7 @@ fun AnimatedAmountDisplay(
     modifier: Modifier = Modifier,
     fontSize: Int = 52,
 ) {
+    val glyphs = remember(amount) { amountGlyphs(amount) }
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.Bottom,
@@ -63,10 +71,9 @@ fun AnimatedAmountDisplay(
             modifier = Modifier.padding(bottom = (fontSize * 0.18f).dp),
         )
         Spacer(Modifier.size(2.dp))
-        amount.forEachIndexed { index, ch ->
-            val key = "$index-$ch-${amount.length}"
+        glyphs.forEachIndexed { index, glyph ->
             AnimatedContent(
-                targetState = key,
+                targetState = glyph,
                 transitionSpec = {
                     (scaleIn(initialScale = 0.6f, animationSpec = spring(stiffness = 400f, dampingRatio = 0.6f)) +
                         fadeIn(tween(160))) togetherWith
@@ -74,13 +81,13 @@ fun AnimatedAmountDisplay(
                             fadeOut(tween(120)))
                 },
                 label = "amount_char_$index",
-            ) { _ ->
+            ) { item ->
                 Text(
-                    text = ch.toString(),
+                    text = item.char.toString(),
                     color = valueColor,
                     fontSize = fontSize.sp,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = (-0.025).sp,
+                    letterSpacing = 0.sp,
                 )
             }
         }
@@ -146,12 +153,41 @@ private fun KeypadButton(key: String, onClick: () -> Unit, modifier: Modifier = 
     val palette = LocalRestaurantPalette.current
     val shape = RoundedCornerShape(18.dp)
     val isEmpty = key.isBlank()
+    var pressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.94f else 1f,
+        animationSpec = spring(stiffness = 520f, dampingRatio = 0.72f),
+        label = "money_keypad_scale",
+    )
     Box(
         modifier = modifier
             .height(58.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(shape)
-            .background(if (isEmpty) Color.Transparent else palette.cardSurface)
-            .let { if (!isEmpty) it.clickable(onClick = onClick) else it },
+            .background(
+                when {
+                    isEmpty -> Color.Transparent
+                    pressed -> palette.brand.copy(alpha = 0.10f)
+                    else -> palette.cardSurface
+                },
+            )
+            .pointerInput(key, isEmpty) {
+                if (isEmpty) return@pointerInput
+                detectTapGestures(
+                    onPress = {
+                        pressed = true
+                        onClick()
+                        try {
+                            tryAwaitRelease()
+                        } finally {
+                            pressed = false
+                        }
+                    },
+                )
+            },
         contentAlignment = Alignment.Center,
     ) {
         when (key) {
@@ -227,3 +263,29 @@ fun backspaceDigit(current: String): String {
 }
 
 fun amountAsNumber(raw: String): Double = raw.toDoubleOrNull() ?: 0.0
+
+private data class AmountGlyph(val id: String, val char: Char)
+
+private fun amountGlyphs(formattedAmount: String): List<AmountGlyph> {
+    val normalized = formattedAmount.ifBlank { "0" }
+    val parts = normalized.split(".", limit = 2)
+    val intDigits = parts[0].filter { it.isDigit() }.ifEmpty { "0" }
+    val glyphs = mutableListOf<AmountGlyph>()
+
+    intDigits.forEachIndexed { index, char ->
+        glyphs += AmountGlyph("raw-$index", char)
+        val digitsAfter = intDigits.length - 1 - index
+        if (digitsAfter > 0 && digitsAfter % 3 == 0) {
+            glyphs += AmountGlyph("comma-$digitsAfter", ',')
+        }
+    }
+
+    if (parts.size > 1) {
+        glyphs += AmountGlyph("dot", '.')
+        parts[1].forEachIndexed { index, char ->
+            glyphs += AmountGlyph("dec-$index", char)
+        }
+    }
+
+    return glyphs
+}

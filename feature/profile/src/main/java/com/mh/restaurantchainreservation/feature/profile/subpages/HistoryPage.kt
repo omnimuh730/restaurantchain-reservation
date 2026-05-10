@@ -4,14 +4,16 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
@@ -26,7 +28,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,7 +39,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -87,6 +87,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.delay
 import kotlin.math.min
 
 private enum class TxnCategory(
@@ -139,7 +140,9 @@ private data class Txn(
     val address: String? = null,
 )
 
-private val MockTxns: List<Txn> by lazy { generateMockTransactions(84) }
+private const val HistoryPageSize = 20
+
+private val MockTxns: List<Txn> by lazy { generateMockTransactions(2_000) }
 
 @Composable
 fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
@@ -148,10 +151,14 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var range by rememberSaveable(stateSaver = dateRangeSaver()) {
         mutableStateOf(rangeFromPreset(PresetId.Month))
     }
-    var visible by rememberSaveable { mutableIntStateOf(20) }
+    var visible by rememberSaveable { mutableIntStateOf(HistoryPageSize) }
+    var loadingMore by rememberSaveable { mutableStateOf(false) }
     var openInvoice by rememberSaveable { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(category, range) { visible = 20 }
+    LaunchedEffect(category, range) {
+        visible = HistoryPageSize
+        loadingMore = false
+    }
 
     val filtered = remember(category, range) {
         MockTxns.filter { txn ->
@@ -235,31 +242,23 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 }
 
                 item(key = "more") {
-                    Spacer(Modifier.height(12.dp))
                     if (hasMore) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp)
-                                .clip(RoundedCornerShape(percent = 50))
-                                .border(1.dp, palette.foreground, RoundedCornerShape(percent = 50))
-                                .clickable { visible = min(visible + 20, filtered.size) },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = "Show ${min(20, filtered.size - visible)} more",
-                                color = palette.foreground,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                            )
+                        LaunchedEffect(filtered.size, visible, loadingMore) {
+                            if (!loadingMore) {
+                                loadingMore = true
+                                delay(420)
+                                visible = min(visible + HistoryPageSize, filtered.size)
+                                loadingMore = false
+                            }
                         }
-                    } else if (filtered.size > 20) {
+                        LoadingTransactionSkeleton()
+                    } else if (filtered.size > HistoryPageSize) {
                         Text(
                             text = "You are all caught up.",
                             color = palette.mutedForeground,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
                             textAlign = TextAlign.Center,
                         )
                     }
@@ -290,6 +289,70 @@ private fun LazyListScope.groupedTransactionItems(
                     modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
                 )
                 GroupCard(items = items, onTap = onTap)
+            }
+        }
+    }
+}
+
+@Composable
+private fun LoadingTransactionSkeleton() {
+    val palette = LocalRestaurantPalette.current
+    val pulse by rememberInfiniteTransition(label = "history_skeleton").animateFloat(
+        initialValue = 0.32f,
+        targetValue = 0.76f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(760),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "history_skeleton_alpha",
+    )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp, bottom = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        repeat(3) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(72.dp)
+                    .clip(RoundedCornerShape(22.dp))
+                    .border(1.dp, palette.border.copy(alpha = 0.45f), RoundedCornerShape(22.dp))
+                    .background(palette.cardSurface)
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(CircleShape)
+                        .background(palette.mutedSurface.copy(alpha = pulse)),
+                )
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.64f)
+                            .height(13.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(palette.mutedSurface.copy(alpha = pulse)),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.38f)
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(palette.mutedSurface.copy(alpha = pulse * 0.75f)),
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .width(54.dp)
+                        .height(13.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(palette.mutedSurface.copy(alpha = pulse)),
+                )
             }
         }
     }
@@ -448,6 +511,7 @@ private fun PeriodPicker(value: DateRangeMs, onChange: (DateRangeMs) -> Unit) {
     var draftFrom by remember { mutableStateOf<Long?>(value.fromMs) }
     var draftTo by remember { mutableStateOf<Long?>(value.toMs) }
     var selecting by remember { mutableStateOf(SelectingEdge.From) }
+    var draftIsCustom by remember { mutableStateOf(value.preset == PresetId.Custom) }
     var month by remember {
         mutableStateOf(monthAnchor(value.fromMs))
     }
@@ -458,6 +522,7 @@ private fun PeriodPicker(value: DateRangeMs, onChange: (DateRangeMs) -> Unit) {
             draftTo = value.toMs
             month = monthAnchor(value.fromMs)
             selecting = SelectingEdge.From
+            draftIsCustom = value.preset == PresetId.Custom
         }
     }
 
@@ -543,21 +608,15 @@ private fun PeriodPicker(value: DateRangeMs, onChange: (DateRangeMs) -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    PresetId.values().forEach { p ->
-                        val isActive = value.preset == p ||
-                            (p == PresetId.Custom && draftFrom == null && draftTo == null && value.preset == PresetId.Custom)
+                    PresetId.entries.filter { it != PresetId.Custom }.forEach { p ->
+                        val isActive = !draftIsCustom && value.preset == p
                         PresetChip(
                             label = p.label,
                             active = isActive,
                             onClick = {
-                                if (p == PresetId.Custom) {
-                                    draftFrom = null
-                                    draftTo = null
-                                    selecting = SelectingEdge.From
-                                } else {
-                                    onChange(rangeFromPreset(p))
-                                    open = false
-                                }
+                                draftIsCustom = false
+                                onChange(rangeFromPreset(p))
+                                open = false
                             },
                         )
                     }
@@ -575,7 +634,10 @@ private fun PeriodPicker(value: DateRangeMs, onChange: (DateRangeMs) -> Unit) {
                         value = draftFrom?.let { formatShortDate(it) } ?: "Add date",
                         active = selecting == SelectingEdge.From,
                         emphasized = draftFrom != null,
-                        onClick = { selecting = SelectingEdge.From },
+                        onClick = {
+                            draftIsCustom = true
+                            selecting = SelectingEdge.From
+                        },
                         modifier = Modifier.weight(1f),
                     )
                     Icon(
@@ -589,7 +651,12 @@ private fun PeriodPicker(value: DateRangeMs, onChange: (DateRangeMs) -> Unit) {
                         value = draftTo?.let { formatShortDate(it) } ?: "Add date",
                         active = selecting == SelectingEdge.To,
                         emphasized = draftTo != null,
-                        onClick = { if (draftFrom != null) selecting = SelectingEdge.To },
+                        onClick = {
+                            if (draftFrom != null) {
+                                draftIsCustom = true
+                                selecting = SelectingEdge.To
+                            }
+                        },
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -603,6 +670,7 @@ private fun PeriodPicker(value: DateRangeMs, onChange: (DateRangeMs) -> Unit) {
                     onPick = { picked ->
                         val pf = draftFrom
                         val pt = draftTo
+                        draftIsCustom = true
                         if (selecting == SelectingEdge.From || pf == null || pt != null) {
                             draftFrom = picked
                             draftTo = null
@@ -641,6 +709,7 @@ private fun PeriodPicker(value: DateRangeMs, onChange: (DateRangeMs) -> Unit) {
                             .clickable {
                                 draftFrom = null
                                 draftTo = null
+                                draftIsCustom = true
                                 selecting = SelectingEdge.From
                             }
                             .padding(vertical = 4.dp),

@@ -1,8 +1,10 @@
 package com.mh.restaurantchainreservation.core.i18n
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import java.util.Locale
 
 object LocaleManager {
     private const val LocalePrefsName = "restaurant_locale_prefs"
@@ -13,20 +15,33 @@ object LocaleManager {
         val stored = context.getSharedPreferences(LocalePrefsName, Context.MODE_PRIVATE)
             .getString(LocalePrefsKey, DefaultLocale)
             ?: DefaultLocale
-        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(stored))
+        applyLocale(context.applicationContext, stored)
     }
 
     fun setLocale(context: Context, languageTag: String) {
+        val normalized = languageTag.takeIf { it.startsWith("ko") }?.let { "ko" } ?: "en"
         context.getSharedPreferences(LocalePrefsName, Context.MODE_PRIVATE)
             .edit()
-            .putString(LocalePrefsKey, languageTag)
+            .putString(LocalePrefsKey, normalized)
             .apply()
-        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(languageTag))
+        applyLocale(context.applicationContext, normalized)
+        if (context !== context.applicationContext) {
+            applyLocale(context, normalized)
+        }
     }
 
     fun getLocale(context: Context): String {
         return context.getSharedPreferences(LocalePrefsName, Context.MODE_PRIVATE)
             .getString(LocalePrefsKey, DefaultLocale)
             ?: DefaultLocale
+    }
+
+    private fun applyLocale(context: Context, languageTag: String) {
+        val locale = Locale.forLanguageTag(languageTag)
+        Locale.setDefault(locale)
+        val configuration = Configuration(context.resources.configuration)
+        configuration.setLocale(locale)
+        context.resources.updateConfiguration(configuration, context.resources.displayMetrics)
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(languageTag))
     }
 }
