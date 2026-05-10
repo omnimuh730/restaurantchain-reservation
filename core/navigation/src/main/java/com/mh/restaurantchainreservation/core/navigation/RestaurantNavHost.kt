@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -463,18 +464,12 @@ private fun AppGraph(
                 )
             }
             composable(AuthRoutes.Root) {
-                LoginScreen(
-                    onNavigateRegister = { navController.navigate(AuthRoutes.Register) },
-                    onNavigateForgot = { navController.navigate(AuthRoutes.Forgot) },
-                    onAuthenticated = {
-                        navController.navigate(DiscoverRoutes.Home) {
-                            popUpTo(AuthRoutes.Login) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    },
-                    onClose = {},
-                    allowDismiss = false,
-                )
+                LaunchedEffect(Unit) {
+                    navController.navigate(AuthRoutes.Login) {
+                        popUpTo(AuthRoutes.Root) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
             }
         }
     }
