@@ -1,22 +1,22 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,11 +32,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.rememberScrollState
@@ -73,6 +74,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -80,6 +82,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -185,6 +188,7 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val added = filtered.filter { !it.isDebit }.sumOf { it.amountValue }
     val rewards = filtered.filter { it.category == TxnCategory.Reward || it.category == TxnCategory.Referral }
         .sumOf { it.amountValue }
+    val floatingTabsBottomSpace = 112.dp
 
     Box(
         modifier = modifier
@@ -203,7 +207,7 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 8.dp, bottom = 40.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 8.dp, bottom = floatingTabsBottomSpace),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 item(key = "summary") {
@@ -222,9 +226,7 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     )
                     Spacer(Modifier.height(16.dp))
                 }
-                item(key = "tabs") {
-                    SemanticCategoryTabs(active = category, counts = categoryCounts) { category = it }
-                    Spacer(Modifier.height(12.dp))
+                item(key = "activity-count") {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -232,7 +234,7 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         Text("${shown.size} shown", color = palette.mutedForeground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                         Text("${filtered.size} total", color = palette.mutedForeground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     }
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(10.dp))
                 }
 
                 if (groups.isEmpty()) {
@@ -265,6 +267,16 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 }
             }
         }
+
+        FloatingCategoryTabBar(
+            active = category,
+            counts = categoryCounts,
+            onChange = { category = it },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 16.dp, vertical = 14.dp)
+                .navigationBarsPadding(),
+        )
     }
 
     val openTxn = filtered.firstOrNull { it.id == openInvoice }
@@ -936,49 +948,46 @@ private fun DayCell(
     }
 }
 
-// === Tabs ===
+// === Floating Tabs ===
 
 @Composable
-private fun SemanticCategoryTabs(
+private fun FloatingCategoryTabBar(
     active: TxnCategory,
     counts: Map<TxnCategory, Int>,
     onChange: (TxnCategory) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
+    val shape = RoundedCornerShape(26.dp)
     val tabs = TxnCategory.entries
-    val activeIndex = tabs.indexOf(active).coerceAtLeast(0)
-    val pillShape = RoundedCornerShape(14.dp)
 
     BoxWithConstraints(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .clip(pillShape)
-            .background(palette.mutedSurface.copy(alpha = 0.55f))
-            .padding(4.dp),
+            .shadow(18.dp, shape, clip = false)
+            .clip(shape)
+            .border(1.dp, palette.border.copy(alpha = 0.55f), shape)
+            .background(palette.cardSurface.copy(alpha = 0.98f))
+            .padding(horizontal = 6.dp, vertical = 6.dp),
     ) {
-        val tabWidth = maxWidth / tabs.size
-        val targetX = tabWidth * activeIndex
-        val pillOffsetX by animateDpAsState(
-            targetValue = targetX,
-            animationSpec = spring(dampingRatio = 0.79f, stiffness = 360f),
-            label = "tab-pill-offset",
-        )
-        Box(
+        val inactiveSize = 38.dp
+        val activeMaxWidth = maxOf(96.dp, maxWidth - inactiveSize * (tabs.size - 1).toFloat() - 12.dp)
+
+        Row(
             modifier = Modifier
-                .offset(x = pillOffsetX)
-                .width(tabWidth)
-                .height(48.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(palette.brandSoftSurface),
-        )
-        Row(modifier = Modifier.fillMaxWidth()) {
+                .fillMaxWidth()
+                .height(48.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
             tabs.forEach { cat ->
-                FullWidthTabButton(
+                FloatingCategoryItem(
                     option = cat,
                     isActive = active == cat,
                     count = counts[cat] ?: 0,
+                    activeMaxWidth = activeMaxWidth,
+                    inactiveSize = inactiveSize,
                     onSelect = { onChange(cat) },
-                    modifier = Modifier.weight(1f),
                 )
             }
         }
@@ -986,43 +995,90 @@ private fun SemanticCategoryTabs(
 }
 
 @Composable
-private fun FullWidthTabButton(
+private fun FloatingCategoryItem(
     option: TxnCategory,
     isActive: Boolean,
     count: Int,
+    activeMaxWidth: Dp,
+    inactiveSize: Dp,
     onSelect: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
+    val countLabel = when {
+        count <= 0 -> null
+        count > 99 -> "99+"
+        else -> count.toString()
+    }
+    val label = countLabel?.let { "${option.label} $it" } ?: option.label
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isActive) palette.brand.copy(alpha = 0.11f) else Color.Transparent,
+        animationSpec = tween(durationMillis = 180),
+        label = "floating-category-bg",
+    )
     val contentColor by animateColorAsState(
         targetValue = if (isActive) palette.brand else palette.mutedForeground,
-        animationSpec = tween(180),
-        label = "tab-color",
+        animationSpec = tween(durationMillis = 180),
+        label = "floating-category-color",
     )
-    Column(
-        modifier = modifier
-            .height(48.dp)
-            .clip(RoundedCornerShape(12.dp))
+    val iconScale by animateFloatAsState(
+        targetValue = if (isActive) 1.08f else 1f,
+        animationSpec = spring(dampingRatio = 0.72f, stiffness = 420f),
+        label = "floating-category-icon-scale",
+    )
+    val animatedMinWidth by animateDpAsState(
+        targetValue = if (isActive) 90.dp else inactiveSize,
+        animationSpec = spring(dampingRatio = 0.78f, stiffness = 360f),
+        label = "floating-category-min-width",
+    )
+    val animatedMaxWidth by animateDpAsState(
+        targetValue = if (isActive) activeMaxWidth else inactiveSize,
+        animationSpec = spring(dampingRatio = 0.78f, stiffness = 360f),
+        label = "floating-category-max-width",
+    )
+
+    Row(
+        modifier = Modifier
+            .widthIn(min = animatedMinWidth, max = maxOf(animatedMinWidth, animatedMaxWidth))
+            .height(42.dp)
+            .animateContentSize(animationSpec = spring(dampingRatio = 0.78f, stiffness = 360f))
+            .clip(RoundedCornerShape(21.dp))
+            .background(backgroundColor)
             .clickable(onClick = onSelect)
-            .padding(vertical = 6.dp, horizontal = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+            .padding(horizontal = if (isActive) 13.dp else 0.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
     ) {
         Icon(
             imageVector = option.icon,
-            contentDescription = option.label,
+            contentDescription = label,
             tint = contentColor,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier
+                .size(20.dp)
+                .scale(iconScale),
         )
-        Spacer(Modifier.height(2.dp))
-        Text(
-            text = if (count > 0) "${option.label} $count" else option.label,
-            color = contentColor,
-            fontSize = 10.sp,
-            fontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        AnimatedVisibility(
+            visible = isActive,
+            enter = expandHorizontally(
+                expandFrom = Alignment.Start,
+                animationSpec = spring(dampingRatio = 0.82f, stiffness = 360f),
+            ) + fadeIn(animationSpec = tween(durationMillis = 120, delayMillis = 30)),
+            exit = shrinkHorizontally(
+                shrinkTowards = Alignment.Start,
+                animationSpec = tween(durationMillis = 140),
+            ) + fadeOut(animationSpec = tween(durationMillis = 90)),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = label,
+                    color = contentColor,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
     }
 }
 
