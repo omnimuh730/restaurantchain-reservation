@@ -1,0 +1,282 @@
+package com.mh.restaurantchainreservation.feature.profile.subpages
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.AnimatedAmountDisplay
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.Currency
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.MoneyKeypad
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.amountAsNumber
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.appendDigit
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.backspaceDigit
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.formatAmountString
+
+private val GiftPresetsKRW = listOf(500_000L, 1_000_000L, 2_000_000L)
+private val GiftPresetsUSD = listOf(10L, 25L, 50L)
+
+@Composable
+fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val palette = LocalRestaurantPalette.current
+    var currency by rememberSaveable { mutableStateOf(Currency.KRW) }
+    var amountStr by rememberSaveable(currency) { mutableStateOf(if (currency == Currency.KRW) "500000" else "10") }
+    var recipient by rememberSaveable { mutableStateOf("") }
+    val activeAmount = amountAsNumber(amountStr)
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(palette.cardSurface)
+            .statusBarsPadding(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(palette.mutedSurface)
+                    .clickable(onClick = onBack),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = palette.foreground, modifier = Modifier.size(18.dp))
+            }
+            Spacer(Modifier.size(12.dp))
+            Text("Send a gift", color = palette.foreground, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        // Recipient input
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0xFFF3F4F6))
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Icon(Icons.Outlined.PersonOutline, null, tint = Color(0xFF9CA3AF), modifier = Modifier.size(18.dp))
+            Box(modifier = Modifier.weight(1f)) {
+                if (recipient.isEmpty()) {
+                    Text("Who is this for? (Username)", color = Color(0xFF9CA3AF), fontSize = 14.sp)
+                }
+                BasicTextField(
+                    value = recipient,
+                    onValueChange = { recipient = it },
+                    singleLine = true,
+                    cursorBrush = SolidColor(palette.brand),
+                    textStyle = TextStyle(color = palette.foreground, fontSize = 14.sp),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        // Gift card with animated amount
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            GiftCard(currency = currency, amountStr = amountStr, modifier = Modifier.weight(1f))
+            Spacer(Modifier.size(12.dp))
+            CurrencySwitchSquare(currency = currency, onToggle = {
+                currency = if (currency == Currency.KRW) Currency.USD else Currency.KRW
+            })
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        // Presets
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            val presets = if (currency == Currency.KRW) GiftPresetsKRW else GiftPresetsUSD
+            presets.forEach { p ->
+                GiftPresetChip(
+                    label = if (currency == Currency.KRW) "₩%,d".format(p) else "$%,d".format(p),
+                    selected = p.toDouble() == activeAmount,
+                    onClick = { amountStr = p.toString() },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // Keypad
+        MoneyKeypad(
+            currency = currency,
+            onDigit = { amountStr = appendDigit(amountStr, it, currency) },
+            onBackspace = { amountStr = backspaceDigit(amountStr) },
+            modifier = Modifier.padding(horizontal = 20.dp),
+        )
+
+        Spacer(Modifier.weight(1f))
+
+        // Send CTA
+        val canSend = recipient.trim().isNotEmpty() && activeAmount > 0
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .fillMaxWidth()
+                .height(52.dp)
+                .clip(RoundedCornerShape(percent = 50))
+                .background(if (canSend) palette.brand else palette.brand.copy(alpha = 0.3f))
+                .clickable(enabled = canSend, onClick = onBack),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = if (canSend) "Send ${if (currency == Currency.KRW) "₩" else "$"}${formatAmountString(amountStr, currency)}" else "Send Gift",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.ExtraBold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun GiftCard(currency: Currency, amountStr: String, modifier: Modifier = Modifier) {
+    val gradient = if (currency == Currency.KRW) {
+        Brush.linearGradient(
+            listOf(Color(0xFF2563EB), Color(0xFF0EA5E9)),
+            start = androidx.compose.ui.geometry.Offset.Zero,
+            end = androidx.compose.ui.geometry.Offset.Infinite,
+        )
+    } else {
+        Brush.linearGradient(listOf(Color(0xFFFF5A5F), Color(0xFFE91E63)))
+    }
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(gradient)
+            .padding(20.dp),
+    ) {
+        Column {
+            Text(
+                text = "Gift Card Balance",
+                color = Color.White.copy(alpha = 0.85f),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 1.sp,
+            )
+            Spacer(Modifier.height(12.dp))
+            AnimatedAmountDisplay(
+                amount = formatAmountString(amountStr, currency),
+                symbol = if (currency == Currency.KRW) "₩" else "$",
+                symbolColor = Color.White.copy(alpha = 0.85f),
+                valueColor = Color.White,
+                fontSize = 36,
+            )
+            Spacer(Modifier.height(12.dp))
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.White.copy(alpha = 0.18f))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            ) {
+                Text("TONIGHT", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CurrencySwitchSquare(currency: Currency, onToggle: () -> Unit) {
+    val container = if (currency == Currency.KRW) Color(0xFFFFE4E6) else Color(0xFFE0F2FE)
+    val content = if (currency == Currency.KRW) Color(0xFFE91E63) else Color(0xFF1976D2)
+    Column(
+        modifier = Modifier
+            .size(width = 48.dp, height = 64.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(container)
+            .clickable(onClick = onToggle),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = if (currency == Currency.KRW) "$" else "₩",
+            color = content,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Icon(
+            imageVector = Icons.Filled.SwapHoriz,
+            contentDescription = "Switch currency",
+            tint = content,
+            modifier = Modifier.size(14.dp),
+        )
+    }
+}
+
+@Composable
+private fun GiftPresetChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val palette = LocalRestaurantPalette.current
+    val shape = RoundedCornerShape(percent = 50)
+    Box(
+        modifier = modifier
+            .height(40.dp)
+            .clip(shape)
+            .background(if (selected) palette.brand else palette.cardSurface)
+            .border(1.dp, if (selected) palette.brand else palette.border, shape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            color = if (selected) Color.White else palette.foreground,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}

@@ -1,0 +1,462 @@
+<resources>
+    <string name="app_name">레스토랑 체인 예약</string>
+
+    <string name="tab_discover">발견</string>
+    <string name="tab_wishlist">위시리스트</string>
+    <string name="tab_dining">다이닝</string>
+    <string name="tab_profile">프로필</string>
+    <string name="tab_qrpay">QR 결제</string>
+    <string name="qr_pay_aria">QR 결제</string>
+    <string name="brand_name">Tonight</string>
+    <string name="brand_tagline">레스토랑 예약</string>
+
+    <string name="title_login">로그인</string>
+    <string name="title_register">회원가입</string>
+    <string name="title_forgot_password">비밀번호 찾기</string>
+    <string name="title_discover">탐색</string>
+    <string name="title_search_results">검색 결과</string>
+    <string name="title_restaurant_detail">레스토랑 상세</string>
+    <string name="title_book_table">테이블 예약</string>
+    <string name="title_dining">다이닝</string>
+    <string name="title_dining_detail">예약 상세</string>
+    <string name="title_enjoy_meal">식사 즐기기</string>
+    <string name="title_wishlist">위시리스트</string>
+    <string name="title_profile">프로필</string>
+    <string name="title_settings">설정</string>
+    <string name="title_notifications">알림</string>
+    <string name="title_qrpay">QR 결제</string>
+
+    <string name="desc_sign_in">계속하려면 로그인하세요</string>
+    <string name="desc_discover_subtitle">레스토랑을 찾아보세요</string>
+    <string name="desc_discover_search_hint">지역, 음식, 분위기로 검색하세요</string>
+    <string name="desc_search_sheet">어디서 / 언제 / 몇 명</string>
+    <string name="desc_filter_placeholder">필터 내용 자리 표시자</string>
+    <string name="desc_booking_detail">상세 정보, 메뉴, 리뷰</string>
+    <string name="desc_booking_steps">날짜, 정보, 선호도, 결제 단계</string>
+    <string name="desc_dining_tabs">예정, 방문, 취소 예약 탭</string>
+    <string name="desc_dining_manage">예약 관리, 수정, 취소 상태</string>
+    <string name="desc_wishlist_saved">저장한 레스토랑과 음식</string>
+    <string name="desc_profile_wallet">지갑, 리워드, 프로필 액션</string>
+    <string name="desc_notifications_inbox">받은 알림 및 업데이트</string>
+    <string name="desc_qrpay">스캔하여 결제</string>
+
+    <string name="action_create_account">계정 만들기</string>
+    <string name="action_forgot_password">비밀번호 찾기</string>
+    <string name="action_open_search">검색 열기</string>
+    <string name="action_open_restaurant_detail">레스토랑 상세 보기</string>
+    <string name="action_filter">필터</string>
+    <string name="action_book_table">테이블 예약</string>
+    <string name="action_complete_booking">예약 완료</string>
+    <string name="action_open_booking_detail">예약 상세 보기</string>
+    <string name="action_open_enjoy_mode">식사 모드 열기</string>
+    <string name="action_settings">설정</string>
+    <string name="action_notifications">알림</string>
+    <string name="action_switch_to_korean">한국어로 변경</string>
+    <string name="action_switch_to_english">영어로 변경</string>
+    <string name="action_open_qrpay">QR 결제 열기</string>
+
+    <!-- Common actions -->
+    <string name="common_action_back">뒤로</string>
+    <string name="common_action_close">닫기</string>
+    <string name="common_action_done">완료</string>
+
+    <!-- Profile hub -->
+    <string name="profile_hub_title">프로필</string>
+    <string name="profile_hub_notifications_aria">알림</string>
+    <string name="profile_quick_topup">충전</string>
+    <string name="profile_quick_gift">선물</string>
+    <string name="profile_quick_activity">활동 내역</string>
+    <string name="profile_daily_reward_title">오늘의 데일리 리워드</string>
+    <string name="profile_daily_badge">데일리</string>
+    <string name="profile_daily_reward_subtitle">선물 상자를 열어 추가 포인트를 확인하세요.</string>
+    <string name="profile_refer_title">친구 초대</string>
+    <string name="profile_refer_subtitle">초대하면 둘 다 1만 원 리워드를 받아요.</string>
+    <string name="profile_account_settings">계정 설정</string>
+    <string name="profile_menu_location">위치</string>
+    <string name="profile_menu_subscription">구독</string>
+    <string name="profile_menu_pro">PRO</string>
+    <string name="profile_menu_free">무료</string>
+    <string name="profile_menu_friends">친구 및 연락처</string>
+    <string name="profile_menu_settings">설정</string>
+    <string name="profile_menu_help">도움말</string>
+    <string name="profile_menu_contact_support">고객센터 문의</string>
+    <string name="profile_menu_language">언어</string>
+    <string name="profile_lang_korean">한국어</string>
+    <string name="profile_lang_english">English</string>
+    <string name="profile_version">앱 버전 %1$s</string>
+    <string name="profile_last_released">최근 업데이트: %1$s</string>
+
+    <!-- Top card -->
+    <string name="profile_display_name">알렉스 첸</string>
+    <string name="profile_handle">\@alexchen</string>
+    <string name="profile_tier_pro">프로</string>
+    <string name="profile_tier_free">무료</string>
+    <string name="profile_gold_tier">골드 등급</string>
+    <string name="profile_points_to_platinum">플래티넘까지 660pt</string>
+    <string name="profile_avatar_aria">%1$s의 프로필 사진</string>
+
+    <!-- Wallet -->
+    <string name="profile_wallet_title">투나잇 월렛</string>
+    <string name="profile_wallet_show">보기</string>
+    <string name="profile_wallet_hide">숨기기</string>
+    <string name="profile_wallet_show_aria">잔액 보기</string>
+    <string name="profile_wallet_hide_aria">잔액 숨기기</string>
+    <string name="profile_wallet_domestic_krw">국내 · KRW</string>
+    <string name="profile_wallet_foreign_usd">해외 · USD</string>
+    <string name="profile_wallet_bonus">+₩330,000 보너스</string>
+    <string name="profile_wallet_label">투나잇 월렛</string>
+    <string name="profile_wallet_card_line">TONIGHT  WALLET  ·  ALEX CHEN</string>
+    <string name="profile_wallet_masked">••••••</string>
+    <string name="profile_wallet_krw_value">₩13,330,000</string>
+    <string name="profile_wallet_usd_value">$5,000.00</string>
+
+    <!-- Default location -->
+    <string name="profile_default_location_name">강남역</string>
+    <string name="profile_default_location_address">서울 강남구</string>
+
+    <!-- Avatar picker -->
+    <string name="profile_avatar_picker_title">사진 선택</string>
+    <string name="profile_avatar_picker_subtitle">큐레이션된 컬렉션에서 선택하세요</string>
+    <string name="profile_avatar_picker_reset">초기화</string>
+    <string name="profile_avatar_picker_save">사진 저장</string>
+
+    <!-- Tier modal -->
+    <string name="profile_tier_modal_title">등급 혜택</string>
+    <string name="profile_tier_modal_current">현재 등급</string>
+    <string name="profile_tier_modal_gold_level">GOLD · 레벨 2</string>
+    <string name="profile_tier_modal_to_platinum">플래티넘까지 660pt</string>
+    <string name="profile_tier_modal_current_badge">현재</string>
+    <string name="profile_tier_modal_pts_suffix">%1$dpt 이상</string>
+    <string name="profile_tier_silver_name">실버</string>
+    <string name="profile_tier_gold_name">골드</string>
+    <string name="profile_tier_platinum_name">플래티넘</string>
+    <string name="profile_tier_diamond_name">다이아몬드</string>
+    <string name="profile_tier_silver_perk_1">예약마다 기본 포인트 적립</string>
+    <string name="profile_tier_silver_perk_2">표준 고객 지원</string>
+    <string name="profile_tier_silver_perk_3">웰컴 ₩2,000 리워드</string>
+    <string name="profile_tier_gold_perk_1">예약마다 +10% 보너스 포인트</string>
+    <string name="profile_tier_gold_perk_2">우선 좌석 배정</string>
+    <string name="profile_tier_gold_perk_3">생일 특별 메뉴</string>
+    <string name="profile_tier_gold_perk_4">빠른 고객 지원</string>
+    <string name="profile_tier_platinum_perk_1">예약마다 +20% 보너스 포인트</string>
+    <string name="profile_tier_platinum_perk_2">컨시어지 예약 지원</string>
+    <string name="profile_tier_platinum_perk_3">독점 셰프 다이닝</string>
+    <string name="profile_tier_platinum_perk_4">연 1회 노쇼 면책</string>
+    <string name="profile_tier_diamond_perk_1">예약마다 +30% 보너스 포인트</string>
+    <string name="profile_tier_diamond_perk_2">초청제 투나잇 이벤트</string>
+    <string name="profile_tier_diamond_perk_3">전용 다이닝 컨시어지</string>
+    <string name="profile_tier_diamond_perk_4">서프라이즈 웰컴 기프트</string>
+
+    <!-- Daily bonus -->
+    <string name="profile_daily_drop_label">데일리 드롭</string>
+    <string name="profile_daily_pick_title">선물 고르기</string>
+    <string name="profile_daily_won_title">당첨!</string>
+    <string name="profile_daily_pick_subtitle">상자 하나를 눌러 오늘의 선물을 확인하세요.</string>
+    <string name="profile_daily_won_subtitle">오늘의 데일리 리워드입니다.</string>
+    <string name="profile_daily_claim">리워드 받기</string>
+    <string name="profile_daily_reward_pts">%1$spt</string>
+    <string name="profile_daily_reward_50">50pt</string>
+    <string name="profile_daily_reward_100">100pt</string>
+    <string name="profile_daily_reward_200">200pt</string>
+    <string name="profile_daily_reward_500">500pt</string>
+    <string name="profile_daily_reward_jackpot">잭팟 1,000pt</string>
+    <string name="profile_daily_reward_coupon">10% 쿠폰</string>
+    <string name="profile_daily_reward_dining">다이닝 쿠폰</string>
+    <string name="profile_daily_reward_fx">환전 무료 업그레이드</string>
+    <string name="profile_daily_reward_any_order">자유 주문권</string>
+
+    <!-- Settings page -->
+    <string name="profile_settings_appearance">화면</string>
+    <string name="profile_settings_theme">테마</string>
+    <string name="profile_settings_language">언어</string>
+    <string name="profile_settings_theme_light">라이트</string>
+    <string name="profile_settings_theme_dark">다크</string>
+    <string name="profile_settings_theme_system">시스템</string>
+
+    <!-- Dining list page -->
+    <string name="dining_page_title">나의 다이닝</string>
+    <string name="dining_next_up">다음 일정</string>
+    <string name="dining_no_upcoming_plans">예정된 일정 없음</string>
+    <string name="dining_zero_upcoming">예정 0건</string>
+    <string name="dining_discover_prompt">새로운 단골을 찾아보세요.</string>
+    <string name="dining_places_visited">방문한 곳</string>
+    <string name="dining_total_bookings">전체 예약</string>
+    <string name="dining_add_by_code">예약 코드로 추가</string>
+    <string name="dining_tab_list_aria">다이닝 예약 상태</string>
+
+    <string name="dining_tab_upcoming_label">예정</string>
+    <string name="dining_tab_upcoming_short">예정</string>
+    <string name="dining_tab_upcoming_title">예정된 예약</string>
+    <string name="dining_tab_upcoming_desc">대기 중인 요청과 도착 전 확정된 예약입니다.</string>
+
+    <string name="dining_tab_visited_label">방문</string>
+    <string name="dining_tab_visited_short">방문</string>
+    <string name="dining_tab_visited_title">방문한 곳</string>
+    <string name="dining_tab_visited_desc">완료된 식사의 영수증, 평점, 빠른 재예약을 확인하세요.</string>
+
+    <string name="dining_tab_cancel_label">취소</string>
+    <string name="dining_tab_cancel_short">취소</string>
+    <string name="dining_tab_cancel_title">취소된 예약</string>
+    <string name="dining_tab_cancel_desc">참고용으로 보관된 과거 취소와 노쇼입니다.</string>
+
+    <string name="dining_empty_upcoming_title">예정된 예약이 없어요</string>
+    <string name="dining_empty_upcoming_desc">대기 중이거나 확정된 예약이 여기 표시됩니다.</string>
+    <string name="dining_empty_visited_title">아직 방문한 곳이 없어요</string>
+    <string name="dining_empty_visited_desc">완료된 다이닝 경험이 여기 표시됩니다.</string>
+    <string name="dining_empty_cancel_title">취소 내역이 없어요</string>
+    <string name="dining_empty_cancel_desc">취소된 예약이 없어요. 멋진 다이닝 기록이에요!</string>
+    <string name="dining_empty_find_restaurant">레스토랑 찾기</string>
+
+    <!-- Booking card -->
+    <string name="booking_status_now">진행 중</string>
+    <string name="booking_status_pending">대기</string>
+    <string name="booking_status_confirmed">확정</string>
+    <string name="booking_status_rejected">거절</string>
+    <string name="booking_status_visited">방문</string>
+    <string name="booking_status_cancelled">취소</string>
+    <string name="booking_status_no_show">노쇼</string>
+
+    <string name="booking_confirmation_label">예약 코드</string>
+    <string name="booking_copy_label">예약 코드 복사</string>
+    <string name="booking_copied_toast">복사됨</string>
+
+    <string name="booking_waiting_title">승인 대기 중</string>
+    <string name="booking_waiting_desc">레스토랑이 예약 요청을 검토하고 있어요.</string>
+    <string name="booking_rejected_title">요청이 승인되지 않음</string>
+    <string name="booking_rejected_desc">새로운 시간을 시도하거나 목록에서 삭제하세요.</string>
+
+    <string name="booking_rating_label">평점</string>
+    <string name="booking_paid_label">결제</string>
+    <string name="booking_points_label">포인트</string>
+
+    <string name="booking_action_enjoy">식사하기</string>
+    <string name="booking_action_scan">스캔</string>
+    <string name="booking_action_receipt">영수증</string>
+    <string name="booking_action_details">상세</string>
+    <string name="booking_action_request_again">다시 요청</string>
+    <string name="booking_action_book_again">다시 예약</string>
+    <string name="booking_action_manage">관리</string>
+    <string name="booking_action_invite">친구 초대</string>
+    <string name="booking_action_show_qr">QR 보기</string>
+    <string name="booking_action_delete">삭제</string>
+
+    <string name="booking_guests_one">%1$d명</string>
+    <string name="booking_guests_many">%1$d명</string>
+
+    <!-- Booking detail page -->
+    <string name="detail_header_title">예약</string>
+    <string name="detail_header_back">다이닝으로 돌아가기</string>
+    <string name="detail_header_share">예약 공유</string>
+    <string name="detail_save">저장</string>
+    <string name="detail_unsave">저장 해제</string>
+    <string name="detail_party">인원</string>
+    <string name="detail_section_restaurant">레스토랑</string>
+    <string name="detail_action_browse_menu">메뉴 보기</string>
+    <string name="detail_action_browse_menu_desc">방문 전에 메뉴를 확인해보세요</string>
+    <string name="detail_action_directions">길찾기</string>
+    <string name="detail_action_call">레스토랑 전화</string>
+    <string name="detail_section_details">상세</string>
+    <string name="detail_section_location">위치</string>
+    <string name="detail_dining_points">다이닝 포인트</string>
+    <string name="detail_dining_points_earned">%1$d 포인트 적립됨</string>
+    <string name="detail_dining_points_pending">%1$d 포인트 적립 예정</string>
+    <string name="detail_dining_points_none">이 예약은 포인트가 없습니다</string>
+    <string name="detail_your_rating">나의 평점</string>
+    <string name="detail_pending_title">승인 대기 중</string>
+    <string name="detail_pending_desc">레스토랑이 예약을 검토 중입니다. 승인 또는 거절되면 알림을 받습니다.</string>
+    <string name="detail_request_code">요청 코드</string>
+    <string name="detail_rejected_title">요청이 거절됨</string>
+    <string name="detail_rejected_desc">이 시간은 승인되지 않았어요. 다른 시간을 요청하거나 목록에서 삭제하세요.</string>
+    <string name="detail_share_hint">이 코드를 친구에게 공유하면 예약에 함께 참여할 수 있어요.</string>
+    <string name="detail_view_receipt">영수증 보기</string>
+    <string name="detail_book_again">다시 예약</string>
+    <string name="detail_show_qr">QR 보기</string>
+    <string name="detail_invite">초대</string>
+    <string name="detail_occasion_birthday">생일</string>
+    <string name="detail_occasion_anniversary">기념일</string>
+    <string name="detail_occasion_date">데이트</string>
+    <string name="detail_occasion_special">스페셜</string>
+
+    <!-- Manage sheet -->
+    <string name="manage_title">예약 관리</string>
+    <string name="manage_subtitle">변경하거나 자리를 반환하세요.</string>
+    <string name="manage_modify">예약 수정</string>
+    <string name="manage_modify_desc">인원, 좌석, 시간 또는 요청을 변경하세요.</string>
+    <string name="manage_cancel">예약 취소</string>
+    <string name="manage_cancel_desc">반환된 자리는 레스토랑이 받게 됩니다.</string>
+    <string name="manage_close">닫기</string>
+
+    <!-- Cancel confirm -->
+    <string name="cancel_confirm_title">이 예약을 취소할까요?</string>
+    <string name="cancel_confirm_body">%1$s의 자리를 반환합니다.</string>
+    <string name="cancel_confirm_warning">되돌릴 수 없습니다</string>
+    <string name="cancel_confirm_keep">유지</string>
+    <string name="cancel_confirm_cancel">취소</string>
+
+    <!-- Modify modal -->
+    <string name="modify_title_chip">예약 수정</string>
+    <string name="modify_label_guests">인원</string>
+    <string name="modify_label_time">시간</string>
+    <string name="modify_label_seating">좌석</string>
+    <string name="modify_label_note">메모</string>
+    <string name="modify_note_hint">알레르기, 기념일 또는 특별 요청…</string>
+    <string name="modify_save">저장</string>
+
+    <!-- Show QR modal -->
+    <string name="show_qr_title">도착 QR</string>
+    <string name="show_qr_subtitle">호스트 스탠드에서 보여주세요.</string>
+    <string name="show_qr_close">QR 닫기</string>
+    <string name="show_qr_save">저장</string>
+    <string name="show_qr_share">공유</string>
+
+    <!-- Add booking code modal -->
+    <string name="add_code_title">예약 코드 추가</string>
+    <string name="add_code_subtitle">공유된 예약 코드로 예약에 참여하세요.</string>
+    <string name="add_code_done_title">예약이 확인됨</string>
+    <string name="add_code_done_subtitle">이 예약 카드가 다이닝 일정에 추가되었어요.</string>
+    <string name="add_code_label">예약 코드</string>
+    <string name="add_code_placeholder">CT-2026-0418A</string>
+    <string name="add_code_verify">확인</string>
+    <string name="add_code_done">완료</string>
+    <string name="add_code_view">보기</string>
+    <string name="add_code_verified_title">코드 확인됨</string>
+    <string name="add_code_verified_subtitle">%1$s가 예정된 초대장이 되었어요.</string>
+    <string name="add_code_error_not_found">예약 코드를 찾을 수 없어요. 글자와 숫자를 확인하세요.</string>
+    <string name="add_code_error_not_active">활성화된 확정 예약만 코드로 참여할 수 있어요.</string>
+
+    <!-- Menu modal -->
+    <string name="menu_modal_title_order">오늘의 추천</string>
+    <string name="menu_modal_title_preview">미리 계획하기</string>
+    <string name="menu_modal_chip_order">메뉴</string>
+    <string name="menu_modal_chip_preview">메뉴 미리보기</string>
+    <string name="menu_modal_subtitle">참고용입니다. 주문은 서버가 받아요.</string>
+    <string name="menu_modal_dishes_count">%1$d개 메뉴</string>
+    <string name="menu_modal_done">완료</string>
+
+    <!-- Order receipt modal -->
+    <string name="receipt_title">주문 영수증</string>
+    <string name="receipt_paid_chip">결제 완료</string>
+    <string name="receipt_subtotal">소계</string>
+    <string name="receipt_tax">세금</string>
+    <string name="receipt_tip">팁</string>
+    <string name="receipt_total">합계</string>
+    <string name="receipt_paid_with">결제 수단</string>
+    <string name="receipt_qty">수량 %1$d</string>
+    <string name="receipt_none">이 방문에 대한 영수증이 없어요.</string>
+    <string name="receipt_save">저장</string>
+    <string name="receipt_share">공유</string>
+    <string name="receipt_rating_label">나의 평점</string>
+
+    <!-- Invite friends -->
+    <string name="invite_title">친구 초대</string>
+    <string name="invite_subtitle">예약을 일행과 공유하세요.</string>
+    <string name="invite_share_link">링크 공유</string>
+    <string name="invite_copy_code">코드 복사</string>
+    <string name="invite_copied">복사됨</string>
+    <string name="invite_invited">초대됨 (%1$d)</string>
+    <string name="invite_done">완료</string>
+    <string name="invite_quick">빠른 초대</string>
+
+    <!-- Enjoy meal page -->
+    <string name="enjoy_back">뒤로</string>
+    <string name="enjoy_now_dining">현재 식사 중</string>
+    <string name="enjoy_upcoming_reservation">예정된 예약</string>
+    <string name="enjoy_status_live">진행 중</string>
+    <string name="enjoy_status_upcoming">예정</string>
+    <string name="enjoy_seated_for">착석 %1$s</string>
+    <string name="enjoy_starts_in">%1$s 후 시작</string>
+    <string name="enjoy_session_active_title">테이블 세션 활성화됨</string>
+    <string name="enjoy_session_active_desc">QR 세션, 영수증, 테이블 액션을 여기서 사용하세요.</string>
+    <string name="enjoy_ready_title">도착 준비 완료</string>
+    <string name="enjoy_ready_desc">예약 %1$s에 연결되어 있습니다.</string>
+    <string name="enjoy_at_the_table">테이블에서</string>
+    <string name="enjoy_before_arrive">도착 전에</string>
+    <string name="enjoy_action_pay">스캔 후 결제</string>
+    <string name="enjoy_action_pay_desc">테이블에서 영수증을 결제하세요</string>
+    <string name="enjoy_action_menu">메뉴 보기</string>
+    <string name="enjoy_action_menu_desc">오늘의 메뉴를 확인하세요</string>
+    <string name="enjoy_action_server">서버 호출</string>
+    <string name="enjoy_action_server_desc">테이블에서 도움을 요청하세요</string>
+    <string name="enjoy_action_show_qr">QR 보기</string>
+    <string name="enjoy_action_show_qr_desc">빠른 도착 체크인</string>
+    <string name="enjoy_action_invite">친구 초대</string>
+    <string name="enjoy_action_invite_desc">예약을 공유하세요</string>
+    <string name="enjoy_action_directions">길찾기</string>
+    <string name="enjoy_action_scanqr">도착 QR 스캔</string>
+    <string name="enjoy_action_scanqr_desc">호스트 스탠드에서 인증</string>
+    <string name="enjoy_action_preview_menu">메뉴 미리보기</string>
+    <string name="enjoy_action_preview_menu_desc">미리 주문을 계획하세요</string>
+    <string name="enjoy_checklist_title">도착 체크리스트</string>
+    <string name="enjoy_checklist_qr">QR 코드 준비</string>
+    <string name="enjoy_checklist_share">예약 코드를 일행과 공유</string>
+    <string name="enjoy_checklist_early">몇 분 일찍 도착</string>
+
+    <!-- Scan QR flow -->
+    <string name="scan_title">QR 다이닝</string>
+    <string name="scan_progress_label">진행 상황</string>
+    <string name="scan_progress_complete">완료</string>
+    <string name="scan_step_scan">스캔</string>
+    <string name="scan_step_arrived">도착</string>
+    <string name="scan_step_dining">식사</string>
+    <string name="scan_step_bill">영수증</string>
+    <string name="scan_step_pay">결제</string>
+    <string name="scan_step_review">리뷰</string>
+    <string name="scan_intro_scan_title">레스토랑 QR 스캔</string>
+    <string name="scan_intro_scan_desc">테이블 또는 호스트 스탠드의 코드로 도착을 인증하세요.</string>
+    <string name="scan_status_scanning">스캔 중…</string>
+    <string name="scan_status_detected">QR 코드 감지됨</string>
+    <string name="scan_button_simulate">QR 스캔 시뮬레이션</string>
+    <string name="scan_button_detected">감지됨</string>
+    <string name="scan_intro_arrived_title">환영합니다</string>
+    <string name="scan_intro_arrived_desc">테이블이 준비되었고 레스토랑에서 체크인되었습니다.</string>
+    <string name="scan_arrived_table">테이블</string>
+    <string name="scan_arrived_party">인원</string>
+    <string name="scan_arrived_continue">식사로 계속</string>
+    <string name="scan_intro_dining_title">맛있게 드세요</string>
+    <string name="scan_intro_dining_desc">레스토랑이 항목을 추가하면 영수증이 업데이트됩니다.</string>
+    <string name="scan_chip_dining">식사 중</string>
+    <string name="scan_request_bill">영수증 요청</string>
+    <string name="scan_intro_bill_title">영수증 확인</string>
+    <string name="scan_intro_bill_desc">결제 전에 항목과 팁을 확인하세요.</string>
+    <string name="scan_continue_payment">결제로 계속</string>
+    <string name="scan_intro_pay_done_title">결제 완료</string>
+    <string name="scan_intro_pay_done_desc">Tonight Wallet으로 결제됨. 리뷰로 이동합니다.</string>
+    <string name="scan_intro_review_title">어떠셨나요?</string>
+    <string name="scan_intro_review_desc">간단한 평점은 추천 향상에 도움이 됩니다.</string>
+    <string name="scan_review_taste">맛</string>
+    <string name="scan_review_ambience">분위기</string>
+    <string name="scan_review_service">서비스</string>
+    <string name="scan_review_value">가성비</string>
+    <string name="scan_review_overall">전체 %1$d/5 – %2$s</string>
+    <string name="scan_review_placeholder">경험을 다른 사람과 나눠주세요…</string>
+    <string name="scan_review_submit">리뷰 제출</string>
+    <string name="scan_review_skip">건너뛰기</string>
+    <string name="scan_review_thanks_title">감사합니다</string>
+    <string name="scan_review_thanks_desc">리뷰가 제출되었어요.</string>
+    <string name="scan_done_title">모두 완료</string>
+    <string name="scan_done_subtitle">%1$s에서 식사해주셔서 감사합니다.</string>
+    <string name="scan_done_receipt">디지털 영수증</string>
+    <string name="scan_done_paid_chip">결제 완료</string>
+    <string name="scan_done_items">%1$d개 항목</string>
+    <string name="scan_done_total_paid">총 결제액</string>
+    <string name="scan_done_reward_points">+%1$d 리워드 포인트</string>
+    <string name="scan_done_reward_desc">이번 방문에서 적립</string>
+    <string name="scan_done_discover_more">더 많은 레스토랑 둘러보기</string>
+    <string name="scan_done_back">나의 다이닝으로</string>
+    <string name="scan_rating_label_1">아쉬움</string>
+    <string name="scan_rating_label_2">개선 필요</string>
+    <string name="scan_rating_label_3">괜찮음</string>
+    <string name="scan_rating_label_4">즐거움</string>
+    <string name="scan_rating_label_5">최고</string>
+    <string name="scan_pay_slide">슬라이드 결제 – %1$s</string>
+    <string name="scan_pay_complete">결제 완료!</string>
+    <string name="scan_bill_running_total">실시간 합계</string>
+    <string name="scan_bill_tax_at_checkout">결제 시 세금 계산</string>
+    <string name="scan_bill_live">실시간 영수증</string>
+    <string name="scan_bill_yours">영수증</string>
+    <string name="scan_bill_updating">업데이트 중</string>
+
+    <!-- Toast / generic -->
+    <string name="toast_server_notified_title">서버 호출됨</string>
+    <string name="toast_server_notified_body">직원이 곧 옵니다.</string>
+</resources>
