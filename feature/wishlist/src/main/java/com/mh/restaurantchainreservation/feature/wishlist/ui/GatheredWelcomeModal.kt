@@ -1,5 +1,7 @@
 package com.mh.restaurantchainreservation.feature.wishlist.ui
 
+import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -23,11 +25,14 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -39,21 +44,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 /**
  * One-shot welcome dialog shown the first time the user opens the Wishlist
- * tab in a session. Mirrors the React `GatheredModal` — backdrop dim, a
- * centered card with a 2x2 grid of image tiles that animate in from each
- * corner, then "We've gathered..." copy and a black "Got it" pill.
+ * tab in a session. Mirrors the React `GatheredModal` — Tailwind-style
+ * `backdrop-blur-sm` via [android.view.Window.setBackgroundBlurRadius] on API 31+,
+ * plus a light white scrim; older API uses a stronger frosted scrim only.
  */
 @Composable
 fun GatheredWelcomeModal(
     images: List<String>,
     onDismiss: () -> Unit,
 ) {
+    val palette = LocalRestaurantPalette.current
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -62,6 +70,38 @@ fun GatheredWelcomeModal(
             dismissOnClickOutside = true,
         ),
     ) {
+        val view = LocalView.current
+        val density = LocalDensity.current
+        val supportsBackdropBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+        DisposableEffect(view) {
+            val window = (view.parent as? DialogWindowProvider)?.window
+            val previousDim = window?.attributes?.dimAmount
+            if (window != null) {
+                window.setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT))
+                val attrs = window.attributes
+                attrs.dimAmount = 0f
+                window.attributes = attrs
+                if (supportsBackdropBlur) {
+                    // Match Tailwind default `--blur-sm` (~4px on web).
+                    val blurPx = (4f * density.density).roundToInt().coerceIn(1, 150)
+                    window.setBackgroundBlurRadius(blurPx)
+                }
+            }
+            onDispose {
+                if (window != null) {
+                    if (supportsBackdropBlur) {
+                        window.setBackgroundBlurRadius(0)
+                    }
+                    if (previousDim != null) {
+                        val a = window.attributes
+                        a.dimAmount = previousDim
+                        window.attributes = a
+                    }
+                }
+            }
+        }
+
         val backdropAlpha = remember { Animatable(0f) }
         val cardScale = remember { Animatable(0.95f) }
         val cardY = remember { Animatable(50f) }
@@ -101,7 +141,22 @@ fun GatheredWelcomeModal(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = backdropAlpha.value * 0.45f))
+                .background(
+                    if (supportsBackdropBlur) {
+                        // Light veil on top of real backdrop blur (like bg-white/30 + backdrop-blur-sm).
+                        if (palette.isDark) {
+                            Color.White.copy(alpha = backdropAlpha.value * 0.22f)
+                        } else {
+                            Color.White.copy(alpha = backdropAlpha.value * 0.38f)
+                        }
+                    } else {
+                        if (palette.isDark) {
+                            Color.White.copy(alpha = backdropAlpha.value * 0.28f)
+                        } else {
+                            Color.White.copy(alpha = backdropAlpha.value * 0.82f)
+                        }
+                    },
+                )
                 .clickable(
                     indication = null,
                     interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },

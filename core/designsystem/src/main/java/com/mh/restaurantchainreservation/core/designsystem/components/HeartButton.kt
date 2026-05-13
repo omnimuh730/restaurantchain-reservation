@@ -29,9 +29,17 @@ import androidx.compose.ui.unit.dp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 
 enum class HeartButtonSize(val container: Dp, val icon: Dp) {
-    Small(container = 28.dp, icon = 15.dp),
-    Medium(container = 36.dp, icon = 18.dp),
-    Large(container = 42.dp, icon = 22.dp),
+    Small(container = 28.dp, icon = 21.dp),
+    Medium(container = 36.dp, icon = 27.dp),
+    Large(container = 42.dp, icon = 32.dp),
+}
+
+enum class HeartButtonStyle {
+    /** Circular scrim behind the heart (default). */
+    Floating,
+
+    /** Heart only on top of imagery; no circular background (e.g. discover photo cards). */
+    Overlay,
 }
 
 @Composable
@@ -40,6 +48,7 @@ fun HeartButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     size: HeartButtonSize = HeartButtonSize.Medium,
+    style: HeartButtonStyle = HeartButtonStyle.Floating,
     contentDescription: String = if (active) "Remove from saved" else "Save",
     containerColor: Color = Color.Black.copy(alpha = 0.38f),
     activeContainerColor: Color = Color.Black.copy(alpha = 0.38f),
@@ -68,12 +77,19 @@ fun HeartButton(
         previous = active
     }
 
+    val scrimModifier = if (style == HeartButtonStyle.Floating) {
+        Modifier
+            .clip(CircleShape)
+            .background(if (active) activeContainerColor else containerColor)
+    } else {
+        Modifier
+    }
+
     Box(
         modifier = modifier
             .size(size.container)
             .scale(scale.value)
-            .clip(CircleShape)
-            .background(if (active) activeContainerColor else containerColor)
+            .then(scrimModifier)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,

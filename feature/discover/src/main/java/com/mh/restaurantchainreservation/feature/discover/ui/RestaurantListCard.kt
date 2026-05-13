@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
+import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.WishlistStore
@@ -76,6 +77,7 @@ fun RestaurantListCard(
                 active = saved,
                 onClick = { WishlistStore.openPicker(restaurant) },
                 size = HeartButtonSize.Medium,
+                style = HeartButtonStyle.Overlay,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(10.dp),

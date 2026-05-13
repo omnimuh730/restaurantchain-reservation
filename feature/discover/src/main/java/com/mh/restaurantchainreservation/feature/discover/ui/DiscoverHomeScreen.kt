@@ -75,6 +75,7 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
+import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Banner
 import com.mh.restaurantchainreservation.core.model.City
@@ -409,10 +410,12 @@ private fun GlassSearchButton(
         onClick = onClick,
         modifier = modifier
             .height(height)
-            .clip(RoundedCornerShape(999.dp))
+            .clip(RoundedCornerShape(topStart = 5.dp,
+                topEnd = 5.dp, bottomEnd = 5.dp,
+                bottomStart = 5.dp))
             .border(1.dp, Color.White.copy(alpha = 0.45f), RoundedCornerShape(999.dp))
-            .background(Color.White.copy(alpha = if (compact) 0.34f else 0.24f))
-            .padding(horizontal = if (compact) 10.dp else 12.dp),
+//            .background(Color.White.copy(alpha = if (compact) 0.34f else 0.24f))
+//            .padding(horizontal = if (compact) 10.dp else 12.dp),
     ) {
         Box(modifier = Modifier.matchParentSize()) {
             Box(
@@ -527,7 +530,10 @@ private fun QuickCategoryButton(
 ) {
     val palette = LocalRestaurantPalette.current
     PressableScale(onClick = onClick, modifier = modifier.padding(horizontal = 2.dp)) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Box(
                 modifier = Modifier
                     .size(54.dp)
@@ -740,6 +746,7 @@ private fun AirbnbMiniCard(
                     active = saved,
                     onClick = { WishlistStore.openPicker(restaurant) },
                     size = HeartButtonSize.Medium,
+                    style = HeartButtonStyle.Overlay,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(8.dp),
