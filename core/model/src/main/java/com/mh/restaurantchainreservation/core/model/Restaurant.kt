@@ -224,9 +224,84 @@ object DiscoverData {
         ),
     )
 
+    /**
+     * Extra mock rows so each price tab has a long list (used by discover "Restaurants by Price").
+     * Distinct ids: `catalog-t{1-4}-{001-024}`.
+     */
+    private val priceCatalogPerTier = 24
+
+    private val priceCatalogImagePool: List<String> = listOf(
+        "https://images.unsplash.com/photo-1678684279246-96e6afb970f2?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1590189599125-67138c6509ef?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1657502996869-6ccd568b9d41?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1681270507609-e2a5f21969b0?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1687276287139-88f7333c8ca4?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1694834589398-27b369c6f7a6?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1731460202531-bf8389d565f7?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1564759319376-a60b400ced8e?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1753722157947-8a50f04a9309?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1773188243397-29591fa09047?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1763867641400-96b9cccdbf7d?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1768397003905-a202ea6325f5?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1526366411709-472085c8a586?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1598990386084-8af4dd12b3b4?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1762922425306-ef64664f6e4d?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1675150303909-1bb94e33132f?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1692780941487-505d5d908aa6?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop",
+    )
+
+    private val priceCatalogNameA = listOf(
+        "Harbor", "Neon", "Maple", "Copper", "Velvet", "Stone", "Silver", "Golden",
+        "Urban", "Garden", "Riverside", "Summit", "Lotus", "Ember", "Crimson", "Azure",
+    )
+    private val priceCatalogNameB = listOf(
+        "Kitchen", "Table", "Yard", "House", "Bistro", "Grill", "Noodle", "Tavern",
+        "Cellar", "Roof", "Counter", "Hall", "Corner", "Market", "Social", "Club",
+    )
+    private val priceCatalogCuisines = listOf(
+        "Korean", "Japanese", "Italian", "Thai", "French", "Chinese", "Mexican", "Indian",
+        "Vietnamese", "Spanish", "Greek", "Turkish", "BBQ", "Seafood", "Steakhouse", "Brunch",
+        "Mediterranean", "Fusion", "American", "Peruvian", "Ethiopian", "Lebanese", "Polish", "Tapas",
+    )
+    private val priceCatalogAreas = listOf(
+        "Downtown", "Midtown", "Arts District", "Waterfront", "Old Town", "North End",
+        "SoHo", "West Loop", "Koreatown", "Japantown", "Uptown", "Financial District",
+    )
+    private val priceCatalogTags = listOf("New", "Popular", "Chef's pick", "Local gem", null, null, null)
+
+    private fun buildPriceTierCatalog(): List<Restaurant> {
+        fun tier(price: String, tierKey: String): List<Restaurant> {
+            return (1..priceCatalogPerTier).map { idx ->
+                val i = idx - 1
+                val baseName = "${priceCatalogNameA[i % priceCatalogNameA.size]} ${priceCatalogNameB[(i / priceCatalogNameA.size) % priceCatalogNameB.size]}"
+                val name = "$baseName · $idx"
+                val cuisine = priceCatalogCuisines[i % priceCatalogCuisines.size]
+                val rating = (3.85 + (i % 14) * 0.08).coerceAtMost(5.0)
+                val reviews = 180 + i * 97 + (tierKey.last().digitToIntOrNull()?.times(11) ?: 0)
+                val distance = "${(i % 8) + 1}.${(i * 7) % 10} mi"
+                Restaurant(
+                    id = "catalog-$tierKey-${idx.toString().padStart(3, '0')}",
+                    name = name,
+                    cuisine = cuisine,
+                    rating = rating,
+                    reviews = reviews,
+                    price = price,
+                    distance = distance,
+                    image = priceCatalogImagePool[i % priceCatalogImagePool.size],
+                    area = priceCatalogAreas[i % priceCatalogAreas.size],
+                    tag = priceCatalogTags[i % priceCatalogTags.size],
+                )
+            }
+        }
+        return tier("$", "t1") + tier("$$", "t2") + tier("$$$", "t3") + tier("$$$$", "t4")
+    }
+
     /** Combined catalog used for search / detail lookups. */
     val ALL: List<Restaurant> by lazy {
-        (MONTHLY_BEST + LOVED_BY_LOCALS + VIRAL + DATE_NIGHT).distinctBy { it.id }
+        (MONTHLY_BEST + LOVED_BY_LOCALS + VIRAL + DATE_NIGHT + buildPriceTierCatalog()).distinctBy { it.id }
     }
 
     fun findById(id: String): Restaurant? = ALL.firstOrNull { it.id == id }
