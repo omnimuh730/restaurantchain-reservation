@@ -36,7 +36,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -55,10 +54,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -95,6 +98,8 @@ import com.mh.restaurantchainreservation.feature.discover.R
 import java.text.NumberFormat
 import java.util.Locale
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 
 /** Thumbnail height:width = 105:110 → [Modifier.aspectRatio] uses width/height = 110/105. */
 private val DiscoverRestaurantImageAspectWidthOverHeight = 110f / 105f
@@ -161,6 +166,17 @@ private val RestaurantMiniCardTotalHeight = RestaurantMiniImageHeight + Restaura
 
 private val RestaurantSeeAllCardShape = RoundedCornerShape(18.dp)
 
+private fun restaurantsForPriceLabel(price: String): List<Restaurant> =
+    DiscoverData.ALL.filter { it.price == price }.ifEmpty {
+        DiscoverData.ALL.take(6).mapIndexed { index, restaurant ->
+            restaurant.copy(
+                id = "price-${price.length}-${restaurant.id}",
+                price = price,
+                tag = if (index % 2 == 0) "New" else "Sale",
+            )
+        }
+    }
+
 @Composable
 fun DiscoverHomeScreen(
     onOpenSearch: () -> Unit,
@@ -174,18 +190,28 @@ fun DiscoverHomeScreen(
     val palette = LocalRestaurantPalette.current
     val listState = rememberLazyListState()
     val news = remember { mockNews() }
-    var priceTabSelected by rememberSaveable { mutableStateOf("$$$") }
     val priceTabLabels = remember { listOf("$", "$$", "$$$", "$$$$") }
-    val restaurantsByPrice = remember(priceTabSelected) {
-        DiscoverData.ALL.filter { it.price == priceTabSelected }.ifEmpty {
-            DiscoverData.ALL.take(6).mapIndexed { index, restaurant ->
-                restaurant.copy(
-                    id = "price-${priceTabSelected.length}-${restaurant.id}",
-                    price = priceTabSelected,
-                    tag = if (index % 2 == 0) "New" else "Sale",
-                )
+    var priceTabIndex by rememberSaveable { mutableIntStateOf(2) }
+    val pricePagerState = rememberPagerState(
+        initialPage = priceTabIndex.coerceIn(0, priceTabLabels.lastIndex),
+        pageCount = { priceTabLabels.size },
+    )
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(pricePagerState) {
+        snapshotFlow { pricePagerState.settledPage }
+            .distinctUntilChanged()
+            .collect { page ->
+                if (page != priceTabIndex) {
+                    priceTabIndex = page
+                }
             }
-        }
+    }
+
+    val currentPricePage = pricePagerState.currentPage.coerceIn(0, priceTabLabels.lastIndex)
+    val selectedPriceLabel = priceTabLabels[currentPricePage]
+    val placeCount = remember(selectedPriceLabel) {
+        restaurantsForPriceLabel(selectedPriceLabel).size
     }
     val compact by remember {
         derivedStateOf {
@@ -283,29 +309,48 @@ fun DiscoverHomeScreen(
             }
             stickyHeader {
                 RestaurantsByPriceStickyHeader(
-                    selectedPrice = priceTabSelected,
-                    onSelectPrice = { label -> priceTabSelected = label },
-                    placeCount = restaurantsByPrice.size,
+                    selectedPrice = selectedPriceLabel,
+                    onSelectPrice = { label ->
+                        val idx = priceTabLabels.indexOf(label)
+                        if (idx >= 0) {
+                            priceTabIndex = idx
+                            scope.launch {
+                                pricePagerState.animateScrollToPage(idx)
+                            }
+                        }
+                    },
+                    placeCount = placeCount,
                     tabLabels = priceTabLabels,
                 )
             }
             item {
                 Spacer(Modifier.height(16.dp))
             }
-            items(
-                items = restaurantsByPrice,
-                key = { restaurant -> restaurant.id },
-            ) { restaurant ->
-                val openId = restaurant.id.removePrefix("price-${priceTabSelected.length}-")
-                RestaurantByPriceListRow(
-                    restaurant = restaurant,
-                    onClick = { onOpenRestaurant(openId) },
-                    modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 18.dp),
-                )
+            item(key = "restaurants_by_price_pager") {
+                HorizontalPager(
+                    state = pricePagerState,
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top,
+                ) { page ->
+                    val price = priceTabLabels[page]
+                    val restaurants = remember(price) { restaurantsForPriceLabel(price) }
+                    Column(Modifier.fillMaxWidth()) {
+                        restaurants.forEach { restaurant ->
+                            key(restaurant.id) {
+                                val openId = restaurant.id.removePrefix("price-${price.length}-")
+                                RestaurantByPriceListRow(
+                                    restaurant = restaurant,
+                                    onClick = { onOpenRestaurant(openId) },
+                                    modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 18.dp),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
             }
         }
     }
-}
 }
 
 @Composable
@@ -1710,7 +1755,7 @@ private fun rememberLateNight(): List<Restaurant> = remember {
 
 private data class FanLayer(val rotation: Float, val x: Dp, val y: Dp)
 
-private enum class MorePreset { CompactWide, CompactNarrow }
+private enum class MorePreset { CompactWide, CompactNarrow, Restaurant, News }
 
 private data class MoreDimensions(
     val outerWidth: Dp,
@@ -1729,6 +1774,8 @@ private data class MoreDimensions(
 private fun moreDimensions(preset: MorePreset): MoreDimensions = when (preset) {
     MorePreset.CompactWide -> MoreDimensions(128.dp, 80.dp, 13.dp, 30.dp, 14.dp, 64.dp, 44.dp, 10.dp, 3.dp, 2.dp, 13.sp)
     MorePreset.CompactNarrow -> MoreDimensions(112.dp, 80.dp, 13.dp, 30.dp, 14.dp, 64.dp, 44.dp, 10.dp, 3.dp, 2.dp, 12.sp)
+    MorePreset.Restaurant -> MoreDimensions(176.dp, 224.dp, 18.dp, 60.dp, 26.dp, 130.dp, 86.dp, 22.dp, 8.dp, 12.dp, 15.sp)
+    MorePreset.News -> MoreDimensions(256.dp, 264.dp, 20.dp, 76.dp, 32.dp, 162.dp, 104.dp, 28.dp, 10.dp, 16.dp, 17.sp)
 }
 
 /** Same WebP assets as `restaurantchain-reservation-ui-demo` / `public/icons/discover`. */
