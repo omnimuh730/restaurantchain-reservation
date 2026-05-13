@@ -79,6 +79,7 @@ import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Banner
 import com.mh.restaurantchainreservation.core.model.City
 import com.mh.restaurantchainreservation.core.model.DiscoverData
@@ -337,10 +338,12 @@ private fun HeroBanner(
                 title = "Find a restaurant",
                 subtitle = "Today - 2 people - Anywhere",
                 compact = false,
+                opaqueGlass = false,
+                palette = palette,
                 onClick = onOpenSearch,
                 modifier = Modifier.weight(1f),
             )
-            GlassMapButton(compact = false, onClick = onOpenMap)
+            GlassMapButton(compact = false, opaqueGlass = false, palette = palette, onClick = onOpenMap)
         }
 
         PressableScale(
@@ -397,7 +400,8 @@ private fun CompactDiscoverBar(
                 this.alpha = alpha
                 translationY = y
             }
-            .background(palette.cardSurface.copy(alpha = 0.70f))
+            .background(discoverGlassBarBackgroundBrush(palette))
+            .border(width = 1.dp, color = discoverGlassBarEdgeColor(palette))
             .windowInsetsPadding(WindowInsets.statusBars)
             .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -407,12 +411,99 @@ private fun CompactDiscoverBar(
             title = "Find a restaurant",
             subtitle = if (listState.firstVisibleItemIndex > 0) "Explore nearby tables" else "Today - 2 people",
             compact = true,
+            opaqueGlass = true,
+            palette = palette,
             onClick = onOpenSearch,
             modifier = Modifier.weight(1f),
         )
-        GlassMapButton(compact = true, onClick = onOpenMap)
+        GlassMapButton(compact = true, opaqueGlass = true, palette = palette, onClick = onOpenMap)
     }
 }
+
+private fun discoverGlassBarBackgroundBrush(palette: RestaurantPalette): Brush =
+    if (palette.isDark) {
+        Brush.verticalGradient(
+            colors = listOf(
+                palette.cardSurface.copy(alpha = 0.96f),
+                Color(0xFF2C2C2E).copy(alpha = 0.93f),
+            ),
+        )
+    } else {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color.White.copy(alpha = 0.94f),
+                palette.cardSurface.copy(alpha = 0.90f),
+            ),
+        )
+    }
+
+private fun discoverGlassBarEdgeColor(palette: RestaurantPalette): Color =
+    if (palette.isDark) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.58f)
+
+private data class GlassPillLayers(
+    val baseFill: Color,
+    val borderAlpha: Float,
+    val iconPlateFill: Color,
+    val gradientTopAlpha: Float,
+)
+
+private fun discoverGlassPillLayers(
+    palette: RestaurantPalette,
+    compact: Boolean,
+    opaqueGlass: Boolean,
+): GlassPillLayers {
+    if (palette.isDark) {
+        val strong = opaqueGlass && compact
+        val base = when {
+            strong -> palette.cardSurface.copy(alpha = 0.90f)
+            compact -> palette.cardSurface.copy(alpha = 0.62f)
+            else -> palette.cardSurface.copy(alpha = 0.48f)
+        }
+        val border = when {
+            strong -> 0.30f
+            compact -> 0.24f
+            else -> 0.22f
+        }
+        val icon = Color.White.copy(alpha = if (strong) 0.20f else 0.14f)
+        val grad = when {
+            strong -> 0.22f
+            compact -> 0.18f
+            else -> 0.15f
+        }
+        return GlassPillLayers(base, border, icon, grad)
+    }
+    val strong = opaqueGlass && compact
+    val baseAlpha = when {
+        strong -> 0.58f
+        compact -> 0.42f
+        else -> 0.32f
+    }
+    val borderAlpha = when {
+        strong -> 0.62f
+        compact -> 0.52f
+        else -> 0.48f
+    }
+    val iconAlpha = when {
+        strong -> 0.52f
+        compact -> 0.44f
+        else -> 0.40f
+    }
+    val gradTop = when {
+        strong -> 0.40f
+        compact -> 0.34f
+        else -> 0.30f
+    }
+    return GlassPillLayers(
+        baseFill = Color.White.copy(alpha = baseAlpha),
+        borderAlpha = borderAlpha,
+        iconPlateFill = Color.White.copy(alpha = iconAlpha),
+        gradientTopAlpha = gradTop,
+    )
+}
+
+private fun discoverGlassPillBorderColor(palette: RestaurantPalette, borderAlpha: Float): Color =
+    if (palette.isDark) Color.White.copy(alpha = (borderAlpha * 0.42f + 0.10f).coerceIn(0.12f, 0.36f))
+    else Color.White.copy(alpha = borderAlpha.coerceIn(0f, 1f))
 
 @Composable
 private fun GlassSearchButton(
@@ -421,17 +512,19 @@ private fun GlassSearchButton(
     compact: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    opaqueGlass: Boolean = false,
+    palette: RestaurantPalette = LocalRestaurantPalette.current,
 ) {
-    val palette = LocalRestaurantPalette.current
     val height = if (compact) 44.dp else 56.dp
     val iconSize = if (compact) 32.dp else 38.dp
+    val layers = discoverGlassPillLayers(palette, compact, opaqueGlass)
     PressableScale(
         onClick = onClick,
         modifier = modifier
             .height(height)
             .clip(RoundedCornerShape(999.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.45f), RoundedCornerShape(999.dp))
-            .background(Color.White.copy(alpha = if (compact) 0.34f else 0.24f))
+            .border(1.dp, discoverGlassPillBorderColor(palette, layers.borderAlpha), RoundedCornerShape(999.dp))
+            .background(layers.baseFill)
             .padding(horizontal = if (compact) 10.dp else 12.dp),
     ) {
         Box(modifier = Modifier.matchParentSize()) {
@@ -440,7 +533,10 @@ private fun GlassSearchButton(
                     .matchParentSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.White.copy(alpha = 0.32f), Color.Transparent),
+                            colors = listOf(
+                                Color.White.copy(alpha = layers.gradientTopAlpha),
+                                Color.Transparent,
+                            ),
                         ),
                     ),
             )
@@ -454,8 +550,8 @@ private fun GlassSearchButton(
                     modifier = Modifier
                         .size(iconSize)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.42f))
-                        .border(1.dp, Color.White.copy(alpha = 0.45f), CircleShape),
+                        .background(layers.iconPlateFill)
+                        .border(1.dp, discoverGlassPillBorderColor(palette, layers.borderAlpha * 0.92f), CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(Icons.Outlined.Search, contentDescription = null, tint = palette.foreground, modifier = Modifier.size(if (compact) 15.dp else 18.dp))
@@ -472,7 +568,7 @@ private fun GlassSearchButton(
                     )
                     Text(
                         text = subtitle,
-                        color = palette.foreground.copy(alpha = 0.68f),
+                        color = palette.foreground.copy(alpha = if (opaqueGlass && compact) 0.72f else 0.68f),
                         fontSize = if (compact) 10.sp else 12.sp,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
@@ -485,23 +581,31 @@ private fun GlassSearchButton(
 }
 
 @Composable
-private fun GlassMapButton(compact: Boolean, onClick: () -> Unit) {
-    val palette = LocalRestaurantPalette.current
+private fun GlassMapButton(
+    compact: Boolean,
+    onClick: () -> Unit,
+    opaqueGlass: Boolean = false,
+    palette: RestaurantPalette = LocalRestaurantPalette.current,
+) {
     val size = if (compact) 44.dp else 56.dp
+    val layers = discoverGlassPillLayers(palette, compact, opaqueGlass)
     PressableScale(
         onClick = onClick,
         modifier = Modifier
             .size(size)
             .clip(CircleShape)
-            .border(1.dp, Color.White.copy(alpha = 0.45f), CircleShape)
-            .background(Color.White.copy(alpha = if (compact) 0.34f else 0.24f)),
+            .border(1.dp, discoverGlassPillBorderColor(palette, layers.borderAlpha), CircleShape)
+            .background(layers.baseFill),
     ) {
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color.White.copy(alpha = 0.32f), Color.Transparent),
+                        colors = listOf(
+                            Color.White.copy(alpha = layers.gradientTopAlpha),
+                            Color.Transparent,
+                        ),
                     ),
                 ),
             contentAlignment = Alignment.Center,
