@@ -628,8 +628,11 @@ private fun QuickCategoryButton(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    PressableScale(onClick = onClick, modifier = modifier) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    PressableScale(onClick = onClick, modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Image(
                 painter = painterResource(categoryDrawableRes(category.id)),
                 contentDescription = category.label,
@@ -643,7 +646,9 @@ private fun QuickCategoryButton(
                 lineHeight = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
