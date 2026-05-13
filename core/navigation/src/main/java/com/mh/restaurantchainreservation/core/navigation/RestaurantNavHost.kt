@@ -60,6 +60,7 @@ import com.mh.restaurantchainreservation.feature.dining.DiningEnjoyScreen
 import com.mh.restaurantchainreservation.feature.dining.DiningHomeScreen
 import com.mh.restaurantchainreservation.feature.dining.DiningRoutes
 import com.mh.restaurantchainreservation.feature.discover.DiscoverRoutes
+import com.mh.restaurantchainreservation.feature.discover.ui.AllPromotionsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.CategoryResultsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverHomeScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverSearchModal
@@ -268,6 +269,7 @@ private fun shouldShowAppChrome(route: String?): Boolean {
         route == QrPayRoutes.Home -> false
         route == DiscoverRoutes.Search -> false
         route.startsWith("discover/search?") -> false
+        route == DiscoverRoutes.AllPromotions -> false
         else -> true
     }
 }
@@ -311,7 +313,20 @@ private fun AppGraph(
                     onOpenCategory = { id -> navController.navigate(DiscoverRoutes.category(id)) },
                     onOpenFood = { id -> navController.navigate(DiscoverRoutes.food(id)) },
                     onOpenLocation = { id -> navController.navigate(DiscoverRoutes.location(id)) },
-                    onOpenSection = { id -> navController.navigate(DiscoverRoutes.section(id)) },
+                    onOpenSection = { id ->
+                        when (id) {
+                            "banners" -> navController.navigate(DiscoverRoutes.AllPromotions)
+                            else -> navController.navigate(DiscoverRoutes.section(id))
+                        }
+                    },
+                )
+            }
+            composable(DiscoverRoutes.AllPromotions) {
+                AllPromotionsScreen(
+                    onClose = { navController.popBackStack() },
+                    onBannerClick = { bannerId ->
+                        navController.navigate(DiscoverRoutes.section(bannerId))
+                    },
                 )
             }
             composable(DiscoverRoutes.Search) {

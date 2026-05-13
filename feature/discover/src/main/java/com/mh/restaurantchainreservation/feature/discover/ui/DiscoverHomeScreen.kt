@@ -8,7 +8,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -32,10 +31,10 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -45,6 +44,8 @@ import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,6 +57,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,6 +74,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import kotlin.math.roundToInt
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
@@ -87,6 +90,7 @@ import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.WishlistStore
 import com.mh.restaurantchainreservation.core.model.mockNews
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun DiscoverHomeScreen(
@@ -107,6 +111,46 @@ fun DiscoverHomeScreen(
         }
     }
 
+    var selectedPriceTab by rememberSaveable { mutableStateOf("$") }
+    val priceTabBasePool = remember(selectedPriceTab) {
+        restaurantsForPriceTab(selectedPriceTab)
+    }
+    var priceSectionRestaurants by remember(selectedPriceTab) {
+        mutableStateOf(restaurantsForPriceTab(selectedPriceTab).take(5))
+    }
+    var priceSectionLoadingMore by remember { mutableStateOf(false) }
+    LaunchedEffect(selectedPriceTab) {
+        priceSectionLoadingMore = false
+    }
+    LaunchedEffect(listState, priceSectionRestaurants.size, selectedPriceTab, priceTabBasePool) {
+        snapshotFlow {
+            if (priceSectionLoadingMore) return@snapshotFlow false
+            val poolSize = priceTabBasePool.size
+            val n = priceSectionRestaurants.size
+            if (n == 0 || n >= poolSize) {
+                false
+            } else {
+                val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+                val lastRestaurantIndex = 2 + n - 1
+                lastVisible >= lastRestaurantIndex
+            }
+        }
+            .distinctUntilChanged()
+            .collect { showLastRow ->
+                if (!showLastRow) return@collect
+                val loaded = priceSectionRestaurants.size
+                val more = priceTabBasePool.drop(loaded).take(5)
+                if (more.isEmpty()) return@collect
+                priceSectionLoadingMore = true
+                try {
+                    delay(520)
+                    priceSectionRestaurants = priceSectionRestaurants + more
+                } finally {
+                    priceSectionLoadingMore = false
+                }
+            }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -115,7 +159,7 @@ fun DiscoverHomeScreen(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 96.dp),
+            contentPadding = PaddingValues (bottom = 16.dp)
         ) {
             item {
                 HeroBanner(
@@ -182,8 +226,31 @@ fun DiscoverHomeScreen(
                         onOpenRestaurant = onOpenRestaurant,
                         onMore = { onOpenSection("late-night") },
                     )
-                    RailSpacer(30.dp)
-                    RestaurantsByPriceSection(onOpenRestaurant = onOpenRestaurant)
+                    RailSpacer(12.dp)
+                }
+            }
+            item {
+                RestaurantsByPriceHeaderAndTabs(
+                    selectedPrice = selectedPriceTab,
+                    onSelectPrice = { selectedPriceTab = it },
+                    placesLabel = "${priceTabBasePool.size.coerceAtLeast(6)}+ places",
+                )
+            }
+            itemsIndexed(
+                items = priceSectionRestaurants,
+                key = { _, restaurant -> restaurant.id },
+            ) { _, restaurant ->
+                RestaurantByPriceListRowWithLazyEnter(
+                    restaurant = restaurant,
+                    onOpenRestaurant = {
+                        onOpenRestaurant(resolveRestaurantNavigationId(selectedPriceTab, restaurant.id))
+                    },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                )
+            }
+            if (priceSectionLoadingMore) {
+                item(key = "price-section-loading-more") {
+                    PriceSectionLoadingMoreFooter()
                 }
             }
         }
@@ -871,100 +938,318 @@ private fun NewsRail(news: List<NewsItem>, onMore: () -> Unit) {
     }
 }
 
-@Composable
-private fun RestaurantsByPriceSection(onOpenRestaurant: (String) -> Unit) {
-    val palette = LocalRestaurantPalette.current
-    var selected by rememberSaveable { mutableStateOf("$$") }
-    val tabs = listOf(
-        PriceTab("$", "Budget-friendly", Color(0xFF16A34A)),
-        PriceTab("$$", "Moderate", Color(0xFF2563EB)),
-        PriceTab("$$$", "Upscale", Color(0xFF7C3AED)),
-        PriceTab("$$$$", "Fine dining", Color(0xFFD97706)),
-    )
-    val restaurants = remember(selected) {
-        DiscoverData.ALL.filter { it.price == selected }.ifEmpty {
-            DiscoverData.ALL.take(6).mapIndexed { index, restaurant ->
-                restaurant.copy(
-                    id = "price-${selected.length}-${restaurant.id}",
-                    price = selected,
-                    tag = if (index % 2 == 0) "New" else "Sale",
-                )
-            }
+private fun restaurantsForPriceTab(selected: String): List<Restaurant> =
+    DiscoverData.ALL.filter { it.price == selected }.ifEmpty {
+        DiscoverData.ALL.take(6).mapIndexed { index, restaurant ->
+            restaurant.copy(
+                id = "price-${selected.length}-${restaurant.id}",
+                price = selected,
+                tag = if (index % 2 == 0) "New" else "Sale",
+            )
         }
     }
 
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        SectionHeader(title = "Restaurants by Price", horizontalPadding = 0.dp)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            tabs.forEach { tab ->
-                PriceTabButton(
-                    tab = tab,
-                    selected = selected == tab.label,
-                    onClick = { selected = tab.label },
-                )
-            }
-        }
-        Column(
-            modifier = Modifier.padding(top = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(22.dp),
-        ) {
-            restaurants.chunked(2).forEach { row ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    row.forEach { restaurant ->
-                        AirbnbMiniCard(
-                            restaurant = restaurant,
-                            width = 0.dp,
-                            onClick = { onOpenRestaurant(restaurant.id.removePrefix("price-${selected.length}-")) },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    if (row.size == 1) {
-                        Spacer(Modifier.weight(1f))
-                    }
-                }
-            }
-        }
+private fun resolveRestaurantNavigationId(typedPrice: String, id: String): String {
+    val prefix = "price-${typedPrice.length}-"
+    if (!id.startsWith(prefix)) return id
+    val tail = id.removePrefix(prefix)
+    val candidate = tail.substringAfterLast('-')
+    return if (candidate.matches(Regex("[a-z]\\d+"))) candidate else tail
+}
+
+private fun discoverListCategoryLabel(restaurant: Restaurant): String {
+    val area = restaurant.area?.trim()?.takeIf { it.isNotBlank() }
+    if (!area.isNullOrBlank()) return area
+    return restaurant.cuisine.split("·").first().trim()
+}
+
+private fun cuisineDetailLabel(restaurant: Restaurant): String =
+    restaurant.cuisine.split("·").first().trim()
+
+@Composable
+private fun PriceSectionLoadingMoreFooter() {
+    val palette = LocalRestaurantPalette.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(22.dp),
+            strokeWidth = 2.dp,
+            color = palette.foreground.copy(alpha = 0.55f),
+        )
+        Spacer(Modifier.width(14.dp))
         Text(
-            text = "${restaurants.size}+ places",
+            text = "Loading more places…",
             color = palette.mutedForeground,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(top = 18.dp),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
         )
     }
 }
 
 @Composable
-private fun PriceTabButton(tab: PriceTab, selected: Boolean, onClick: () -> Unit) {
+private fun RestaurantByPriceListRowWithLazyEnter(
+    restaurant: Restaurant,
+    onOpenRestaurant: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isPaginated = restaurant.id.contains("-more-")
+    val slot = if (isPaginated) {
+        restaurant.id.substringAfter("-more-").substringBefore("-").toIntOrNull()?.rem(5) ?: 0
+    } else {
+        0
+    }
+    var revealed by remember(restaurant.id) { mutableStateOf(!isPaginated) }
+    LaunchedEffect(restaurant.id, isPaginated) {
+        if (isPaginated) {
+            delay(50L + slot * 55L)
+            revealed = true
+        }
+    }
+    val alpha by animateFloatAsState(
+        targetValue = if (revealed) 1f else 0f,
+        animationSpec = tween(360, easing = FastOutSlowInEasing),
+        label = "price-lazy-a",
+    )
+    val offsetY by animateFloatAsState(
+        targetValue = if (revealed) 0f else 22f,
+        animationSpec = spring(dampingRatio = 0.84f, stiffness = 360f),
+        label = "price-lazy-y",
+    )
+    val rowModifier = if (isPaginated) {
+        modifier.graphicsLayer {
+            this.alpha = alpha
+            translationY = offsetY
+        }
+    } else {
+        modifier
+    }
+    RestaurantByPriceListRow(
+        restaurant = restaurant,
+        onOpenRestaurant = onOpenRestaurant,
+        modifier = rowModifier,
+    )
+}
+
+@Composable
+private fun RestaurantsByPriceHeaderAndTabs(
+    selectedPrice: String,
+    onSelectPrice: (String) -> Unit,
+    placesLabel: String,
+) {
     val palette = LocalRestaurantPalette.current
+    val tabs = listOf("$", "$$", "$$$", "$$$$")
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = "Restaurants by Price",
+                color = palette.foreground,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = placesLabel,
+                color = palette.mutedForeground,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+        ) {
+            tabs.forEach { tab ->
+                val selected = selectedPrice == tab
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            role = Role.Tab,
+                            onClick = { onSelectPrice(tab) },
+                        )
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = tab,
+                            color = if (selected) palette.foreground else palette.mutedForeground,
+                            fontSize = 16.sp,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(3.dp)
+                                .background(if (selected) palette.foreground else Color.Transparent),
+                        )
+                    }
+                }
+            }
+        }
+        HorizontalDivider(
+            thickness = 1.dp,
+            color = palette.border,
+        )
+    }
+}
+
+@Composable
+private fun RestaurantByPriceListRow(
+    restaurant: Restaurant,
+    onOpenRestaurant: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    val collections by WishlistStore.collections.collectAsState()
+    val saved = collections.any { collection -> collection.restaurants.any { it.id == restaurant.id } }
+    val goldStar = Color(0xFFEAB308)
+    val emptyStar = palette.mutedForeground.copy(alpha = 0.35f)
+    val filledStars = (restaurant.rating + 0.25).roundToInt().coerceIn(0, 5)
+
     PressableScale(
-        onClick = onClick,
-        modifier = Modifier
-            .height(50.dp)
-            .clip(RoundedCornerShape(999.dp))
-            .border(1.dp, if (selected) tab.color.copy(alpha = 0.42f) else palette.border, RoundedCornerShape(999.dp))
-            .background(if (selected) tab.color.copy(alpha = 0.14f) else palette.cardSurface)
-            .padding(horizontal = 14.dp),
+        onClick = onOpenRestaurant,
+        modifier = modifier.fillMaxWidth(),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(tab.label, color = if (selected) tab.color else palette.foreground, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
-            Column {
-                Text(tab.description, color = palette.foreground, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                Text(if (selected) "Selected" else "Tap to view", color = palette.mutedForeground, fontSize = 10.sp, maxLines = 1)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(96.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(palette.mutedSurface),
+            ) {
+                AsyncImage(
+                    model = restaurant.image,
+                    contentDescription = restaurant.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                val tag = restaurant.tag
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .padding(6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    if (!tag.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(Color.White.copy(alpha = 0.94f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                        ) {
+                            Text(
+                                tag,
+                                color = Color(0xFF222222),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                            )
+                        }
+                    } else {
+                        Spacer(Modifier)
+                    }
+                    HeartButton(
+                        active = saved,
+                        onClick = { WishlistStore.openPicker(restaurant) },
+                        size = HeartButtonSize.Small,
+                        style = HeartButtonStyle.Overlay,
+                        overlayContentAlignment = Alignment.TopCenter,
+                        modifier = Modifier,
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = restaurant.name,
+                    color = palette.foreground,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Icon(
+                        Icons.Outlined.Place,
+                        contentDescription = null,
+                        tint = palette.mutedForeground,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Text(
+                        text = discoverListCategoryLabel(restaurant),
+                        color = palette.mutedForeground,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    repeat(5) { index ->
+                        Icon(
+                            Icons.Filled.Star,
+                            contentDescription = null,
+                            tint = if (index < filledStars) goldStar else emptyStar,
+                            modifier = Modifier.size(14.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(2.dp))
+                    Text(
+                        text = "%.1f".format(restaurant.rating),
+                        color = palette.mutedForeground,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = "(${formatReviewCount(restaurant.reviews)} reviews)",
+                        color = palette.mutedForeground,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 2.dp),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Text(
+                    text = "${cuisineDetailLabel(restaurant)} • ${restaurant.price} • ${restaurant.distance}",
+                    color = palette.mutedForeground,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }
 }
+
+private fun formatReviewCount(count: Int): String =
+    count.toString().reversed().chunked(3).joinToString(",").reversed()
 
 @Composable
 private fun SectionHeader(title: String, horizontalPadding: Dp = 16.dp) {
@@ -1147,8 +1432,6 @@ private fun rememberLateNight(): List<Restaurant> = remember {
         (DiscoverData.findById("v1") ?: DiscoverData.VIRAL.first()).copy(area = "Last call tables", tag = "Late night"),
     )
 }
-
-private data class PriceTab(val label: String, val description: String, val color: Color)
 
 private data class FanLayer(val rotation: Float, val x: Dp, val y: Dp)
 

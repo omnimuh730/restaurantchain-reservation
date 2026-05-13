@@ -18,6 +18,12 @@ data class Restaurant(
     val tag: String? = null,
 )
 
+/** Mock reservation slot for discover list cards (available vs crossed-out). */
+data class RestaurantTimeSlot(
+    val label: String,
+    val available: Boolean,
+)
+
 data class FoodType(
     val id: String,
     val label: String,
@@ -224,9 +230,63 @@ object DiscoverData {
         ),
     )
 
-    /** Combined catalog used for search / detail lookups. */
+    /**
+     * Deterministic extended mock catalog (~187 entries) so [ALL] reaches ~200 restaurants
+     * while keeping curated rails (monthly best, locals, etc.) unchanged.
+     */
+    private fun buildExtendedRestaurantCatalog(): List<Restaurant> {
+        val first = listOf(
+            "Neon", "Copper", "Silver", "Golden", "Urban", "Harbor", "Garden", "Velvet", "Maple", "Cedar",
+            "Stone", "Azure", "Crimson", "Ivory", "Jade", "Lotus", "Olive", "Pepper", "Saffron", "Sesame",
+            "Willow", "Birch", "Cypress", "Elm", "Hazel", "Laurel", "Magnolia", "Rowan", "Sage", "Wisteria",
+        )
+        val second = listOf(
+            "Fork", "Spoon", "Kitchen", "House", "Table", "Corner", "Bistro", "Grill", "Noodle", "Taco",
+            "Bowl", "Plate", "Pantry", "Cellar", "Roof", "Garden", "Yard", "Alley", "Lane", "Market",
+            "Hall", "Room", "Den", "Parlor", "Study", "Studio", "Atelier", "Counter", "Bar", "Lounge",
+        )
+        val cuisines = listOf(
+            "Korean", "Japanese", "Italian", "Mexican", "Vietnamese", "Thai", "French", "Chinese", "Indian",
+            "Mediterranean", "Spanish", "Greek", "Turkish", "Peruvian", "Lebanese", "Ethiopian", "American",
+            "BBQ", "Seafood", "Steakhouse", "Vegan", "Brunch · Café", "Fusion", "Polish", "German", "British",
+            "Irish", "Moroccan", "Brazilian", "Argentine", "Filipino", "Indonesian", "Malaysian", "Singaporean",
+        )
+        val areas = listOf(
+            "Downtown", "Midtown", "SoHo", "West Loop", "Seongsu", "Hongdae", "Gangnam", "Pike Place",
+            "Mission", "Brooklyn", "West Village", "Arts District", "Nob Hill", "Capitol Hill", "Fremont",
+            "Bucktown", "Lincoln Park", "Echo Park", "Silver Lake", "Hayes Valley", "Belltown", "Koreatown",
+        )
+        val prices = listOf("$", "$$", "$$$", "$$$$")
+        val tags = listOf<String?>(null, "New", "Sale", "Popular", "Local Pick")
+        return (1..187).map { n ->
+            val i = n - 1
+            val name = "${first[(i + n) % first.size]} ${second[(i * 3 + n * 5) % second.size]}"
+            val cuisine = cuisines[i % cuisines.size]
+            val rating = 3.8 + (i % 12) * 0.1
+            val reviews = 180 + (i * 47) % 9800
+            val price = prices[i % prices.size]
+            val distanceMi = ((i % 25) + 1) * 0.1 + (i % 3) * 0.03
+            val distance = "%.1f mi".format(distanceMi)
+            // Deterministic unique image per row (avoids repeating the same small Unsplash set).
+            val image = "https://picsum.photos/seed/restaurantchain-c%03d/400/300".format(n)
+            Restaurant(
+                id = "c%03d".format(n),
+                name = name,
+                cuisine = cuisine,
+                rating = rating,
+                reviews = reviews,
+                price = price,
+                distance = distance,
+                image = image,
+                area = areas[i % areas.size],
+                tag = tags[i % tags.size],
+            )
+        }
+    }
+
+    /** Combined catalog used for search / detail lookups (~200 restaurants). */
     val ALL: List<Restaurant> by lazy {
-        (MONTHLY_BEST + LOVED_BY_LOCALS + VIRAL + DATE_NIGHT).distinctBy { it.id }
+        (MONTHLY_BEST + LOVED_BY_LOCALS + VIRAL + DATE_NIGHT + buildExtendedRestaurantCatalog()).distinctBy { it.id }
     }
 
     fun findById(id: String): Restaurant? = ALL.firstOrNull { it.id == id }

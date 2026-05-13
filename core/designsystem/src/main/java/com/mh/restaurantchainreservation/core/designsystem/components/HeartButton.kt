@@ -49,6 +49,8 @@ fun HeartButton(
     modifier: Modifier = Modifier,
     size: HeartButtonSize = HeartButtonSize.Medium,
     style: HeartButtonStyle = HeartButtonStyle.Floating,
+    /** When [style] is [HeartButtonStyle.Overlay], aligns the icon inside the tap target (e.g. top-align with a badge). */
+    overlayContentAlignment: Alignment = Alignment.Center,
     contentDescription: String = if (active) "Remove from saved" else "Save",
     containerColor: Color = Color.Black.copy(alpha = 0.38f),
     activeContainerColor: Color = Color.Black.copy(alpha = 0.38f),
@@ -97,7 +99,7 @@ fun HeartButton(
                 onClickLabel = contentDescription,
                 onClick = onClick,
             ),
-        contentAlignment = Alignment.Center,
+        contentAlignment = if (style == HeartButtonStyle.Overlay) overlayContentAlignment else Alignment.Center,
     ) {
         Icon(
             imageVector = if (active) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
