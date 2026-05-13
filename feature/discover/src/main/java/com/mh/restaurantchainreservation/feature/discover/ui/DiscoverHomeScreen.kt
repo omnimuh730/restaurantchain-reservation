@@ -93,6 +93,9 @@ import java.text.NumberFormat
 import java.util.Locale
 import kotlinx.coroutines.delay
 
+/** Thumbnail height:width = 105:110 → [Modifier.aspectRatio] uses width/height = 110/105. */
+private val DiscoverRestaurantImageAspectWidthOverHeight = 110f / 105f
+
 @Composable
 fun DiscoverHomeScreen(
     onOpenSearch: () -> Unit,
@@ -130,18 +133,28 @@ fun DiscoverHomeScreen(
             .fillMaxSize()
             .background(palette.cardSurface),
     ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 96.dp),
-        ) {
+        Column(Modifier.fillMaxSize()) {
+            if (compact) {
+                CompactDiscoverBar(
+                    listState = listState,
+                    onOpenSearch = onOpenSearch,
+                    onOpenMap = onOpenSearch,
+                )
+            }
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(bottom = 96.dp),
+            ) {
             item {
                 HeroBanner(
                     banners = DiscoverData.BANNERS,
                     onOpenSearch = onOpenSearch,
                     onOpenMap = onOpenSearch,
                     onViewAll = { onOpenSection("banners") },
-                    onBannerClick = { onOpenSection(it) },
+                    onBannerClick = { bannerId -> onOpenSection(bannerId) },
                 )
             }
             item {
@@ -206,34 +219,28 @@ fun DiscoverHomeScreen(
             stickyHeader {
                 RestaurantsByPriceStickyHeader(
                     selectedPrice = priceTabSelected,
-                    onSelectPrice = { priceTabSelected = it },
+                    onSelectPrice = { label -> priceTabSelected = label },
                     placeCount = restaurantsByPrice.size,
                     tabLabels = priceTabLabels,
                 )
             }
             item {
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(16.dp))
             }
             items(
                 items = restaurantsByPrice,
-                key = { it.id },
+                key = { restaurant -> restaurant.id },
             ) { restaurant ->
                 val openId = restaurant.id.removePrefix("price-${priceTabSelected.length}-")
                 RestaurantByPriceListRow(
                     restaurant = restaurant,
                     onClick = { onOpenRestaurant(openId) },
-                    modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
+                    modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 18.dp),
                 )
             }
         }
-
-        CompactDiscoverBar(
-            visible = compact,
-            listState = listState,
-            onOpenSearch = onOpenSearch,
-            onOpenMap = onOpenSearch,
-        )
     }
+}
 }
 
 @Composable
@@ -375,31 +382,14 @@ private fun HeroBanner(
 
 @Composable
 private fun CompactDiscoverBar(
-    visible: Boolean,
     listState: LazyListState,
     onOpenSearch: () -> Unit,
     onOpenMap: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(360, easing = FastOutSlowInEasing),
-        label = "discover-compact-alpha",
-    )
-    val y by animateFloatAsState(
-        targetValue = if (visible) 0f else -22f,
-        animationSpec = tween(420, easing = FastOutSlowInEasing),
-        label = "discover-compact-y",
-    )
-    if (alpha <= 0.01f && !visible) return
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .graphicsLayer {
-                this.alpha = alpha
-                translationY = y
-            }
             .background(discoverGlassBarBackgroundBrush(palette))
             .border(width = 1.dp, color = discoverGlassBarEdgeColor(palette))
             .windowInsetsPadding(WindowInsets.statusBars)
@@ -513,7 +503,7 @@ private fun GlassSearchButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     opaqueGlass: Boolean = false,
-    palette: RestaurantPalette = LocalRestaurantPalette.current,
+    palette: RestaurantPalette,
 ) {
     val height = if (compact) 44.dp else 56.dp
     val iconSize = if (compact) 32.dp else 38.dp
@@ -585,7 +575,7 @@ private fun GlassMapButton(
     compact: Boolean,
     onClick: () -> Unit,
     opaqueGlass: Boolean = false,
-    palette: RestaurantPalette = LocalRestaurantPalette.current,
+    palette: RestaurantPalette,
 ) {
     val size = if (compact) 44.dp else 56.dp
     val layers = discoverGlassPillLayers(palette, compact, opaqueGlass)
@@ -837,7 +827,7 @@ private fun AirbnbMiniCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1f)
+                    .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
                     .clip(RoundedCornerShape(18.dp))
                     .background(palette.mutedSurface),
             ) {
@@ -986,29 +976,36 @@ private fun RestaurantsByPriceStickyHeader(
             .fillMaxWidth()
             .background(palette.cardSurface),
     ) {
-        HorizontalDivider(color = palette.border.copy(alpha = 0.65f))
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        HorizontalDivider(color = palette.border.copy(alpha = 0.55f))
+        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 14.dp, bottom = 10.dp),
+                    .padding(top = 18.dp, bottom = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
                     text = "Restaurants by Price",
                     color = palette.foreground,
-                    fontSize = 20.sp,
+                    fontSize = 22.sp,
+                    lineHeight = 26.sp,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = "$placeCount+ places",
                     color = palette.mutedForeground,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.Normal,
                 )
             }
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                verticalAlignment = Alignment.Bottom,
+            ) {
                 tabLabels.forEach { label ->
                     PriceUnderlineTab(
                         label = label,
@@ -1019,7 +1016,7 @@ private fun RestaurantsByPriceStickyHeader(
                 }
             }
         }
-        HorizontalDivider(color = palette.border.copy(alpha = 0.65f), modifier = Modifier.padding(top = 4.dp))
+        HorizontalDivider(color = palette.border.copy(alpha = 0.55f))
     }
 }
 
@@ -1031,22 +1028,34 @@ private fun PriceUnderlineTab(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    PressableScale(onClick = onClick, modifier = modifier) {
+    val indicatorWidth = when (label.length) {
+        1 -> 32.dp
+        2 -> 40.dp
+        3 -> 50.dp
+        else -> 58.dp
+    }
+    PressableScale(
+        onClick = onClick,
+        modifier = modifier.padding(vertical = 2.dp),
+    ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 2.dp, vertical = 6.dp),
         ) {
             Text(
                 text = label,
                 color = if (selected) palette.foreground else palette.mutedForeground,
-                fontSize = 17.sp,
+                fontSize = 19.sp,
+                lineHeight = 22.sp,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.55f)
-                    .height(3.dp)
+                    .width(indicatorWidth)
+                    .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
                     .background(if (selected) palette.foreground else Color.Transparent),
             )
@@ -1069,16 +1078,18 @@ private fun RestaurantByPriceListRow(
     }
     val summaryLine = "${restaurant.cuisine} · ${restaurant.price} · ${restaurant.distance}"
     val starGold = Color(0xFFFFC107)
+    val thumbWidth = 120.dp
     PressableScale(onClick = onClick, modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
-                    .size(88.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .width(thumbWidth)
+                    .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
+                    .clip(RoundedCornerShape(16.dp))
                     .background(palette.mutedSurface),
             ) {
                 AsyncImage(
@@ -1092,12 +1103,12 @@ private fun RestaurantByPriceListRow(
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopStart)
-                            .padding(6.dp)
+                            .padding(8.dp)
                             .clip(RoundedCornerShape(999.dp))
                             .background(Color.White.copy(alpha = 0.94f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                            .padding(horizontal = 9.dp, vertical = 5.dp),
                     ) {
-                        Text(tag, color = Color(0xFF222222), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                        Text(tag, color = Color(0xFF222222), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                     }
                 }
                 HeartButton(
@@ -1106,20 +1117,21 @@ private fun RestaurantByPriceListRow(
                     size = HeartButtonSize.Medium,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(6.dp),
+                        .padding(8.dp),
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = restaurant.name,
                     color = palette.foreground,
-                    fontSize = 16.sp,
+                    fontSize = 18.sp,
+                    lineHeight = 22.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Row(
-                    modifier = Modifier.padding(top = 3.dp),
+                    modifier = Modifier.padding(top = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
@@ -1127,18 +1139,18 @@ private fun RestaurantByPriceListRow(
                         Icons.Outlined.Place,
                         contentDescription = null,
                         tint = palette.mutedForeground,
-                        modifier = Modifier.size(14.dp),
+                        modifier = Modifier.size(15.dp),
                     )
                     Text(
                         text = categoryLine,
                         color = palette.mutedForeground,
-                        fontSize = 12.sp,
+                        fontSize = 13.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
                 Row(
-                    modifier = Modifier.padding(top = 4.dp),
+                    modifier = Modifier.padding(top = 5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     RatingStarRow(rating = restaurant.rating, starGold = starGold)
@@ -1146,14 +1158,14 @@ private fun RestaurantByPriceListRow(
                     Text(
                         text = "%.1f".format(restaurant.rating),
                         color = palette.foreground,
-                        fontSize = 12.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
                         text = reviewLabel,
                         color = palette.mutedForeground,
-                        fontSize = 12.sp,
+                        fontSize = 13.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -1161,8 +1173,8 @@ private fun RestaurantByPriceListRow(
                 Text(
                     text = summaryLine,
                     color = palette.mutedForeground,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 4.dp),
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(top = 5.dp),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
