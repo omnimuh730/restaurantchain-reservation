@@ -14,6 +14,8 @@
     <string name="title_register">회원가입</string>
     <string name="title_forgot_password">비밀번호 찾기</string>
     <string name="title_discover">탐색</string>
+    <string name="title_all_promotions">모든 프로모션</string>
+    <string name="desc_close_all_promotions">닫기</string>
     <string name="title_search_results">검색 결과</string>
     <string name="title_restaurant_detail">레스토랑 상세</string>
     <string name="title_book_table">테이블 예약</string>

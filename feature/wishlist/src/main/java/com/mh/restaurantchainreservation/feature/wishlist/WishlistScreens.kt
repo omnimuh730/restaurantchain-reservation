@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -32,11 +33,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -106,31 +106,39 @@ fun WishlistScreen(modifier: Modifier = Modifier) {
     ) {
         // List view (always rendered; the detail slides over it).
         Column(modifier = Modifier.fillMaxSize()) {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
                     .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "Wishlists",
                     color = palette.foreground,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                 )
-                ToolbarTextButton(
-                    text = "New",
-                    icon = Icons.Filled.Add,
-                    onClick = { createDialogOpen = true },
-                )
-                Spacer(Modifier.width(8.dp))
-                ToolbarTextButton(
-                    text = if (managingCollections) "Done" else "Edit",
-                    icon = if (managingCollections) Icons.Filled.Close else Icons.Filled.Edit,
-                    onClick = { managingCollections = !managingCollections },
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ToolbarTextButton(
+                            text = "New list",
+                            icon = Icons.Outlined.Add,
+                            onClick = { createDialogOpen = true },
+                        )
+                        ToolbarTextButton(
+                            text = if (managingCollections) "Done" else "Manage lists",
+                            icon = null,
+                            onClick = { managingCollections = !managingCollections },
+                        )
+                    }
+                }
             }
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
@@ -248,7 +256,6 @@ private fun CollectionCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
             .clickable { onClick() },
     ) {
         Box(
@@ -443,21 +450,27 @@ private fun DetailItem(
 @Composable
 private fun ToolbarTextButton(
     text: String,
-    icon: ImageVector,
+    icon: ImageVector? = null,
     onClick: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
+    val pillShape = RoundedCornerShape(percent = 50)
+    val pillBackground = if (palette.isDark) palette.mutedSurface else palette.cardSurface
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .background(palette.mutedSurface)
+            .heightIn(min = 38.dp)
+            .clip(pillShape)
+            .background(pillBackground, pillShape)
+            .border(1.dp, palette.border, pillShape)
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 9.dp),
+            .padding(horizontal = 16.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
-        Icon(icon, contentDescription = null, tint = palette.foreground, modifier = Modifier.size(15.dp))
-        Text(text, color = palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        if (icon != null) {
+            Icon(icon, contentDescription = null, tint = palette.foreground, modifier = Modifier.size(16.dp))
+        }
+        Text(text, color = palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -523,7 +536,7 @@ private fun WishlistNameDialog(
                         .padding(top = 18.dp)
                         .height(54.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .border(1.dp, if (name.isBlank()) palette.border else palette.foreground, RoundedCornerShape(16.dp))
+                        .border(1.dp, palette.border, RoundedCornerShape(16.dp))
                         .padding(horizontal = 14.dp),
                     contentAlignment = Alignment.CenterStart,
                 ) {
@@ -540,36 +553,45 @@ private fun WishlistNameDialog(
                     )
                 }
                 Text("${name.length}/50 characters", color = palette.mutedForeground, fontSize = 12.sp, modifier = Modifier.padding(top = 7.dp))
+                val canCreate = name.trim().isNotEmpty()
+                val actionShape = RoundedCornerShape(14.dp)
+                val actionHeight = 50.dp
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 20.dp),
-                    horizontalArrangement = Arrangement.End,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        "Cancel",
-                        color = palette.foreground,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .clickable(onClick = onDismiss)
-                            .padding(horizontal = 10.dp, vertical = 10.dp),
-                    )
-                    Spacer(Modifier.width(8.dp))
                     Box(
                         modifier = Modifier
-                            .height(44.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (name.trim().isNotEmpty()) palette.foreground else palette.mutedSurface)
-                            .clickable(enabled = name.trim().isNotEmpty()) { onConfirm(name.trim()) }
-                            .padding(horizontal = 22.dp),
+                            .weight(1f)
+                            .height(actionHeight)
+                            .clip(actionShape)
+                            .border(1.dp, palette.border, actionShape)
+                            .background(palette.cardSurface)
+                            .clickable(onClick = onDismiss),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            "Cancel",
+                            color = palette.foreground,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(actionHeight)
+                            .clip(actionShape)
+                            .background(if (canCreate) palette.foreground else palette.mutedSurface)
+                            .clickable(enabled = canCreate) { onConfirm(name.trim()) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             confirmLabel,
-                            color = if (name.trim().isNotEmpty()) palette.cardSurface else palette.mutedForeground,
+                            color = if (canCreate) palette.cardSurface else palette.mutedForeground,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                         )
