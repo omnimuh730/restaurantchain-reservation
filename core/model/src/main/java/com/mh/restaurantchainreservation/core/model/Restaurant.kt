@@ -18,6 +18,12 @@ data class Restaurant(
     val tag: String? = null,
 )
 
+/** Mock reservation slot for discover list cards (available vs crossed-out). */
+data class RestaurantTimeSlot(
+    val label: String,
+    val available: Boolean,
+)
+
 data class FoodType(
     val id: String,
     val label: String,

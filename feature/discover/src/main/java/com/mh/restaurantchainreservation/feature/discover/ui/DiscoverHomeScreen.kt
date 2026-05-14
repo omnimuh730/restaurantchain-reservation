@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalFoundationApi::class)
+﻿@file:OptIn(ExperimentalFoundationApi::class)
 
 package com.mh.restaurantchainreservation.feature.discover.ui
 
@@ -36,6 +36,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -46,6 +48,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -83,6 +86,7 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
+import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Banner
@@ -94,12 +98,9 @@ import com.mh.restaurantchainreservation.core.model.QuickCategory
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.WishlistStore
 import com.mh.restaurantchainreservation.core.model.mockNews
-import com.mh.restaurantchainreservation.feature.discover.R
-import java.text.NumberFormat
-import java.util.Locale
+import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
 
 /** Thumbnail height:width = 105:110 → [Modifier.aspectRatio] uses width/height = 110/105. */
 private val DiscoverRestaurantImageAspectWidthOverHeight = 110f / 105f
@@ -190,33 +191,50 @@ fun DiscoverHomeScreen(
     val palette = LocalRestaurantPalette.current
     val listState = rememberLazyListState()
     val news = remember { mockNews() }
-    val priceTabLabels = remember { listOf("$", "$$", "$$$", "$$$$") }
-    var priceTabIndex by rememberSaveable { mutableIntStateOf(2) }
-    val pricePagerState = rememberPagerState(
-        initialPage = priceTabIndex.coerceIn(0, priceTabLabels.lastIndex),
-        pageCount = { priceTabLabels.size },
-    )
-    val scope = rememberCoroutineScope()
-
-    LaunchedEffect(pricePagerState) {
-        snapshotFlow { pricePagerState.settledPage }
-            .distinctUntilChanged()
-            .collect { page ->
-                if (page != priceTabIndex) {
-                    priceTabIndex = page
-                }
-            }
-    }
-
-    val currentPricePage = pricePagerState.currentPage.coerceIn(0, priceTabLabels.lastIndex)
-    val selectedPriceLabel = priceTabLabels[currentPricePage]
-    val placeCount = remember(selectedPriceLabel) {
-        restaurantsForPriceLabel(selectedPriceLabel).size
-    }
     val compact by remember {
         derivedStateOf {
             listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 250
         }
+    }
+
+    var selectedPriceTab by rememberSaveable { mutableStateOf("$") }
+    val priceTabBasePool = remember(selectedPriceTab) {
+        restaurantsForPriceTab(selectedPriceTab)
+    }
+    var priceSectionRestaurants by remember(selectedPriceTab) {
+        mutableStateOf(restaurantsForPriceTab(selectedPriceTab).take(5))
+    }
+    var priceSectionLoadingMore by remember { mutableStateOf(false) }
+    LaunchedEffect(selectedPriceTab) {
+        priceSectionLoadingMore = false
+    }
+    LaunchedEffect(listState, priceSectionRestaurants.size, selectedPriceTab, priceTabBasePool) {
+        snapshotFlow {
+            if (priceSectionLoadingMore) return@snapshotFlow false
+            val poolSize = priceTabBasePool.size
+            val n = priceSectionRestaurants.size
+            if (n == 0 || n >= poolSize) {
+                false
+            } else {
+                val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+                val lastRestaurantIndex = 2 + n - 1
+                lastVisible >= lastRestaurantIndex
+            }
+        }
+            .distinctUntilChanged()
+            .collect { showLastRow ->
+                if (!showLastRow) return@collect
+                val loaded = priceSectionRestaurants.size
+                val more = priceTabBasePool.drop(loaded).take(5)
+                if (more.isEmpty()) return@collect
+                priceSectionLoadingMore = true
+                try {
+                    delay(520)
+                    priceSectionRestaurants = priceSectionRestaurants + more
+                } finally {
+                    priceSectionLoadingMore = false
+                }
+            }
     }
 
     Box(
@@ -304,50 +322,32 @@ fun DiscoverHomeScreen(
                         onOpenRestaurant = onOpenRestaurant,
                         onMore = { onOpenSection("late-night") },
                     )
-                    RailSpacer(30.dp)
+                    RailSpacer(12.dp)
                 }
-            }
-            stickyHeader {
-                RestaurantsByPriceStickyHeader(
-                    selectedPrice = selectedPriceLabel,
-                    onSelectPrice = { label ->
-                        val idx = priceTabLabels.indexOf(label)
-                        if (idx >= 0) {
-                            priceTabIndex = idx
-                            scope.launch {
-                                pricePagerState.animateScrollToPage(idx)
-                            }
-                        }
-                    },
-                    placeCount = placeCount,
-                    tabLabels = priceTabLabels,
-                )
             }
             item {
-                Spacer(Modifier.height(16.dp))
+                RestaurantsByPriceHeaderAndTabs(
+                    selectedPrice = selectedPriceTab,
+                    onSelectPrice = { selectedPriceTab = it },
+                    placesLabel = "${priceTabBasePool.size.coerceAtLeast(6)}+ places",
+                )
             }
-            item(key = "restaurants_by_price_pager") {
-                HorizontalPager(
-                    state = pricePagerState,
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top,
-                ) { page ->
-                    val price = priceTabLabels[page]
-                    val restaurants = remember(price) { restaurantsForPriceLabel(price) }
-                    Column(Modifier.fillMaxWidth()) {
-                        restaurants.forEach { restaurant ->
-                            key(restaurant.id) {
-                                val openId = restaurant.id.removePrefix("price-${price.length}-")
-                                RestaurantByPriceListRow(
-                                    restaurant = restaurant,
-                                    onClick = { onOpenRestaurant(openId) },
-                                    modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 18.dp),
-                                )
-                            }
-                        }
-                    }
+            itemsIndexed(
+                items = priceSectionRestaurants,
+                key = { _, restaurant -> restaurant.id },
+            ) { _, restaurant ->
+                RestaurantByPriceListRowWithLazyEnter(
+                    restaurant = restaurant,
+                    onOpenRestaurant = {
+                        onOpenRestaurant(resolveRestaurantNavigationId(selectedPriceTab, restaurant.id))
+                    },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                )
+            }
+            if (priceSectionLoadingMore) {
+                item(key = "price-section-loading-more") {
+                    PriceSectionLoadingMoreFooter()
                 }
-            }
             }
         }
     }
@@ -1330,123 +1330,192 @@ private fun RestaurantSeeAllCard(
     }
 }
 
+private fun restaurantsForPriceTab(selected: String): List<Restaurant> =
+    DiscoverData.ALL.filter { it.price == selected }.ifEmpty {
+        DiscoverData.ALL.take(6).mapIndexed { index, restaurant ->
+            restaurant.copy(
+                id = "price-${selected.length}-${restaurant.id}",
+                price = selected,
+                tag = if (index % 2 == 0) "New" else "Sale",
+            )
+        }
+    }
+
+private fun resolveRestaurantNavigationId(typedPrice: String, id: String): String {
+    val prefix = "price-${typedPrice.length}-"
+    if (!id.startsWith(prefix)) return id
+    val tail = id.removePrefix(prefix)
+    val candidate = tail.substringAfterLast('-')
+    return if (candidate.matches(Regex("[a-z]\\d+"))) candidate else tail
+}
+
+private fun discoverListCategoryLabel(restaurant: Restaurant): String {
+    val area = restaurant.area?.trim()?.takeIf { it.isNotBlank() }
+    if (!area.isNullOrBlank()) return area
+    return restaurant.cuisine.split("·").first().trim()
+}
+
+private fun cuisineDetailLabel(restaurant: Restaurant): String =
+    restaurant.cuisine.split("·").first().trim()
+
 @Composable
-private fun RestaurantsByPriceStickyHeader(
-    selectedPrice: String,
-    onSelectPrice: (String) -> Unit,
-    placeCount: Int,
-    tabLabels: List<String>,
-) {
+private fun PriceSectionLoadingMoreFooter() {
     val palette = LocalRestaurantPalette.current
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.cardSurface),
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        HorizontalDivider(color = palette.border.copy(alpha = 0.55f))
-        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 18.dp, bottom = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = "Restaurants by Price",
-                    color = palette.foreground,
-                    fontSize = 22.sp,
-                    lineHeight = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = "$placeCount+ places",
-                    color = palette.mutedForeground,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                )
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                verticalAlignment = Alignment.Bottom,
-            ) {
-                tabLabels.forEach { label ->
-                    PriceUnderlineTab(
-                        label = label,
-                        selected = selectedPrice == label,
-                        onClick = { onSelectPrice(label) },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-        }
-        HorizontalDivider(color = palette.border.copy(alpha = 0.55f))
+        CircularProgressIndicator(
+            modifier = Modifier.size(22.dp),
+            strokeWidth = 2.dp,
+            color = palette.foreground.copy(alpha = 0.55f),
+        )
+        Spacer(Modifier.width(14.dp))
+        Text(
+            text = "Loading more places…",
+            color = palette.mutedForeground,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+        )
     }
 }
 
 @Composable
-private fun PriceUnderlineTab(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
+private fun RestaurantByPriceListRowWithLazyEnter(
+    restaurant: Restaurant,
+    onOpenRestaurant: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val palette = LocalRestaurantPalette.current
-    val indicatorWidth = when (label.length) {
-        1 -> 32.dp
-        2 -> 40.dp
-        3 -> 50.dp
-        else -> 58.dp
+    val isPaginated = restaurant.id.contains("-more-")
+    val slot = if (isPaginated) {
+        restaurant.id.substringAfter("-more-").substringBefore("-").toIntOrNull()?.rem(5) ?: 0
+    } else {
+        0
     }
-    PressableScale(
-        onClick = onClick,
-        modifier = modifier.padding(vertical = 2.dp),
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 2.dp, vertical = 6.dp),
+    var revealed by remember(restaurant.id) { mutableStateOf(!isPaginated) }
+    LaunchedEffect(restaurant.id, isPaginated) {
+        if (isPaginated) {
+            delay(50L + slot * 55L)
+            revealed = true
+        }
+    }
+    val alpha by animateFloatAsState(
+        targetValue = if (revealed) 1f else 0f,
+        animationSpec = tween(360, easing = FastOutSlowInEasing),
+        label = "price-lazy-a",
+    )
+    val offsetY by animateFloatAsState(
+        targetValue = if (revealed) 0f else 22f,
+        animationSpec = spring(dampingRatio = 0.84f, stiffness = 360f),
+        label = "price-lazy-y",
+    )
+    val rowModifier = if (isPaginated) {
+        modifier.graphicsLayer {
+            this.alpha = alpha
+            translationY = offsetY
+        }
+    } else {
+        modifier
+    }
+    RestaurantByPriceListRow(
+        restaurant = restaurant,
+        onOpenRestaurant = onOpenRestaurant,
+        modifier = rowModifier,
+    )
+}
+
+@Composable
+private fun RestaurantsByPriceHeaderAndTabs(
+    selectedPrice: String,
+    onSelectPrice: (String) -> Unit,
+    placesLabel: String,
+) {
+    val palette = LocalRestaurantPalette.current
+    val tabs = listOf("$", "$$", "$$$", "$$$$")
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                text = label,
-                color = if (selected) palette.foreground else palette.mutedForeground,
-                fontSize = 19.sp,
-                lineHeight = 22.sp,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                text = "Restaurants by Price",
+                color = palette.foreground,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.height(10.dp))
-            Box(
-                modifier = Modifier
-                    .width(indicatorWidth)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(if (selected) palette.foreground else Color.Transparent),
+            Text(
+                text = placesLabel,
+                color = palette.mutedForeground,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
             )
         }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+        ) {
+            tabs.forEach { tab ->
+                val selected = selectedPrice == tab
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            role = Role.Tab,
+                            onClick = { onSelectPrice(tab) },
+                        )
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = tab,
+                            color = if (selected) palette.foreground else palette.mutedForeground,
+                            fontSize = 16.sp,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(3.dp)
+                                .background(if (selected) palette.foreground else Color.Transparent),
+                        )
+                    }
+                }
+            }
+        }
+        HorizontalDivider(
+            thickness = 1.dp,
+            color = palette.border,
+        )
     }
 }
 
 @Composable
 private fun RestaurantByPriceListRow(
     restaurant: Restaurant,
-    onClick: () -> Unit,
+    onOpenRestaurant: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
     val collections by WishlistStore.collections.collectAsState()
     val saved = collections.any { collection -> collection.restaurants.any { it.id == restaurant.id } }
-    val categoryLine = restaurant.area ?: restaurant.cuisine
-    val reviewLabel = remember(restaurant.id, restaurant.reviews) {
-        "(${NumberFormat.getNumberInstance(Locale.US).format(restaurant.reviews)} reviews)"
-    }
-    val summaryLine = "${restaurant.cuisine} · ${restaurant.price} · ${restaurant.distance}"
-    val starGold = Color(0xFFFFC107)
-    val thumbWidth = 120.dp
-    PressableScale(onClick = onClick, modifier = modifier.fillMaxWidth()) {
+    val goldStar = Color(0xFFEAB308)
+    val emptyStar = palette.mutedForeground.copy(alpha = 0.35f)
+    val filledStars = (restaurant.rating + 0.25).roundToInt().coerceIn(0, 5)
+
+    PressableScale(
+        onClick = onOpenRestaurant,
+        modifier = modifier.fillMaxWidth(),
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -1454,9 +1523,8 @@ private fun RestaurantByPriceListRow(
         ) {
             Box(
                 modifier = Modifier
-                    .width(thumbWidth)
-                    .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
-                    .clip(RoundedCornerShape(16.dp))
+                    .size(96.dp)
+                    .clip(RoundedCornerShape(14.dp))
                     .background(palette.mutedSurface),
             ) {
                 AsyncImage(
@@ -1466,39 +1534,55 @@ private fun RestaurantByPriceListRow(
                     modifier = Modifier.fillMaxSize(),
                 )
                 val tag = restaurant.tag
-                if (!tag.isNullOrBlank()) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(8.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(Color.White.copy(alpha = 0.94f))
-                            .padding(horizontal = 9.dp, vertical = 5.dp),
-                    ) {
-                        Text(tag, color = Color(0xFF222222), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-                    }
-                }
-                HeartButton(
-                    active = saved,
-                    onClick = { WishlistStore.openPicker(restaurant) },
-                    size = HeartButtonSize.Medium,
+                Row(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp),
-                )
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .padding(6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    if (!tag.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(Color.White.copy(alpha = 0.94f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                        ) {
+                            Text(
+                                tag,
+                                color = Color(0xFF222222),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                            )
+                        }
+                    } else {
+                        Spacer(Modifier)
+                    }
+                    HeartButton(
+                        active = saved,
+                        onClick = { WishlistStore.openPicker(restaurant) },
+                        size = HeartButtonSize.Small,
+                        style = HeartButtonStyle.Overlay,
+                        overlayContentAlignment = Alignment.TopCenter,
+                        modifier = Modifier,
+                    )
+                }
             }
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 Text(
                     text = restaurant.name,
                     color = palette.foreground,
-                    fontSize = 18.sp,
-                    lineHeight = 22.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Row(
-                    modifier = Modifier.padding(top = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
@@ -1506,42 +1590,48 @@ private fun RestaurantByPriceListRow(
                         Icons.Outlined.Place,
                         contentDescription = null,
                         tint = palette.mutedForeground,
-                        modifier = Modifier.size(15.dp),
+                        modifier = Modifier.size(14.dp),
                     )
                     Text(
-                        text = categoryLine,
+                        text = discoverListCategoryLabel(restaurant),
                         color = palette.mutedForeground,
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
                 Row(
-                    modifier = Modifier.padding(top = 5.dp),
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    RatingStarRow(rating = restaurant.rating, starGold = starGold)
-                    Spacer(Modifier.width(6.dp))
+                    repeat(5) { index ->
+                        Icon(
+                            Icons.Filled.Star,
+                            contentDescription = null,
+                            tint = if (index < filledStars) goldStar else emptyStar,
+                            modifier = Modifier.size(14.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(2.dp))
                     Text(
                         text = "%.1f".format(restaurant.rating),
-                        color = palette.foreground,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        text = reviewLabel,
                         color = palette.mutedForeground,
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = "(${formatReviewCount(restaurant.reviews)} reviews)",
+                        color = palette.mutedForeground,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 2.dp),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
                 Text(
-                    text = summaryLine,
+                    text = "${cuisineDetailLabel(restaurant)} • ${restaurant.price} • ${restaurant.distance}",
                     color = palette.mutedForeground,
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(top = 5.dp),
+                    fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1550,26 +1640,8 @@ private fun RestaurantByPriceListRow(
     }
 }
 
-@Composable
-private fun RatingStarRow(rating: Double, starGold: Color) {
-    val palette = LocalRestaurantPalette.current
-    val full = kotlin.math.floor(rating).toInt().coerceIn(0, 5)
-    val remainder = rating - full
-    val emptyTint = palette.mutedForeground.copy(alpha = 0.38f)
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(1.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        repeat(5) { index ->
-            val tint = when {
-                index < full -> starGold
-                index == full && remainder >= 0.45 -> starGold.copy(alpha = 0.58f)
-                else -> emptyTint
-            }
-            Icon(Icons.Filled.Star, contentDescription = null, tint = tint, modifier = Modifier.size(12.dp))
-        }
-    }
-}
+private fun formatReviewCount(count: Int): String =
+    count.toString().reversed().chunked(3).joinToString(",").reversed()
 
 @Composable
 private fun SectionHeader(title: String, horizontalPadding: Dp = 16.dp) {

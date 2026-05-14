@@ -6,6 +6,8 @@ package com.mh.restaurantchainreservation.feature.discover
  */
 object DiscoverRoutes {
     const val Home: String = "discover"
+    /** Full-screen gallery of hero banners (View All on Discover). */
+    const val AllPromotions: String = "discover/promotions"
     const val Search: String = "discover/search"
     const val Category: String = "discover/category/{categoryId}"
     const val Food: String = "discover/food/{foodId}"
