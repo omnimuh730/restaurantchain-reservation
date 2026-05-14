@@ -25,11 +25,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.SolidColor
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import androidx.compose.ui.text.TextStyle
@@ -43,9 +41,7 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantFont
 import java.text.NumberFormat
 import java.util.Locale
 
-internal val SharedHubGoldShadowTone = Color(0xFF8A5612)
-
-/** Web `drop-shadow` stack: `rgba(0,0,0,0.45) 0 1px 0`, `rgba(0,0,0,0.25) 0 2px 4px` under gold-gradient text. */
+/** Web-style gold text stack (offset layers; no drop shadow). */
 @Composable
 private fun HubWebGoldText(
     text: String,
@@ -61,11 +57,6 @@ private fun HubWebGoldText(
             overflow = TextOverflow.Ellipsis,
             style = style.copy(
                 brush = SolidColor(Color.Black.copy(alpha = 0.25f)),
-                shadow = Shadow(
-                    color = Color.Black.copy(alpha = 0.2f),
-                    offset = Offset.Zero,
-                    blurRadius = 4f,
-                ),
             ),
         )
         Text(
@@ -75,7 +66,6 @@ private fun HubWebGoldText(
             overflow = TextOverflow.Ellipsis,
             style = style.copy(
                 brush = SolidColor(Color.Black.copy(alpha = 0.45f)),
-                shadow = null,
             ),
         )
         Text(
@@ -127,12 +117,6 @@ internal fun HubLuxuryEmvChip(modifier: Modifier = Modifier) {
     val chipShape = RoundedCornerShape(6.dp)
     Box(
         modifier = modifier
-            .shadow(
-                elevation = 8.dp,
-                shape = chipShape,
-                ambientColor = Color.Black.copy(alpha = 0.5f),
-                spotColor = Color(0xFFFFE8C8).copy(alpha = 0.18f),
-            )
             .size(width = 40.dp, height = 28.dp)
             .clip(chipShape)
             .background(hubChipAnodizedBrush())
@@ -201,7 +185,6 @@ internal fun SharedHubCardFace(
 ) {
     val cardShape = RoundedCornerShape(32.dp)
     val palette = LocalRestaurantPalette.current
-    val spec = hubCardThemeSpec(model.themeId, palette.brand)
     val balancePrimaryText = remember(model.krwBalance, model.usdBalance) {
         hubPrimaryBalanceText(model.krwBalance, model.usdBalance)
     }
@@ -243,11 +226,6 @@ internal fun SharedHubCardFace(
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 0.06.sp,
             brush = hubMetalSilverBrush(),
-            shadow = Shadow(
-                color = Color.Black.copy(alpha = 0.38f),
-                offset = Offset(0f, 1.8f),
-                blurRadius = 10f,
-            ),
         )
     }
 
@@ -255,13 +233,6 @@ internal fun SharedHubCardFace(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(1.58f)
-            .shadow(
-                elevation = 28.dp,
-                shape = cardShape,
-                clip = false,
-                ambientColor = spec.glow.copy(alpha = 0.72f),
-                spotColor = spec.shadow.copy(alpha = 0.68f),
-            )
             .clip(cardShape),
     ) {
         HubThemedCardBackground(

@@ -11,9 +11,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +39,10 @@ import com.mh.restaurantchainreservation.core.designsystem.components.icons.Toni
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 
+private val WalletDecorCircleSize = 176.dp
+private val WalletDecorCircleOffsetX = (-40).dp
+private val WalletDecorCircleOffsetY = 48.dp
+
 @Composable
 fun WalletCardStack(
     showBalance: Boolean,
@@ -50,22 +56,34 @@ fun WalletCardStack(
     Box(
         modifier = modifier
             .padding(horizontal = 16.dp)
-            .fillMaxWidth()
-            .shadow(
-                elevation = 18.dp,
-                shape = cardShape,
-                ambientColor = palette.brand.copy(alpha = 0.55f),
-                spotColor = palette.brand.copy(alpha = 0.55f),
-            )
-            .clip(cardShape)
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(palette.gradientStart, palette.gradientMid, palette.gradientEnd),
-                    start = Offset(0f, 0f),
-                    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
-                ),
-            ),
+            .fillMaxWidth(),
     ) {
+        // Web: pointer-events-none absolute -bottom-12 -left-10 h-44 w-44 rounded-full bg white/8
+        Box(
+            Modifier
+                .align(Alignment.BottomStart)
+                .size(WalletDecorCircleSize)
+                .offset(x = WalletDecorCircleOffsetX, y = WalletDecorCircleOffsetY)
+                .background(Color.White.copy(alpha = 0.48f), CircleShape),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation = 18.dp,
+                    shape = cardShape,
+                    ambientColor = palette.brand.copy(alpha = 0.55f),
+                    spotColor = palette.brand.copy(alpha = 0.55f),
+                )
+                .clip(cardShape)
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(palette.gradientStart, palette.gradientMid, palette.gradientEnd),
+                        start = Offset(0f, 0f),
+                        end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
+                    ),
+                ),
+        ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -152,6 +170,7 @@ fun WalletCardStack(
                 Spacer(Modifier.width(0.dp))
             }
         }
+    }
     }
 }
 

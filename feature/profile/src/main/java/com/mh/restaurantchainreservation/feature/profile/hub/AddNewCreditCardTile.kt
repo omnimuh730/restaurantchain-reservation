@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -51,12 +50,6 @@ fun AddNewCreditCardTile(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .aspectRatio(1.58f)
-            .shadow(
-                elevation = 20.dp,
-                shape = RoundedCornerShape(TileCorner),
-                ambientColor = Color.Black.copy(alpha = 0.08f),
-                spotColor = brand.copy(alpha = 0.12f),
-            )
             .clip(RoundedCornerShape(TileCorner))
             .background(
                 Brush.verticalGradient(
@@ -88,12 +81,6 @@ fun AddNewCreditCardTile(modifier: Modifier = Modifier) {
             Box(
                 modifier = Modifier
                     .size(56.dp)
-                    .shadow(
-                        elevation = 10.dp,
-                        shape = CircleShape,
-                        ambientColor = Color.Black.copy(alpha = 0.18f),
-                        spotColor = brand.copy(alpha = 0.28f),
-                    )
                     .clip(CircleShape)
                     .background(
                         Brush.verticalGradient(
