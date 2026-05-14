@@ -3,11 +3,14 @@ package com.mh.restaurantchainreservation.feature.wishlist.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mh.restaurantchainreservation.core.model.WishlistStore
@@ -37,11 +40,24 @@ fun WishlistOverlayHost(
         WishlistStore.dismissToast(id)
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        // Toast sits just above the bottom chrome.
+    val pick = pendingPick
+    if (pick != null) {
+        WishlistSelectionSheet(
+            restaurant = pick,
+            onDismiss = { WishlistStore.closePicker() },
+        )
+    }
+
+    // Only occupy hit-test bounds when the toast is visible so the discover (and other)
+    // scroll surfaces underneath keep receiving gestures.
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .wrapContentSize(align = Alignment.BottomCenter),
+    ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(bottom = bottomInset.calculateBottomPadding()),
         ) {
             WishlistSavedToast(
@@ -51,14 +67,6 @@ fun WishlistOverlayHost(
                     WishlistStore.dismissToast(toast?.id ?: 0L)
                     WishlistStore.openPicker(r)
                 },
-            )
-        }
-        // Sheet renders as its own Dialog, so it's automatically full-screen.
-        val pick = pendingPick
-        if (pick != null) {
-            WishlistSelectionSheet(
-                restaurant = pick,
-                onDismiss = { WishlistStore.closePicker() },
             )
         }
     }

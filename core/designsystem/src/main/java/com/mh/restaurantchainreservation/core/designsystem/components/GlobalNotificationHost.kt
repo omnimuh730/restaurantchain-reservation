@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -93,7 +94,10 @@ fun GlobalNotificationHost(
     }
 
     Box(
-        modifier = modifier.fillMaxSize().padding(bottom = bottomInset.calculateBottomPadding()),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(bottom = bottomInset.calculateBottomPadding())
+            .wrapContentSize(align = Alignment.BottomCenter),
         contentAlignment = Alignment.BottomCenter,
     ) {
         AnimatedVisibility(

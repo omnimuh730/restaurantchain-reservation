@@ -29,10 +29,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.AccessTime
-import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -52,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.DiscoverData
 import com.mh.restaurantchainreservation.core.model.Restaurant
@@ -136,10 +135,10 @@ fun RestaurantDetailScreen(
             CircleButton(
                 onClick = { saved = !saved },
                 content = {
-                    Icon(
-                        imageVector = if (saved) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    HeartDrawableIcon(
+                        active = saved,
                         contentDescription = if (saved) "Remove from saved" else "Save",
-                        tint = if (saved) palette.brand else palette.foreground,
+                        iconHeight = 22.dp,
                     )
                 },
             )

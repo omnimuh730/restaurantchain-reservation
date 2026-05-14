@@ -65,6 +65,7 @@ import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
+import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.DiscoverData
 import com.mh.restaurantchainreservation.core.model.Restaurant
@@ -407,6 +408,7 @@ private fun DetailItem(
                     active = true,
                     onClick = onRemove,
                     size = HeartButtonSize.Medium,
+                    style = HeartButtonStyle.Overlay,
                     contentDescription = "Remove",
                     modifier = Modifier
                         .align(Alignment.TopEnd)

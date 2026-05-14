@@ -31,8 +31,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Call
@@ -72,6 +70,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
@@ -194,13 +193,11 @@ fun BookingDetailScreen(
                         animationSpec = spring(stiffness = 380f, dampingRatio = 0.45f),
                         label = "heart_scale",
                     )
-                    Icon(
-                        imageVector = if (saved) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    HeartDrawableIcon(
+                        active = saved,
                         contentDescription = stringResource(if (saved) I18nR.string.detail_unsave else I18nR.string.detail_save),
-                        tint = if (saved) palette.brand else palette.foreground,
-                        modifier = Modifier
-                            .size(20.dp)
-                            .graphicsLayer { scaleX = heartScale; scaleY = heartScale },
+                        modifier = Modifier.graphicsLayer { scaleX = heartScale; scaleY = heartScale },
+                        iconHeight = 20.dp,
                     )
                 }
                 Column(

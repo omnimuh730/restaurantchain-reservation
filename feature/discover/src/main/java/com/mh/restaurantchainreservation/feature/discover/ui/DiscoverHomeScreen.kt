@@ -1,4 +1,4 @@
-﻿@file:OptIn(ExperimentalFoundationApi::class)
+﻿@file:OptIn(ExperimentalFoundationApi::class, ExperimentalHazeMaterialsApi::class)
 
 package com.mh.restaurantchainreservation.feature.discover.ui
 
@@ -39,6 +39,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -72,6 +73,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -82,6 +84,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
+import dev.chrisbanes.haze.rememberHazeState
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
@@ -96,6 +104,7 @@ import com.mh.restaurantchainreservation.core.model.QuickCategory
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.WishlistStore
 import com.mh.restaurantchainreservation.core.model.mockNews
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -165,6 +174,9 @@ private val RestaurantMiniCardTotalHeight = RestaurantMiniImageHeight + Restaura
 
 private val RestaurantSeeAllCardShape = RoundedCornerShape(18.dp)
 
+/** Status bar + compact discover bar inner padding (8+44+8); matches [CompactDiscoverBar]. */
+private val CompactDiscoverBarInnerHeight = 60.dp
+
 @Composable
 fun DiscoverHomeScreen(
     onOpenSearch: () -> Unit,
@@ -204,7 +216,7 @@ fun DiscoverHomeScreen(
                 false
             } else {
                 val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
-                val lastRestaurantIndex = 2 + n - 1
+                val lastRestaurantIndex = 3 + n
                 lastVisible >= lastRestaurantIndex
             }
         }
@@ -229,21 +241,32 @@ fun DiscoverHomeScreen(
             .fillMaxSize()
             .background(palette.cardSurface),
     ) {
-        Column(Modifier.fillMaxSize()) {
-            if (compact) {
-                CompactDiscoverBar(
-                    listState = listState,
-                    onOpenSearch = onOpenSearch,
-                    onOpenMap = onOpenSearch,
-                )
+        val hazeState = rememberHazeState()
+        val density = LocalDensity.current
+        val statusBarInsets = WindowInsets.statusBars
+        val compactBarTotalHeight = remember(density, statusBarInsets) {
+            with(density) { statusBarInsets.getTop(this).toDp() } + CompactDiscoverBarInnerHeight
+        }
+
+        val showStickyTabs by remember {
+            derivedStateOf {
+                val tabsInfo = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == "restaurants-by-price-header" }
+                if (tabsInfo == null) {
+                    listState.firstVisibleItemIndex > 1
+                } else {
+                    val threshold = with(density) { compactBarTotalHeight.toPx() }
+                    tabsInfo.offset <= threshold
+                }
             }
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = PaddingValues(bottom = 96.dp),
-            ) {
+        }
+
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeSource(state = hazeState),
+            contentPadding = PaddingValues(bottom = 16.dp),
+        ) {
             item {
                 HeroBanner(
                     banners = DiscoverData.BANNERS,
@@ -312,12 +335,18 @@ fun DiscoverHomeScreen(
                     RailSpacer(12.dp)
                 }
             }
-            item {
-                RestaurantsByPriceHeaderAndTabs(
-                    selectedPrice = selectedPriceTab,
-                    onSelectPrice = { selectedPriceTab = it },
-                    placesLabel = "${priceTabBasePool.size.coerceAtLeast(6)}+ places",
-                )
+            item(key = "restaurants-by-price-header") {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(palette.cardSurface),
+                ) {
+                    RestaurantsByPriceHeaderAndTabs(
+                        selectedPrice = selectedPriceTab,
+                        onSelectPrice = { selectedPriceTab = it },
+                        placesLabel = "${priceTabBasePool.size.coerceAtLeast(6)}+ places",
+                    )
+                }
             }
             itemsIndexed(
                 items = priceSectionRestaurants,
@@ -337,8 +366,36 @@ fun DiscoverHomeScreen(
                 }
             }
         }
+
+        if (compact) {
+            CompactDiscoverBar(
+                hazeState = hazeState,
+                onOpenSearch = onOpenSearch,
+                onOpenMap = onOpenSearch,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .zIndex(4f),
+            )
+
+            if (showStickyTabs) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .padding(top = compactBarTotalHeight)
+                        .background(palette.cardSurface)
+                        .zIndex(3f),
+                ) {
+                    RestaurantsByPriceHeaderAndTabs(
+                        selectedPrice = selectedPriceTab,
+                        onSelectPrice = { selectedPriceTab = it },
+                        placesLabel = "${priceTabBasePool.size.coerceAtLeast(6)}+ places",
+                    )
+                }
+            }
+        }
     }
-}
 }
 
 @Composable
@@ -441,7 +498,7 @@ private fun HeroBanner(
         ) {
             GlassSearchButton(
                 title = "Find a restaurant",
-                subtitle = "Today - 2 people - Anywhere",
+                subtitle = "Type of food, restaurant name…",
                 compact = false,
                 opaqueGlass = false,
                 palette = palette,
@@ -467,6 +524,7 @@ private fun HeroBanner(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .zIndex(1f)
                 .fillMaxWidth()
                 .height(76.dp)
                 .background(
@@ -475,20 +533,58 @@ private fun HeroBanner(
                     ),
                 ),
         )
+
+        HeroBannerPagerIndicators(
+            pageCount = banners.size,
+            pagerState = pagerState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .zIndex(3f)
+                .padding(bottom = 40.dp),
+        )
+    }
+}
+
+@Composable
+private fun HeroBannerPagerIndicators(
+    pageCount: Int,
+    pagerState: PagerState,
+    modifier: Modifier = Modifier,
+) {
+    if (pageCount <= 1) return
+    val scrollPosition = pagerState.currentPage + pagerState.currentPageOffsetFraction
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        repeat(pageCount) { index ->
+            val distance = abs(scrollPosition - index).coerceIn(0f, 1f)
+            val width = (5f + (14f - 5f) * (1f - distance)).dp
+            val dotAlpha = lerp(0.42f, 0.96f, 1f - distance)
+            Box(
+                modifier = Modifier
+                    .height(5.dp)
+                    .width(width)
+                    .clip(RoundedCornerShape(50))
+                    .background(Color.White.copy(alpha = dotAlpha)),
+            )
+        }
     }
 }
 
 @Composable
 private fun CompactDiscoverBar(
-    listState: LazyListState,
+    hazeState: HazeState,
     onOpenSearch: () -> Unit,
     onOpenMap: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .background(discoverGlassBarBackgroundBrush(palette))
+            .hazeEffect(state = hazeState, style = HazeMaterials.thin())
             .border(width = 1.dp, color = discoverGlassBarEdgeColor(palette))
             .windowInsetsPadding(WindowInsets.statusBars)
             .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
@@ -497,36 +593,19 @@ private fun CompactDiscoverBar(
     ) {
         GlassSearchButton(
             title = "Find a restaurant",
-            subtitle = if (listState.firstVisibleItemIndex > 0) "Explore nearby tables" else "Today - 2 people",
+            subtitle = "Type of food, restaurant name…",
             compact = true,
-            opaqueGlass = true,
+            opaqueGlass = false,
             palette = palette,
             onClick = onOpenSearch,
             modifier = Modifier.weight(1f),
         )
-        GlassMapButton(compact = true, opaqueGlass = true, palette = palette, onClick = onOpenMap)
+        GlassMapButton(compact = true, opaqueGlass = false, palette = palette, onClick = onOpenMap)
     }
 }
 
-private fun discoverGlassBarBackgroundBrush(palette: RestaurantPalette): Brush =
-    if (palette.isDark) {
-        Brush.verticalGradient(
-            colors = listOf(
-                palette.cardSurface.copy(alpha = 0.96f),
-                Color(0xFF2C2C2E).copy(alpha = 0.93f),
-            ),
-        )
-    } else {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color.White.copy(alpha = 0.94f),
-                palette.cardSurface.copy(alpha = 0.90f),
-            ),
-        )
-    }
-
 private fun discoverGlassBarEdgeColor(palette: RestaurantPalette): Color =
-    if (palette.isDark) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.58f)
+    if (palette.isDark) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.42f)
 
 private data class GlassPillLayers(
     val baseFill: Color,
@@ -543,33 +622,33 @@ private fun discoverGlassPillLayers(
     if (palette.isDark) {
         val strong = opaqueGlass && compact
         val base = when {
-            strong -> palette.cardSurface.copy(alpha = 0.90f)
-            compact -> palette.cardSurface.copy(alpha = 0.62f)
-            else -> palette.cardSurface.copy(alpha = 0.48f)
+            strong -> palette.cardSurface.copy(alpha = 0.88f)
+            compact -> palette.cardSurface.copy(alpha = 0.60f)
+            else -> palette.cardSurface.copy(alpha = 0.42f)
         }
         val border = when {
-            strong -> 0.30f
-            compact -> 0.24f
-            else -> 0.22f
+            strong -> 0.35f
+            compact -> 0.28f
+            else -> 0.26f
         }
-        val icon = Color.White.copy(alpha = if (strong) 0.20f else 0.14f)
+        val icon = Color.White.copy(alpha = if (strong) 0.18f else 0.12f)
         val grad = when {
-            strong -> 0.22f
-            compact -> 0.18f
-            else -> 0.15f
+            strong -> 0.28f
+            compact -> 0.24f
+            else -> 0.20f
         }
         return GlassPillLayers(base, border, icon, grad)
     }
     val strong = opaqueGlass && compact
     val baseAlpha = when {
-        strong -> 0.58f
-        compact -> 0.42f
-        else -> 0.32f
+        strong -> 0.52f
+        compact -> 0.38f
+        else -> 0.28f
     }
     val borderAlpha = when {
-        strong -> 0.62f
-        compact -> 0.52f
-        else -> 0.48f
+        strong -> 0.70f
+        compact -> 0.60f
+        else -> 0.56f
     }
     val iconAlpha = when {
         strong -> 0.52f
@@ -577,9 +656,9 @@ private fun discoverGlassPillLayers(
         else -> 0.40f
     }
     val gradTop = when {
-        strong -> 0.40f
-        compact -> 0.34f
-        else -> 0.30f
+        strong -> 0.50f
+        compact -> 0.44f
+        else -> 0.38f
     }
     return GlassPillLayers(
         baseFill = Color.White.copy(alpha = baseAlpha),
@@ -606,14 +685,14 @@ private fun GlassSearchButton(
     val height = if (compact) 44.dp else 56.dp
     val iconSize = if (compact) 32.dp else 38.dp
     val layers = discoverGlassPillLayers(palette, compact, opaqueGlass)
+    val horizontalPadding = if (compact) 10.dp else 14.dp
     PressableScale(
         onClick = onClick,
         modifier = modifier
             .height(height)
             .clip(RoundedCornerShape(999.dp))
             .border(1.dp, discoverGlassPillBorderColor(palette, layers.borderAlpha), RoundedCornerShape(999.dp))
-            .background(layers.baseFill)
-            .padding(horizontal = if (compact) 10.dp else 12.dp),
+            .background(layers.baseFill),
     ) {
         Box(modifier = Modifier.matchParentSize()) {
             Box(
@@ -623,6 +702,7 @@ private fun GlassSearchButton(
                         Brush.verticalGradient(
                             colors = listOf(
                                 Color.White.copy(alpha = layers.gradientTopAlpha),
+                                Color.White.copy(alpha = layers.gradientTopAlpha * 0.4f),
                                 Color.Transparent,
                             ),
                         ),
@@ -631,7 +711,7 @@ private fun GlassSearchButton(
             Row(
                 modifier = Modifier
                     .matchParentSize()
-                    .padding(horizontal = if (compact) 0.dp else 2.dp),
+                    .padding(horizontal = horizontalPadding),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
@@ -692,6 +772,7 @@ private fun GlassMapButton(
                     Brush.verticalGradient(
                         colors = listOf(
                             Color.White.copy(alpha = layers.gradientTopAlpha),
+                            Color.White.copy(alpha = layers.gradientTopAlpha * 0.4f),
                             Color.Transparent,
                         ),
                     ),
@@ -708,19 +789,21 @@ private fun QuickCategoryGrid(categories: List<QuickCategory>, onClick: (String)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 18.dp, vertical = 4.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         categories.chunked(4).forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Start,
             ) {
                 row.forEach { category ->
                     QuickCategoryButton(
                         category = category,
                         onClick = { onClick(category.id) },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
                     )
                 }
                 repeat(4 - row.size) {
@@ -738,8 +821,16 @@ private fun QuickCategoryButton(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    PressableScale(onClick = onClick, modifier = modifier.padding(horizontal = 2.dp)) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    PressableScale(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Box(
                 modifier = Modifier
                     .size(54.dp)
@@ -957,6 +1048,7 @@ private fun AirbnbMiniCard(
                     active = saved,
                     onClick = { WishlistStore.openPicker(restaurant) },
                     size = HeartButtonSize.Medium,
+                    style = HeartButtonStyle.Overlay,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(8.dp),
