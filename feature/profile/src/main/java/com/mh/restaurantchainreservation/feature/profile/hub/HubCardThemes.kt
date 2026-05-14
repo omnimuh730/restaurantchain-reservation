@@ -147,6 +147,12 @@ internal fun hubCardThemeSpec(id: HubCardThemeId): HubCardThemeSpec = when (id) 
     )
 }
 
+/** Linear brush for compact theme swatches (picker, list rows). */
+internal fun hubCardThemeSwatchBrush(themeId: HubCardThemeId): Brush {
+    val colors = hubCardThemeSpec(themeId).gradient
+    return Brush.linearGradient(colors)
+}
+
 internal fun hubCardLabelMuted(themeId: HubCardThemeId): Color = when (themeId) {
     HubCardThemeId.Ocean -> Color(0xFFE0EEFF).copy(alpha = 0.92f)
     HubCardThemeId.Forest -> Color(0xFFD1FAE5).copy(alpha = 0.90f)
@@ -459,6 +465,7 @@ private fun DrawScope.drawEdgeRimlight(w: Float, h: Float) {
 internal fun HubThemedCardBackground(
     themeId: HubCardThemeId,
     modifier: Modifier = Modifier,
+    patternOverride: HubCardPattern? = null,
 ) {
     val spec = hubCardThemeSpec(themeId)
     val transition = rememberInfiniteTransition(label = "hubCardAmbient")
@@ -508,7 +515,7 @@ internal fun HubThemedCardBackground(
         )
 
         drawBoldMidgroundArc(w, h, drift, Color.White)
-        drawHubCardPattern(spec.pattern, spec.highlight, spec.shadow, w, h)
+        drawHubCardPattern(patternOverride ?: spec.pattern, spec.highlight, spec.shadow, w, h)
 
         drawAuroraHolographicFilm(themeId, w, h, drift)
         drawFilmGrainSubtle(w, h, seed = themeId.ordinal * 7919 + 13)
@@ -544,6 +551,10 @@ internal fun HubThemedCardBackground(
     }
 }
 
+/**
+ * Card-face pattern layer aligned with web `PatternLayer` (stars / grid / wave / rays / blob).
+ * `highlight` and `shadow` come from [HubCardThemeSpec] like the React theme tokens.
+ */
 private fun DrawScope.drawHubCardPattern(
     pattern: HubCardPattern,
     highlight: Color,
@@ -554,43 +565,45 @@ private fun DrawScope.drawHubCardPattern(
     when (pattern) {
         HubCardPattern.None -> Unit
         HubCardPattern.Stars -> {
+            // SVG: radialGradient white 0.7 → transparent; circles at % positions, r in px-like units
             for (s in StarField) {
                 val cx = w * s.xPct
                 val cy = h * s.yPct
-                val r = (kotlin.math.min(w, h) * 0.014f) * (s.rDp / 1.4f)
+                val rPx = kotlin.math.min(w, h) * 0.012f * s.rDp
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = 0.95f),
-                            Color.White.copy(alpha = 0.35f),
-                            Color.Transparent,
+                            Color.White.copy(alpha = 0.7f),
+                            Color.White.copy(alpha = 0f),
                         ),
                         center = Offset(cx, cy),
-                        radius = r * 2.4f,
+                        radius = rPx * 3.2f,
                     ),
-                    radius = r,
+                    radius = rPx,
                     center = Offset(cx, cy),
                 )
             }
         }
         HubCardPattern.Grid -> {
-            val line = Color.White.copy(alpha = 0.14f)
+            // CSS: 22px grid, line rgba(255,255,255,0.85), layer opacity 0.07 → effective ~0.06
+            val lineAlpha = 0.85f * 0.07f
+            val line = Color.White.copy(alpha = lineAlpha)
             val step = 22f * density
             var x = 0f
             while (x <= w) {
-                drawLine(line, Offset(x, 0f), Offset(x, h), strokeWidth = 1.15f * density)
+                drawLine(line, Offset(x, 0f), Offset(x, h), strokeWidth = 1f * density)
                 x += step
             }
             var y = 0f
             while (y <= h) {
-                drawLine(line, Offset(0f, y), Offset(w, y), strokeWidth = 1.15f * density)
+                drawLine(line, Offset(0f, y), Offset(w, y), strokeWidth = 1f * density)
                 y += step
             }
         }
         HubCardPattern.Wave -> {
+            val sx = w / 320f
+            val sy = h / 200f
             val path1 = Path().apply {
-                val sx = w / 320f
-                val sy = h / 200f
                 moveTo(0f, 140f * sy)
                 cubicTo(
                     80f * sx, 90f * sy,
@@ -601,10 +614,8 @@ private fun DrawScope.drawHubCardPattern(
                 lineTo(0f, h)
                 close()
             }
-            drawPath(path1, color = shadow.copy(alpha = 0.72f))
+            drawPath(path1, color = shadow.copy(alpha = 0.55f))
             val path2 = Path().apply {
-                val sx = w / 320f
-                val sy = h / 200f
                 moveTo(0f, 160f * sy)
                 cubicTo(
                     100f * sx, 100f * sy,
@@ -615,34 +626,35 @@ private fun DrawScope.drawHubCardPattern(
                 lineTo(0f, h)
                 close()
             }
-            drawPath(path2, color = highlight.copy(alpha = 0.38f))
+            drawPath(path2, color = highlight.copy(alpha = 0.25f))
         }
         HubCardPattern.Rays -> {
-            val stroke = Color.White.copy(alpha = 0.18f)
+            val stroke = Color.White.copy(alpha = 0.10f)
+            val scale = w / 320f
             for (i in 0 until 18) {
                 drawLine(
                     color = stroke,
                     start = Offset(w, 0f),
-                    end = Offset(w - i * 22f * (w / 320f), h),
-                    strokeWidth = 1.35f * density,
+                    end = Offset(w - i * 22f * scale, h),
+                    strokeWidth = 1f * density,
                     cap = StrokeCap.Round,
                 )
             }
         }
         HubCardPattern.Blob -> {
+            // Two offset circles: top-right (h-44 w-44 area), bottom-left (h-52 w-52) — solid theme fills
+            val m = kotlin.math.min(w, h)
+            val rTop = m * 0.26f
+            val rBot = m * 0.31f
             drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(highlight.copy(alpha = 0.72f), Color.Transparent),
-                    center = Offset(w * 1.08f, -h * 0.08f),
-                    radius = w * 0.42f,
-                ),
+                color = highlight,
+                radius = rTop,
+                center = Offset(w + m * 0.02f, -m * 0.08f),
             )
             drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(shadow.copy(alpha = 0.62f), Color.Transparent),
-                    center = Offset(-w * 0.06f, h * 1.12f),
-                    radius = h * 0.48f,
-                ),
+                color = shadow,
+                radius = rBot,
+                center = Offset(-m * 0.06f, h + m * 0.10f),
             )
         }
     }

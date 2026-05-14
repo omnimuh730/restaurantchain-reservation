@@ -52,7 +52,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -70,10 +69,16 @@ import com.mh.restaurantchainreservation.feature.profile.subpages.components.amo
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.appendDigit
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.backspaceDigit
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.formatAmountString
+import com.mh.restaurantchainreservation.feature.profile.hub.HubCardPattern
+import com.mh.restaurantchainreservation.feature.profile.hub.HubCardThemeId
+import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFace
+import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFaceModel
+import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeSpec
+import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeSwatchBrush
 import kotlin.math.max
 import kotlin.math.min
 
-private enum class CardMode { Browse, Deposit, Withdraw, Send, Settings }
+private enum class CardMode { Browse, Deposit, Withdraw, Send, Settings, ChooseNewCardTheme }
 
 private data class ProfileCreditCard(
     val id: String,
@@ -81,23 +86,13 @@ private data class ProfileCreditCard(
     val holder: String,
     val number: String,
     val expiry: String,
-    val theme: CardTheme,
+    val themeId: HubCardThemeId,
+    val pattern: HubCardPattern,
     val frozen: Boolean = false,
     val externalUse: Boolean = true,
     val krwBalance: Double,
     val usdBalance: Double,
 )
-
-private enum class CardTheme(
-    val label: String,
-    val start: Color,
-    val end: Color,
-    val accent: Color,
-) {
-    Rose("Rose", Color(0xFF111827), Color(0xFFFF385C), Color(0xFFFFB4C4)),
-    Ink("Ink", Color(0xFF0F172A), Color(0xFF334155), Color(0xFFA7F3D0)),
-    Sky("Sky", Color(0xFF0C4A6E), Color(0xFF38BDF8), Color(0xFFFFF7ED)),
-}
 
 private data class CardTx(
     val label: String,
@@ -116,7 +111,8 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 holder = "Alex Chen",
                 number = "4890123456784242",
                 expiry = "08/29",
-                theme = CardTheme.Rose,
+                themeId = HubCardThemeId.Rose,
+                pattern = hubCardThemeSpec(HubCardThemeId.Rose).pattern,
                 krwBalance = 820000.0,
                 usdBalance = 216.45,
             ),
@@ -126,7 +122,8 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 holder = "Alex Chen",
                 number = "5339123411119021",
                 expiry = "11/30",
-                theme = CardTheme.Sky,
+                themeId = HubCardThemeId.Ocean,
+                pattern = HubCardPattern.Rays,
                 krwBalance = 120000.0,
                 usdBalance = 84.0,
             ),
@@ -135,6 +132,10 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var activeIndex by rememberSaveable { mutableIntStateOf(0) }
     var mode by rememberSaveable { mutableStateOf(CardMode.Browse) }
     var qrCard by remember { mutableStateOf<ProfileCreditCard?>(null) }
+    var pendingPickTheme by remember { mutableStateOf(HubCardThemeId.Rose) }
+    var pendingPickPattern by remember { mutableStateOf(hubCardThemeSpec(HubCardThemeId.Rose).pattern) }
+    var pendingNewCardNumber by remember { mutableStateOf("") }
+    var pendingNewCardNickname by remember { mutableStateOf("Tonight Rose") }
 
     val activeCard = cards.getOrNull(activeIndex.coerceIn(0, max(cards.lastIndex, 0)))
 
@@ -157,20 +158,11 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 ) {
                     HeaderAddButton {
                         val index = cards.size + 1
-                        cards.add(
-                            ProfileCreditCard(
-                                id = "card-$index",
-                                nickname = "Tonight ${CardTheme.entries[index % CardTheme.entries.size].label}",
-                                holder = "Alex Chen",
-                                number = "4890${(100000000000 + index * 43129).toString().takeLast(12)}",
-                                expiry = "12/${29 + index}",
-                                theme = CardTheme.entries[index % CardTheme.entries.size],
-                                krwBalance = 0.0,
-                                usdBalance = 0.0,
-                            ),
-                        )
-                        activeIndex = cards.lastIndex
-                        GlobalNotificationCenter.success("Card created", "Your new Tonight card is ready.")
+                        pendingPickTheme = HubCardThemeId.Rose
+                        pendingPickPattern = hubCardThemeSpec(HubCardThemeId.Rose).pattern
+                        pendingNewCardNumber = "4890${(100000000000 + index * 43129).toString().takeLast(12)}"
+                        pendingNewCardNickname = "Tonight ${HubCardThemeId.Rose.name}"
+                        mode = CardMode.ChooseNewCardTheme
                     }
                     Spacer(Modifier.height(18.dp))
                     CardCarousel(
@@ -211,6 +203,41 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     }
                     Spacer(Modifier.height(40.dp))
                 }
+            }
+            CardMode.ChooseNewCardTheme -> {
+                val index = cards.size + 1
+                ChooseCardThemePage(
+                    previewNickname = pendingNewCardNickname,
+                    holder = "Alex Chen",
+                    lastFour = pendingNewCardNumber.takeLast(4),
+                    fullCardNumber = pendingNewCardNumber,
+                    selectedThemeId = pendingPickTheme,
+                    selectedPattern = pendingPickPattern,
+                    onThemeSelected = {
+                        pendingPickTheme = it
+                        pendingNewCardNickname = "Tonight ${it.name}"
+                    },
+                    onPatternSelected = { pendingPickPattern = it },
+                    onBack = { mode = CardMode.Browse },
+                    onConfirm = {
+                        cards.add(
+                            ProfileCreditCard(
+                                id = "card-$index",
+                                nickname = pendingNewCardNickname,
+                                holder = "Alex Chen",
+                                number = pendingNewCardNumber,
+                                expiry = "12/${29 + index}",
+                                themeId = pendingPickTheme,
+                                pattern = pendingPickPattern,
+                                krwBalance = 0.0,
+                                usdBalance = 0.0,
+                            ),
+                        )
+                        activeIndex = cards.lastIndex
+                        mode = CardMode.Browse
+                        GlobalNotificationCenter.success("Card created", "Your new Tonight card is ready.")
+                    },
+                )
             }
             CardMode.Deposit, CardMode.Withdraw, CardMode.Send -> {
                 activeCard?.let { card ->
@@ -309,6 +336,24 @@ private fun HeaderAddButton(onClick: () -> Unit) {
     }
 }
 
+private fun ProfileCreditCard.toFaceModel(revealPan: Boolean): SharedHubCardFaceModel {
+    val lastFour = number.takeLast(4).ifEmpty { "0000" }
+    return SharedHubCardFaceModel(
+        productLabel = nickname,
+        holder = holder,
+        lastFour = lastFour,
+        krwBalance = krwBalance.toLong(),
+        usdBalance = usdBalance,
+        themeId = themeId,
+        pattern = pattern,
+        showBalance = krwBalance > 0.0 || usdBalance > 0.0,
+        showDualBalance = krwBalance > 0.0 && usdBalance > 0.0,
+        frozen = frozen,
+        showFullPan = revealPan,
+        fullCardNumber = number,
+    )
+}
+
 @Composable
 private fun CardCarousel(cards: List<ProfileCreditCard>, activeIndex: Int, onSelect: (Int) -> Unit) {
     LazyRow(
@@ -340,42 +385,10 @@ private fun CardCarousel(cards: List<ProfileCreditCard>, activeIndex: Int, onSel
 
 @Composable
 private fun CardFace(card: ProfileCreditCard, reveal: Boolean, modifier: Modifier = Modifier) {
-    val gradient = Brush.linearGradient(listOf(card.theme.start, card.theme.end))
-    Box(
-        modifier = modifier
-            .aspectRatio(1.58f)
-            .clip(RoundedCornerShape(24.dp))
-            .background(gradient)
-            .padding(22.dp),
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                Column {
-                    Text(card.nickname, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
-                    Text("TONIGHT CARD", color = Color.White.copy(alpha = 0.62f), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                }
-                if (card.frozen) {
-                    Text(
-                        "FROZEN",
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Black,
-                        modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(Color.White.copy(alpha = 0.18f)).padding(horizontal = 10.dp, vertical = 5.dp),
-                    )
-                }
-            }
-            Spacer(Modifier.weight(1f))
-            Text("Balance", color = Color.White.copy(alpha = 0.66f), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-            Text(formatKrw(card.krwBalance), color = Color.White, fontSize = 25.sp, fontWeight = FontWeight.Black)
-            Text(formatUsd(card.usdBalance), color = card.theme.accent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(14.dp))
-            Text(if (reveal) formatCardNumber(card.number) else maskCard(card.number), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(card.holder.uppercase(), color = Color.White.copy(alpha = 0.82f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-                Text(if (reveal) card.expiry else "**/**", color = Color.White.copy(alpha = 0.82f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-            }
-        }
-    }
+    SharedHubCardFace(
+        model = card.toFaceModel(revealPan = reveal),
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -457,7 +470,7 @@ private fun CardListRow(card: ProfileCreditCard, selected: Boolean, onClick: () 
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
-            modifier = Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(listOf(card.theme.start, card.theme.end))),
+            modifier = Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(hubCardThemeSwatchBrush(card.themeId)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(Icons.Outlined.CreditCard, null, tint = Color.White, modifier = Modifier.size(22.dp))
@@ -551,7 +564,7 @@ private fun CurrencyChip(label: String, selected: Boolean, modifier: Modifier = 
 @Composable
 private fun SmallCardHeader(card: ProfileCreditCard) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Box(Modifier.size(48.dp).clip(RoundedCornerShape(15.dp)).background(Brush.linearGradient(listOf(card.theme.start, card.theme.end))), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(48.dp).clip(RoundedCornerShape(15.dp)).background(hubCardThemeSwatchBrush(card.themeId)), contentAlignment = Alignment.Center) {
             Icon(Icons.Outlined.CreditCard, null, tint = Color.White, modifier = Modifier.size(23.dp))
         }
         Column(modifier = Modifier.weight(1f)) {
