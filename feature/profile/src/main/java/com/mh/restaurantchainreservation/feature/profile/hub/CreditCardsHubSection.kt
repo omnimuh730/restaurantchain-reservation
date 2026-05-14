@@ -181,7 +181,7 @@ fun CreditCardsHubSection(
                 ((maxWidth - cardWidth) / 2).coerceAtLeast(0.dp)
             }
             // Slight deck overlap + gap so back layers read as separate sheets, not one blob.
-            val overlap = remember(cardWidth) { cardWidth * 0.26f }
+            val overlap = remember(cardWidth) { cardWidth * 0.22f }
 
             HorizontalPager(
                 state = pagerState,

@@ -401,7 +401,7 @@ private fun CardCarousel(
         val sidePad = remember(maxWidth, cardWidth) {
             ((maxWidth - cardWidth) / 2).coerceAtLeast(4.dp)
         }
-        val overlap = cardWidth * 0.26f
+        val overlap = cardWidth * 0.22f
 
         HorizontalPager(
             state = pagerState,

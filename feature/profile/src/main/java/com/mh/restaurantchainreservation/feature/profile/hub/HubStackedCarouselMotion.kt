@@ -8,7 +8,8 @@ import kotlin.math.abs
  *
  * Goals:
  * - At rest, inactive pages sit **partly under** the active card (deck overlap) with **scale close** to the front.
- * - **Trailing** (next, d > 0) stack biased a touch higher than **leading** (prev).
+ * - Inactive header starts a **few px higher** than the active card so the back **top rounded corner** peeks above the front edge.
+ * - **RotationZ** tilts inactive bodies **high → low** (outer edge lower); sign matches page side.
  * - Mid-swipe: extra **horizontal** spread + slightly smaller scale so layers do not awkwardly cover each other in the center.
  * - **Z-order** steepest near |d| == 0 so the interactive card stays clearly on top while dragging.
  */
@@ -24,17 +25,18 @@ internal object HubStackedCarouselMotion {
         val d = pageOffsetPages.coerceIn(-DClamp, DClamp)
         val absD = abs(d)
         val focusT = 1f - absD.coerceIn(0f, 1f)
-        val raiseT = (1f - focusT).coerceIn(0f, 1f)
+        val inactiveT = (1f - focusT).coerceIn(0f, 1f)
         val trailingBias = when {
-            d > 0.015f -> 1.12f
-            d < -0.015f -> 0.96f
+            d > 0.015f -> 1.06f
+            d < -0.015f -> 0.97f
             else -> 1f
         }
-        val baseLiftPx = 26f * density * raiseT * trailingBias
+        // Negative Y moves content up — tiny lift so the back card’s top corner clears the active top edge.
+        val headerPeekPx = 9f * density * inactiveT * trailingBias
         val u = absD.coerceIn(0f, 1f)
-        val midLiftK = (1f - abs(u * 2f - 1f)).coerceIn(0f, 1f)
-        val midLiftPx = midLiftK * 10f * density
-        return -baseLiftPx - midLiftPx
+        val midPeekK = (1f - abs(u * 2f - 1f)).coerceIn(0f, 1f)
+        val midPeekPx = midPeekK * 3f * density
+        return -(headerPeekPx + midPeekPx)
     }
 
     /**
@@ -60,12 +62,12 @@ internal object HubStackedCarouselMotion {
         val focusT = 1f - absD.coerceIn(0f, 1f)
         val u = absD.coerceIn(0f, 1f)
         val midK = (1f - abs(u * 2f - 1f)).coerceIn(0f, 1f)
-        val base = lerp(0.91f, 1f, focusT)
-        return (base - midK * 0.022f).coerceIn(0.86f, 1f)
+        val base = lerp(0.94f, 1f, focusT)
+        return (base - midK * 0.015f).coerceIn(0.90f, 1f)
     }
 
     fun rotationZForPage(pageOffsetPages: Float): Float =
-        (-pageOffsetPages * 6.6f).coerceIn(-9.5f, 9.5f)
+        (pageOffsetPages * 6.6f).coerceIn(-9.5f, 9.5f)
 
     fun alphaForPage(pageOffsetPages: Float): Float {
         val absD = abs(pageOffsetPages).coerceAtMost(DClamp)
