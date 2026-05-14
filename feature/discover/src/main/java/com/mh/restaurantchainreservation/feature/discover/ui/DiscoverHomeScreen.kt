@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -216,7 +215,8 @@ fun DiscoverHomeScreen(
                 false
             } else {
                 val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
-                val lastRestaurantIndex = 3 + n
+                // Items: 0 hero, 1 rails, 2 price header → first restaurant at 3; last at 2 + n.
+                val lastRestaurantIndex = 2 + n
                 lastVisible >= lastRestaurantIndex
             }
         }
@@ -246,18 +246,6 @@ fun DiscoverHomeScreen(
         val statusBarInsets = WindowInsets.statusBars
         val compactBarTotalHeight = remember(density, statusBarInsets) {
             with(density) { statusBarInsets.getTop(this).toDp() } + CompactDiscoverBarInnerHeight
-        }
-
-        val showStickyTabs by remember {
-            derivedStateOf {
-                val tabsInfo = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == "restaurants-by-price-header" }
-                if (tabsInfo == null) {
-                    listState.firstVisibleItemIndex > 1
-                } else {
-                    val threshold = with(density) { compactBarTotalHeight.toPx() }
-                    tabsInfo.offset <= threshold
-                }
-            }
         }
 
         LazyColumn(
@@ -335,11 +323,12 @@ fun DiscoverHomeScreen(
                     RailSpacer(12.dp)
                 }
             }
-            item(key = "restaurants-by-price-header") {
+            stickyHeader(key = "restaurants-by-price-header") {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(palette.cardSurface),
+                        .background(palette.cardSurface)
+                        .padding(top = if (compact) compactBarTotalHeight else 0.dp),
                 ) {
                     RestaurantsByPriceHeaderAndTabs(
                         selectedPrice = selectedPriceTab,
@@ -377,23 +366,6 @@ fun DiscoverHomeScreen(
                     .fillMaxWidth()
                     .zIndex(4f),
             )
-
-            if (showStickyTabs) {
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .fillMaxWidth()
-                        .padding(top = compactBarTotalHeight)
-                        .background(palette.cardSurface)
-                        .zIndex(3f),
-                ) {
-                    RestaurantsByPriceHeaderAndTabs(
-                        selectedPrice = selectedPriceTab,
-                        onSelectPrice = { selectedPriceTab = it },
-                        placesLabel = "${priceTabBasePool.size.coerceAtLeast(6)}+ places",
-                    )
-                }
-            }
         }
     }
 }
