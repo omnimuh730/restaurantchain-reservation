@@ -98,6 +98,7 @@ import com.mh.restaurantchainreservation.core.model.QuickCategory
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.WishlistStore
 import com.mh.restaurantchainreservation.core.model.mockNews
+import com.mh.restaurantchainreservation.feature.discover.R
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -166,17 +167,6 @@ private val RestaurantMiniMetaBlockHeight = 46.dp
 private val RestaurantMiniCardTotalHeight = RestaurantMiniImageHeight + RestaurantMiniMetaBlockHeight
 
 private val RestaurantSeeAllCardShape = RoundedCornerShape(18.dp)
-
-private fun restaurantsForPriceLabel(price: String): List<Restaurant> =
-    DiscoverData.ALL.filter { it.price == price }.ifEmpty {
-        DiscoverData.ALL.take(6).mapIndexed { index, restaurant ->
-            restaurant.copy(
-                id = "price-${price.length}-${restaurant.id}",
-                price = price,
-                tag = if (index % 2 == 0) "New" else "Sale",
-            )
-        }
-    }
 
 @Composable
 fun DiscoverHomeScreen(
@@ -348,6 +338,7 @@ fun DiscoverHomeScreen(
                 item(key = "price-section-loading-more") {
                     PriceSectionLoadingMoreFooter()
                 }
+            }
             }
         }
     }
