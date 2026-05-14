@@ -58,10 +58,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -172,10 +176,32 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 }
                 SubpageScaffold(
                     title = "Credit cards",
+                    subtitle = "Multi-currency · Tonight Card",
                     onBack = onBack,
+                    headerActions = {
+                        val p = LocalRestaurantPalette.current
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(p.mutedSurface)
+                                .clickable(
+                                    role = Role.Button,
+                                    onClickLabel = "Add new card",
+                                    onClick = openChooseNewCardTheme,
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Add,
+                                contentDescription = "Add new card",
+                                tint = p.foreground,
+                                modifier = Modifier.size(22.dp),
+                            )
+                        }
+                    },
                 ) {
-                    HeaderAddButton(onClick = openChooseNewCardTheme)
-                    Spacer(Modifier.height(18.dp))
+                    Spacer(Modifier.height(8.dp))
                     CardCarousel(
                         cards = cards,
                         activeIndex = activeIndex,
@@ -324,30 +350,6 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-private fun HeaderAddButton(onClick: () -> Unit) {
-    val palette = LocalRestaurantPalette.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .border(1.dp, palette.border, RoundedCornerShape(18.dp))
-            .background(palette.cardSurface)
-            .clickable(onClick = onClick)
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Box(Modifier.size(42.dp).clip(CircleShape).background(palette.brand.copy(alpha = 0.10f)), contentAlignment = Alignment.Center) {
-            Icon(Icons.Outlined.Add, null, tint = palette.brand, modifier = Modifier.size(22.dp))
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text("Open a new card", color = palette.foreground, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
-            Text("Every card stays multi-currency.", color = palette.mutedForeground, fontSize = 12.sp)
-        }
-    }
-}
-
 private fun ProfileCreditCard.toFaceModel(revealPan: Boolean): SharedHubCardFaceModel {
     val lastFour = number.takeLast(4).ifEmpty { "0000" }
     return SharedHubCardFaceModel(
@@ -374,6 +376,7 @@ private fun CardCarousel(
     onSelect: (Int) -> Unit,
     onAddNewCard: () -> Unit,
 ) {
+    val palette = LocalRestaurantPalette.current
     val cardWidth = 318.dp
     val pagerState = rememberPagerState(
         initialPage = activeIndex.coerceIn(0, cards.size),
@@ -397,55 +400,132 @@ private fun CardCarousel(
             .collect { page -> onSelect(page) }
     }
 
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        val sidePad = remember(maxWidth, cardWidth) {
-            ((maxWidth - cardWidth) / 2).coerceAtLeast(4.dp)
-        }
-        val overlap = cardWidth * 0.22f
+    val pageCount = cards.size + 1
 
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = sidePad),
-            pageSize = PageSize.Fixed(cardWidth),
-            pageSpacing = -overlap,
-            verticalAlignment = Alignment.CenterVertically,
-            beyondViewportPageCount = 3,
-            flingBehavior = stackedFling,
-        ) { page ->
-            val d = pagerState.getOffsetDistanceInPages(page).coerceIn(-2.5f, 2.5f)
-            Box(
-                modifier = Modifier
-                    .zIndex(HubStackedCarouselMotion.zIndexForPage(d))
-                    .graphicsLayer {
-                        transformOrigin = TransformOrigin(0.5f, 0.52f)
-                        cameraDistance = 14f * density
-                        rotationZ = HubStackedCarouselMotion.rotationZForPage(d)
-                        val scale = HubStackedCarouselMotion.scaleForPage(d)
-                        scaleX = scale
-                        scaleY = scale
-                        translationX = HubStackedCarouselMotion.translationX(d, density)
-                        translationY = HubStackedCarouselMotion.translationY(d, density)
-                        alpha = HubStackedCarouselMotion.alphaForPage(d)
-                    },
-            ) {
-                if (page >= cards.size) {
-                    AddNewCreditCardTile(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(onClick = onAddNewCard),
-                    )
-                } else {
-                    CardFace(
-                        card = cards[page],
-                        reveal = page == activeIndex,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSelect(page) },
-                    )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val sidePad = remember(maxWidth, cardWidth) {
+                ((maxWidth - cardWidth) / 2).coerceAtLeast(4.dp)
+            }
+            val overlap = cardWidth * 0.22f
+
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = sidePad),
+                pageSize = PageSize.Fixed(cardWidth),
+                pageSpacing = -overlap,
+                verticalAlignment = Alignment.CenterVertically,
+                beyondViewportPageCount = 3,
+                flingBehavior = stackedFling,
+            ) { page ->
+                val d = pagerState.getOffsetDistanceInPages(page).coerceIn(-2.5f, 2.5f)
+                Box(
+                    modifier = Modifier
+                        .zIndex(HubStackedCarouselMotion.zIndexForPage(d))
+                        .graphicsLayer {
+                            transformOrigin = TransformOrigin(0.5f, 0.52f)
+                            cameraDistance = 14f * density
+                            rotationZ = HubStackedCarouselMotion.rotationZForPage(d)
+                            val scale = HubStackedCarouselMotion.scaleForPage(d)
+                            scaleX = scale
+                            scaleY = scale
+                            translationX = HubStackedCarouselMotion.translationX(d, density)
+                            translationY = HubStackedCarouselMotion.translationY(d, density)
+                            alpha = HubStackedCarouselMotion.alphaForPage(d)
+                        },
+                ) {
+                    if (page >= cards.size) {
+                        AddNewCreditCardTile(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(
+                                    role = Role.Button,
+                                    onClickLabel = "Add new card",
+                                    onClick = onAddNewCard,
+                                ),
+                        )
+                    } else {
+                        CardFace(
+                            card = cards[page],
+                            reveal = page == activeIndex,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSelect(page) },
+                        )
+                    }
                 }
             }
         }
+
+        Spacer(Modifier.height(14.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            repeat(pageCount) { index ->
+                if (index > 0) Spacer(Modifier.width(6.dp))
+                val selected = index == pagerState.currentPage
+                if (selected) {
+                    Box(
+                        modifier = Modifier
+                            .width(22.dp)
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(palette.brand),
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(palette.mutedForeground.copy(alpha = 0.28f)),
+                    )
+                }
+            }
+            Spacer(Modifier.width(10.dp))
+            CarouselDashedAddButton(onClick = onAddNewCard)
+        }
+    }
+}
+
+@Composable
+private fun CarouselDashedAddButton(onClick: () -> Unit) {
+    val palette = LocalRestaurantPalette.current
+    Box(
+        modifier = Modifier
+            .size(36.dp)
+            .clickable(
+                role = Role.Button,
+                onClickLabel = "Add new card",
+                onClick = onClick,
+            )
+            .drawBehind {
+                val c = Offset(size.width / 2f, size.height / 2f)
+                val fillR = size.minDimension / 2f - 1.dp.toPx()
+                drawCircle(color = Color.White, radius = fillR, center = c)
+                val strokeW = 2.dp.toPx()
+                val r = (fillR - strokeW / 2f).coerceAtLeast(4f)
+                drawCircle(
+                    color = palette.brand,
+                    radius = r,
+                    center = c,
+                    style = Stroke(
+                        width = strokeW,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(9f, 7f), 0f),
+                    ),
+                )
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Add,
+            contentDescription = null,
+            tint = palette.brand,
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
 

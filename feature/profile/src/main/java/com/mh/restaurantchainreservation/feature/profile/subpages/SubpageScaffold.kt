@@ -23,6 +23,8 @@ fun SubpageScaffold(
     modifier: Modifier = Modifier,
     horizontalPadding: Int = 20,
     scrollable: Boolean = true,
+    subtitle: String? = null,
+    headerActions: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -38,6 +40,8 @@ fun SubpageScaffold(
             title = title,
             onBack = onBack,
             backContentDescription = backLabel,
+            subtitle = subtitle,
+            actions = headerActions,
             modifier = Modifier.padding(horizontal = horizontalPadding.dp),
         )
         if (scrollable) {
