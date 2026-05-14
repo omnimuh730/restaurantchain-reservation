@@ -176,7 +176,6 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 }
                 SubpageScaffold(
                     title = "Credit cards",
-                    subtitle = "Multi-currency · Tonight Card",
                     onBack = onBack,
                     headerActions = {
                         val p = LocalRestaurantPalette.current
@@ -201,14 +200,23 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         }
                     },
                 ) {
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = "Multi-currency · Tonight Card",
+                        modifier = Modifier.fillMaxWidth(),
+                        color = palette.mutedForeground,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                        fontWeight = FontWeight.Normal,
+                    )
+                    Spacer(Modifier.height(44.dp))
                     CardCarousel(
                         cards = cards,
                         activeIndex = activeIndex,
                         onSelect = { activeIndex = it },
                         onAddNewCard = openChooseNewCardTheme,
                     )
-                    Spacer(Modifier.height(18.dp))
+                    Spacer(Modifier.height(28.dp))
                     activeCard?.let { card ->
                         ActionGrid(
                             frozen = card.frozen,
@@ -377,7 +385,6 @@ private fun CardCarousel(
     onAddNewCard: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val cardWidth = 318.dp
     val pagerState = rememberPagerState(
         initialPage = activeIndex.coerceIn(0, cards.size),
         pageCount = { cards.size + 1 },
@@ -403,7 +410,17 @@ private fun CardCarousel(
     val pageCount = cards.size + 1
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 20.dp),
+        ) {
+            val cardWidth = remember(maxWidth) {
+                val target = maxWidth * 0.92f
+                val capped = if (target > 364.dp) 364.dp else target
+                val floored = if (capped < 272.dp) 272.dp else capped
+                if (floored > maxWidth - 8.dp) maxWidth - 8.dp else floored
+            }
             val sidePad = remember(maxWidth, cardWidth) {
                 ((maxWidth - cardWidth) / 2).coerceAtLeast(4.dp)
             }
@@ -458,7 +475,7 @@ private fun CardCarousel(
             }
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(20.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
