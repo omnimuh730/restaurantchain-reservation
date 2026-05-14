@@ -66,7 +66,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
 import com.mh.restaurantchainreservation.core.designsystem.components.DeterministicQrCode
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationCenter
@@ -84,6 +83,7 @@ import com.mh.restaurantchainreservation.feature.profile.hub.HubCardThemeId
 import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFace
 import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFaceModel
 import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeSpec
+import com.mh.restaurantchainreservation.feature.profile.hub.HubStackedCarouselMotion
 import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeBackgroundBrush
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.min
@@ -414,21 +414,19 @@ private fun CardCarousel(
             flingBehavior = stackedFling,
         ) { page ->
             val d = pagerState.getOffsetDistanceInPages(page).coerceIn(-2.5f, 2.5f)
-            val absD = kotlin.math.abs(d)
-            val focusT = 1f - absD.coerceIn(0f, 1f)
             Box(
                 modifier = Modifier
-                    .zIndex(4000f - absD * 1100f)
+                    .zIndex(HubStackedCarouselMotion.zIndexForPage(d))
                     .graphicsLayer {
                         transformOrigin = TransformOrigin(0.5f, 0.52f)
                         cameraDistance = 14f * density
-                        rotationZ = (-d * 7.8f).coerceIn(-12f, 12f)
-                        val scale = lerp(0.84f, 1f, focusT)
+                        rotationZ = HubStackedCarouselMotion.rotationZForPage(d)
+                        val scale = HubStackedCarouselMotion.scaleForPage(d)
                         scaleX = scale
                         scaleY = scale
-                        translationX = d * 22f * density
-                        translationY = lerp(20f * density, 0f, focusT)
-                        alpha = lerp(0.74f, 1f, focusT).coerceIn(0.58f, 1f)
+                        translationX = HubStackedCarouselMotion.translationX(d, density)
+                        translationY = HubStackedCarouselMotion.translationY(d, density)
+                        alpha = HubStackedCarouselMotion.alphaForPage(d)
                     },
             ) {
                 if (page >= cards.size) {
