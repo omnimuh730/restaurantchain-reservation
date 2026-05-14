@@ -142,6 +142,14 @@ fun ProfileHubScreen(
             }
 
             StaggerItem {
+                CreditCardsHubSection(
+                    onManageCards = onOpenCards,
+                    onOpenCardInfo = onOpenCards,
+                    onAddNewCard = onOpenCards,
+                )
+            }
+
+            StaggerItem {
                 QuickActionsRow(
                     onTopUp = onOpenTopUp,
                     onGift = onOpenSendGift,
