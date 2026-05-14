@@ -8,6 +8,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -44,10 +45,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Place
-import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -58,8 +57,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -70,8 +72,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -96,6 +98,7 @@ import com.mh.restaurantchainreservation.core.model.QuickCategory
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.WishlistStore
 import com.mh.restaurantchainreservation.core.model.mockNews
+import com.mh.restaurantchainreservation.feature.discover.R
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -260,7 +263,7 @@ fun DiscoverHomeScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                         .background(palette.cardSurface)
-                        .padding(top = 18.dp, bottom = 10.dp),
+                        .padding(top = 16.dp, bottom = 10.dp),
                 ) {
                     QuickCategoryGrid(DiscoverData.QUICK_CATEGORIES, onOpenCategory)
                     RailSpacer(28.dp)
@@ -336,9 +339,9 @@ fun DiscoverHomeScreen(
                     PriceSectionLoadingMoreFooter()
                 }
             }
+            }
         }
     }
-}
 }
 
 @Composable
@@ -463,18 +466,6 @@ private fun HeroBanner(
         ) {
             Text("View All", color = Color(0xFF222222), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(76.dp)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, palette.cardSurface),
-                    ),
-                ),
-        )
     }
 }
 
@@ -708,13 +699,13 @@ private fun QuickCategoryGrid(categories: List<QuickCategory>, onClick: (String)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 18.dp, vertical = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         categories.chunked(4).forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 row.forEach { category ->
                     QuickCategoryButton(
@@ -738,30 +729,27 @@ private fun QuickCategoryButton(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    PressableScale(onClick = onClick, modifier = modifier.padding(horizontal = 2.dp)) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(categoryTint(category.id).copy(alpha = 0.13f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = categoryIcon(category.id),
-                    contentDescription = null,
-                    tint = categoryTint(category.id),
-                    modifier = Modifier.size(28.dp),
-                )
-            }
+    PressableScale(onClick = onClick, modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Image(
+                painter = painterResource(categoryDrawableRes(category.id)),
+                contentDescription = category.label,
+                modifier = Modifier.size(48.dp),
+                contentScale = ContentScale.Fit,
+            )
             Text(
-                text = compactCategoryLabel(category.label),
+                text = categoryTwoLineLabel(category.id),
                 color = palette.foreground,
-                fontSize = 13.sp,
-                lineHeight = 15.sp,
+                fontSize = 12.sp,
+                lineHeight = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 7.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1830,7 +1818,7 @@ private fun rememberLateNight(): List<Restaurant> = remember {
 
 private data class FanLayer(val rotation: Float, val x: Dp, val y: Dp)
 
-private enum class MorePreset { CompactWide, CompactNarrow }
+private enum class MorePreset { CompactWide, CompactNarrow, Restaurant, News }
 
 private data class MoreDimensions(
     val outerWidth: Dp,
@@ -1849,34 +1837,32 @@ private data class MoreDimensions(
 private fun moreDimensions(preset: MorePreset): MoreDimensions = when (preset) {
     MorePreset.CompactWide -> MoreDimensions(128.dp, 80.dp, 13.dp, 30.dp, 14.dp, 64.dp, 44.dp, 10.dp, 3.dp, 2.dp, 13.sp)
     MorePreset.CompactNarrow -> MoreDimensions(112.dp, 80.dp, 13.dp, 30.dp, 14.dp, 64.dp, 44.dp, 10.dp, 3.dp, 2.dp, 12.sp)
+    MorePreset.Restaurant -> MoreDimensions(176.dp, 224.dp, 18.dp, 60.dp, 26.dp, 130.dp, 86.dp, 22.dp, 8.dp, 12.dp, 15.sp)
+    MorePreset.News -> MoreDimensions(256.dp, 264.dp, 20.dp, 76.dp, 32.dp, 162.dp, 104.dp, 28.dp, 10.dp, 16.dp, 17.sp)
 }
 
-private fun compactCategoryLabel(label: String): String = when (label) {
-    "Trending Now" -> "Trending\nNow"
-    "Top Ranking" -> "Top\nRanking"
-    "Hot in New York" -> "Hot in\nNew York"
-    "Best K-BBQ" -> "Best\nK-BBQ"
-    "Best American" -> "Best\nAmerican"
-    "Local Favorite" -> "Local\nFavorite"
-    "Nearby Me" -> "Nearby\nMe"
-    else -> label
+/** Same WebP assets as `restaurantchain-reservation-ui-demo` / `public/icons/discover`. */
+private fun categoryDrawableRes(id: String): Int = when (id) {
+    "trending" -> R.drawable.discover_cat_trending
+    "catch-only" -> R.drawable.discover_cat_catch_only
+    "top-ranking" -> R.drawable.discover_cat_top_ranking
+    "hot-ny" -> R.drawable.discover_cat_hot_ny
+    "best-kbbq" -> R.drawable.discover_cat_best_kbbq
+    "best-american" -> R.drawable.discover_cat_best_american
+    "local-fav" -> R.drawable.discover_cat_local_fav
+    "nearby-me" -> R.drawable.discover_cat_nearby_me
+    else -> R.drawable.discover_cat_trending
 }
 
-private fun categoryIcon(id: String): ImageVector = when (id) {
-    "nearby-me", "hot-ny" -> Icons.Outlined.Place
-    "local-fav", "catch-only" -> Icons.Outlined.FavoriteBorder
-    "best-kbbq", "best-american" -> Icons.Outlined.Restaurant
-    else -> Icons.Filled.Star
-}
-
-private fun categoryTint(id: String): Color = when (id) {
-    "trending" -> Color(0xFFFF385C)
-    "catch-only" -> Color(0xFFDB2777)
-    "top-ranking" -> Color(0xFFEAB308)
-    "hot-ny" -> Color(0xFF2563EB)
-    "best-kbbq" -> Color(0xFFEA580C)
-    "best-american" -> Color(0xFF059669)
-    "local-fav" -> Color(0xFFE11D48)
-    "nearby-me" -> Color(0xFF0891B2)
-    else -> Color(0xFFFF385C)
+/** Matches web demo line breaks (`whitespace-pre-line` labels). */
+private fun categoryTwoLineLabel(id: String): String = when (id) {
+    "trending" -> "Trending\nNow"
+    "catch-only" -> "Catch\nOnly"
+    "top-ranking" -> "Top\nRanking"
+    "hot-ny" -> "Hot in\nNew York"
+    "best-kbbq" -> "Best\nK-BBQ"
+    "best-american" -> "Best\nAmerican"
+    "local-fav" -> "Local\nFavorite"
+    "nearby-me" -> "Nearby\nMe"
+    else -> "Explore\nMore"
 }

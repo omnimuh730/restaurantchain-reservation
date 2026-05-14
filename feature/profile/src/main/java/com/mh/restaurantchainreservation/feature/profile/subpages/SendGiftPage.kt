@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -67,7 +68,7 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
@@ -84,7 +85,7 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
             Text("Send a gift", color = palette.foreground, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         // Recipient input
         Row(
@@ -113,7 +114,7 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
             }
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(24.dp))
 
         // Gift card with animated amount
         Row(
@@ -130,7 +131,7 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
             })
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(24.dp))
 
         // Presets
         Row(
@@ -150,7 +151,7 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.weight(1f))
 
         // Keypad
         MoneyKeypad(
@@ -166,7 +167,8 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
         val canSend = recipient.trim().isNotEmpty() && activeAmount > 0
         Box(
             modifier = Modifier
-                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 16.dp)
+                .navigationBarsPadding()
                 .fillMaxWidth()
                 .height(52.dp)
                 .clip(RoundedCornerShape(percent = 50))

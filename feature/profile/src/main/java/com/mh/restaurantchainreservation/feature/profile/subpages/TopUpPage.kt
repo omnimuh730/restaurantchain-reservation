@@ -272,7 +272,7 @@ private fun SelectView(
             .padding(top = 16.dp),
     ) {
         TopBar(title = "Top up", onBack = onBack)
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
 
         // Animated hero amount + currency toggle
         Row(
@@ -292,7 +292,7 @@ private fun SelectView(
             CurrencySwitchPill(currency = currency, onToggle = onCurrencyToggle)
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(24.dp))
 
         // Quick presets (3-grid, top row)
         Column(
@@ -315,7 +315,8 @@ private fun SelectView(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        // Share vertical slack between preset block, keypad, and pay row instead of one gap above the CTA.
+        Spacer(Modifier.weight(1f))
 
         // Numeric keypad
         MoneyKeypad(
@@ -325,12 +326,12 @@ private fun SelectView(
             modifier = Modifier.padding(horizontal = 20.dp),
         )
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.weight(0.55f))
 
         // Pay-with row
         PayWithRow(provider = provider, onClick = onPickProvider, modifier = Modifier.padding(horizontal = 20.dp))
 
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.weight(0.45f))
 
         // Sticky CTA
         BrandPillButton(
