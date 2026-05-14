@@ -181,6 +181,23 @@ internal fun hubCardLabelMuted(themeId: HubCardThemeId): Color = when (themeId) 
     else -> Color.White.copy(alpha = 0.88f)
 }
 
+/** Web card gold numerals: `linear-gradient(160deg, rgb(255,233,168) 0%, …)`. */
+internal fun hubWebCardGoldBrush(): Brush {
+    val rad = (160.0 * PI / 180.0).toFloat()
+    val ux = sin(rad)
+    val uy = -cos(rad)
+    val len = 720f
+    return Brush.linearGradient(
+        0f to Color(0xFFFFE9A8),
+        0.22f to Color(0xFFFFD56A),
+        0.5f to Color(0xFFC9933E),
+        0.72f to Color(0xFFFFE9A8),
+        1f to Color(0xFFC7892F),
+        start = Offset.Zero,
+        end = Offset(ux * len, uy * len),
+    )
+}
+
 /** Premium anodized gold for balances, PAN, emboss accents. */
 internal fun hubMetalGoldBrush(): Brush = Brush.linearGradient(
     colors = listOf(

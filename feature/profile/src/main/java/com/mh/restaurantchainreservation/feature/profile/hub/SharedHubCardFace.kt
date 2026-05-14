@@ -1,17 +1,10 @@
 package com.mh.restaurantchainreservation.feature.profile.hub
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,15 +15,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,12 +31,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalDensity
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.TonightLogoMark
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantFontFamily
@@ -54,6 +44,48 @@ import java.text.NumberFormat
 import java.util.Locale
 
 internal val SharedHubGoldShadowTone = Color(0xFF8A5612)
+
+/** Web `drop-shadow` stack: `rgba(0,0,0,0.45) 0 1px 0`, `rgba(0,0,0,0.25) 0 2px 4px` under gold-gradient text. */
+@Composable
+private fun HubWebGoldText(
+    text: String,
+    style: TextStyle,
+    modifier: Modifier = Modifier,
+    maxLines: Int = 1,
+) {
+    Box(modifier) {
+        Text(
+            text = text,
+            modifier = Modifier.offset(x = 0.dp, y = 2.dp),
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis,
+            style = style.copy(
+                brush = SolidColor(Color.Black.copy(alpha = 0.25f)),
+                shadow = Shadow(
+                    color = Color.Black.copy(alpha = 0.2f),
+                    offset = Offset.Zero,
+                    blurRadius = 4f,
+                ),
+            ),
+        )
+        Text(
+            text = text,
+            modifier = Modifier.offset(x = 0.dp, y = 1.dp),
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis,
+            style = style.copy(
+                brush = SolidColor(Color.Black.copy(alpha = 0.45f)),
+                shadow = null,
+            ),
+        )
+        Text(
+            text = text,
+            style = style,
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
 
 internal data class SharedHubCardFaceModel(
     val productLabel: String,
@@ -89,15 +121,6 @@ internal fun formatUsdHub(value: Double): String {
     nf.minimumFractionDigits = 2
     return nf.format(value)
 }
-
-private fun hubGoldDotBrush(): Brush = Brush.radialGradient(
-    colors = listOf(
-        Color(0xFFFFF6E8),
-        Color(0xFFFFD88A),
-        Color(0xFFC7892F).copy(alpha = 0.88f),
-        Color(0xFF5C3D0A).copy(alpha = 0.75f),
-    ),
-)
 
 @Composable
 internal fun HubLuxuryEmvChip(modifier: Modifier = Modifier) {
@@ -147,181 +170,28 @@ internal fun HubLuxuryEmvChip(modifier: Modifier = Modifier) {
 }
 
 @Composable
-internal fun HubPanGoldDot(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .size(7.dp),
-    ) {
-        Box(
-            Modifier
-                .fillMaxSize()
-                .clip(CircleShape)
-                .background(hubGoldDotBrush()),
-        )
-        Box(
-            Modifier
-                .align(Alignment.TopStart)
-                .padding(start = 1.dp, top = 0.5.dp)
-                .size(3.dp)
-                .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.42f)),
-        )
-    }
-}
-
-@Composable
 internal fun HubMaskedExpiryGold(
-    goldDetailStyle: TextStyle,
+    expiryWebStyle: TextStyle,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    HubWebGoldText(
+        text = "••/••",
+        style = expiryWebStyle,
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        repeat(2) {
-            HubPanGoldDot()
-        }
-        Text(
-            text = "/",
-            style = goldDetailStyle.copy(
-                fontSize = 13.sp,
-                letterSpacing = 0.sp,
-                brush = hubMetalGoldBrush(),
-                shadow = Shadow(
-                    color = SharedHubGoldShadowTone.copy(alpha = 0.5f),
-                    offset = Offset(0f, 1.5f),
-                    blurRadius = 5f,
-                ),
-            ),
-        )
-        repeat(2) {
-            HubPanGoldDot()
-        }
-    }
-}
-
-@Composable
-internal fun HubMetallicGoldBalance(
-    text: String,
-    baseStyle: TextStyle,
-    shimmerPhase: Float,
-    modifier: Modifier = Modifier,
-) {
-    BoxWithConstraints(modifier.fillMaxWidth()) {
-        val density = LocalDensity.current
-        val widthPx = with(density) { maxWidth.toPx() }
-        val heightPx = with(density) { 44.dp.toPx() }
-        val band = widthPx * 0.42f
-        Box(Modifier.fillMaxWidth()) {
-            Text(
-                text = text,
-                modifier = Modifier.offset(0.dp, 1.35.dp),
-                style = baseStyle.copy(
-                    brush = SolidColor(SharedHubGoldShadowTone.copy(alpha = 0.78f)),
-                    shadow = null,
-                ),
-            )
-            Text(
-                text = text,
-                style = baseStyle,
-            )
-            Text(
-                text = text,
-                modifier = Modifier.offset(0.dp, (-0.7).dp),
-                style = baseStyle.copy(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.88f),
-                            Color.White.copy(alpha = 0.18f),
-                            Color(0xFFFFF0C8).copy(alpha = 0.55f),
-                        ),
-                        start = Offset(0f, 0f),
-                        end = Offset(0f, heightPx * 0.9f),
-                    ),
-                    shadow = Shadow(Color.Transparent, Offset.Zero, blurRadius = 0f),
-                ),
-            )
-            Text(
-                text = text,
-                style = baseStyle.copy(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            Color.White.copy(alpha = 0.62f),
-                            Color.Transparent,
-                        ),
-                        start = Offset(shimmerPhase * widthPx - band, 0f),
-                        end = Offset(shimmerPhase * widthPx + band, heightPx),
-                    ),
-                    shadow = Shadow(Color.Transparent, Offset.Zero, blurRadius = 0f),
-                ),
-            )
-        }
-    }
-}
-
-@Composable
-private fun HubGoldLastFourDigit(char: String, style: TextStyle) {
-    Box {
-        Text(
-            text = char,
-            modifier = Modifier.offset(0.dp, 0.85.dp),
-            style = style.copy(
-                brush = SolidColor(SharedHubGoldShadowTone.copy(alpha = 0.52f)),
-                shadow = null,
-            ),
-        )
-        Text(text = char, style = style)
-        Text(
-            text = char,
-            modifier = Modifier.offset(0.dp, (-0.35).dp),
-            style = style.copy(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.78f),
-                        Color(0xFFFFF8E8).copy(alpha = 0.35f),
-                        Color.Transparent,
-                    ),
-                    start = Offset(0f, 0f),
-                    end = Offset(0f, 22f),
-                ),
-                shadow = Shadow(Color.Transparent, Offset.Zero, blurRadius = 0f),
-            ),
-        )
-    }
+    )
 }
 
 @Composable
 internal fun HubMaskedPanRow(
     lastFour: String,
-    goldDetailStyle: TextStyle,
+    panWebStyle: TextStyle,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    HubWebGoldText(
+        text = "•••• •••• •••• $lastFour",
+        style = panWebStyle,
         modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            repeat(3) { groupIndex ->
-                if (groupIndex > 0) {
-                    Spacer(Modifier.width(4.dp))
-                }
-                repeat(4) {
-                    HubPanGoldDot()
-                }
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            lastFour.forEach { ch ->
-                HubGoldLastFourDigit(char = ch.toString(), style = goldDetailStyle)
-            }
-        }
-    }
+    )
 }
 
 @Composable
@@ -332,22 +202,38 @@ internal fun SharedHubCardFace(
     val cardShape = RoundedCornerShape(32.dp)
     val palette = LocalRestaurantPalette.current
     val spec = hubCardThemeSpec(model.themeId, palette.brand)
-    val labelMuted = hubCardLabelMuted(model.themeId)
     val balancePrimaryText = remember(model.krwBalance, model.usdBalance) {
         hubPrimaryBalanceText(model.krwBalance, model.usdBalance)
     }
-    val goldBalanceStyle = remember {
+    val labelWeb = Color.White.copy(alpha = 0.7f)
+    val goldBalanceWebStyle = remember {
         TextStyle(
             fontFamily = RestaurantFontFamily,
-            fontSize = 29.sp,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 0.12.sp,
-            brush = hubMetalGoldBrush(),
-            shadow = Shadow(
-                color = SharedHubGoldShadowTone.copy(alpha = 0.62f),
-                offset = Offset(0f, 3.5f),
-                blurRadius = 22f,
-            ),
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = (-0.01).em,
+            brush = hubWebCardGoldBrush(),
+            fontFeatureSettings = "tnum",
+        )
+    }
+    val panWebStyle = remember {
+        TextStyle(
+            fontFamily = RestaurantFontFamily,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.18.em,
+            brush = hubWebCardGoldBrush(),
+            fontFeatureSettings = "tnum",
+        )
+    }
+    val expiryWebStyle = remember {
+        TextStyle(
+            fontFamily = RestaurantFontFamily,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.sp,
+            brush = hubWebCardGoldBrush(),
+            fontFeatureSettings = "tnum",
         )
     }
     val silverUsdStyle = remember {
@@ -364,30 +250,6 @@ internal fun SharedHubCardFace(
             ),
         )
     }
-    val goldDetailStyle = remember {
-        TextStyle(
-            fontFamily = RestaurantFontFamily,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 3.6.sp,
-            brush = hubMetalGoldBrush(),
-            shadow = Shadow(
-                color = SharedHubGoldShadowTone.copy(alpha = 0.68f),
-                offset = Offset(0f, 2.2f),
-                blurRadius = 14f,
-            ),
-        )
-    }
-    val shimmerTransition = rememberInfiniteTransition(label = "luxuryCardShimmer")
-    val shimmerPhase by shimmerTransition.animateFloat(
-        initialValue = -1f,
-        targetValue = 2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 5200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "shimmerPhase",
-    )
 
     Box(
         modifier = modifier
@@ -411,7 +273,7 @@ internal fun SharedHubCardFace(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 22.dp, vertical = 20.dp),
+                .padding(20.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -420,10 +282,10 @@ internal fun SharedHubCardFace(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     TonightLogoMark(
-                        modifier = Modifier.size(26.dp),
+                        modifier = Modifier.size(18.dp),
                         color = Color.White,
                         contentDescription = null,
                     )
@@ -431,9 +293,9 @@ internal fun SharedHubCardFace(
                         text = model.productLabel,
                         color = Color.White,
                         fontFamily = RestaurantFontFamily,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 0.1.sp,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.02).em,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -455,18 +317,17 @@ internal fun SharedHubCardFace(
             if (model.showBalance) {
                 Text(
                     text = "AVAILABLE BALANCE",
-                    color = labelMuted,
+                    color = labelWeb,
                     fontFamily = RestaurantFontFamily,
                     fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.65.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.14.em,
                 )
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(4.dp))
                 if (model.showDualBalance && model.krwBalance > 0L && model.usdBalance > 0.0) {
-                    HubMetallicGoldBalance(
+                    HubWebGoldText(
                         text = formatKrwHub(model.krwBalance),
-                        baseStyle = goldBalanceStyle,
-                        shimmerPhase = shimmerPhase,
+                        style = goldBalanceWebStyle,
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
@@ -474,10 +335,9 @@ internal fun SharedHubCardFace(
                         style = silverUsdStyle,
                     )
                 } else {
-                    HubMetallicGoldBalance(
+                    HubWebGoldText(
                         text = balancePrimaryText,
-                        baseStyle = goldBalanceStyle,
-                        shimmerPhase = shimmerPhase,
+                        style = goldBalanceWebStyle,
                     )
                 }
                 Spacer(Modifier.height(16.dp))
@@ -505,20 +365,15 @@ internal fun SharedHubCardFace(
             }
             Spacer(Modifier.weight(1f))
             if (model.showFullPan && model.fullCardNumber.isNotEmpty()) {
-                Text(
+                HubWebGoldText(
                     text = model.fullCardNumber.chunked(4).joinToString(" "),
-                    color = Color.White,
-                    fontFamily = RestaurantFontFamily,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.8.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    style = panWebStyle,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             } else {
-                HubMaskedPanRow(lastFour = model.lastFour, goldDetailStyle = goldDetailStyle)
+                HubMaskedPanRow(lastFour = model.lastFour, panWebStyle = panWebStyle)
             }
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(12.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -527,20 +382,20 @@ internal fun SharedHubCardFace(
                 Column(modifier = Modifier.weight(1f, fill = false)) {
                     Text(
                         text = "CARD HOLDER",
-                        color = labelMuted,
+                        color = labelWeb,
                         fontFamily = RestaurantFontFamily,
                         fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.35.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.14.em,
                     )
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(2.dp))
                     Text(
                         text = model.holder,
                         color = Color.White,
                         fontFamily = RestaurantFontFamily,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.35.sp,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.02.em,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -548,15 +403,15 @@ internal fun SharedHubCardFace(
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = "EXPIRES",
-                        color = labelMuted,
+                        color = labelWeb,
                         fontFamily = RestaurantFontFamily,
                         fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.35.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.14.em,
                     )
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(2.dp))
                     HubMaskedExpiryGold(
-                        goldDetailStyle = goldDetailStyle,
+                        expiryWebStyle = expiryWebStyle,
                     )
                 }
             }
