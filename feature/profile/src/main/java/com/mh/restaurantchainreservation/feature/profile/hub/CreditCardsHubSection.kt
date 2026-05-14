@@ -24,15 +24,18 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,45 +47,27 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.lerp
+import androidx.compose.ui.zIndex
+import kotlin.math.abs
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.TonightLogoMark
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantFontFamily
 import java.text.NumberFormat
 import java.util.Locale
 
-private enum class HubLuxuryVariant {
-    Burgundy,
-    Midnight,
-}
-
-private val HubGoldLight = Color(0xFFF7D774)
-private val HubGoldMid = Color(0xFFD9A441)
-private val HubGoldDeep = Color(0xFFB67A1F)
 private val HubGoldShadowTone = Color(0xFF8A5612)
-
-private val HubBurgundyStops = listOf(
-    Color(0xFF5B0015),
-    Color(0xFF76001F),
-    Color(0xFFA0002C),
-    Color(0xFFB3123B),
-)
-
-private val HubMidnightStops = listOf(
-    Color(0xFF0B1026),
-    Color(0xFF151A35),
-    Color(0xFF252047),
-    Color(0xFF362F6B),
-)
 
 private data class HubCreditCard(
     val id: String,
@@ -91,17 +76,172 @@ private data class HubCreditCard(
     val lastFour: String,
     val krwBalance: Long,
     val usdBalance: Double,
-    val variant: HubLuxuryVariant,
-    val preferUsdBalance: Boolean,
-)
-
-private fun hubGoldVerticalBrush(): Brush = Brush.verticalGradient(
-    listOf(HubGoldLight, HubGoldMid, HubGoldDeep, HubGoldShadowTone),
+    val themeId: HubCardThemeId,
+    val showBalance: Boolean,
+    val showDualBalance: Boolean = false,
 )
 
 private fun hubGoldDotBrush(): Brush = Brush.radialGradient(
-    colors = listOf(HubGoldLight, HubGoldMid.copy(alpha = 0.92f)),
+    colors = listOf(Color(0xFFFFE9A8), Color(0xFFC7892F).copy(alpha = 0.92f)),
 )
+
+@Composable
+private fun LuxuryEmvChip(modifier: Modifier = Modifier) {
+    val chipShape = RoundedCornerShape(6.dp)
+    Box(
+        modifier = modifier
+            .size(width = 40.dp, height = 28.dp)
+            .clip(chipShape)
+            .background(hubMetalGoldBrush())
+            .border(1.dp, Color.White.copy(alpha = 0.28f), chipShape),
+    ) {
+        Canvas(Modifier.fillMaxSize()) {
+            val grid = Color.Black.copy(alpha = 0.22f)
+            val stepX = size.width / 4f
+            var x = stepX
+            repeat(3) {
+                drawLine(grid, Offset(x, 0f), Offset(x, size.height), strokeWidth = 1f * density)
+                x += stepX
+            }
+            val stepY = size.height / 3f
+            var y = stepY
+            repeat(2) {
+                drawLine(grid, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f * density)
+                y += stepY
+            }
+        }
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(3.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .border(1.dp, Color.Black.copy(alpha = 0.15f), RoundedCornerShape(3.dp)),
+        )
+    }
+}
+
+@Composable
+private fun HubPanGoldDot(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(7.dp),
+    ) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .clip(CircleShape)
+                .background(hubGoldDotBrush()),
+        )
+        Box(
+            Modifier
+                .align(Alignment.TopStart)
+                .padding(start = 1.dp, top = 0.5.dp)
+                .size(3.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.42f)),
+        )
+    }
+}
+
+@Composable
+private fun HubMaskedExpiryGold(
+    goldDetailStyle: TextStyle,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        repeat(2) {
+            HubPanGoldDot()
+        }
+        Text(
+            text = "/",
+            style = goldDetailStyle.copy(
+                fontSize = 13.sp,
+                letterSpacing = 0.sp,
+                brush = hubMetalGoldBrush(),
+                shadow = Shadow(
+                    color = HubGoldShadowTone.copy(alpha = 0.5f),
+                    offset = Offset(0f, 1.5f),
+                    blurRadius = 5f,
+                ),
+            ),
+        )
+        repeat(2) {
+            HubPanGoldDot()
+        }
+    }
+}
+
+@Composable
+private fun HubMetallicGoldBalance(
+    text: String,
+    baseStyle: TextStyle,
+    shimmerPhase: Float,
+    modifier: Modifier = Modifier,
+) {
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        val density = LocalDensity.current
+        val widthPx = with(density) { maxWidth.toPx() }
+        val heightPx = with(density) { 44.dp.toPx() }
+        val band = widthPx * 0.42f
+        Box(Modifier.fillMaxWidth()) {
+            Text(
+                text = text,
+                modifier = Modifier.offset(0.dp, 1.35.dp),
+                style = baseStyle.copy(
+                    brush = SolidColor(HubGoldShadowTone.copy(alpha = 0.62f)),
+                    shadow = null,
+                ),
+            )
+            Text(
+                text = text,
+                style = baseStyle,
+            )
+            Text(
+                text = text,
+                modifier = Modifier.offset(0.dp, (-0.7).dp),
+                style = baseStyle.copy(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.72f),
+                            Color.White.copy(alpha = 0.1f),
+                            Color(0xFFFFE9A8).copy(alpha = 0.4f),
+                        ),
+                        start = Offset(0f, 0f),
+                        end = Offset(0f, heightPx * 0.9f),
+                    ),
+                    shadow = Shadow(Color.Transparent, Offset.Zero, blurRadius = 0f),
+                ),
+            )
+            Text(
+                text = text,
+                style = baseStyle.copy(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.White.copy(alpha = 0.48f),
+                            Color.Transparent,
+                        ),
+                        start = Offset(shimmerPhase * widthPx - band, 0f),
+                        end = Offset(shimmerPhase * widthPx + band, heightPx),
+                    ),
+                    shadow = Shadow(Color.Transparent, Offset.Zero, blurRadius = 0f),
+                ),
+            )
+        }
+    }
+}
+
+private fun hubPrimaryBalanceText(krw: Long, usd: Double): String = when {
+    usd > 0 && krw <= 0L -> formatUsdHub(usd)
+    krw > 0 && usd <= 0.0 -> formatKrwHub(krw)
+    krw.toDouble() >= usd * 1400.0 -> formatKrwHub(krw)
+    usd > 0 -> formatUsdHub(usd)
+    else -> formatKrwHub(krw)
+}
 
 @Composable
 fun CreditCardsHubSection(
@@ -114,24 +254,65 @@ fun CreditCardsHubSection(
     val cards = remember {
         listOf(
             HubCreditCard(
-                id = "card-main",
+                id = "c-ink",
                 productLabel = "Tonight Card",
                 holder = "ALEX CHEN",
                 lastFour = "1595",
-                krwBalance = 850_000L,
+                krwBalance = 400_000L,
                 usdBalance = 0.0,
-                variant = HubLuxuryVariant.Burgundy,
-                preferUsdBalance = false,
+                themeId = HubCardThemeId.Ink,
+                showBalance = true,
             ),
             HubCreditCard(
-                id = "card-travel",
-                productLabel = "Travel",
+                id = "c-rose",
+                productLabel = "Tonight Card",
                 holder = "ALEX CHEN",
-                lastFour = "9021",
-                krwBalance = 0L,
+                lastFour = "2840",
+                krwBalance = 450_000L,
                 usdBalance = 120.0,
-                variant = HubLuxuryVariant.Midnight,
-                preferUsdBalance = true,
+                themeId = HubCardThemeId.Rose,
+                showBalance = true,
+                showDualBalance = true,
+            ),
+            HubCreditCard(
+                id = "c-amethyst",
+                productLabel = "Tonight Card",
+                holder = "ALEX CHEN",
+                lastFour = "4412",
+                krwBalance = 0L,
+                usdBalance = 0.0,
+                themeId = HubCardThemeId.Amethyst,
+                showBalance = false,
+            ),
+            HubCreditCard(
+                id = "c-ocean",
+                productLabel = "Tonight Card",
+                holder = "ALEX CHEN",
+                lastFour = "7781",
+                krwBalance = 0L,
+                usdBalance = 0.0,
+                themeId = HubCardThemeId.Ocean,
+                showBalance = false,
+            ),
+            HubCreditCard(
+                id = "c-sunset",
+                productLabel = "Tonight Card",
+                holder = "ALEX CHEN",
+                lastFour = "9033",
+                krwBalance = 0L,
+                usdBalance = 0.0,
+                themeId = HubCardThemeId.Sunset,
+                showBalance = false,
+            ),
+            HubCreditCard(
+                id = "c-forest",
+                productLabel = "Tonight Card",
+                holder = "ALEX CHEN",
+                lastFour = "1129",
+                krwBalance = 0L,
+                usdBalance = 0.0,
+                themeId = HubCardThemeId.Forest,
+                showBalance = false,
             ),
         )
     }
@@ -201,18 +382,54 @@ fun CreditCardsHubSection(
 
         Spacer(Modifier.height(18.dp))
 
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(0.dp),
-            pageSpacing = 0.dp,
-        ) { page ->
-            HubCreditCardFace(
-                card = cards[page],
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(role = Role.Button, onClick = onOpenCardInfo),
-            )
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 14.dp),
+        ) {
+            val cardWidth = remember(maxWidth) {
+                val target = maxWidth * 0.84f
+                val capped = if (target > 334.dp) 334.dp else target
+                val floored = if (capped < 258.dp) 258.dp else capped
+                if (floored > maxWidth - 10.dp) maxWidth - 10.dp else floored
+            }
+            val sidePad = remember(maxWidth, cardWidth) {
+                ((maxWidth - cardWidth) / 2).coerceAtLeast(0.dp)
+            }
+            val overlap = remember(cardWidth) { cardWidth * 0.12f }
+
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = sidePad),
+                pageSize = PageSize.Fixed(cardWidth),
+                pageSpacing = -overlap,
+                verticalAlignment = Alignment.CenterVertically,
+                beyondViewportPageCount = 3,
+            ) { page ->
+                val pageOffsetPages = pagerState.getOffsetDistanceInPages(page)
+                Box(
+                    modifier = Modifier
+                        .zIndex(520f - abs(pageOffsetPages) * 200f)
+                        .graphicsLayer {
+                            val adj = abs(pageOffsetPages).coerceIn(0f, 1f)
+                            val t = 1f - adj
+                            scaleX = lerp(0.87f, 1f, t)
+                            scaleY = lerp(0.87f, 1f, t)
+                            translationX = pageOffsetPages * 46.dp.toPx()
+                            translationY = lerp(8.dp.toPx(), 0f, t)
+                            alpha = lerp(0.9f, 1f, t)
+                            cameraDistance = 18f * density
+                        },
+                ) {
+                    HubCreditCardFace(
+                        card = cards[page],
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(role = Role.Button, onClick = onOpenCardInfo),
+                    )
+                }
+            }
         }
 
         Spacer(Modifier.height(14.dp))
@@ -274,20 +491,36 @@ fun CreditCardsHubSection(
 @Composable
 private fun HubCreditCardFace(card: HubCreditCard, modifier: Modifier = Modifier) {
     val cardShape = RoundedCornerShape(32.dp)
-    val balanceText = remember(card.krwBalance, card.usdBalance, card.preferUsdBalance) {
-        if (card.preferUsdBalance) formatUsdHub(card.usdBalance) else formatKrwHub(card.krwBalance)
+    val spec = hubCardThemeSpec(card.themeId)
+    val labelMuted = hubCardLabelMuted(card.themeId)
+    val balancePrimaryText = remember(card.krwBalance, card.usdBalance) {
+        hubPrimaryBalanceText(card.krwBalance, card.usdBalance)
     }
     val goldBalanceStyle = remember {
         TextStyle(
             fontFamily = RestaurantFontFamily,
-            fontSize = 32.sp,
+            fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            letterSpacing = 0.2.sp,
-            brush = hubGoldVerticalBrush(),
+            letterSpacing = 0.05.sp,
+            brush = hubMetalGoldBrush(),
             shadow = Shadow(
-                color = HubGoldShadowTone.copy(alpha = 0.42f),
-                offset = Offset(0f, 2f),
-                blurRadius = 14f,
+                color = HubGoldShadowTone.copy(alpha = 0.48f),
+                offset = Offset(0f, 2.5f),
+                blurRadius = 16f,
+            ),
+        )
+    }
+    val silverUsdStyle = remember {
+        TextStyle(
+            fontFamily = RestaurantFontFamily,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.02.sp,
+            brush = hubMetalSilverBrush(),
+            shadow = Shadow(
+                color = Color.Black.copy(alpha = 0.35f),
+                offset = Offset(0f, 1.5f),
+                blurRadius = 8f,
             ),
         )
     }
@@ -297,11 +530,11 @@ private fun HubCreditCardFace(card: HubCreditCard, modifier: Modifier = Modifier
             fontSize = 15.sp,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 3.2.sp,
-            brush = hubGoldVerticalBrush(),
+            brush = hubMetalGoldBrush(),
             shadow = Shadow(
-                color = Color.Black.copy(alpha = 0.35f),
-                offset = Offset(0f, 1f),
-                blurRadius = 6f,
+                color = HubGoldShadowTone.copy(alpha = 0.55f),
+                offset = Offset(0f, 1.5f),
+                blurRadius = 8f,
             ),
         )
     }
@@ -321,16 +554,16 @@ private fun HubCreditCardFace(card: HubCreditCard, modifier: Modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1.58f)
             .shadow(
-                elevation = 22.dp,
+                elevation = 28.dp,
                 shape = cardShape,
                 clip = false,
-                ambientColor = Color.Black.copy(alpha = 0.14f),
-                spotColor = Color.Black.copy(alpha = 0.22f),
+                ambientColor = spec.glow.copy(alpha = 0.55f),
+                spotColor = spec.shadow.copy(alpha = 0.5f),
             )
             .clip(cardShape),
     ) {
-        LuxuryCardBackground(
-            variant = card.variant,
+        HubThemedCardBackground(
+            themeId = card.themeId,
             modifier = Modifier.fillMaxSize(),
         )
         Canvas(
@@ -343,7 +576,7 @@ private fun HubCreditCardFace(card: HubCreditCard, modifier: Modifier = Modifier
             drawRect(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color.White.copy(alpha = 0.14f),
+                        Color.White.copy(alpha = 0.12f),
                         Color.Transparent,
                         Color.Transparent,
                     ),
@@ -352,73 +585,110 @@ private fun HubCreditCardFace(card: HubCreditCard, modifier: Modifier = Modifier
                 ),
             )
         }
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(28.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.07f)),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .height(3.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.48f),
+                            Color.White.copy(alpha = 0.14f),
+                            Color.Transparent,
+                        ),
+                    ),
+                ),
+        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 22.dp, vertical = 20.dp),
         ) {
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                if (card.id == "card-main") {
-                    TonightLogoMark(
-                        modifier = Modifier.size(26.dp),
-                        color = Color.White.copy(alpha = 0.95f),
-                        contentDescription = null,
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(22.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.12f)),
-                    )
-                }
+                TonightLogoMark(
+                    modifier = Modifier.size(26.dp),
+                    color = Color.White.copy(alpha = 0.95f),
+                    contentDescription = null,
+                )
                 Text(
                     text = card.productLabel,
                     color = Color.White,
                     fontFamily = RestaurantFontFamily,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.15.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.02.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Spacer(Modifier.height(20.dp))
-            Text(
-                text = "AVAILABLE BALANCE",
-                color = Color.White.copy(alpha = 0.52f),
-                fontFamily = RestaurantFontFamily,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 2.2.sp,
-            )
-            Spacer(Modifier.height(6.dp))
-            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                val density = LocalDensity.current
-                val widthPx = with(density) { maxWidth.toPx() }
-                val shimmerHeightPx = with(density) { 40.dp.toPx() }
-                val band = widthPx * 0.42f
-                Text(text = balanceText, style = goldBalanceStyle)
+            Spacer(Modifier.height(18.dp))
+            if (card.showBalance) {
                 Text(
-                    text = balanceText,
-                    style = goldBalanceStyle.copy(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.White.copy(alpha = 0.38f),
-                                Color.Transparent,
-                            ),
-                            start = Offset(shimmerPhase * widthPx - band, 0f),
-                            end = Offset(shimmerPhase * widthPx + band, shimmerHeightPx),
-                        ),
-                        shadow = Shadow(Color.Transparent, Offset.Zero, blurRadius = 0f),
-                    ),
+                    text = "AVAILABLE BALANCE",
+                    color = labelMuted,
+                    fontFamily = RestaurantFontFamily,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 2.2.sp,
                 )
+                Spacer(Modifier.height(6.dp))
+                if (card.showDualBalance && card.krwBalance > 0L && card.usdBalance > 0.0) {
+                    HubMetallicGoldBalance(
+                        text = formatKrwHub(card.krwBalance),
+                        baseStyle = goldBalanceStyle,
+                        shimmerPhase = shimmerPhase,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = formatUsdHub(card.usdBalance),
+                        style = silverUsdStyle,
+                    )
+                } else {
+                    HubMetallicGoldBalance(
+                        text = balancePrimaryText,
+                        baseStyle = goldBalanceStyle,
+                        shimmerPhase = shimmerPhase,
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        LuxuryEmvChip()
+                        Icon(
+                            imageVector = Icons.Outlined.AutoAwesome,
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.85f),
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    HubContactlessIcon(tint = Color.White.copy(alpha = 0.88f))
+                }
+                Spacer(Modifier.height(18.dp))
             }
-            Spacer(Modifier.height(12.dp))
             Spacer(Modifier.weight(1f))
             HubMaskedPanRow(lastFour = card.lastFour, goldDetailStyle = goldDetailStyle)
             Spacer(Modifier.height(18.dp))
@@ -427,10 +697,10 @@ private fun HubCreditCardFace(card: HubCreditCard, modifier: Modifier = Modifier
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom,
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f, fill = false)) {
                     Text(
                         text = "CARD HOLDER",
-                        color = Color.White.copy(alpha = 0.48f),
+                        color = labelMuted,
                         fontFamily = RestaurantFontFamily,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -441,9 +711,9 @@ private fun HubCreditCardFace(card: HubCreditCard, modifier: Modifier = Modifier
                         text = card.holder,
                         color = Color.White,
                         fontFamily = RestaurantFontFamily,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 1.4.sp,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -451,16 +721,15 @@ private fun HubCreditCardFace(card: HubCreditCard, modifier: Modifier = Modifier
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = "EXPIRES",
-                        color = Color.White.copy(alpha = 0.48f),
+                        color = labelMuted,
                         fontFamily = RestaurantFontFamily,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 2.sp,
                     )
                     Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = "09/28",
-                        style = goldDetailStyle.copy(fontSize = 13.sp, letterSpacing = 2.sp),
+                    HubMaskedExpiryGold(
+                        goldDetailStyle = goldDetailStyle,
                     )
                 }
             }
@@ -469,64 +738,30 @@ private fun HubCreditCardFace(card: HubCreditCard, modifier: Modifier = Modifier
 }
 
 @Composable
-private fun LuxuryCardBackground(
-    variant: HubLuxuryVariant,
-    modifier: Modifier = Modifier,
-) {
-    val stops = when (variant) {
-        HubLuxuryVariant.Burgundy -> HubBurgundyStops
-        HubLuxuryVariant.Midnight -> HubMidnightStops
-    }
-    val transition = rememberInfiniteTransition(label = "luxuryCardAmbient")
-    val drift by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 14_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "drift",
-    )
-    Canvas(modifier = modifier.fillMaxSize()) {
-        val w = size.width
-        val h = size.height
-        val shift = drift * w * 0.12f
-        drawRect(
-            brush = Brush.linearGradient(
-                colorStops = arrayOf(
-                    0f to stops[0],
-                    0.35f to stops[1],
-                    0.72f to stops[2],
-                    1f to stops[3],
+private fun HubGoldLastFourDigit(char: String, style: TextStyle) {
+    Box {
+        Text(
+            text = char,
+            modifier = Modifier.offset(0.dp, 0.85.dp),
+            style = style.copy(
+                brush = SolidColor(HubGoldShadowTone.copy(alpha = 0.52f)),
+                shadow = null,
+            ),
+        )
+        Text(text = char, style = style)
+        Text(
+            text = char,
+            modifier = Modifier.offset(0.dp, (-0.35).dp),
+            style = style.copy(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = 0.55f),
+                        Color.Transparent,
+                    ),
+                    start = Offset(0f, 0f),
+                    end = Offset(0f, 18f),
                 ),
-                start = Offset(-shift, h * 0.25f),
-                end = Offset(w + shift, h * 0.82f),
-            ),
-        )
-        drawRect(
-            brush = Brush.linearGradient(
-                colors = listOf(
-                    Color.Transparent,
-                    Color.White.copy(alpha = 0.07f),
-                    Color.Transparent,
-                ),
-                start = Offset(w * 0.15f + shift * 0.5f, 0f),
-                end = Offset(w * 0.95f, h),
-            ),
-            blendMode = BlendMode.Screen,
-        )
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(Color.Black.copy(alpha = 0.5f), Color.Transparent),
-                center = Offset(-w * 0.12f, h * 1.08f),
-                radius = w * 0.85f,
-            ),
-        )
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(Color.White.copy(alpha = 0.22f), Color.Transparent),
-                center = Offset(w * 1.08f, -h * 0.12f),
-                radius = w * 0.62f,
+                shadow = Shadow(Color.Transparent, Offset.Zero, blurRadius = 0f),
             ),
         )
     }
@@ -552,21 +787,13 @@ private fun HubMaskedPanRow(
                     Spacer(Modifier.width(4.dp))
                 }
                 repeat(4) {
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(hubGoldDotBrush()),
-                    )
+                    HubPanGoldDot()
                 }
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             lastFour.forEach { ch ->
-                Text(
-                    text = ch.toString(),
-                    style = goldDetailStyle,
-                )
+                HubGoldLastFourDigit(char = ch.toString(), style = goldDetailStyle)
             }
         }
     }
