@@ -52,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -74,7 +75,7 @@ import com.mh.restaurantchainreservation.feature.profile.hub.HubCardThemeId
 import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFace
 import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFaceModel
 import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeSpec
-import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeSwatchBrush
+import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeBackgroundBrush
 import kotlin.math.max
 import kotlin.math.min
 
@@ -470,7 +471,19 @@ private fun CardListRow(card: ProfileCreditCard, selected: Boolean, onClick: () 
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
-            modifier = Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(hubCardThemeSwatchBrush(card.themeId)),
+            modifier = Modifier
+                .size(46.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .drawBehind {
+                    drawRect(
+                        brush = hubCardThemeBackgroundBrush(
+                            themeId = card.themeId,
+                            widthPx = size.width,
+                            heightPx = size.height,
+                            brandColor = palette.brand,
+                        ),
+                    )
+                },
             contentAlignment = Alignment.Center,
         ) {
             Icon(Icons.Outlined.CreditCard, null, tint = Color.White, modifier = Modifier.size(22.dp))
@@ -563,13 +576,29 @@ private fun CurrencyChip(label: String, selected: Boolean, modifier: Modifier = 
 
 @Composable
 private fun SmallCardHeader(card: ProfileCreditCard) {
+    val palette = LocalRestaurantPalette.current
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Box(Modifier.size(48.dp).clip(RoundedCornerShape(15.dp)).background(hubCardThemeSwatchBrush(card.themeId)), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(15.dp))
+                .drawBehind {
+                    drawRect(
+                        brush = hubCardThemeBackgroundBrush(
+                            themeId = card.themeId,
+                            widthPx = size.width,
+                            heightPx = size.height,
+                            brandColor = palette.brand,
+                        ),
+                    )
+                },
+            contentAlignment = Alignment.Center,
+        ) {
             Icon(Icons.Outlined.CreditCard, null, tint = Color.White, modifier = Modifier.size(23.dp))
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(card.nickname, color = LocalRestaurantPalette.current.foreground, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
-            Text(maskCard(card.number), color = LocalRestaurantPalette.current.mutedForeground, fontSize = 12.sp)
+            Text(card.nickname, color = palette.foreground, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+            Text(maskCard(card.number), color = palette.mutedForeground, fontSize = 12.sp)
         }
     }
 }

@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,7 +35,7 @@ import com.mh.restaurantchainreservation.feature.profile.hub.HubCardPattern
 import com.mh.restaurantchainreservation.feature.profile.hub.HubCardThemeId
 import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFace
 import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFaceModel
-import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeSwatchBrush
+import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeBackgroundBrush
 
 private val ThemePickerOrder: List<HubCardThemeId> = listOf(
     HubCardThemeId.Ink,
@@ -196,12 +197,21 @@ private fun ThemeSwatchCell(
                 .fillMaxWidth()
                 .aspectRatio(1f)
                 .clip(RoundedCornerShape(16.dp))
+                .drawBehind {
+                    drawRect(
+                        brush = hubCardThemeBackgroundBrush(
+                            themeId = themeId,
+                            widthPx = size.width,
+                            heightPx = size.height,
+                            brandColor = palette.brand,
+                        ),
+                    )
+                }
                 .border(
                     width = if (selected) 3.dp else 1.dp,
                     color = if (selected) palette.foreground else palette.border,
                     shape = RoundedCornerShape(16.dp),
                 )
-                .background(hubCardThemeSwatchBrush(themeId))
                 .clickable(onClick = onClick),
         ) {
             if (selected) {

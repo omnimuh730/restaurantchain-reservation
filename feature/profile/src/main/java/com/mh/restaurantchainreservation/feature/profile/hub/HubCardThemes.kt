@@ -1,16 +1,9 @@
 package com.mh.restaurantchainreservation.feature.profile.hub
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -25,6 +18,10 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.hypot
+import kotlin.math.sin
 import kotlin.random.Random
 
 internal enum class HubCardThemeId {
@@ -54,104 +51,127 @@ internal data class HubCardThemeSpec(
     val pattern: HubCardPattern,
 )
 
-private val InkGradient = listOf(
-    Color(0xFF020208),
-    Color(0xFF0C0C14),
-    Color(0xFF151520),
-    Color(0xFF030306),
-)
+/** sRGB mix: `ratioFirst` is fraction of `c1` (matches CSS `color-mix(in srgb, c1 p%, c2)` with p = ratioFirst*100). */
+private fun mixSrgb(c1: Color, c2: Color, ratioFirst: Float): Color {
+    val t = ratioFirst.coerceIn(0f, 1f)
+    return Color(
+        red = c1.red * t + c2.red * (1f - t),
+        green = c1.green * t + c2.green * (1f - t),
+        blue = c1.blue * t + c2.blue * (1f - t),
+        alpha = c1.alpha * t + c2.alpha * (1f - t),
+    )
+}
 
-private val RoseGradient = listOf(
-    Color(0xFFFF2D55),
-    Color(0xFFB80C28),
-    Color(0xFF5C0614),
-    Color(0xFF140204),
+private val InkGradient = listOf(
+    Color(0xFF1F1F24),
+    Color(0xFF111114),
+    Color(0xFF050507),
 )
 
 private val AmethystGradient = listOf(
-    Color(0xFF9D4DFF),
-    Color(0xFF5B21B6),
-    Color(0xFF2E0F5C),
-    Color(0xFF0A0418),
+    Color(0xFF6E45FF),
+    Color(0xFF3A1F9C),
+    Color(0xFF160E47),
 )
 
 private val OceanGradient = listOf(
-    Color(0xFF2563EB),
-    Color(0xFF1E3A8A),
-    Color(0xFF0F1729),
-    Color(0xFF020617),
+    Color(0xFF1FB2FF),
+    Color(0xFF1259D1),
+    Color(0xFF061B5E),
 )
 
 private val SunsetGradient = listOf(
-    Color(0xFFFF7B54),
-    Color(0xFFDC2626),
-    Color(0xFF7F1D1D),
-    Color(0xFF1C0707),
+    Color(0xFFFF8650),
+    Color(0xFFE03A3A),
+    Color(0xFF6B0F1E),
 )
 
 private val ForestGradient = listOf(
-    Color(0xFF10B981),
-    Color(0xFF065F46),
-    Color(0xFF022C1F),
-    Color(0xFF020F0C),
+    Color(0xFF1FB07A),
+    Color(0xFF0E624C),
+    Color(0xFF07241D),
 )
 
-internal fun hubCardThemeSpec(id: HubCardThemeId): HubCardThemeSpec = when (id) {
+/**
+ * Credit card themes aligned with web `CARD_THEMES` (135° gradients, glow / highlight / shadow rgba, default pattern per id).
+ * Rose gradient and glow use [brandColor] when provided (CSS `color-mix` with `var(--primary)`); otherwise primary defaults to `#FF385C`.
+ */
+internal fun hubCardThemeSpec(
+    id: HubCardThemeId,
+    /** When set, Rose theme uses `color-mix`-style stops and glow from this primary (web `var(--primary)`). */
+    brandColor: Color? = null,
+): HubCardThemeSpec = when (id) {
     HubCardThemeId.Ink -> HubCardThemeSpec(
         id = id,
         gradient = InkGradient,
-        glow = Color(0xFF3B82F6).copy(alpha = 0.55f),
-        highlight = Color.White.copy(alpha = 0.38f),
-        shadow = Color.Black.copy(alpha = 0.72f),
+        glow = Color.White.copy(alpha = 0.08f),
+        highlight = Color.White.copy(alpha = 0.10f),
+        shadow = Color.Black.copy(alpha = 0.45f),
         pattern = HubCardPattern.Stars,
     )
-    HubCardThemeId.Rose -> HubCardThemeSpec(
-        id = id,
-        gradient = RoseGradient,
-        glow = Color(0xFFFF4D6D).copy(alpha = 0.62f),
-        highlight = Color.White.copy(alpha = 0.42f),
-        shadow = Color.Black.copy(alpha = 0.58f),
-        pattern = HubCardPattern.Blob,
-    )
+    HubCardThemeId.Rose -> {
+        val primary = brandColor ?: Color(0xFFFF385C)
+        val black = Color.Black
+        HubCardThemeSpec(
+            id = id,
+            gradient = listOf(
+                mixSrgb(primary, black, 0.70f),
+                mixSrgb(primary, black, 0.45f),
+                mixSrgb(primary, black, 0.22f),
+            ),
+            glow = primary.copy(alpha = 0.38f),
+            highlight = Color.White.copy(alpha = 0.18f),
+            shadow = Color.Black.copy(alpha = 0.30f),
+            pattern = HubCardPattern.Blob,
+        )
+    }
     HubCardThemeId.Amethyst -> HubCardThemeSpec(
         id = id,
         gradient = AmethystGradient,
-        glow = Color(0xFFC4A5FF).copy(alpha = 0.58f),
-        highlight = Color.White.copy(alpha = 0.40f),
-        shadow = Color.Black.copy(alpha = 0.55f),
+        glow = Color(0xFF7657FF).copy(alpha = 0.40f),
+        highlight = Color.White.copy(alpha = 0.22f),
+        shadow = Color.Black.copy(alpha = 0.30f),
         pattern = HubCardPattern.Wave,
     )
     HubCardThemeId.Ocean -> HubCardThemeSpec(
         id = id,
         gradient = OceanGradient,
-        glow = Color(0xFF60A5FA).copy(alpha = 0.58f),
-        highlight = Color.White.copy(alpha = 0.40f),
-        shadow = Color.Black.copy(alpha = 0.58f),
+        glow = Color(0xFF1FB2FF).copy(alpha = 0.35f),
+        highlight = Color.White.copy(alpha = 0.22f),
+        shadow = Color.Black.copy(alpha = 0.32f),
         pattern = HubCardPattern.Rays,
     )
     HubCardThemeId.Sunset -> HubCardThemeSpec(
         id = id,
         gradient = SunsetGradient,
-        glow = Color(0xFFFFA07A).copy(alpha = 0.58f),
-        highlight = Color.White.copy(alpha = 0.40f),
-        shadow = Color.Black.copy(alpha = 0.58f),
+        glow = Color(0xFFFF8650).copy(alpha = 0.40f),
+        highlight = Color.White.copy(alpha = 0.22f),
+        shadow = Color.Black.copy(alpha = 0.32f),
         pattern = HubCardPattern.Blob,
     )
     HubCardThemeId.Forest -> HubCardThemeSpec(
         id = id,
         gradient = ForestGradient,
-        glow = Color(0xFF34D399).copy(alpha = 0.52f),
-        highlight = Color.White.copy(alpha = 0.36f),
-        shadow = Color.Black.copy(alpha = 0.56f),
+        glow = Color(0xFF1FB07A).copy(alpha = 0.35f),
+        highlight = Color.White.copy(alpha = 0.20f),
+        shadow = Color.Black.copy(alpha = 0.32f),
         pattern = HubCardPattern.Grid,
     )
 }
 
-/** Linear brush for compact theme swatches (picker, list rows). */
-internal fun hubCardThemeSwatchBrush(themeId: HubCardThemeId): Brush {
-    val colors = hubCardThemeSpec(themeId).gradient
-    return Brush.linearGradient(colors)
-}
+/** Same 135° multi-stop gradient as the card canvas (use in `drawBehind { drawRect(...) }`). */
+internal fun hubCardThemeBackgroundBrush(
+    themeId: HubCardThemeId,
+    widthPx: Float,
+    heightPx: Float,
+    shiftPx: Float = 0f,
+    brandColor: Color? = null,
+): Brush = hubLinearBgBrush(
+    stops = hubCardThemeSpec(themeId, brandColor).gradient,
+    shift = shiftPx,
+    w = widthPx,
+    h = heightPx,
+)
 
 internal fun hubCardLabelMuted(themeId: HubCardThemeId): Color = when (themeId) {
     HubCardThemeId.Ocean -> Color(0xFFE0EEFF).copy(alpha = 0.92f)
@@ -205,29 +225,65 @@ internal fun hubMetalSilverBrush(): Brush = Brush.linearGradient(
 
 private fun hubLinearBgBrush(stops: List<Color>, shift: Float, w: Float, h: Float): Brush {
     val colorStops: Array<Pair<Float, Color>> = when (stops.size) {
-        3 -> arrayOf(0f to stops[0], 0.55f to stops[1], 1f to stops[2])
+        3 -> when (stops) {
+            OceanGradient -> arrayOf(
+                0f to stops[0],
+                0.5f to stops[1],
+                1f to stops[2],
+            )
+            else -> arrayOf(
+                0f to stops[0],
+                0.55f to stops[1],
+                1f to stops[2],
+            )
+        }
         4 -> arrayOf(0f to stops[0], 0.35f to stops[1], 0.72f to stops[2], 1f to stops[3])
         else -> arrayOf(0f to stops.first(), 1f to stops.last())
     }
+    // CSS linear-gradient(135deg, …): diagonal top-left → bottom-right
     return Brush.linearGradient(
         colorStops = colorStops,
-        start = Offset(-shift, h * 0.15f),
-        end = Offset(w * 1.05f + shift, h * 0.95f),
+        start = Offset(-shift * 0.5f, -shift * 0.5f),
+        end = Offset(w * 1.02f + shift * 0.5f, h * 1.02f + shift * 0.5f),
     )
 }
 
 private data class StarSpec(val xPct: Float, val yPct: Float, val rDp: Float)
 
+/** Dense small-dot field (web-like stipple); `rDp` scales a shared min-side factor. */
 private val StarField = listOf(
-    StarSpec(0.12f, 0.18f, 1.6f),
-    StarSpec(0.56f, 0.08f, 1.0f),
-    StarSpec(0.80f, 0.22f, 1.4f),
-    StarSpec(0.22f, 0.42f, 0.9f),
-    StarSpec(0.70f, 0.48f, 1.2f),
-    StarSpec(0.42f, 0.60f, 1.0f),
-    StarSpec(0.18f, 0.78f, 1.5f),
-    StarSpec(0.86f, 0.78f, 1.0f),
-    StarSpec(0.62f, 0.86f, 0.8f),
+    StarSpec(0.08f, 0.10f, 0.55f),
+    StarSpec(0.22f, 0.08f, 0.45f),
+    StarSpec(0.38f, 0.12f, 0.60f),
+    StarSpec(0.52f, 0.06f, 0.40f),
+    StarSpec(0.68f, 0.11f, 0.50f),
+    StarSpec(0.88f, 0.09f, 0.48f),
+    StarSpec(0.92f, 0.22f, 0.55f),
+    StarSpec(0.74f, 0.20f, 0.42f),
+    StarSpec(0.58f, 0.24f, 0.58f),
+    StarSpec(0.44f, 0.20f, 0.45f),
+    StarSpec(0.28f, 0.22f, 0.52f),
+    StarSpec(0.10f, 0.26f, 0.48f),
+    StarSpec(0.14f, 0.38f, 0.50f),
+    StarSpec(0.32f, 0.36f, 0.44f),
+    StarSpec(0.50f, 0.40f, 0.56f),
+    StarSpec(0.66f, 0.38f, 0.46f),
+    StarSpec(0.84f, 0.36f, 0.52f),
+    StarSpec(0.78f, 0.50f, 0.48f),
+    StarSpec(0.60f, 0.52f, 0.54f),
+    StarSpec(0.40f, 0.54f, 0.42f),
+    StarSpec(0.22f, 0.50f, 0.50f),
+    StarSpec(0.08f, 0.58f, 0.46f),
+    StarSpec(0.18f, 0.68f, 0.52f),
+    StarSpec(0.36f, 0.70f, 0.44f),
+    StarSpec(0.54f, 0.72f, 0.58f),
+    StarSpec(0.72f, 0.70f, 0.46f),
+    StarSpec(0.90f, 0.66f, 0.50f),
+    StarSpec(0.82f, 0.82f, 0.48f),
+    StarSpec(0.62f, 0.86f, 0.54f),
+    StarSpec(0.42f, 0.88f, 0.45f),
+    StarSpec(0.20f, 0.86f, 0.52f),
+    StarSpec(0.48f, 0.62f, 0.47f),
 )
 
 private fun DrawScope.drawVelvetDepthLayer(w: Float, h: Float) {
@@ -437,6 +493,68 @@ private fun DrawScope.drawDirectionalLightSlab(w: Float, h: Float) {
     )
 }
 
+/**
+ * Web: `linear-gradient(115deg, transparent 0%, transparent 38%, rgba(255,255,255,0.18) 50%,
+ * transparent 62%, transparent 100%)` + `opacity-30` + `mix-blend-overlay` over full card.
+ */
+private fun DrawScope.drawHubCardOverlaySheen(w: Float, h: Float) {
+    val rad = (115.0 * PI / 180.0).toFloat()
+    val ux = sin(rad)
+    val uy = -cos(rad)
+    val halfExtent = hypot(w.toDouble(), h.toDouble()).toFloat() * 0.65f + 1f
+    val cx = w * 0.5f
+    val cy = h * 0.5f
+    val start = Offset(cx - ux * halfExtent, cy - uy * halfExtent)
+    val end = Offset(cx + ux * halfExtent, cy + uy * halfExtent)
+    val brush = Brush.linearGradient(
+        0f to Color.Transparent,
+        0.38f to Color.Transparent,
+        0.5f to Color.White.copy(alpha = 0.18f),
+        0.62f to Color.Transparent,
+        1f to Color.Transparent,
+        start = start,
+        end = end,
+    )
+    drawRect(
+        brush = brush,
+        alpha = 0.3f,
+        blendMode = BlendMode.Overlay,
+    )
+}
+
+/**
+ * Web: `radial-gradient(120% 80% at 100% 0%, rgba(255,255,255,0.22), transparent 55%)` and
+ * `radial-gradient(80% 60% at 0% 100%, rgba(0,0,0,0.3), transparent 65%)` on `inset-0`.
+ * Compose has no elliptical radial brush here — use corner-centered circles whose radii match
+ * the CSS ellipse axes (`max(120%×w, 80%×h)` / `max(80%×w, 60%×h)` as extent).
+ */
+private fun DrawScope.drawHubCardCornerRadialWash(w: Float, h: Float) {
+    val rHighlight = kotlin.math.max(1.2f * w, 0.8f * h)
+    val rShadow = kotlin.math.max(0.8f * w, 0.6f * h)
+    val hi = Offset(w, 0f)
+    val lo = Offset(0f, h)
+    drawCircle(
+        brush = Brush.radialGradient(
+            0f to Color.White.copy(alpha = 0.22f),
+            0.55f to Color.Transparent,
+            center = hi,
+            radius = rHighlight,
+        ),
+        radius = rHighlight,
+        center = hi,
+    )
+    drawCircle(
+        brush = Brush.radialGradient(
+            0f to Color.Black.copy(alpha = 0.3f),
+            0.65f to Color.Transparent,
+            center = lo,
+            radius = rShadow,
+        ),
+        radius = rShadow,
+        center = lo,
+    )
+}
+
 private fun DrawScope.drawEdgeRimlight(w: Float, h: Float) {
     val r = kotlin.math.min(w, h) * 0.105f
     val inset = 0.6f * density
@@ -466,88 +584,23 @@ internal fun HubThemedCardBackground(
     themeId: HubCardThemeId,
     modifier: Modifier = Modifier,
     patternOverride: HubCardPattern? = null,
+    /** Rose gradient/glow use design-system primary when set (web `var(--primary)`). */
+    brandColor: Color? = null,
 ) {
-    val spec = hubCardThemeSpec(themeId)
-    val transition = rememberInfiniteTransition(label = "hubCardAmbient")
-    val drift by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 16_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "drift",
-    )
-    val streak by transition.animateFloat(
-        initialValue = -0.35f,
-        targetValue = 1.35f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 11_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "specSweep",
-    )
+    val spec = hubCardThemeSpec(themeId, brandColor)
     Canvas(modifier = modifier.fillMaxSize()) {
         val w = size.width
         val h = size.height
-        val shift = drift * w * 0.07f
-        val stops = spec.gradient
-
-        drawRect(brush = hubLinearBgBrush(stops, shift, w, h))
-        drawBoldGeometricMasses(themeId, w, h, drift)
-        drawVelvetDepthLayer(w, h)
-
-        drawVolumetricKeyLight(spec, w, h, drift)
-
-        drawRect(
-            brush = Brush.radialGradient(
-                colors = listOf(spec.highlight.copy(alpha = 0.92f), Color.Transparent),
-                center = Offset(w * 1.0f, -h * 0.04f),
-                radius = w * 1.05f,
-            ),
+        drawRect(brush = hubLinearBgBrush(spec.gradient, shift = 0f, w, h))
+        drawHubCardPattern(
+            pattern = patternOverride ?: spec.pattern,
+            highlight = spec.highlight,
+            shadow = spec.shadow,
+            w = w,
+            h = h,
         )
-        drawRect(
-            brush = Brush.radialGradient(
-                colors = listOf(spec.shadow.copy(alpha = 0.92f), Color.Transparent),
-                center = Offset(-w * 0.04f, h * 1.04f),
-                radius = h * 0.95f,
-            ),
-        )
-
-        drawBoldMidgroundArc(w, h, drift, Color.White)
-        drawHubCardPattern(patternOverride ?: spec.pattern, spec.highlight, spec.shadow, w, h)
-
-        drawAuroraHolographicFilm(themeId, w, h, drift)
-        drawFilmGrainSubtle(w, h, seed = themeId.ordinal * 7919 + 13)
-        drawSpecularSweep(w, h, streak)
-
-        drawRect(
-            brush = Brush.linearGradient(
-                colors = listOf(
-                    Color.Transparent,
-                    Color.Transparent,
-                    Color.White.copy(alpha = 0.24f),
-                    Color.Transparent,
-                    Color.Transparent,
-                ),
-                start = Offset(-w * 0.25f, 0f),
-                end = Offset(w * 1.15f, h * 1.05f),
-            ),
-            blendMode = BlendMode.Overlay,
-        )
-
-        drawCinematicVignette(w, h)
-        drawFrostedGlassSheen(w, h)
-
-        drawRect(
-            brush = Brush.linearGradient(
-                colors = listOf(Color.White.copy(alpha = 0.2f), Color.Transparent),
-                start = Offset(0f, 0f),
-                end = Offset(w * 0.4f, h * 0.08f),
-            ),
-        )
-        drawDirectionalLightSlab(w, h)
-        drawEdgeRimlight(w, h)
+        drawHubCardCornerRadialWash(w = w, h = h)
+        drawHubCardOverlaySheen(w = w, h = h)
     }
 }
 
@@ -565,19 +618,21 @@ private fun DrawScope.drawHubCardPattern(
     when (pattern) {
         HubCardPattern.None -> Unit
         HubCardPattern.Stars -> {
-            // SVG: radialGradient white 0.7 → transparent; circles at % positions, r in px-like units
+            // Small soft dots (web stipple): tight radial falloff, many placements via [StarField].
+            val m = kotlin.math.min(w, h)
+            val base = m * 0.0048f
             for (s in StarField) {
                 val cx = w * s.xPct
                 val cy = h * s.yPct
-                val rPx = kotlin.math.min(w, h) * 0.012f * s.rDp
+                val rPx = (base * s.rDp).coerceAtLeast(0.35f * density)
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = 0.7f),
+                            Color.White.copy(alpha = 0.55f),
                             Color.White.copy(alpha = 0f),
                         ),
                         center = Offset(cx, cy),
-                        radius = rPx * 3.2f,
+                        radius = rPx * 2.05f,
                     ),
                     radius = rPx,
                     center = Offset(cx, cy),
@@ -642,19 +697,23 @@ private fun DrawScope.drawHubCardPattern(
             }
         }
         HubCardPattern.Blob -> {
-            // Two offset circles: top-right (h-44 w-44 area), bottom-left (h-52 w-52) — solid theme fills
-            val m = kotlin.math.min(w, h)
-            val rTop = m * 0.26f
-            val rBot = m * 0.31f
+            // Web: top-right `h-44 w-44` (176px) + `-top-16 -right-12`; bottom-left `h-52 w-52` (208px) + `-bottom-20 -left-16`.
+            // Centers on a 360×224 reference: top (w-40, 24), bottom (40, h-24); radii 88 / 104. Scale by min side vs ref min.
+            val refW = 360f
+            val refH = 224f
+            val refMin = kotlin.math.min(refW, refH)
+            val scale = kotlin.math.min(w, h) / refMin
+            val rTop = 88f * scale
+            val rBot = 104f * scale
             drawCircle(
                 color = highlight,
                 radius = rTop,
-                center = Offset(w + m * 0.02f, -m * 0.08f),
+                center = Offset(w * (refW - 40f) / refW, 24f * h / refH),
             )
             drawCircle(
                 color = shadow,
                 radius = rBot,
-                center = Offset(-m * 0.06f, h + m * 0.10f),
+                center = Offset(40f * w / refW, h * (refH - 24f) / refH),
             )
         }
     }

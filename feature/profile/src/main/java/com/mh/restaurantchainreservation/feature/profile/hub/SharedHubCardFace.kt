@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
+import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -329,7 +330,8 @@ internal fun SharedHubCardFace(
     modifier: Modifier = Modifier,
 ) {
     val cardShape = RoundedCornerShape(32.dp)
-    val spec = hubCardThemeSpec(model.themeId)
+    val palette = LocalRestaurantPalette.current
+    val spec = hubCardThemeSpec(model.themeId, palette.brand)
     val labelMuted = hubCardLabelMuted(model.themeId)
     val balancePrimaryText = remember(model.krwBalance, model.usdBalance) {
         hubPrimaryBalanceText(model.krwBalance, model.usdBalance)
@@ -403,6 +405,7 @@ internal fun SharedHubCardFace(
         HubThemedCardBackground(
             themeId = model.themeId,
             patternOverride = model.pattern,
+            brandColor = palette.brand,
             modifier = Modifier.fillMaxSize(),
         )
         Column(
