@@ -501,7 +501,6 @@ private fun RestaurantResultCard(restaurant: Restaurant, onOpen: () -> Unit) {
                         .align(Alignment.TopEnd)
                         .padding(12.dp),
                 )
-                Dots(modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 10.dp))
             }
             Row(
                 modifier = Modifier.padding(top = 12.dp),
@@ -610,20 +609,6 @@ private fun MapPreviewCard(
                 color = palette.foreground,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
-            )
-        }
-    }
-}
-
-@Composable
-private fun Dots(modifier: Modifier = Modifier) {
-    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        repeat(5) { index ->
-            Box(
-                modifier = Modifier
-                    .size(if (index == 0) 7.dp else 6.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = if (index == 0) 1f else 0.55f)),
             )
         }
     }
