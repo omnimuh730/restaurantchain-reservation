@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,11 +49,15 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingScreenTitleHeader
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroup
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroupItem
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroupVariant
@@ -110,17 +116,26 @@ fun ProfileHubScreen(
             .background(palette.cardSurface),
     ) {
         val scroll = rememberScrollState()
+        val density = LocalDensity.current
+        val collapseRangePx = remember(density) {
+            with(density) {
+                (CollapsingTitleHeaderMetrics.expandedBodyHeight - CollapsingTitleHeaderMetrics.collapsedBodyHeight)
+                    .toPx()
+            }
+                .coerceAtLeast(1f)
+        }
+        val collapseProgress = (scroll.value / collapseRangePx).coerceIn(0f, 1f)
+        val statusBarTopDp = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+
         Stagger(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(scroll),
+                .verticalScroll(scroll)
+                .zIndex(0f),
             staggerMs = 40,
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            HubHeader(
-                unreadCount = unreadCount,
-                onOpenNotifications = onOpenNotifications,
-            )
+            Spacer(Modifier.height(CollapsingTitleHeaderMetrics.expandedBodyHeight + statusBarTopDp))
 
             StaggerItem {
                 ProfileTopCard(
@@ -190,6 +205,15 @@ fun ProfileHubScreen(
                 Spacer(Modifier.height(24.dp))
             }
         }
+
+        ProfileHubCollapsingHeader(
+            collapseProgress = collapseProgress,
+            unreadCount = unreadCount,
+            onOpenNotifications = onOpenNotifications,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(2f),
+        )
     }
 
     AvatarPickerModal(
@@ -218,60 +242,52 @@ fun ProfileHubScreen(
 }
 
 @Composable
-private fun HubHeader(
+private fun ProfileHubCollapsingHeader(
+    collapseProgress: Float,
     unreadCount: Int,
     onOpenNotifications: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(palette.cardSurface.copy(alpha = 0.90f))
-            .statusBarsPadding()
-            .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = stringResource(I18nR.string.profile_hub_title),
-            color = palette.foreground,
-            fontSize = 32.sp,
-            lineHeight = 36.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .shadow(elevation = 4.dp, shape = CircleShape)
-                .clip(CircleShape)
-                .background(palette.cardSurface)
-                .border(1.dp, palette.border.copy(alpha = 0.4f), CircleShape)
-                .clickable(
-                    role = Role.Button,
-                    onClickLabel = stringResource(I18nR.string.profile_hub_notifications_aria),
-                    onClick = onOpenNotifications,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.NotificationsNone,
-                contentDescription = stringResource(I18nR.string.profile_hub_notifications_aria),
-                tint = palette.foreground,
-                modifier = Modifier.size(18.dp),
-            )
-            if (unreadCount > 0) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 8.dp, end = 8.dp)
-                        .size(10.dp)
-                        .clip(CircleShape)
-                        .background(Color.Red)
-                        .border(2.dp, palette.cardSurface, CircleShape),
+    CollapsingScreenTitleHeader(
+        title = stringResource(I18nR.string.profile_hub_title),
+        collapseProgress = collapseProgress,
+        modifier = modifier,
+        trailing = {
+            Box(
+                modifier = Modifier
+                    .size(CollapsingTitleHeaderMetrics.trailingSlotSize)
+                    .shadow(elevation = 4.dp, shape = CircleShape)
+                    .clip(CircleShape)
+                    .background(palette.cardSurface)
+                    .border(1.dp, palette.border.copy(alpha = 0.4f), CircleShape)
+                    .clickable(
+                        role = Role.Button,
+                        onClickLabel = stringResource(I18nR.string.profile_hub_notifications_aria),
+                        onClick = onOpenNotifications,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.NotificationsNone,
+                    contentDescription = stringResource(I18nR.string.profile_hub_notifications_aria),
+                    tint = palette.foreground,
+                    modifier = Modifier.size(18.dp),
                 )
+                if (unreadCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 6.dp, end = 6.dp)
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(Color.Red)
+                            .border(2.dp, palette.cardSurface, CircleShape),
+                    )
+                }
             }
-        }
-    }
+        },
+    )
 }
 
 @Composable

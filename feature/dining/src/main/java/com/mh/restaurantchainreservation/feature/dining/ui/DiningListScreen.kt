@@ -9,13 +9,15 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -30,13 +32,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.material3.Text
+import androidx.compose.ui.zIndex
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingScreenTitleHeader
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
@@ -74,29 +78,36 @@ fun DiningListScreen(
     }
     val nextBooking = approved.firstOrNull()
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface)
-            .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-            .padding(top = 32.dp, bottom = 48.dp),
+            .background(palette.cardSurface),
     ) {
-        // Page title (fades in)
-        DiningHeaderFadeIn {
-            Text(
-                text = stringResource(I18nR.string.dining_page_title),
-                color = palette.foreground,
-                fontSize = 36.sp,
-                lineHeight = 36.sp,
-                fontWeight = FontWeight.ExtraBold,
-            )
+        val scroll = rememberScrollState()
+        val density = LocalDensity.current
+        val collapseRangePx = remember(density) {
+            with(density) {
+                (CollapsingTitleHeaderMetrics.expandedBodyHeight - CollapsingTitleHeaderMetrics.collapsedBodyHeight)
+                    .toPx()
+            }
+                .coerceAtLeast(1f)
         }
-        Spacer(Modifier.height(32.dp))
+        val collapseProgress = (scroll.value / collapseRangePx).coerceIn(0f, 1f)
+        val statusBarTopDp = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
 
-        // Hero block: NextUp + StatsGrid (staggered)
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scroll)
+                .zIndex(0f)
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 48.dp),
+        ) {
+            Spacer(Modifier.height(CollapsingTitleHeaderMetrics.expandedBodyHeight + statusBarTopDp))
+            Spacer(Modifier.height(16.dp))
+
+            // Hero block: NextUp + StatsGrid (staggered)
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             DiningStaggerItem(indexInGroup = 0) {
                 if (nextBooking != null) {
                     NextUpCard(
@@ -113,12 +124,12 @@ fun DiningListScreen(
                     totalBookings = upcoming.size + visited.size + cancelled.size,
                 )
             }
-        }
+            }
 
-        Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(32.dp))
 
-        // Tabs section
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Tabs section
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             DiningTabBar(
                 selected = currentTab,
                 counts = tabCounts,
@@ -195,7 +206,16 @@ fun DiningListScreen(
                     )
                 }
             }
+            }
         }
+
+        CollapsingScreenTitleHeader(
+            title = stringResource(I18nR.string.dining_page_title),
+            collapseProgress = collapseProgress,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(2f),
+        )
     }
 }
 
