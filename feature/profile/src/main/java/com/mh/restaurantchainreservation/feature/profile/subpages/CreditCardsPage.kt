@@ -2,16 +2,17 @@ package com.mh.restaurantchainreservation.feature.profile.subpages
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -23,8 +24,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -42,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -49,17 +53,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.lerp
+import androidx.compose.ui.zIndex
 import com.mh.restaurantchainreservation.core.designsystem.components.DeterministicQrCode
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationCenter
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -77,12 +85,10 @@ import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFace
 import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFaceModel
 import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeSpec
 import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeBackgroundBrush
-import kotlin.math.max
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.min
 
 private enum class CardMode { Browse, Deposit, Withdraw, Send, Settings, ChooseNewCardTheme }
-
-private const val AddCardCarouselKey = "add-new-card"
 
 private data class ProfileCreditCard(
     val id: String,
@@ -141,7 +147,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var pendingNewCardNumber by remember { mutableStateOf("") }
     var pendingNewCardNickname by remember { mutableStateOf("Tonight Rose") }
 
-    val activeCard = cards.getOrNull(activeIndex.coerceIn(0, max(cards.lastIndex, 0)))
+    val activeCard = if (activeIndex < cards.size) cards.getOrNull(activeIndex.coerceIn(0, cards.lastIndex.coerceAtLeast(0))) else null
 
     fun replaceActive(next: ProfileCreditCard) {
         val index = cards.indexOfFirst { it.id == next.id }
@@ -189,22 +195,22 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         Spacer(Modifier.height(22.dp))
                         TransactionsCard(card = card)
                         Spacer(Modifier.height(22.dp))
-                        Text("Your cards", color = palette.foreground, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
-                        Spacer(Modifier.height(10.dp))
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(20.dp))
-                                .border(1.dp, palette.border, RoundedCornerShape(20.dp))
-                                .background(palette.cardSurface),
-                        ) {
-                            cards.forEachIndexed { index, item ->
-                                CardListRow(
-                                    card = item,
-                                    selected = index == activeIndex,
-                                    onClick = { activeIndex = index },
-                                )
-                            }
+                    }
+                    Text("Your cards", color = palette.foreground, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                    Spacer(Modifier.height(10.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .border(1.dp, palette.border, RoundedCornerShape(20.dp))
+                            .background(palette.cardSurface),
+                    ) {
+                        cards.forEachIndexed { index, item ->
+                            CardListRow(
+                                card = item,
+                                selected = index == activeIndex && activeIndex < cards.size,
+                                onClick = { activeIndex = index },
+                            )
                         }
                     }
                     Spacer(Modifier.height(40.dp))
@@ -360,6 +366,7 @@ private fun ProfileCreditCard.toFaceModel(revealPan: Boolean): SharedHubCardFace
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CardCarousel(
     cards: List<ProfileCreditCard>,
@@ -367,45 +374,79 @@ private fun CardCarousel(
     onSelect: (Int) -> Unit,
     onAddNewCard: () -> Unit,
 ) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        items(cards, key = { it.id }) { card ->
-            val index = cards.indexOf(card)
-            val selected = index == activeIndex
-            val scale by animateFloatAsState(
-                targetValue = if (selected) 1f else 0.92f,
-                animationSpec = spring(dampingRatio = 0.72f, stiffness = 360f),
-                label = "card-scale",
-            )
-            CardFace(
-                card = card,
-                reveal = selected,
-                modifier = Modifier
-                    .width(318.dp)
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                    }
-                    .clickable { onSelect(index) },
-            )
+    val cardWidth = 318.dp
+    val pagerState = rememberPagerState(
+        initialPage = activeIndex.coerceIn(0, cards.size),
+        pageCount = { cards.size + 1 },
+    )
+    val stackedFling = PagerDefaults.flingBehavior(
+        state = pagerState,
+        snapAnimationSpec = spring(dampingRatio = 0.82f, stiffness = 320f),
+    )
+
+    LaunchedEffect(activeIndex, cards.size) {
+        val target = activeIndex.coerceIn(0, cards.size)
+        if (pagerState.currentPage != target) {
+            pagerState.animateScrollToPage(target)
         }
-        items(listOf(Unit), key = { AddCardCarouselKey }) {
-            val scale by animateFloatAsState(
-                targetValue = 0.92f,
-                animationSpec = spring(dampingRatio = 0.72f, stiffness = 360f),
-                label = "add-card-scale",
-            )
-            AddNewCreditCardTile(
+    }
+
+    LaunchedEffect(pagerState, cards.size) {
+        snapshotFlow { pagerState.settledPage }
+            .distinctUntilChanged()
+            .collect { page -> onSelect(page) }
+    }
+
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val sidePad = remember(maxWidth, cardWidth) {
+            ((maxWidth - cardWidth) / 2).coerceAtLeast(4.dp)
+        }
+        val overlap = cardWidth * 0.26f
+
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = sidePad),
+            pageSize = PageSize.Fixed(cardWidth),
+            pageSpacing = -overlap,
+            verticalAlignment = Alignment.CenterVertically,
+            beyondViewportPageCount = 3,
+            flingBehavior = stackedFling,
+        ) { page ->
+            val d = pagerState.getOffsetDistanceInPages(page).coerceIn(-2.5f, 2.5f)
+            val absD = kotlin.math.abs(d)
+            val focusT = 1f - absD.coerceIn(0f, 1f)
+            Box(
                 modifier = Modifier
-                    .width(318.dp)
+                    .zIndex(4000f - absD * 1100f)
                     .graphicsLayer {
+                        transformOrigin = TransformOrigin(0.5f, 0.52f)
+                        cameraDistance = 14f * density
+                        rotationZ = (-d * 7.8f).coerceIn(-12f, 12f)
+                        val scale = lerp(0.84f, 1f, focusT)
                         scaleX = scale
                         scaleY = scale
-                    }
-                    .clickable(onClick = onAddNewCard),
-            )
+                        translationX = d * 22f * density
+                        translationY = lerp(20f * density, 0f, focusT)
+                        alpha = lerp(0.74f, 1f, focusT).coerceIn(0.58f, 1f)
+                    },
+            ) {
+                if (page >= cards.size) {
+                    AddNewCreditCardTile(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onAddNewCard),
+                    )
+                } else {
+                    CardFace(
+                        card = cards[page],
+                        reveal = page == activeIndex,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelect(page) },
+                    )
+                }
+            }
         }
     }
 }

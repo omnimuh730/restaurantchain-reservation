@@ -13,14 +13,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,9 +34,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
@@ -45,7 +46,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
-import kotlin.math.abs
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 
 private data class HubCreditCard(
@@ -92,46 +92,6 @@ fun CreditCardsHubSection(
                 showBalance = true,
                 showDualBalance = true,
             ),
-            HubCreditCard(
-                id = "c-amethyst",
-                productLabel = "Tonight Card",
-                holder = "ALEX CHEN",
-                lastFour = "4412",
-                krwBalance = 0L,
-                usdBalance = 0.0,
-                themeId = HubCardThemeId.Amethyst,
-                showBalance = false,
-            ),
-            HubCreditCard(
-                id = "c-ocean",
-                productLabel = "Tonight Card",
-                holder = "ALEX CHEN",
-                lastFour = "7781",
-                krwBalance = 0L,
-                usdBalance = 0.0,
-                themeId = HubCardThemeId.Ocean,
-                showBalance = false,
-            ),
-            HubCreditCard(
-                id = "c-sunset",
-                productLabel = "Tonight Card",
-                holder = "ALEX CHEN",
-                lastFour = "9033",
-                krwBalance = 0L,
-                usdBalance = 0.0,
-                themeId = HubCardThemeId.Sunset,
-                showBalance = false,
-            ),
-            HubCreditCard(
-                id = "c-forest",
-                productLabel = "Tonight Card",
-                holder = "ALEX CHEN",
-                lastFour = "1129",
-                krwBalance = 0L,
-                usdBalance = 0.0,
-                themeId = HubCardThemeId.Forest,
-                showBalance = false,
-            ),
         )
     }
     val totalKrw = remember(cards) { cards.sumOf { it.krwBalance } }
@@ -141,6 +101,13 @@ fun CreditCardsHubSection(
     }
 
     val pagerState = rememberPagerState(pageCount = { cards.size + 1 })
+    val stackedFling = PagerDefaults.flingBehavior(
+        state = pagerState,
+        snapAnimationSpec = spring(
+            dampingRatio = 0.82f,
+            stiffness = 320f,
+        ),
+    )
     val containerShape = RoundedCornerShape(24.dp)
 
     Column(
@@ -203,7 +170,7 @@ fun CreditCardsHubSection(
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 14.dp),
+                .padding(vertical = 22.dp),
         ) {
             val cardWidth = remember(maxWidth) {
                 val target = maxWidth * 0.84f
@@ -214,7 +181,8 @@ fun CreditCardsHubSection(
             val sidePad = remember(maxWidth, cardWidth) {
                 ((maxWidth - cardWidth) / 2).coerceAtLeast(0.dp)
             }
-            val overlap = remember(cardWidth) { cardWidth * 0.12f }
+            // Stronger overlap so neighbours read as a stacked deck behind the center card.
+            val overlap = remember(cardWidth) { cardWidth * 0.26f }
 
             HorizontalPager(
                 state = pagerState,
@@ -224,20 +192,28 @@ fun CreditCardsHubSection(
                 pageSpacing = -overlap,
                 verticalAlignment = Alignment.CenterVertically,
                 beyondViewportPageCount = 3,
+                flingBehavior = stackedFling,
             ) { page ->
-                val pageOffsetPages = pagerState.getOffsetDistanceInPages(page)
+                val d = pagerState.getOffsetDistanceInPages(page).coerceIn(-2.5f, 2.5f)
+                val absD = kotlin.math.abs(d)
+                // 1 = fully focused; 0 = one full page away (still visible as deck edge).
+                val focusT = 1f - absD.coerceIn(0f, 1f)
                 Box(
                     modifier = Modifier
-                        .zIndex(520f - abs(pageOffsetPages) * 200f)
+                        // Sharper z separation so the front card always wins during cross-fade.
+                        .zIndex(4000f - absD * 1100f)
                         .graphicsLayer {
-                            val adj = abs(pageOffsetPages).coerceIn(0f, 1f)
-                            val t = 1f - adj
-                            scaleX = lerp(0.87f, 1f, t)
-                            scaleY = lerp(0.87f, 1f, t)
-                            translationX = pageOffsetPages * 46.dp.toPx()
-                            translationY = lerp(8.dp.toPx(), 0f, t)
-                            alpha = lerp(0.9f, 1f, t)
-                            cameraDistance = 18f * density
+                            transformOrigin = TransformOrigin(0.5f, 0.52f)
+                            cameraDistance = 14f * density
+                            // Drag-linked yaw: pages to the right lean opposite to pages on the left.
+                            rotationZ = (-d * 7.8f).coerceIn(-12f, 12f)
+                            val scale = lerp(0.84f, 1f, focusT)
+                            scaleX = scale
+                            scaleY = scale
+                            // Extra lateral parallax on top of pager motion — wallet stack feel.
+                            translationX = d * 22f * density
+                            translationY = lerp(20f * density, 0f, focusT)
+                            alpha = lerp(0.74f, 1f, focusT).coerceIn(0.58f, 1f)
                         },
                 ) {
                     if (page >= cards.size) {
