@@ -140,7 +140,7 @@ fun CreditCardsHubSection(
         "Total · ${formatKrwHub(totalKrw)} · ${formatUsdHub(totalUsd)}"
     }
 
-    val pagerState = rememberPagerState(pageCount = { cards.size })
+    val pagerState = rememberPagerState(pageCount = { cards.size + 1 })
     val containerShape = RoundedCornerShape(24.dp)
 
     Column(
@@ -240,12 +240,20 @@ fun CreditCardsHubSection(
                             cameraDistance = 18f * density
                         },
                 ) {
-                    HubCreditCardFace(
-                        card = cards[page],
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(role = Role.Button, onClick = onOpenCardInfo),
-                    )
+                    if (page >= cards.size) {
+                        AddNewCreditCardTile(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(role = Role.Button, onClick = onAddNewCard),
+                        )
+                    } else {
+                        HubCreditCardFace(
+                            card = cards[page],
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(role = Role.Button, onClick = onOpenCardInfo),
+                        )
+                    }
                 }
             }
         }
@@ -259,7 +267,7 @@ fun CreditCardsHubSection(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            repeat(cards.size) { index ->
+            repeat(cards.size + 1) { index ->
                 if (index > 0) Spacer(Modifier.width(6.dp))
                 val selected = index == pagerState.currentPage
                 if (selected) {

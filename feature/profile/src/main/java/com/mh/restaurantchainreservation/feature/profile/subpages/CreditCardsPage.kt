@@ -70,6 +70,7 @@ import com.mh.restaurantchainreservation.feature.profile.subpages.components.amo
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.appendDigit
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.backspaceDigit
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.formatAmountString
+import com.mh.restaurantchainreservation.feature.profile.hub.AddNewCreditCardTile
 import com.mh.restaurantchainreservation.feature.profile.hub.HubCardPattern
 import com.mh.restaurantchainreservation.feature.profile.hub.HubCardThemeId
 import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFace
@@ -80,6 +81,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 private enum class CardMode { Browse, Deposit, Withdraw, Send, Settings, ChooseNewCardTheme }
+
+private const val AddCardCarouselKey = "add-new-card"
 
 private data class ProfileCreditCard(
     val id: String,
@@ -153,23 +156,25 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     ) { targetMode ->
         when (targetMode) {
             CardMode.Browse -> {
+                val openChooseNewCardTheme = {
+                    val index = cards.size + 1
+                    pendingPickTheme = HubCardThemeId.Rose
+                    pendingPickPattern = hubCardThemeSpec(HubCardThemeId.Rose).pattern
+                    pendingNewCardNumber = "4890${(100000000000 + index * 43129).toString().takeLast(12)}"
+                    pendingNewCardNickname = "Tonight ${HubCardThemeId.Rose.name}"
+                    mode = CardMode.ChooseNewCardTheme
+                }
                 SubpageScaffold(
                     title = "Credit cards",
                     onBack = onBack,
                 ) {
-                    HeaderAddButton {
-                        val index = cards.size + 1
-                        pendingPickTheme = HubCardThemeId.Rose
-                        pendingPickPattern = hubCardThemeSpec(HubCardThemeId.Rose).pattern
-                        pendingNewCardNumber = "4890${(100000000000 + index * 43129).toString().takeLast(12)}"
-                        pendingNewCardNickname = "Tonight ${HubCardThemeId.Rose.name}"
-                        mode = CardMode.ChooseNewCardTheme
-                    }
+                    HeaderAddButton(onClick = openChooseNewCardTheme)
                     Spacer(Modifier.height(18.dp))
                     CardCarousel(
                         cards = cards,
                         activeIndex = activeIndex,
                         onSelect = { activeIndex = it },
+                        onAddNewCard = openChooseNewCardTheme,
                     )
                     Spacer(Modifier.height(18.dp))
                     activeCard?.let { card ->
@@ -356,7 +361,12 @@ private fun ProfileCreditCard.toFaceModel(revealPan: Boolean): SharedHubCardFace
 }
 
 @Composable
-private fun CardCarousel(cards: List<ProfileCreditCard>, activeIndex: Int, onSelect: (Int) -> Unit) {
+private fun CardCarousel(
+    cards: List<ProfileCreditCard>,
+    activeIndex: Int,
+    onSelect: (Int) -> Unit,
+    onAddNewCard: () -> Unit,
+) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -379,6 +389,22 @@ private fun CardCarousel(cards: List<ProfileCreditCard>, activeIndex: Int, onSel
                         scaleY = scale
                     }
                     .clickable { onSelect(index) },
+            )
+        }
+        items(listOf(Unit), key = { AddCardCarouselKey }) {
+            val scale by animateFloatAsState(
+                targetValue = 0.92f,
+                animationSpec = spring(dampingRatio = 0.72f, stiffness = 360f),
+                label = "add-card-scale",
+            )
+            AddNewCreditCardTile(
+                modifier = Modifier
+                    .width(318.dp)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    }
+                    .clickable(onClick = onAddNewCard),
             )
         }
     }
