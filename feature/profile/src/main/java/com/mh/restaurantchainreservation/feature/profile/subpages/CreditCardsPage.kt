@@ -72,7 +72,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -83,7 +82,6 @@ import androidx.compose.ui.zIndex
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageHeaderIconButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DeterministicQrCode
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationCenter
-import com.mh.restaurantchainreservation.core.designsystem.components.PageHeader
 import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalBottomSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.AnimatedAmountDisplay
@@ -102,7 +100,6 @@ import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFaceMo
 import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeSpec
 import com.mh.restaurantchainreservation.feature.profile.hub.HubStackedCarouselMotion
 import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeBackgroundBrush
-import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.min
 
@@ -174,7 +171,6 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
         if (index >= 0) cards[index] = next
     }
 
-    val sheetBackLabel = stringResource(I18nR.string.common_action_back)
     val configuration = LocalConfiguration.current
     /** Same as [ChooseCardThemeBottomSheet] (`ChooseCardThemePage`). */
     val cardActionsSheetMaxHeight = (configuration.screenHeightDp * 0.78f).dp
@@ -321,14 +317,9 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp),
+                                .padding(horizontal = 20.dp)
+                                .padding(top = 12.dp),
                         ) {
-                            PageHeader(
-                                title = card.nickname,
-                                onBack = ::dismissCardActionsSheet,
-                                backContentDescription = sheetBackLabel,
-                            )
-                            Spacer(Modifier.height(8.dp))
                             CardActionsTabRow(
                                 selectedTab = cardActionsTab,
                                 onTabSelected = { cardActionsTab = it },
@@ -689,7 +680,7 @@ private fun CardActionsTabRow(
     }
     val stripBg = if (palette.isDark) palette.cardSurface else Color.White
     val strokePx = with(density) { 1.dp.toPx() }
-    val rowHeight = lerp(56f, 42f, collapse).dp
+    val rowHeight = lerp(58f, 44f, collapse).dp
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -793,9 +784,9 @@ private fun CardActionTabCell(
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 1.dp)
+                    .padding(bottom = 7.dp)
                     .fillMaxWidth(0.52f)
-                    .height(3.dp)
+                    .height(4.dp)
                     .clip(RoundedCornerShape(999.dp))
                     .background(palette.brand),
             )
