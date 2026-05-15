@@ -124,7 +124,7 @@ private val PickerSwatchShape = RoundedCornerShape(
 private val PickerSelectedInnerShape = RoundedCornerShape(11.dp)
 
 /** Horizontal inset for title, card preview, section headers, footer, and strip row ends. */
-private val ChooseCardSheetContentPadding = 14.dp
+private val ChooseCardSheetContentPadding = 20.dp
 
 /**
  * Rising bottom sheet (~78% screen height) for picking theme and pattern when adding a card.
@@ -508,7 +508,7 @@ private fun ChooseCardThemeStepTabs(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = ChooseCardSheetContentPadding)
-            .padding(top = 26.dp, bottom = 4.dp),
+            .padding(top = 2.dp, bottom = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

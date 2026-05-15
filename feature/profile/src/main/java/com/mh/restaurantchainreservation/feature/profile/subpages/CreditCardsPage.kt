@@ -202,7 +202,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                             }
                         },
                     ) {
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(2.dp))
                     Text(
                         text = "Multi-currency · Tonight Card",
                         modifier = Modifier.fillMaxWidth(),
@@ -211,14 +211,14 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         lineHeight = 18.sp,
                         fontWeight = FontWeight.Normal,
                     )
-                    Spacer(Modifier.height(44.dp))
+                    Spacer(Modifier.height(20.dp))
                     CardCarousel(
                         cards = cards,
                         activeIndex = activeIndex,
                         onSelect = { activeIndex = it },
                         onAddNewCard = openChooseNewCardTheme,
                     )
-                    Spacer(Modifier.height(28.dp))
+                    Spacer(Modifier.height(20.dp))
                     activeCard?.let { card ->
                         ActionGrid(
                             frozen = card.frozen,
