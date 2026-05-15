@@ -100,6 +100,9 @@ import kotlin.math.min
 
 private enum class CardMode { Browse, Deposit, Withdraw, Send, Settings }
 
+/** Horizontal inset when the focused card is centered; swipe brings neighbors through this gutter. */
+private val CreditCardPagerGutter = 20.dp
+
 private data class ProfileCreditCard(
     val id: String,
     val nickname: String,
@@ -182,6 +185,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
         SubpageScaffold(
             title = "Credit cards",
             onBack = onBack,
+            contentHorizontalPadding = 0,
             headerActions = {
                 val p = LocalRestaurantPalette.current
                 Box(
@@ -205,15 +209,17 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 }
             },
         ) {
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = "Multi-currency · Tonight Card",
-                modifier = Modifier.fillMaxWidth(),
-                color = palette.mutedForeground,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-                fontWeight = FontWeight.Normal,
-            )
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = "Multi-currency · Tonight Card",
+                    modifier = Modifier.fillMaxWidth(),
+                    color = palette.mutedForeground,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    fontWeight = FontWeight.Normal,
+                )
+            }
             Spacer(Modifier.height(20.dp))
             CardCarousel(
                 cards = cards,
@@ -224,8 +230,10 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     mode = CardMode.Settings
                 },
                 onAddNewCard = openChooseNewCardTheme,
+                fullWidthPagerWithCenterGutters = true,
             )
             Spacer(Modifier.height(20.dp))
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
             activeCard?.let { card ->
                 ActionGrid(
                     frozen = card.frozen,
@@ -257,6 +265,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 }
             }
             Spacer(Modifier.height(40.dp))
+            }
         }
 
         ChooseCardThemeBottomSheet(
@@ -434,6 +443,12 @@ private fun CardCarousel(
     onSelect: (Int) -> Unit,
     onCardClick: (Int) -> Unit,
     onAddNewCard: () -> Unit,
+    /**
+     * When true, the pager uses the full screen width; each page is narrower than the screen with
+     * [CreditCardPagerGutter] on each side so the centered card has side space, while [HorizontalPager]
+     * `contentPadding` lets adjacent cards scroll into those gutters.
+     */
+    fullWidthPagerWithCenterGutters: Boolean = false,
 ) {
     val palette = LocalRestaurantPalette.current
     val pagerState = rememberPagerState(
@@ -466,14 +481,22 @@ private fun CardCarousel(
                 .fillMaxWidth()
                 .padding(vertical = 20.dp),
         ) {
-            val cardWidth = remember(maxWidth) {
-                val target = maxWidth * 0.92f
-                val capped = if (target > 364.dp) 364.dp else target
-                val floored = if (capped < 272.dp) 272.dp else capped
-                if (floored > maxWidth - 8.dp) maxWidth - 8.dp else floored
+            val cardWidth = remember(maxWidth, fullWidthPagerWithCenterGutters) {
+                if (fullWidthPagerWithCenterGutters) {
+                    (maxWidth - CreditCardPagerGutter * 2).coerceAtLeast(1.dp)
+                } else {
+                    val target = maxWidth * 0.92f
+                    val capped = if (target > 364.dp) 364.dp else target
+                    val floored = if (capped < 272.dp) 272.dp else capped
+                    if (floored > maxWidth - 8.dp) maxWidth - 8.dp else floored
+                }
             }
-            val sidePad = remember(maxWidth, cardWidth) {
-                ((maxWidth - cardWidth) / 2).coerceAtLeast(4.dp)
+            val sidePad = remember(maxWidth, cardWidth, fullWidthPagerWithCenterGutters) {
+                if (fullWidthPagerWithCenterGutters) {
+                    CreditCardPagerGutter
+                } else {
+                    ((maxWidth - cardWidth) / 2).coerceAtLeast(4.dp)
+                }
             }
             val overlap = cardWidth * 0.22f
 

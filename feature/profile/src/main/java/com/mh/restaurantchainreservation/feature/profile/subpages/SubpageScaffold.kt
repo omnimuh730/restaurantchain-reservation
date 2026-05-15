@@ -22,6 +22,8 @@ fun SubpageScaffold(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     horizontalPadding: Int = 20,
+    /** When set, applied to scrollable/main content instead of [horizontalPadding] (header still uses [horizontalPadding]). */
+    contentHorizontalPadding: Int? = null,
     scrollable: Boolean = true,
     subtitle: String? = null,
     headerActions: (@Composable () -> Unit)? = null,
@@ -29,6 +31,7 @@ fun SubpageScaffold(
 ) {
     val palette = LocalRestaurantPalette.current
     val backLabel = stringResource(I18nR.string.common_action_back)
+    val contentPad = contentHorizontalPadding ?: horizontalPadding
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -49,14 +52,14 @@ fun SubpageScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = horizontalPadding.dp),
+                    .padding(horizontal = contentPad.dp),
                 content = content,
             )
         } else {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = horizontalPadding.dp),
+                    .padding(horizontal = contentPad.dp),
                 content = content,
             )
         }
