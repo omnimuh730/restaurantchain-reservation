@@ -2,8 +2,6 @@ package com.mh.restaurantchainreservation.feature.profile.subpages
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -11,9 +9,9 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -23,10 +21,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,9 +35,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -60,6 +60,7 @@ import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -74,7 +75,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -82,7 +82,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -182,13 +181,11 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
         list.map { it.first to it.second.toList() }
     }
 
-    val categoryCounts = remember(range) { buildCategoryCounts(MockTxns, range) }
-
     val spent = filtered.filter { it.isDebit }.sumOf { it.amountValue }
     val added = filtered.filter { !it.isDebit }.sumOf { it.amountValue }
     val rewards = filtered.filter { it.category == TxnCategory.Reward || it.category == TxnCategory.Referral }
         .sumOf { it.amountValue }
-    val floatingTabsBottomSpace = 112.dp
+    val listBottomPadding = 24.dp
 
     Box(
         modifier = modifier
@@ -203,29 +200,35 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 onBack = onBack,
             )
 
-            LazyColumn(
+            Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 8.dp, bottom = floatingTabsBottomSpace),
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .navigationBarsPadding()
+                    .padding(top = 8.dp),
+            ) {
+                ActivitySummaryStatsCard(
+                    spent = spent,
+                    added = added,
+                    rewards = rewards,
+                )
+                Spacer(Modifier.height(12.dp))
+                ActivityStickyDateAndCategoryRow(
+                    range = range,
+                    onRangeChange = { range = it },
+                    category = category,
+                    onCategoryChange = { category = it },
+                )
+                Spacer(Modifier.height(8.dp))
+
+                LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = listBottomPadding),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
-                item(key = "summary") {
-                    SummaryCard(
-                        activeLabel = "${category.label} activity",
-                        spent = spent,
-                        added = added,
-                        rewards = rewards,
-                        canReset = category != TxnCategory.All || range.preset != PresetId.Month,
-                        onReset = {
-                            category = TxnCategory.All
-                            range = rangeFromPreset(PresetId.Month)
-                        },
-                        range = range,
-                        onRangeChange = { range = it },
-                    )
-                    Spacer(Modifier.height(16.dp))
-                }
                 item(key = "activity-count") {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -267,16 +270,7 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 }
             }
         }
-
-        FloatingCategoryTabBar(
-            active = category,
-            counts = categoryCounts,
-            onChange = { category = it },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = 16.dp, vertical = 14.dp)
-                .navigationBarsPadding(),
-        )
+    }
     }
 
     val openTxn = filtered.firstOrNull { it.id == openInvoice }
@@ -443,15 +437,10 @@ private fun HeaderBar(title: String, subtitle: String, onBack: () -> Unit) {
 }
 
 @Composable
-private fun SummaryCard(
-    activeLabel: String,
+private fun ActivitySummaryStatsCard(
     spent: Double,
     added: Double,
     rewards: Double,
-    canReset: Boolean,
-    onReset: () -> Unit,
-    range: DateRangeMs,
-    onRangeChange: (DateRangeMs) -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
     Column(
@@ -465,37 +454,122 @@ private fun SummaryCard(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("THIS VIEW", color = palette.mutedForeground, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.6.sp)
-                Text(activeLabel, color = palette.foreground, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
-            }
-            if (canReset) {
-                Text(
-                    text = "Reset",
-                    color = palette.brand,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(percent = 50))
-                        .clickable(onClick = onReset)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                )
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             SummaryCell(label = "Spent", value = formatUsd(spent), modifier = Modifier.weight(1f))
             SummaryCell(label = "Added", value = formatUsd(added), modifier = Modifier.weight(1f))
             SummaryCell(label = "Rewards", value = formatUsd(rewards), modifier = Modifier.weight(1f))
         }
-        Spacer(Modifier.height(14.dp))
+    }
+}
+
+@Composable
+private fun ActivityStickyDateAndCategoryRow(
+    range: DateRangeMs,
+    onRangeChange: (DateRangeMs) -> Unit,
+    category: TxnCategory,
+    onCategoryChange: (TxnCategory) -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(palette.cardSurface)
+            .padding(top = 4.dp, bottom = 8.dp),
+    ) {
         PeriodPicker(value = range, onChange = onRangeChange)
+        Spacer(Modifier.height(10.dp))
+        ActivityCategoryTabRow(
+            selected = category,
+            onSelect = onCategoryChange,
+        )
+        HorizontalDivider(
+            modifier = Modifier.padding(top = 10.dp),
+            color = palette.border.copy(alpha = 0.45f),
+        )
+    }
+}
+
+@Composable
+private fun ActivityCategoryTabRow(
+    selected: TxnCategory,
+    onSelect: (TxnCategory) -> Unit,
+) {
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(
+            items = TxnCategory.entries.toList(),
+            key = { it.id },
+        ) { option ->
+            ActivityCategoryChip(
+                option = option,
+                isSelected = selected == option,
+                onClick = { onSelect(option) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActivityCategoryChip(
+    option: TxnCategory,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val shape = RoundedCornerShape(999.dp)
+    Row(
+        modifier = Modifier
+            .wrapContentWidth()
+            .height(40.dp)
+            .defaultMinSize(minWidth = 40.dp)
+            .animateContentSize(animationSpec = spring(dampingRatio = 0.78f, stiffness = 380f))
+            .clip(shape)
+            .border(
+                1.dp,
+                if (isSelected) palette.brand else palette.border.copy(alpha = 0.65f),
+                shape,
+            )
+            .background(if (isSelected) palette.brand.copy(alpha = 0.10f) else palette.mutedSurface.copy(alpha = 0.45f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = if (isSelected) 12.dp else 0.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = if (isSelected) Arrangement.Start else Arrangement.Center,
+    ) {
+        Icon(
+            imageVector = option.icon,
+            contentDescription = option.label,
+            tint = if (isSelected) palette.brand else palette.mutedForeground,
+            modifier = Modifier.size(18.dp),
+        )
+        AnimatedVisibility(
+            visible = isSelected,
+            enter = expandHorizontally(
+                expandFrom = Alignment.Start,
+                animationSpec = spring(dampingRatio = 0.82f, stiffness = 400f),
+            ) + fadeIn(animationSpec = tween(durationMillis = 140, delayMillis = 20)),
+            exit = shrinkHorizontally(
+                shrinkTowards = Alignment.Start,
+                animationSpec = tween(durationMillis = 140),
+            ) + fadeOut(animationSpec = tween(durationMillis = 100)),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = option.label,
+                    color = palette.brand,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
     }
 }
 
@@ -948,140 +1022,6 @@ private fun DayCell(
     }
 }
 
-// === Floating Tabs ===
-
-@Composable
-private fun FloatingCategoryTabBar(
-    active: TxnCategory,
-    counts: Map<TxnCategory, Int>,
-    onChange: (TxnCategory) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val palette = LocalRestaurantPalette.current
-    val shape = RoundedCornerShape(26.dp)
-    val tabs = TxnCategory.entries
-
-    BoxWithConstraints(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(18.dp, shape, clip = false)
-            .clip(shape)
-            .border(1.dp, palette.border.copy(alpha = 0.55f), shape)
-            .background(palette.cardSurface.copy(alpha = 0.98f))
-            .padding(horizontal = 6.dp, vertical = 6.dp),
-    ) {
-        val inactiveSize = 38.dp
-        val activeMaxWidth = maxOf(96.dp, maxWidth - inactiveSize * (tabs.size - 1).toFloat() - 12.dp)
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            tabs.forEach { cat ->
-                FloatingCategoryItem(
-                    option = cat,
-                    isActive = active == cat,
-                    count = counts[cat] ?: 0,
-                    activeMaxWidth = activeMaxWidth,
-                    inactiveSize = inactiveSize,
-                    onSelect = { onChange(cat) },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun FloatingCategoryItem(
-    option: TxnCategory,
-    isActive: Boolean,
-    count: Int,
-    activeMaxWidth: Dp,
-    inactiveSize: Dp,
-    onSelect: () -> Unit,
-) {
-    val palette = LocalRestaurantPalette.current
-    val countLabel = when {
-        count <= 0 -> null
-        count > 99 -> "99+"
-        else -> count.toString()
-    }
-    val label = countLabel?.let { "${option.label} $it" } ?: option.label
-    val backgroundColor by animateColorAsState(
-        targetValue = if (isActive) palette.brand.copy(alpha = 0.11f) else Color.Transparent,
-        animationSpec = tween(durationMillis = 180),
-        label = "floating-category-bg",
-    )
-    val contentColor by animateColorAsState(
-        targetValue = if (isActive) palette.brand else palette.mutedForeground,
-        animationSpec = tween(durationMillis = 180),
-        label = "floating-category-color",
-    )
-    val iconScale by animateFloatAsState(
-        targetValue = if (isActive) 1.08f else 1f,
-        animationSpec = spring(dampingRatio = 0.72f, stiffness = 420f),
-        label = "floating-category-icon-scale",
-    )
-    val animatedMinWidth by animateDpAsState(
-        targetValue = if (isActive) 90.dp else inactiveSize,
-        animationSpec = spring(dampingRatio = 0.78f, stiffness = 360f),
-        label = "floating-category-min-width",
-    )
-    val animatedMaxWidth by animateDpAsState(
-        targetValue = if (isActive) activeMaxWidth else inactiveSize,
-        animationSpec = spring(dampingRatio = 0.78f, stiffness = 360f),
-        label = "floating-category-max-width",
-    )
-
-    Row(
-        modifier = Modifier
-            .widthIn(min = animatedMinWidth, max = maxOf(animatedMinWidth, animatedMaxWidth))
-            .height(42.dp)
-            .animateContentSize(animationSpec = spring(dampingRatio = 0.78f, stiffness = 360f))
-            .clip(RoundedCornerShape(21.dp))
-            .background(backgroundColor)
-            .clickable(onClick = onSelect)
-            .padding(horizontal = if (isActive) 13.dp else 0.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            imageVector = option.icon,
-            contentDescription = label,
-            tint = contentColor,
-            modifier = Modifier
-                .size(20.dp)
-                .scale(iconScale),
-        )
-        AnimatedVisibility(
-            visible = isActive,
-            enter = expandHorizontally(
-                expandFrom = Alignment.Start,
-                animationSpec = spring(dampingRatio = 0.82f, stiffness = 360f),
-            ) + fadeIn(animationSpec = tween(durationMillis = 120, delayMillis = 30)),
-            exit = shrinkHorizontally(
-                shrinkTowards = Alignment.Start,
-                animationSpec = tween(durationMillis = 140),
-            ) + fadeOut(animationSpec = tween(durationMillis = 90)),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = label,
-                    color = contentColor,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-}
-
 // === Row + Empty ===
 
 @Composable
@@ -1472,19 +1412,6 @@ private fun dateRangeSaver() = androidx.compose.runtime.saveable.Saver<DateRange
         )
     },
 )
-
-private fun buildCategoryCounts(all: List<Txn>, range: DateRangeMs): Map<TxnCategory, Int> {
-    val counts = mutableMapOf<TxnCategory, Int>().apply {
-        TxnCategory.values().forEach { put(it, 0) }
-    }
-    all.forEach { t ->
-        if (t.timestampMs in range.fromMs..range.toMs) {
-            counts[TxnCategory.All] = (counts[TxnCategory.All] ?: 0) + 1
-            counts[t.category] = (counts[t.category] ?: 0) + 1
-        }
-    }
-    return counts
-}
 
 // === Mock generation ===
 

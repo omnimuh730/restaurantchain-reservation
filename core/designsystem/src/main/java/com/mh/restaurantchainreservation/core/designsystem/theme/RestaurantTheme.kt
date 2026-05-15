@@ -63,9 +63,9 @@ private fun darkScheme(): ColorScheme = darkColorScheme(
 
 private fun readThemePreference(context: Context): ThemePreference {
     val value = context.getSharedPreferences(ThemePrefsName, Context.MODE_PRIVATE)
-        .getString(ThemePrefsKey, ThemePreference.System.name)
-        ?: ThemePreference.System.name
-    return ThemePreference.entries.firstOrNull { it.name == value } ?: ThemePreference.System
+        .getString(ThemePrefsKey, ThemePreference.Light.name)
+        ?: ThemePreference.Light.name
+    return ThemePreference.entries.firstOrNull { it.name == value } ?: ThemePreference.Light
 }
 
 private fun persistThemePreference(context: Context, preference: ThemePreference) {
