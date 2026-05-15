@@ -219,15 +219,6 @@ internal fun SharedHubCardFace(
             fontFeatureSettings = "tnum",
         )
     }
-    val silverUsdStyle = remember {
-        TextStyle(
-            fontFamily = RestaurantFontFamily,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.06.sp,
-            brush = hubMetalSilverBrush(),
-        )
-    }
 
     Box(
         modifier = modifier
@@ -296,15 +287,23 @@ internal fun SharedHubCardFace(
                 )
                 Spacer(Modifier.height(4.dp))
                 if (model.showDualBalance && model.krwBalance > 0L && model.usdBalance > 0.0) {
-                    HubWebGoldText(
-                        text = formatKrwHub(model.krwBalance),
-                        style = goldBalanceWebStyle,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = formatUsdHub(model.usdBalance),
-                        style = silverUsdStyle,
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        HubWebGoldText(
+                            text = formatKrwHub(model.krwBalance),
+                            style = goldBalanceWebStyle,
+                        )
+                        HubWebGoldText(
+                            text = "·",
+                            style = goldBalanceWebStyle,
+                        )
+                        HubWebGoldText(
+                            text = formatUsdHub(model.usdBalance),
+                            style = goldBalanceWebStyle,
+                        )
+                    }
                 } else {
                     HubWebGoldText(
                         text = balancePrimaryText,
@@ -364,7 +363,7 @@ internal fun SharedHubCardFace(
                         text = model.holder,
                         color = Color.White,
                         fontFamily = RestaurantFontFamily,
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.02.em,
                         maxLines = 1,
