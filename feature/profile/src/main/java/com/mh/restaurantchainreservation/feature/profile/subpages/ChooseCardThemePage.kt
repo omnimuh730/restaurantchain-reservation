@@ -29,14 +29,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,6 +71,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalBottomSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.feature.profile.hub.HubCardPattern
 import com.mh.restaurantchainreservation.feature.profile.hub.HubCardThemeId
@@ -192,7 +190,6 @@ internal fun ChooseCardThemeBottomSheet(
     val palette = LocalRestaurantPalette.current
     val configuration = LocalConfiguration.current
     val sheetMaxHeight = (configuration.screenHeightDp * 0.78f).dp
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var step by rememberSaveable { mutableIntStateOf(0) }
     var openingCurrency by rememberSaveable { mutableStateOf(NewCardOpeningCurrency.KRW.name) }
     var initialKrwText by rememberSaveable { mutableStateOf("") }
@@ -232,14 +229,7 @@ internal fun ChooseCardThemeBottomSheet(
         fullCardNumber = fullCardNumber,
     )
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = palette.cardSurface,
-        contentColor = palette.foreground,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        dragHandle = { BottomSheetDefaults.DragHandle() },
-    ) {
+    RestaurantModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
