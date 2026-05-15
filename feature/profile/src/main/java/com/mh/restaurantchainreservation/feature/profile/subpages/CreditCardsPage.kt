@@ -4,8 +4,11 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,10 +19,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -48,6 +51,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -67,12 +71,14 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageHeaderIconButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DeterministicQrCode
@@ -100,7 +106,11 @@ import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.min
 
-private enum class CardMode { Browse, Deposit, Withdraw, Send, Settings }
+private const val CARD_ACTION_TAB_TOP_UP = 0
+private const val CARD_ACTION_TAB_WITHDRAW = 1
+private const val CARD_ACTION_TAB_SEND = 2
+private const val CARD_ACTION_TAB_RECEIVE = 3
+private const val CARD_ACTION_TAB_SETTINGS = 4
 
 /** Horizontal inset when the focused card is centered; swipe brings neighbors through this gutter. */
 private val CreditCardPagerGutter = 20.dp
@@ -149,9 +159,9 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
         }
     }
     var activeIndex by rememberSaveable { mutableIntStateOf(0) }
-    var mode by rememberSaveable { mutableStateOf(CardMode.Browse) }
+    var cardActionsSheetOpen by rememberSaveable { mutableStateOf(false) }
+    var cardActionsTab by rememberSaveable { mutableIntStateOf(CARD_ACTION_TAB_SETTINGS) }
     var showChooseCardThemeSheet by rememberSaveable { mutableStateOf(false) }
-    var qrCard by remember { mutableStateOf<ProfileCreditCard?>(null) }
     var pendingPickTheme by remember { mutableStateOf(HubCardThemeId.Rose) }
     var pendingPickPattern by remember { mutableStateOf(hubCardThemeSpec(HubCardThemeId.Rose).pattern) }
     var pendingNewCardNumber by remember { mutableStateOf("") }
@@ -166,7 +176,17 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
     val sheetBackLabel = stringResource(I18nR.string.common_action_back)
     val configuration = LocalConfiguration.current
-    val creditCardSheetMaxHeight = (configuration.screenHeightDp * 0.78f).dp
+    /** Same as [ChooseCardThemeBottomSheet] (`ChooseCardThemePage`). */
+    val cardActionsSheetMaxHeight = (configuration.screenHeightDp * 0.78f).dp
+
+    fun dismissCardActionsSheet() {
+        cardActionsSheetOpen = false
+    }
+
+    fun openCardActionsSheet(tab: Int) {
+        cardActionsTab = tab.coerceIn(CARD_ACTION_TAB_TOP_UP, CARD_ACTION_TAB_SETTINGS)
+        cardActionsSheetOpen = true
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         val openChooseNewCardTheme = {
@@ -212,7 +232,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 onSelect = { activeIndex = it },
                 onCardClick = { page ->
                     activeIndex = page
-                    mode = CardMode.Settings
+                    openCardActionsSheet(CARD_ACTION_TAB_SETTINGS)
                 },
                 onAddNewCard = openChooseNewCardTheme,
                 fullWidthPagerWithCenterGutters = true,
@@ -222,11 +242,11 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
             activeCard?.let { card ->
                 ActionGrid(
                     frozen = card.frozen,
-                    onDeposit = { if (!card.frozen) mode = CardMode.Deposit },
-                    onWithdraw = { if (!card.frozen) mode = CardMode.Withdraw },
-                    onSend = { if (!card.frozen) mode = CardMode.Send },
-                    onReceive = { qrCard = card },
-                    onSettings = { mode = CardMode.Settings },
+                    onDeposit = { if (!card.frozen) openCardActionsSheet(CARD_ACTION_TAB_TOP_UP) },
+                    onWithdraw = { if (!card.frozen) openCardActionsSheet(CARD_ACTION_TAB_WITHDRAW) },
+                    onSend = { if (!card.frozen) openCardActionsSheet(CARD_ACTION_TAB_SEND) },
+                    onReceive = { openCardActionsSheet(CARD_ACTION_TAB_RECEIVE) },
+                    onSettings = { openCardActionsSheet(CARD_ACTION_TAB_SETTINGS) },
                 )
                 Spacer(Modifier.height(22.dp))
                 TransactionsCard(card = card)
@@ -288,114 +308,139 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
             },
         )
 
-        if (mode == CardMode.Deposit || mode == CardMode.Withdraw || mode == CardMode.Send) {
+        if (cardActionsSheetOpen) {
             activeCard?.let { card ->
-                RestaurantModalBottomSheet(onDismissRequest = { mode = CardMode.Browse }) {
+                val bodyScroll = rememberScrollState()
+                RestaurantModalBottomSheet(onDismissRequest = ::dismissCardActionsSheet) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = creditCardSheetMaxHeight)
-                            .verticalScroll(rememberScrollState())
-                            .navigationBarsPadding()
-                            .padding(horizontal = 20.dp)
-                            .padding(bottom = 24.dp),
+                            .height(cardActionsSheetMaxHeight)
+                            .navigationBarsPadding(),
                     ) {
-                        val sheetTitle = when (mode) {
-                            CardMode.Deposit -> "Top up card"
-                            CardMode.Withdraw -> "Withdraw from card"
-                            else -> "Send from card"
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp),
+                        ) {
+                            PageHeader(
+                                title = card.nickname,
+                                onBack = ::dismissCardActionsSheet,
+                                backContentDescription = sheetBackLabel,
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            CardActionsTabRow(
+                                selectedTab = cardActionsTab,
+                                onTabSelected = { cardActionsTab = it },
+                                frozen = card.frozen,
+                                bodyScrollState = bodyScroll,
+                            )
+                            Spacer(Modifier.height(12.dp))
                         }
-                        PageHeader(
-                            title = sheetTitle,
-                            onBack = { mode = CardMode.Browse },
-                            backContentDescription = sheetBackLabel,
-                        )
-                        CardAmountAction(
-                            card = card,
-                            onApply = { amount, currency ->
-                                val signed = if (mode == CardMode.Withdraw || mode == CardMode.Send) -amount else amount
-                                replaceActive(
-                                    when (currency) {
-                                        Currency.KRW -> card.copy(krwBalance = (card.krwBalance + signed).coerceAtLeast(0.0))
-                                        Currency.USD -> card.copy(usdBalance = (card.usdBalance + signed).coerceAtLeast(0.0))
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .verticalScroll(bodyScroll)
+                                .padding(horizontal = 20.dp)
+                                .padding(top = 16.dp, bottom = 24.dp),
+                        ) {
+                            when (cardActionsTab) {
+                            CARD_ACTION_TAB_TOP_UP, CARD_ACTION_TAB_WITHDRAW, CARD_ACTION_TAB_SEND -> {
+                                if (card.frozen) {
+                                    Text(
+                                        text = "This card is frozen. Open the Settings tab to unfreeze, then you can top up, withdraw, or send.",
+                                        color = palette.mutedForeground,
+                                        fontSize = 14.sp,
+                                        lineHeight = 20.sp,
+                                        modifier = Modifier.padding(vertical = 8.dp),
+                                    )
+                                } else {
+                                    key(card.id, cardActionsTab) {
+                                        CardAmountAction(
+                                            card = card,
+                                            onApply = { amount, currency ->
+                                                val signed =
+                                                    if (cardActionsTab == CARD_ACTION_TAB_TOP_UP) amount else -amount
+                                                replaceActive(
+                                                    if (currency == Currency.KRW) {
+                                                        card.copy(
+                                                            krwBalance = (card.krwBalance + signed).coerceAtLeast(0.0),
+                                                        )
+                                                    } else {
+                                                        card.copy(
+                                                            usdBalance = (card.usdBalance + signed).coerceAtLeast(0.0),
+                                                        )
+                                                    },
+                                                )
+                                                dismissCardActionsSheet()
+                                                GlobalNotificationCenter.success(
+                                                    "Card updated",
+                                                    "Your card balance was updated.",
+                                                )
+                                            },
+                                        )
+                                    }
+                                }
+                            }
+                            CARD_ACTION_TAB_RECEIVE -> {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    DeterministicQrCode(
+                                        code = "tonight-card:${card.number}",
+                                        modifier = Modifier.size(190.dp),
+                                    )
+                                    Spacer(Modifier.height(12.dp))
+                                    Text(
+                                        text = "Receive on this card",
+                                        color = palette.foreground,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp,
+                                    )
+                                    Text(
+                                        text = maskCard(card.number),
+                                        color = palette.mutedForeground,
+                                        fontSize = 13.sp,
+                                    )
+                                }
+                            }
+                            CARD_ACTION_TAB_SETTINGS -> {
+                                CardSettingsPanel(
+                                    card = card,
+                                    canRemove = cards.size > 1,
+                                    onToggleFrozen = {
+                                        replaceActive(card.copy(frozen = !card.frozen))
+                                        GlobalNotificationCenter.info(
+                                            "Card settings",
+                                            if (card.frozen) "Card unfrozen." else "Card frozen.",
+                                        )
+                                    },
+                                    onToggleExternal = {
+                                        replaceActive(card.copy(externalUse = !card.externalUse))
+                                        GlobalNotificationCenter.info(
+                                            "Card settings",
+                                            if (card.externalUse) "External use disabled." else "External use enabled.",
+                                        )
+                                    },
+                                    onRemove = {
+                                        val removeAt = cards.indexOfFirst { it.id == card.id }
+                                        if (removeAt >= 0 && cards.size > 1) {
+                                            cards.removeAt(removeAt)
+                                            activeIndex = min(activeIndex, cards.lastIndex)
+                                            dismissCardActionsSheet()
+                                            GlobalNotificationCenter.warning(
+                                                "Card closed",
+                                                "${card.nickname} was removed.",
+                                            )
+                                        }
                                     },
                                 )
-                                mode = CardMode.Browse
-                                GlobalNotificationCenter.success("Card updated", "Your card balance was updated.")
-                            },
-                        )
+                            }
+                        }
+                        }
                     }
-                }
-            }
-        }
-
-        if (mode == CardMode.Settings) {
-            activeCard?.let { card ->
-                RestaurantModalBottomSheet(onDismissRequest = { mode = CardMode.Browse }) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = creditCardSheetMaxHeight)
-                            .verticalScroll(rememberScrollState())
-                            .navigationBarsPadding()
-                            .padding(horizontal = 20.dp)
-                            .padding(bottom = 24.dp),
-                    ) {
-                        PageHeader(
-                            title = "Card settings",
-                            onBack = { mode = CardMode.Browse },
-                            backContentDescription = sheetBackLabel,
-                        )
-                        CardSettingsPanel(
-                            card = card,
-                            canRemove = cards.size > 1,
-                            onToggleFrozen = {
-                                replaceActive(card.copy(frozen = !card.frozen))
-                                GlobalNotificationCenter.info("Card settings", if (card.frozen) "Card unfrozen." else "Card frozen.")
-                            },
-                            onToggleExternal = {
-                                replaceActive(card.copy(externalUse = !card.externalUse))
-                                GlobalNotificationCenter.info("Card settings", if (card.externalUse) "External use disabled." else "External use enabled.")
-                            },
-                            onRemove = {
-                                val removeAt = cards.indexOfFirst { it.id == card.id }
-                                if (removeAt >= 0 && cards.size > 1) {
-                                    cards.removeAt(removeAt)
-                                    activeIndex = min(activeIndex, cards.lastIndex)
-                                    mode = CardMode.Browse
-                                    GlobalNotificationCenter.warning("Card closed", "${card.nickname} was removed.")
-                                }
-                            },
-                        )
-                    }
-                }
-            }
-        }
-
-        qrCard?.let { card ->
-            RestaurantModalBottomSheet(onDismissRequest = { qrCard = null }) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = creditCardSheetMaxHeight)
-                        .verticalScroll(rememberScrollState())
-                        .navigationBarsPadding()
-                        .padding(horizontal = 20.dp)
-                        .padding(bottom = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    PageHeader(
-                        title = "Receive on this card",
-                        onBack = { qrCard = null },
-                        backContentDescription = sheetBackLabel,
-                    )
-                    DeterministicQrCode(
-                        code = "tonight-card:${card.number}",
-                        modifier = Modifier.size(190.dp),
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Text(card.nickname, color = palette.foreground, fontWeight = FontWeight.Bold)
-                    Text(maskCard(card.number), color = palette.mutedForeground, fontSize = 13.sp)
                 }
             }
         }
@@ -618,6 +663,147 @@ private fun CardFace(card: ProfileCreditCard, reveal: Boolean, modifier: Modifie
 }
 
 @Composable
+private fun CardActionsTabRow(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    frozen: Boolean,
+    bodyScrollState: ScrollState,
+) {
+    val palette = LocalRestaurantPalette.current
+    val density = LocalDensity.current
+    val thresholdPx = remember(density) { with(density) { 48.dp.toPx() } }
+    val collapseRaw = (bodyScrollState.value / thresholdPx).coerceIn(0f, 1f)
+    val collapse by animateFloatAsState(
+        targetValue = collapseRaw,
+        animationSpec = tween(durationMillis = 160),
+        label = "cardActionTabIconCollapse",
+    )
+    val tabPairs = remember {
+        listOf(
+            Icons.Outlined.ArrowDownward to "Top up",
+            Icons.Outlined.ArrowUpward to "Withdraw",
+            Icons.Outlined.Send to "Send",
+            Icons.Outlined.QrCode to "Receive",
+            Icons.Outlined.Settings to "Settings",
+        )
+    }
+    val stripBg = if (palette.isDark) palette.cardSurface else Color.White
+    val strokePx = with(density) { 1.dp.toPx() }
+    val rowHeight = lerp(56f, 42f, collapse).dp
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(stripBg)
+            .drawBehind {
+                val y = size.height - strokePx * 0.5f
+                drawLine(
+                    color = palette.border.copy(alpha = 0.35f),
+                    start = Offset(0f, y),
+                    end = Offset(size.width, y),
+                    strokeWidth = strokePx,
+                )
+            },
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(rowHeight),
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            tabPairs.forEachIndexed { index, (icon, label) ->
+                val selected = index == selectedTab
+                val muted = frozen && index <= CARD_ACTION_TAB_SEND
+                CardActionTabCell(
+                    modifier = Modifier.weight(1f),
+                    icon = icon,
+                    label = label,
+                    selected = selected,
+                    muted = muted,
+                    collapse = collapse,
+                    onClick = { onTabSelected(index) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CardActionTabCell(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    label: String,
+    selected: Boolean,
+    muted: Boolean,
+    collapse: Float,
+    onClick: () -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val iconSlot = (24f * (1f - collapse)).coerceAtLeast(0f).dp
+    val gapAfterIcon = (4f * (1f - collapse)).coerceAtLeast(0f).dp
+    val iconAlpha = 1f - collapse
+    val labelColor = when {
+        muted -> palette.mutedForeground.copy(alpha = 0.42f)
+        selected -> palette.brand
+        else -> palette.mutedForeground
+    }
+    val labelWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .clickable(onClick = onClick),
+    ) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = lerp(8f, 4f, collapse).dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                modifier = Modifier
+                    .height(iconSlot)
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        alpha = iconAlpha
+                        translationY = -2f * collapse
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                if (iconAlpha > 0.02f) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = labelColor,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+            }
+            Spacer(Modifier.height(gapAfterIcon))
+            Text(
+                text = label,
+                color = labelColor,
+                fontSize = 12.sp,
+                fontWeight = labelWeight,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (selected) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 1.dp)
+                    .fillMaxWidth(0.52f)
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(palette.brand),
+            )
+        }
+    }
+}
+
+@Composable
 private fun ActionGrid(
     frozen: Boolean,
     onDeposit: () -> Unit,
@@ -627,16 +813,16 @@ private fun ActionGrid(
     onSettings: () -> Unit,
 ) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        CardAction(Icons.Outlined.ArrowDownward, "Top up", frozen, onDeposit, Modifier.weight(1f))
-        CardAction(Icons.Outlined.ArrowUpward, "Withdraw", frozen, onWithdraw, Modifier.weight(1f))
-        CardAction(Icons.Outlined.Send, "Send", frozen, onSend, Modifier.weight(1f))
-        CardAction(Icons.Outlined.QrCode, "Receive", false, onReceive, Modifier.weight(1f))
-        CardAction(Icons.Outlined.Settings, "Settings", false, onSettings, Modifier.weight(1f))
+        CreditCardGridAction(Icons.Outlined.ArrowDownward, "Top up", frozen, onDeposit, Modifier.weight(1f))
+        CreditCardGridAction(Icons.Outlined.ArrowUpward, "Withdraw", frozen, onWithdraw, Modifier.weight(1f))
+        CreditCardGridAction(Icons.Outlined.Send, "Send", frozen, onSend, Modifier.weight(1f))
+        CreditCardGridAction(Icons.Outlined.QrCode, "Receive", false, onReceive, Modifier.weight(1f))
+        CreditCardGridAction(Icons.Outlined.Settings, "Settings", false, onSettings, Modifier.weight(1f))
     }
 }
 
 @Composable
-private fun CardAction(icon: ImageVector, label: String, disabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun CreditCardGridAction(icon: ImageVector, label: String, disabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val palette = LocalRestaurantPalette.current
     Column(
         modifier = modifier
