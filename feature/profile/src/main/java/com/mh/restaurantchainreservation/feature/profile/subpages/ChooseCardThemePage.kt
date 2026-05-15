@@ -27,6 +27,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -64,6 +65,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -112,12 +114,18 @@ private fun HubCardPattern.displayLabel(): String = when (this) {
 
 private const val ChooseCardSheetSteps = 3
 
+private const val CardPasscodeMinDigits = 4
+
+private fun filterCardPasscodeDigits(raw: String): String =
+    raw.filter { it.isDigit() }
+
 internal enum class NewCardOpeningCurrency { KRW, USD }
 
 internal data class NewCardFunding(
     val openingCurrency: NewCardOpeningCurrency,
     val initialKrw: Double,
     val initialUsd: Double,
+    val cardPasscode: String = "",
 )
 
 /** Width of each theme/pattern card in the horizontal picker strips. */
@@ -189,6 +197,8 @@ internal fun ChooseCardThemeBottomSheet(
     var openingCurrency by rememberSaveable { mutableStateOf(NewCardOpeningCurrency.KRW.name) }
     var initialKrwText by rememberSaveable { mutableStateOf("") }
     var initialUsdText by rememberSaveable { mutableStateOf("") }
+    var cardPasscode by rememberSaveable { mutableStateOf("") }
+    var cardPasscodeConfirm by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(visible) {
         if (visible) {
@@ -196,6 +206,8 @@ internal fun ChooseCardThemeBottomSheet(
             openingCurrency = NewCardOpeningCurrency.KRW.name
             initialKrwText = ""
             initialUsdText = ""
+            cardPasscode = ""
+            cardPasscodeConfirm = ""
         }
     }
 
@@ -335,26 +347,139 @@ internal fun ChooseCardThemeBottomSheet(
                     else -> {
                         Column(modifier = inset) {
                             Text(
-                                text = "Review",
+                                text = "Review and confirm",
                                 color = palette.foreground,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
                             )
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                text = "You’re adding ${previewNickname} with the ${selectedThemeId.name} look and ${selectedPattern.displayLabel()} pattern.",
-                                color = palette.mutedForeground,
-                                fontSize = 14.sp,
-                                lineHeight = 20.sp,
+                            Spacer(Modifier.height(16.dp))
+                            SharedHubCardFace(
+                                model = previewModel,
+                                modifier = Modifier.fillMaxWidth(),
                             )
-                            Spacer(Modifier.height(12.dp))
-                            Text(
-                                text = "Opening ${opening.name} · top-up " +
-                                    "${formatFundingPreview(initialKrwText, initialUsdText)}",
-                                color = palette.mutedForeground,
-                                fontSize = 14.sp,
-                                lineHeight = 20.sp,
-                            )
+                            Spacer(Modifier.height(16.dp))
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .border(1.dp, palette.border, RoundedCornerShape(20.dp))
+                                    .background(palette.cardSurface)
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                            ) {
+                                ReviewSummaryLine(label = "Card holder", value = holder)
+                                Spacer(Modifier.height(14.dp))
+                                ReviewSummaryLine(
+                                    label = "Card number",
+                                    value = formatCardNumberForReview(fullCardNumber),
+                                )
+                                Spacer(Modifier.height(14.dp))
+                                ReviewSummaryLine(label = "Card theme", value = selectedThemeId.name)
+                                Spacer(Modifier.height(14.dp))
+                                ReviewSummaryFundingRow(
+                                    initialKrwText = initialKrwText,
+                                    initialUsdText = initialUsdText,
+                                )
+                                Spacer(Modifier.height(18.dp))
+                                OutlinedTextField(
+                                    value = cardPasscode,
+                                    onValueChange = { cardPasscode = filterCardPasscodeDigits(it) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    label = {
+                                        Text(
+                                            text = "Card passcode",
+                                            color = palette.mutedForeground,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                    },
+                                    placeholder = {
+                                        Text(
+                                            text = "At least 4 digits",
+                                            color = palette.mutedForeground.copy(alpha = 0.5f),
+                                        )
+                                    },
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = palette.border,
+                                        unfocusedBorderColor = palette.border,
+                                        focusedContainerColor = palette.mutedSurface.copy(alpha = 0.45f),
+                                        unfocusedContainerColor = palette.mutedSurface.copy(alpha = 0.45f),
+                                        cursorColor = palette.foreground,
+                                    ),
+                                    shape = RoundedCornerShape(14.dp),
+                                )
+                                Spacer(Modifier.height(10.dp))
+                                val confirmMismatch =
+                                    cardPasscodeConfirm.isNotEmpty() && cardPasscode != cardPasscodeConfirm
+                                OutlinedTextField(
+                                    value = cardPasscodeConfirm,
+                                    onValueChange = { cardPasscodeConfirm = filterCardPasscodeDigits(it) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    label = {
+                                        Text(
+                                            text = "Confirm passcode",
+                                            color = palette.mutedForeground,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                    },
+                                    placeholder = {
+                                        Text(
+                                            text = "Re-enter passcode",
+                                            color = palette.mutedForeground.copy(alpha = 0.5f),
+                                        )
+                                    },
+                                    isError = confirmMismatch,
+                                    supportingText = {
+                                        if (confirmMismatch) {
+                                            Text(
+                                                text = "Passcodes must match",
+                                                color = palette.brand,
+                                                fontSize = 12.sp,
+                                            )
+                                        }
+                                    },
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = palette.border,
+                                        unfocusedBorderColor = palette.border,
+                                        focusedContainerColor = palette.mutedSurface.copy(alpha = 0.45f),
+                                        unfocusedContainerColor = palette.mutedSurface.copy(alpha = 0.45f),
+                                        errorBorderColor = palette.brand,
+                                        errorCursorColor = palette.brand,
+                                        errorSupportingTextColor = palette.brand,
+                                        cursorColor = palette.foreground,
+                                    ),
+                                    shape = RoundedCornerShape(14.dp),
+                                )
+                            }
+                            Spacer(Modifier.height(14.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(palette.mutedSurface)
+                                    .padding(14.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Info,
+                                    contentDescription = null,
+                                    tint = palette.mutedForeground,
+                                    modifier = Modifier.size(22.dp),
+                                )
+                                Text(
+                                    text = "Card details are generated when you confirm. You can manage the card any time.",
+                                    color = palette.mutedForeground,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp,
+                                )
+                            }
                         }
                     }
                 }
@@ -366,15 +491,23 @@ internal fun ChooseCardThemeBottomSheet(
                     .padding(bottom = 16.dp, top = 2.dp),
             ) {
                 val isLast = step >= ChooseCardSheetSteps - 1
+                val passcodesReady =
+                    cardPasscode.length >= CardPasscodeMinDigits &&
+                        cardPasscode == cardPasscodeConfirm
+                val proceedEnabled = !isLast || passcodesReady
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(palette.brand)
+                        .background(
+                            if (proceedEnabled) palette.brand else palette.brand.copy(alpha = 0.38f),
+                        )
                         .clickable(
+                            enabled = proceedEnabled,
                             role = Role.Button,
                             onClick = {
+                                if (!proceedEnabled) return@clickable
                                 if (isLast) {
                                     val krw = initialKrwText.toLongOrNull()?.toDouble() ?: 0.0
                                     val usd = initialUsdText.toDoubleOrNull() ?: 0.0
@@ -383,6 +516,7 @@ internal fun ChooseCardThemeBottomSheet(
                                             openingCurrency = opening,
                                             initialKrw = krw,
                                             initialUsd = usd,
+                                            cardPasscode = cardPasscode,
                                         ),
                                     )
                                 } else {
@@ -393,7 +527,7 @@ internal fun ChooseCardThemeBottomSheet(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = if (isLast) "Add card" else "Continue",
+                        text = if (isLast) "Open card" else "Continue",
                         color = Color.White,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.ExtraBold,
@@ -551,6 +685,13 @@ private fun formatFundingPreview(krw: String, usd: String): String {
         if (u != null && u > 0.0) add("$%.2f".format(u))
     }
     return if (parts.isEmpty()) "none" else parts.joinToString(" · ")
+}
+
+/** PAN grouped as `xxxx - xxxx - xxxx - xxxx` (digits only, up to 16). */
+private fun formatCardNumberForReview(pan: String): String {
+    val digits = pan.filter { it.isDigit() }.take(16)
+    if (digits.isEmpty()) return "—"
+    return digits.chunked(4).joinToString(" - ")
 }
 
 @Composable
@@ -1091,6 +1232,113 @@ private fun PatternPickerStripItem(
             }
         },
     )
+}
+
+@Composable
+private fun ReviewSummaryFundingRow(
+    initialKrwText: String,
+    initialUsdText: String,
+) {
+    val palette = LocalRestaurantPalette.current
+    val usdAccent = palette.brand
+    val kAmt = initialKrwText.toLongOrNull()?.takeIf { it > 0L }
+    val uAmt = initialUsdText.toDoubleOrNull()?.takeIf { it > 0.0 }
+    val showKrw = kAmt != null
+    val showUsd = uAmt != null
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "Initial top-up",
+            color = palette.mutedForeground,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(0.42f),
+        )
+        Row(
+            modifier = Modifier.weight(0.58f),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (!showKrw && !showUsd) {
+                Text(
+                    text = "Skip for now",
+                    color = palette.foreground,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            } else {
+                kAmt?.let { kv ->
+                    Text(
+                        text = "W",
+                        color = OpeningKrwAccentBlue,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = String.format(Locale.US, "%,d", kv),
+                        color = OpeningKrwAccentBlue,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                if (showKrw && showUsd) {
+                    Text(
+                        text = " · ",
+                        color = palette.mutedForeground,
+                        fontSize = 14.sp,
+                    )
+                }
+                uAmt?.let { uv ->
+                    Text(
+                        text = "$",
+                        color = usdAccent,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = String.format(Locale.US, "%.2f", uv),
+                        color = usdAccent,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewSummaryLine(
+    label: String,
+    value: String,
+) {
+    val palette = LocalRestaurantPalette.current
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            color = palette.mutedForeground,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(0.42f),
+        )
+        Text(
+            text = value,
+            color = palette.foreground,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(0.58f),
+            textAlign = TextAlign.End,
+            maxLines = 4,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
 }
 
 @Composable
