@@ -265,7 +265,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                             pendingNewCardNickname = "Tonight ${it.name}"
                         },
                         onPatternSelected = { pendingPickPattern = it },
-                        onConfirm = {
+                        onConfirm = { funding ->
                             val index = cards.size + 1
                             cards.add(
                                 ProfileCreditCard(
@@ -276,8 +276,8 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                                     expiry = "12/${29 + index}",
                                     themeId = pendingPickTheme,
                                     pattern = pendingPickPattern,
-                                    krwBalance = 0.0,
-                                    usdBalance = 0.0,
+                                    krwBalance = funding.initialKrw,
+                                    usdBalance = funding.initialUsd,
                                 ),
                             )
                             activeIndex = cards.lastIndex
