@@ -83,6 +83,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.Collapsing
 import com.mh.restaurantchainreservation.core.designsystem.components.DeterministicQrCode
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationCenter
 import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalBottomSheet
+import com.mh.restaurantchainreservation.core.designsystem.components.TabSelectionBounceBox
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.AnimatedAmountDisplay
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.Currency
@@ -317,8 +318,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp)
-                                .padding(top = 12.dp),
+                                .padding(horizontal = 20.dp),
                         ) {
                             CardActionsTabRow(
                                 selectedTab = cardActionsTab,
@@ -680,7 +680,7 @@ private fun CardActionsTabRow(
     }
     val stripBg = if (palette.isDark) palette.cardSurface else Color.White
     val strokePx = with(density) { 1.dp.toPx() }
-    val rowHeight = lerp(58f, 44f, collapse).dp
+    val rowHeight = lerp(66f, 48f, collapse).dp
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -700,7 +700,7 @@ private fun CardActionsTabRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(rowHeight),
-            verticalAlignment = Alignment.Bottom,
+            verticalAlignment = Alignment.Top,
         ) {
             tabPairs.forEachIndexed { index, (icon, label) ->
                 val selected = index == selectedTab
@@ -736,9 +736,10 @@ private fun CardActionTabCell(
     val labelColor = when {
         muted -> palette.mutedForeground.copy(alpha = 0.42f)
         selected -> palette.brand
-        else -> palette.mutedForeground
+        else -> Color.Black
     }
     val labelWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+    val labelToIndicatorGap = lerp(6f, 3f, collapse).dp
     Box(
         modifier = modifier
             .fillMaxHeight()
@@ -747,49 +748,65 @@ private fun CardActionTabCell(
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = lerp(8f, 4f, collapse).dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(top = lerp(8f, 4f, collapse).dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
-                modifier = Modifier
-                    .height(iconSlot)
-                    .fillMaxWidth()
-                    .graphicsLayer {
-                        alpha = iconAlpha
-                        translationY = -2f * collapse
-                    },
-                contentAlignment = Alignment.Center,
+            TabSelectionBounceBox(
+                isActive = selected,
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                if (iconAlpha > 0.02f) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = labelColor,
-                        modifier = Modifier.size(22.dp),
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .height(iconSlot)
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                alpha = iconAlpha
+                                translationY = -2f * collapse
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (iconAlpha > 0.02f) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = labelColor,
+                                modifier = Modifier.size(22.dp),
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(gapAfterIcon))
+                    Text(
+                        text = label,
+                        color = labelColor,
+                        fontSize = 12.sp,
+                        fontWeight = labelWeight,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
-            Spacer(Modifier.height(gapAfterIcon))
-            Text(
-                text = label,
-                color = labelColor,
-                fontSize = 12.sp,
-                fontWeight = labelWeight,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        if (selected) {
+            Spacer(Modifier.height(labelToIndicatorGap))
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 7.dp)
-                    .fillMaxWidth(0.52f)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(palette.brand),
-            )
+                    .fillMaxWidth()
+                    .height(4.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (selected) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.52f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(palette.brand),
+                    )
+                }
+            }
         }
     }
 }
