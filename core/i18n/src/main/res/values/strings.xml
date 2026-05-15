@@ -107,10 +107,10 @@
     <string name="profile_wallet_foreign_usd">Foreign · USD</string>
     <string name="profile_wallet_bonus">+₩330,000 bonus</string>
     <string name="profile_wallet_label">Tonight Wallet</string>
-    <string name="profile_wallet_card_line">TONIGHT  WALLET  ·  ALEX CHEN</string>
+    <string name="profile_wallet_card_line">•••• •••• •••• 4242 · ALEX CHEN</string>
     <string name="profile_wallet_masked">••••••</string>
-    <string name="profile_wallet_krw_value">₩13,330,000</string>
-    <string name="profile_wallet_usd_value">$5,000.00</string>
+    <string name="profile_wallet_krw_value">₩940,000</string>
+    <string name="profile_wallet_usd_value">$300.45</string>
 
     <!-- Default location -->
     <string name="profile_default_location_name">Gangnam Station</string>

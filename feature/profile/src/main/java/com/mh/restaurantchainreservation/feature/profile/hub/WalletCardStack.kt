@@ -37,6 +37,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.TonightLogoMark
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.feature.profile.data.MockProfileCreditCards
+import com.mh.restaurantchainreservation.feature.profile.hub.formatKrwHub
+import com.mh.restaurantchainreservation.feature.profile.hub.formatUsdHub
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 
 private val WalletDecorCircleSize = 176.dp
@@ -142,13 +145,21 @@ fun WalletCardStack(
             ) {
                 BalanceCell(
                     title = stringResource(I18nR.string.profile_wallet_domestic_krw),
-                    valueText = if (showBalance) stringResource(I18nR.string.profile_wallet_krw_value) else masked,
+                    valueText = if (showBalance) {
+                        formatKrwHub(MockProfileCreditCards.totalKrwLong())
+                    } else {
+                        masked
+                    },
                     badge = stringResource(I18nR.string.profile_wallet_bonus),
                     modifier = Modifier.weight(1f),
                 )
                 BalanceCell(
                     title = stringResource(I18nR.string.profile_wallet_foreign_usd),
-                    valueText = if (showBalance) stringResource(I18nR.string.profile_wallet_usd_value) else masked,
+                    valueText = if (showBalance) {
+                        formatUsdHub(MockProfileCreditCards.totalUsd())
+                    } else {
+                        masked
+                    },
                     footnote = stringResource(I18nR.string.profile_wallet_label),
                     modifier = Modifier.weight(1f),
                 )
@@ -161,7 +172,11 @@ fun WalletCardStack(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = if (showBalance) stringResource(I18nR.string.profile_wallet_card_line) else masked,
+                    text = if (showBalance) {
+                        "•••• •••• •••• ${MockProfileCreditCards.primaryLastFour()} · ${MockProfileCreditCards.HOLDER.uppercase()}"
+                    } else {
+                        masked
+                    },
                     color = Color.White.copy(alpha = 0.95f),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,

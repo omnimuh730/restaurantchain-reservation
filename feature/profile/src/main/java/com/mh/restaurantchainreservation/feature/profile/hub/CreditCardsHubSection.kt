@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.feature.profile.data.MockProfileCreditCards
 
 private data class HubCreditCard(
     val id: String,
@@ -69,29 +70,20 @@ fun CreditCardsHubSection(
 ) {
     val palette = LocalRestaurantPalette.current
     val cards = remember {
-        listOf(
+        MockProfileCreditCards.cards.map { def ->
             HubCreditCard(
-                id = "c-ink",
-                productLabel = "Tonight Card",
-                holder = "ALEX CHEN",
-                lastFour = "1595",
-                krwBalance = 400_000L,
-                usdBalance = 0.0,
-                themeId = HubCardThemeId.Ink,
+                id = def.id,
+                productLabel = def.nickname,
+                holder = MockProfileCreditCards.HOLDER.uppercase(),
+                lastFour = def.lastFour,
+                krwBalance = def.krwBalanceLong,
+                usdBalance = def.usdBalance,
+                themeId = def.themeId,
+                pattern = def.pattern,
                 showBalance = true,
-            ),
-            HubCreditCard(
-                id = "c-rose",
-                productLabel = "Tonight Card",
-                holder = "ALEX CHEN",
-                lastFour = "2840",
-                krwBalance = 450_000L,
-                usdBalance = 120.0,
-                themeId = HubCardThemeId.Rose,
-                showBalance = true,
-                showDualBalance = true,
-            ),
-        )
+                showDualBalance = def.showDualBalance,
+            )
+        }
     }
     val totalKrw = remember(cards) { cards.sumOf { it.krwBalance } }
     val totalUsd = remember(cards) { cards.sumOf { it.usdBalance } }

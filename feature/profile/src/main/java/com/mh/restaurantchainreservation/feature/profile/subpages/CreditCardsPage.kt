@@ -86,6 +86,7 @@ import com.mh.restaurantchainreservation.feature.profile.subpages.components.amo
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.appendDigit
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.backspaceDigit
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.formatAmountString
+import com.mh.restaurantchainreservation.feature.profile.data.MockProfileCreditCards
 import com.mh.restaurantchainreservation.feature.profile.hub.AddNewCreditCardTile
 import com.mh.restaurantchainreservation.feature.profile.hub.HubCardPattern
 import com.mh.restaurantchainreservation.feature.profile.hub.HubCardThemeId
@@ -128,30 +129,23 @@ private data class CardTx(
 fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val palette = LocalRestaurantPalette.current
     val cards = remember {
-        mutableStateListOf(
-            ProfileCreditCard(
-                id = "card-main",
-                nickname = "Tonight Black",
-                holder = "Alex Chen",
-                number = "4890123456784242",
-                expiry = "08/29",
-                themeId = HubCardThemeId.Rose,
-                pattern = hubCardThemeSpec(HubCardThemeId.Rose).pattern,
-                krwBalance = 820000.0,
-                usdBalance = 216.45,
-            ),
-            ProfileCreditCard(
-                id = "card-travel",
-                nickname = "Travel Card",
-                holder = "Alex Chen",
-                number = "5339123411119021",
-                expiry = "11/30",
-                themeId = HubCardThemeId.Ocean,
-                pattern = HubCardPattern.Rays,
-                krwBalance = 120000.0,
-                usdBalance = 84.0,
-            ),
-        )
+        mutableStateListOf<ProfileCreditCard>().apply {
+            MockProfileCreditCards.cards.forEach { def ->
+                add(
+                    ProfileCreditCard(
+                        id = def.id,
+                        nickname = def.nickname,
+                        holder = MockProfileCreditCards.HOLDER,
+                        number = def.number,
+                        expiry = def.expiry,
+                        themeId = def.themeId,
+                        pattern = def.pattern,
+                        krwBalance = def.krwBalance,
+                        usdBalance = def.usdBalance,
+                    ),
+                )
+            }
+        }
     }
     var activeIndex by rememberSaveable { mutableIntStateOf(0) }
     var mode by rememberSaveable { mutableStateOf(CardMode.Browse) }
@@ -272,7 +266,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
             visible = showChooseCardThemeSheet,
             onDismiss = { showChooseCardThemeSheet = false },
             previewNickname = pendingNewCardNickname,
-            holder = "Alex Chen",
+            holder = MockProfileCreditCards.HOLDER,
             lastFour = pendingNewCardNumber.takeLast(4),
             fullCardNumber = pendingNewCardNumber,
             selectedThemeId = pendingPickTheme,
@@ -288,7 +282,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     ProfileCreditCard(
                         id = "card-$index",
                         nickname = pendingNewCardNickname,
-                        holder = "Alex Chen",
+                        holder = MockProfileCreditCards.HOLDER,
                         number = pendingNewCardNumber,
                         expiry = "12/${29 + index}",
                         themeId = pendingPickTheme,
