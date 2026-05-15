@@ -190,6 +190,8 @@
     <string name="settings_delete_modal_title">Delete account</string>
     <string name="settings_delete_modal_body">This action permanently deletes your account and removes your profile data. This cannot be undone.</string>
     <string name="settings_volume_aria">Volume adjustment</string>
+    <string name="settings_volume_mute">Mute</string>
+    <string name="settings_volume_increase">Increase volume</string>
     <string name="settings_row_order_updates">Order updates</string>
     <string name="settings_row_order_updates_desc">Status changes and delivery tracking</string>
     <string name="settings_row_promotions">Promotions</string>

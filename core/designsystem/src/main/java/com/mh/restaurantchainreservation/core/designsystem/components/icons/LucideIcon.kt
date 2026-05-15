@@ -33,6 +33,26 @@ object LucidePaths {
         "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2",
         "M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z",
     )
+
+    /** Speaker + X (mute), 24×24 Lucide-style. */
+    val VolumeX = listOf(
+        "M11 5L6 9H4a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2l5 4V5z",
+        "M16 9l6 6",
+        "M22 9l-6 6",
+    )
+
+    /** Speaker + one wave. */
+    val Volume1 = listOf(
+        "M11 5L6 9H4a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2l5 4V5z",
+        "M15.54 8.46a5 5 0 0 1 0 7.07",
+    )
+
+    /** Speaker + two waves. */
+    val Volume2 = listOf(
+        "M11 5L6 9H4a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2l5 4V5z",
+        "M15.54 8.46a5 5 0 0 1 0 7.07",
+        "M19.07 4.93a10 10 0 0 1 0 14.14",
+    )
 }
 
 @Composable
