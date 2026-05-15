@@ -37,7 +37,12 @@ fun SubpageScaffold(
     contentHorizontalPadding: Int? = null,
     scrollable: Boolean = true,
     subtitle: String? = null,
-    headerActions: (@Composable () -> Unit)? = null,
+    headerActions: (@Composable (collapseProgress: Float) -> Unit)? = null,
+    /** Defaults match profile/dining hub (34→20sp). Use slightly lower values for a subtler title. */
+    titleFontExpandedSp: Float = 34f,
+    titleFontCollapsedSp: Float = 20f,
+    titleLineHeightExpandedSp: Float = 40f,
+    titleLineHeightCollapsedSp: Float = 24f,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -83,6 +88,10 @@ fun SubpageScaffold(
                 subtitle = subtitle,
                 actions = headerActions,
                 horizontalPaddingDp = horizontalPadding,
+                titleFontExpandedSp = titleFontExpandedSp,
+                titleFontCollapsedSp = titleFontCollapsedSp,
+                titleLineHeightExpandedSp = titleLineHeightExpandedSp,
+                titleLineHeightCollapsedSp = titleLineHeightCollapsedSp,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .zIndex(2f),
@@ -101,7 +110,9 @@ fun SubpageScaffold(
                 onBack = onBack,
                 backContentDescription = backLabel,
                 subtitle = subtitle,
-                actions = headerActions,
+                actions = headerActions?.let { hp ->
+                    { hp(0f) }
+                },
                 modifier = Modifier.padding(horizontal = horizontalPadding.dp),
             )
             Column(

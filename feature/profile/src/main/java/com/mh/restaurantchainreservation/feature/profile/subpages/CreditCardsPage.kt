@@ -74,6 +74,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageHeaderIconButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DeterministicQrCode
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationCenter
 import com.mh.restaurantchainreservation.core.designsystem.components.PageHeader
@@ -180,27 +181,17 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
             title = "Credit cards",
             onBack = onBack,
             contentHorizontalPadding = 0,
-            headerActions = {
-                val p = LocalRestaurantPalette.current
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(p.mutedSurface)
-                        .clickable(
-                            role = Role.Button,
-                            onClickLabel = "Add new card",
-                            onClick = openChooseNewCardTheme,
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Add,
-                        contentDescription = "Add new card",
-                        tint = p.foreground,
-                        modifier = Modifier.size(22.dp),
-                    )
-                }
+            titleFontExpandedSp = 33f,
+            titleFontCollapsedSp = 19f,
+            titleLineHeightExpandedSp = 39f,
+            titleLineHeightCollapsedSp = 23f,
+            headerActions = { collapseProgress ->
+                CollapsingSubpageHeaderIconButton(
+                    collapseProgress = collapseProgress,
+                    onClick = openChooseNewCardTheme,
+                    contentDescription = "Add new card",
+                    imageVector = Icons.Outlined.Add,
+                )
             },
         ) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {

@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -63,8 +64,8 @@ object CollapsingTitleHeaderMetrics {
         return subpageRowTopExpanded + rowBlock + subtitleSection + subpageHeaderBottomPadding
     }
 
-    private val subpageBackSizeExpanded = 38.dp
-    private val subpageBackSizeCollapsed = 34.dp
+    private val subpageBackSizeExpanded = 48.dp
+    private val subpageBackSizeCollapsed = 36.dp
     private val subpageTitleLineHeightExpanded = 42.dp
 
     fun subpageBackSize(collapseProgress: Float): androidx.compose.ui.unit.Dp {
@@ -74,7 +75,42 @@ object CollapsingTitleHeaderMetrics {
 
     fun subpageIconSize(collapseProgress: Float): androidx.compose.ui.unit.Dp {
         val t = 1f - collapseProgress
-        return 20.dp + 2.dp * t
+        return 22.dp + 7.dp * t
+    }
+}
+
+/**
+ * Circular header control for collapsing subpages: lerps size with [collapseProgress] and fades
+ * the muted plate to transparent when collapsed (same behavior as the back control).
+ */
+@Composable
+fun CollapsingSubpageHeaderIconButton(
+    collapseProgress: Float,
+    onClick: () -> Unit,
+    contentDescription: String,
+    imageVector: ImageVector,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    val m = CollapsingTitleHeaderMetrics
+    val size = m.subpageBackSize(collapseProgress)
+    val iconSize = m.subpageIconSize(collapseProgress)
+    val plateAlpha = (1f - collapseProgress).coerceIn(0f, 1f)
+    val plateColor = palette.mutedSurface.copy(alpha = palette.mutedSurface.alpha * plateAlpha)
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(plateColor)
+            .clickable(role = Role.Button, onClickLabel = contentDescription, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = contentDescription,
+            tint = palette.foreground,
+            modifier = Modifier.size(iconSize),
+        )
     }
 }
 
@@ -181,6 +217,11 @@ fun CollapsingScreenTitleHeader(
  * Scroll-linked subpage header: back + title on one row (large title shrinks while scrolling),
  * optional subtitle below the row, optional actions, and the same bottom border as the hub header.
  * The back control’s circular plate fades out as [collapseProgress] approaches 1f.
+ *
+ * @param actions Optional trailing controls; receive [collapseProgress] so they can match the back
+ * button (see [CollapsingSubpageHeaderIconButton]).
+ * @param titleFontExpandedSp Title sizes default to profile/dining hub (34→20sp); pass slightly
+ * lower values for a subtler subpage title.
  */
 @Composable
 fun CollapsingSubpageScreenHeader(
@@ -190,8 +231,12 @@ fun CollapsingSubpageScreenHeader(
     backContentDescription: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
-    actions: (@Composable () -> Unit)? = null,
+    actions: (@Composable (collapseProgress: Float) -> Unit)? = null,
     horizontalPaddingDp: Int = 20,
+    titleFontExpandedSp: Float = 34f,
+    titleFontCollapsedSp: Float = 20f,
+    titleLineHeightExpandedSp: Float = 40f,
+    titleLineHeightCollapsedSp: Float = 24f,
 ) {
     val palette = LocalRestaurantPalette.current
     val density = LocalDensity.current
@@ -208,9 +253,8 @@ fun CollapsingSubpageScreenHeader(
         ).toDp()
     }
     val backSize = m.subpageBackSize(collapseProgress)
-    val iconSize = m.subpageIconSize(collapseProgress)
-    val titleFontSp = lerp(34f, 20f, collapseProgress)
-    val titleLineHeightSp = lerp(40f, 24f, collapseProgress)
+    val titleFontSp = lerp(titleFontExpandedSp, titleFontCollapsedSp, collapseProgress)
+    val titleLineHeightSp = lerp(titleLineHeightExpandedSp, titleLineHeightCollapsedSp, collapseProgress)
     val borderAlpha = collapseProgress * 0.45f
 
     val titleBlockHeight = with(density) { titleLineHeightSp.sp.toDp() }
@@ -220,9 +264,6 @@ fun CollapsingSubpageScreenHeader(
     val rowOffsetY = with(density) {
         lerp(rowTopExpanded.toPx(), rowTopCollapsed.toPx(), collapseProgress).toDp()
     }
-
-    val backCircleAlpha = (1f - collapseProgress).coerceIn(0f, 1f)
-    val backPlateColor = palette.mutedSurface.copy(alpha = palette.mutedSurface.alpha * backCircleAlpha)
 
     val headerBackground = if (palette.isDark) {
         palette.cardSurface
@@ -262,21 +303,12 @@ fun CollapsingSubpageScreenHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(backSize)
-                        .clip(CircleShape)
-                        .background(backPlateColor)
-                        .clickable(role = Role.Button, onClickLabel = backContentDescription, onClick = onBack),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                        contentDescription = backContentDescription,
-                        tint = palette.foreground,
-                        modifier = Modifier.size(iconSize),
-                    )
-                }
+                CollapsingSubpageHeaderIconButton(
+                    collapseProgress = collapseProgress,
+                    onClick = onBack,
+                    contentDescription = backContentDescription,
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                )
                 Text(
                     text = title,
                     color = palette.foreground,
@@ -287,9 +319,7 @@ fun CollapsingSubpageScreenHeader(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
-                if (actions != null) {
-                    actions()
-                }
+                actions?.invoke(collapseProgress)
             }
 
             if (subtitle != null) {
