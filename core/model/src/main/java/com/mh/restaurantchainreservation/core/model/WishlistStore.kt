@@ -39,7 +39,7 @@ object WishlistStore {
     private val initialCollections: List<WishlistCollection> = listOf(
         WishlistCollection(
             id = "recent",
-            title = "Recently searched restaurants",
+            title = "Recently search",
             restaurants = DiscoverData.MONTHLY_BEST.take(4),
             isDefault = true,
         ),

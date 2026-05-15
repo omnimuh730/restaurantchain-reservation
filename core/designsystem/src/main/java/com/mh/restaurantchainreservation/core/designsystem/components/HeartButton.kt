@@ -50,6 +50,7 @@ private val PremiumHeartRed = Color(0xFFFF5A5F)
 private const val HEART_ASPECT_RATIO = 31f / 28f
 
 enum class HeartButtonSize(val container: Dp, val icon: Dp) {
+    ExtraSmall(container = 24.dp, icon = 18.dp),
     Small(container = 28.dp, icon = 21.dp),
     Medium(container = 36.dp, icon = 27.dp),
     Large(container = 42.dp, icon = 32.dp),
