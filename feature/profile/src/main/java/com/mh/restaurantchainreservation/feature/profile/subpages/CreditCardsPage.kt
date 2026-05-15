@@ -92,7 +92,7 @@ import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeBackgro
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.min
 
-private enum class CardMode { Browse, Deposit, Withdraw, Send, Settings, ChooseNewCardTheme }
+private enum class CardMode { Browse, Deposit, Withdraw, Send, Settings }
 
 private data class ProfileCreditCard(
     val id: String,
@@ -145,6 +145,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     }
     var activeIndex by rememberSaveable { mutableIntStateOf(0) }
     var mode by rememberSaveable { mutableStateOf(CardMode.Browse) }
+    var showChooseCardThemeSheet by rememberSaveable { mutableStateOf(false) }
     var qrCard by remember { mutableStateOf<ProfileCreditCard?>(null) }
     var pendingPickTheme by remember { mutableStateOf(HubCardThemeId.Rose) }
     var pendingPickPattern by remember { mutableStateOf(hubCardThemeSpec(HubCardThemeId.Rose).pattern) }
@@ -172,34 +173,35 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     pendingPickPattern = hubCardThemeSpec(HubCardThemeId.Rose).pattern
                     pendingNewCardNumber = "4890${(100000000000 + index * 43129).toString().takeLast(12)}"
                     pendingNewCardNickname = "Tonight ${HubCardThemeId.Rose.name}"
-                    mode = CardMode.ChooseNewCardTheme
+                    showChooseCardThemeSheet = true
                 }
-                SubpageScaffold(
-                    title = "Credit cards",
-                    onBack = onBack,
-                    headerActions = {
-                        val p = LocalRestaurantPalette.current
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(p.mutedSurface)
-                                .clickable(
-                                    role = Role.Button,
-                                    onClickLabel = "Add new card",
-                                    onClick = openChooseNewCardTheme,
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Add,
-                                contentDescription = "Add new card",
-                                tint = p.foreground,
-                                modifier = Modifier.size(22.dp),
-                            )
-                        }
-                    },
-                ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    SubpageScaffold(
+                        title = "Credit cards",
+                        onBack = onBack,
+                        headerActions = {
+                            val p = LocalRestaurantPalette.current
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(p.mutedSurface)
+                                    .clickable(
+                                        role = Role.Button,
+                                        onClickLabel = "Add new card",
+                                        onClick = openChooseNewCardTheme,
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Add,
+                                    contentDescription = "Add new card",
+                                    tint = p.foreground,
+                                    modifier = Modifier.size(22.dp),
+                                )
+                            }
+                        },
+                    ) {
                     Spacer(Modifier.height(12.dp))
                     Text(
                         text = "Multi-currency · Tonight Card",
@@ -247,43 +249,43 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                             )
                         }
                     }
-                    Spacer(Modifier.height(40.dp))
+                        Spacer(Modifier.height(40.dp))
+                    }
+                    ChooseCardThemeBottomSheet(
+                        visible = showChooseCardThemeSheet,
+                        onDismiss = { showChooseCardThemeSheet = false },
+                        previewNickname = pendingNewCardNickname,
+                        holder = "Alex Chen",
+                        lastFour = pendingNewCardNumber.takeLast(4),
+                        fullCardNumber = pendingNewCardNumber,
+                        selectedThemeId = pendingPickTheme,
+                        selectedPattern = pendingPickPattern,
+                        onThemeSelected = {
+                            pendingPickTheme = it
+                            pendingNewCardNickname = "Tonight ${it.name}"
+                        },
+                        onPatternSelected = { pendingPickPattern = it },
+                        onConfirm = {
+                            val index = cards.size + 1
+                            cards.add(
+                                ProfileCreditCard(
+                                    id = "card-$index",
+                                    nickname = pendingNewCardNickname,
+                                    holder = "Alex Chen",
+                                    number = pendingNewCardNumber,
+                                    expiry = "12/${29 + index}",
+                                    themeId = pendingPickTheme,
+                                    pattern = pendingPickPattern,
+                                    krwBalance = 0.0,
+                                    usdBalance = 0.0,
+                                ),
+                            )
+                            activeIndex = cards.lastIndex
+                            showChooseCardThemeSheet = false
+                            GlobalNotificationCenter.success("Card created", "Your new Tonight card is ready.")
+                        },
+                    )
                 }
-            }
-            CardMode.ChooseNewCardTheme -> {
-                val index = cards.size + 1
-                ChooseCardThemePage(
-                    previewNickname = pendingNewCardNickname,
-                    holder = "Alex Chen",
-                    lastFour = pendingNewCardNumber.takeLast(4),
-                    fullCardNumber = pendingNewCardNumber,
-                    selectedThemeId = pendingPickTheme,
-                    selectedPattern = pendingPickPattern,
-                    onThemeSelected = {
-                        pendingPickTheme = it
-                        pendingNewCardNickname = "Tonight ${it.name}"
-                    },
-                    onPatternSelected = { pendingPickPattern = it },
-                    onBack = { mode = CardMode.Browse },
-                    onConfirm = {
-                        cards.add(
-                            ProfileCreditCard(
-                                id = "card-$index",
-                                nickname = pendingNewCardNickname,
-                                holder = "Alex Chen",
-                                number = pendingNewCardNumber,
-                                expiry = "12/${29 + index}",
-                                themeId = pendingPickTheme,
-                                pattern = pendingPickPattern,
-                                krwBalance = 0.0,
-                                usdBalance = 0.0,
-                            ),
-                        )
-                        activeIndex = cards.lastIndex
-                        mode = CardMode.Browse
-                        GlobalNotificationCenter.success("Card created", "Your new Tonight card is ready.")
-                    },
-                )
             }
             CardMode.Deposit, CardMode.Withdraw, CardMode.Send -> {
                 activeCard?.let { card ->
