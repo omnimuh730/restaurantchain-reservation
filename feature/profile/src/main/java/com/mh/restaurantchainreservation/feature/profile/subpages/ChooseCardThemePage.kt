@@ -80,6 +80,7 @@ import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFace
 import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFaceModel
 import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeBackgroundBrush
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.Locale
 
 private val ThemePickerOrder: List<HubCardThemeId> = listOf(
@@ -317,7 +318,7 @@ internal fun ChooseCardThemeBottomSheet(
                     }
                     1 -> {
                         OpenCardFundingStep(
-                            modifier = inset,
+                            modifier = Modifier.fillMaxWidth(),
                             openingCurrency = opening,
                             onOpeningCurrency = { openingCurrency = it.name },
                             initialKrwText = initialKrwText,
@@ -430,12 +431,21 @@ private fun formatUsdForDisplay(raw: String): String {
     }
 }
 
+/** USD amount: digits, optional single dot, at most two digits after the decimal (e.g. 1.11). */
 private fun filterUsdDecimal(raw: String): String {
     val out = StringBuilder()
     var hasDot = false
+    var fracDigits = 0
     for (c in raw.replace(",", "")) {
         when {
-            c.isDigit() -> out.append(c)
+            c.isDigit() -> {
+                if (!hasDot) {
+                    out.append(c)
+                } else if (fracDigits < 2) {
+                    out.append(c)
+                    fracDigits++
+                }
+            }
             c == '.' && !hasDot -> {
                 hasDot = true
                 out.append('.')
@@ -443,6 +453,15 @@ private fun filterUsdDecimal(raw: String): String {
         }
     }
     return out.toString().take(16)
+}
+
+/** Normalizes a filtered USD string to exactly two fraction digits (half-up). */
+private fun normalizeUsdToTwoDecimals(raw: String): String {
+    val cleaned = filterUsdDecimal(raw.replace(",", ""))
+    if (cleaned.isEmpty()) return ""
+    if (cleaned == ".") return "0.00"
+    val bd = cleaned.toBigDecimalOrNull() ?: return "0.00"
+    return bd.setScale(2, RoundingMode.HALF_UP).toPlainString()
 }
 
 private object KrwThousandsVisualTransformation : VisualTransformation {
@@ -496,13 +515,20 @@ private fun krwFieldValueAfterAddingPreset(currentText: String, add: Long): Stri
     return filterKrwDigits(capped.toString())
 }
 
-private fun usdFieldValueAfterAddingPreset(currentText: String, add: Int): String {
+private fun usdFieldValueAfterAddingPreset(currentText: String, add: BigDecimal): String {
     val base = currentText.toBigDecimalOrNull() ?: BigDecimal.ZERO
-    val sum = base.add(BigDecimal.valueOf(add.toLong()))
-    return filterUsdDecimal(sum.stripTrailingZeros().toPlainString())
+    val sum = base.add(add)
+    return sum.setScale(2, RoundingMode.HALF_UP).toPlainString()
 }
 
-private val QuickUsdAmountPresets = listOf(1, 5, 10, 20, 50, 100)
+private val QuickUsdAmountPresets = listOf(
+    BigDecimal("1.00"),
+    BigDecimal("5.00"),
+    BigDecimal("10.00"),
+    BigDecimal("20.00"),
+    BigDecimal("50.00"),
+    BigDecimal("100.00"),
+)
 
 private val QuickKrwAmountPresets = listOf(
     100L,
@@ -555,7 +581,12 @@ private fun OpenCardFundingStep(
         else -> openingCurrency == NewCardOpeningCurrency.USD
     }
     val usdAccent = palette.brand
-    Column(modifier = modifier) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = ChooseCardSheetContentPadding),
+        ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -692,13 +723,22 @@ private fun OpenCardFundingStep(
                 .fillMaxWidth()
                 .focusRequester(usdFocusRequester)
                 .onFocusChanged { fs ->
-                    usdFieldFocused = fs.isFocused
-                    if (fs.isFocused) onOpeningCurrency(NewCardOpeningCurrency.USD)
+                    if (fs.isFocused) {
+                        usdFieldFocused = true
+                        onOpeningCurrency(NewCardOpeningCurrency.USD)
+                    } else {
+                        val shouldNormalize = usdFieldFocused && initialUsdText.isNotEmpty()
+                        usdFieldFocused = false
+                        if (shouldNormalize) {
+                            val normalized = normalizeUsdToTwoDecimals(initialUsdText)
+                            if (normalized != initialUsdText) onInitialUsdChange(normalized)
+                        }
+                    }
                 },
             singleLine = true,
             placeholder = {
                 Text(
-                    text = "0",
+                    text = "0.00",
                     color = palette.mutedForeground.copy(alpha = 0.45f),
                     fontSize = 22.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -735,9 +775,11 @@ private fun OpenCardFundingStep(
             fontWeight = FontWeight.SemiBold,
         )
         Spacer(Modifier.height(8.dp))
+        }
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = ChooseCardSheetContentPadding),
         ) {
             items(QuickKrwAmountPresets, key = { it }) { v ->
                 QuickTopUpChip(
@@ -756,31 +798,38 @@ private fun OpenCardFundingStep(
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = ChooseCardSheetContentPadding),
         ) {
-            items(QuickUsdAmountPresets, key = { it }) { v ->
+            items(QuickUsdAmountPresets, key = { it.toPlainString() }) { preset ->
                 QuickTopUpChip(
-                    label = v.toString(),
+                    label = preset.toPlainString(),
                     accent = usdAccent,
                     chipHeight = QuickUsdChipHeight,
                     fontSize = QuickUsdChipFontSize,
                     horizontalPadding = QuickUsdChipHorizontalPadding,
                     onClick = {
                         onOpeningCurrency(NewCardOpeningCurrency.USD)
-                        onInitialUsdChange(usdFieldValueAfterAddingPreset(initialUsdText, v))
+                        onInitialUsdChange(usdFieldValueAfterAddingPreset(initialUsdText, preset))
                         usdFocusRequester.requestFocus()
                     },
                     modifier = Modifier.defaultMinSize(minWidth = QuickUsdChipMinWidth),
                 )
             }
         }
-        Spacer(Modifier.height(12.dp))
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            QuickTopUpChip(
-                label = "Skip for now",
-                accent = null,
-                onClick = onSkipTopUp,
-                modifier = Modifier.widthIn(min = 120.dp),
-            )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = ChooseCardSheetContentPadding),
+        ) {
+            Spacer(Modifier.height(12.dp))
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                QuickTopUpChip(
+                    label = "Skip for now",
+                    accent = null,
+                    onClick = onSkipTopUp,
+                    modifier = Modifier.widthIn(min = 120.dp),
+                )
+            }
         }
     }
 }
