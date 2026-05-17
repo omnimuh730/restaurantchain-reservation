@@ -436,6 +436,7 @@
     <!-- Dining list page -->
     <string name="dining_page_title">My Dining</string>
     <string name="dining_next_up">Next Up</string>
+    <string name="dining_next_up_reservation_number">Reservation Number</string>
     <string name="dining_no_upcoming_plans">No upcoming plans</string>
     <string name="dining_zero_upcoming">0 upcoming</string>
     <string name="dining_discover_prompt">Time to discover a new favorite spot.</string>

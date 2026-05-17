@@ -100,7 +100,7 @@ fun DiningListScreen(
                 .fillMaxSize()
                 .verticalScroll(scroll)
                 .zIndex(0f)
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 16.dp)
                 .padding(bottom = 48.dp),
         ) {
             Spacer(Modifier.height(CollapsingTitleHeaderMetrics.expandedBodyHeight + statusBarTopDp))

@@ -178,6 +178,7 @@
     <!-- Dining list page -->
     <string name="dining_page_title">나의 다이닝</string>
     <string name="dining_next_up">다음 일정</string>
+    <string name="dining_next_up_reservation_number">예약 번호</string>
     <string name="dining_no_upcoming_plans">예정된 일정 없음</string>
     <string name="dining_zero_upcoming">예정 0건</string>
     <string name="dining_discover_prompt">새로운 단골을 찾아보세요.</string>
