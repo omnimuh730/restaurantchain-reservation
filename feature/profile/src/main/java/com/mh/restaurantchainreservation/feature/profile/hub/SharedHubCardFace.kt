@@ -29,6 +29,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.Shadow
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -41,7 +42,7 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantFont
 import java.text.NumberFormat
 import java.util.Locale
 
-/** Web-style gold text stack (offset layers; no drop shadow). */
+/** Web-fidelity gold text stack (simulating multiple CSS drop-shadow filters). */
 @Composable
 private fun HubWebGoldText(
     text: String,
@@ -50,24 +51,32 @@ private fun HubWebGoldText(
     maxLines: Int = 1,
 ) {
     Box(modifier) {
+        // Shadow 2: rgba(0, 0, 0, 0.25) 0px 2px 4px
         Text(
             text = text,
             modifier = Modifier.offset(x = 0.dp, y = 2.dp),
             maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
-            style = style.copy(
-                brush = SolidColor(Color.Black.copy(alpha = 0.25f)),
+            style = style.copy(brush = null).copy(
+                color = Color.Black.copy(alpha = 0.25f),
+                shadow = Shadow(
+                    color = Color.Black.copy(alpha = 0.25f),
+                    offset = Offset(0f, 0f),
+                    blurRadius = 4f
+                )
             ),
         )
+        // Shadow 1: rgba(0, 0, 0, 0.45) 0px 1px 0px
         Text(
             text = text,
             modifier = Modifier.offset(x = 0.dp, y = 1.dp),
             maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
-            style = style.copy(
-                brush = SolidColor(Color.Black.copy(alpha = 0.45f)),
+            style = style.copy(brush = null).copy(
+                color = Color.Black.copy(alpha = 0.45f)
             ),
         )
+        // Foreground Gradient Text
         Text(
             text = text,
             style = style,
@@ -193,8 +202,8 @@ internal fun SharedHubCardFace(
         TextStyle(
             fontFamily = RestaurantFontFamily,
             fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = (-0.01).em,
+            fontWeight = FontWeight.Bold, // font-weight: 700
+            letterSpacing = (-0.01).em,    // letter-spacing: -0.01em
             brush = hubWebCardGoldBrush(),
             fontFeatureSettings = "tnum",
         )
@@ -203,8 +212,8 @@ internal fun SharedHubCardFace(
         TextStyle(
             fontFamily = RestaurantFontFamily,
             fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.18.em,
+            fontWeight = FontWeight.Bold, // font-weight: 700
+            letterSpacing = (-0.01).em,    // letter-spacing: -0.01em
             brush = hubWebCardGoldBrush(),
             fontFeatureSettings = "tnum",
         )
@@ -213,8 +222,8 @@ internal fun SharedHubCardFace(
         TextStyle(
             fontFamily = RestaurantFontFamily,
             fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.sp,
+            fontWeight = FontWeight.Bold, // font-weight: 700
+            letterSpacing = (-0.01).em,    // letter-spacing: -0.01em
             brush = hubWebCardGoldBrush(),
             fontFeatureSettings = "tnum",
         )
