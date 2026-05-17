@@ -181,20 +181,20 @@ internal fun hubCardLabelMuted(themeId: HubCardThemeId): Color = when (themeId) 
     else -> Color.White.copy(alpha = 0.88f)
 }
 
-/** Web-fidelity 160° gold foil gradient brush. */
+/** Web card gold numerals: `linear-gradient(160deg, rgb(255,233,168) 0%, …)`. */
 internal fun hubWebCardGoldBrush(): Brush {
     val rad = (160.0 * PI / 180.0).toFloat()
     val ux = sin(rad)
     val uy = -cos(rad)
     val len = 720f
     return Brush.linearGradient(
-        0.00f to Color(0xFFFFE9A8),
+        0f to Color(0xFFFFE9A8),
         0.22f to Color(0xFFFFD56A),
-        0.50f to Color(0xFFC9933E),
+        0.5f to Color(0xFFC9933E),
         0.72f to Color(0xFFFFE9A8),
-        1.00f to Color(0xFFC7892F),
+        1f to Color(0xFFC7892F),
         start = Offset.Zero,
-        end = Offset(ux * len, uy * len)
+        end = Offset(ux * len, uy * len),
     )
 }
 

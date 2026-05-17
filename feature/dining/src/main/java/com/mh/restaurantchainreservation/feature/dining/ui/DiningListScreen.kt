@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingScreenTitleHeader
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
+import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
@@ -107,7 +108,7 @@ fun DiningListScreen(
             Spacer(Modifier.height(16.dp))
 
             // Hero block: NextUp + StatsGrid (staggered)
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(HubSurfaceCardDefaults.SectionSpacing)) {
             DiningStaggerItem(indexInGroup = 0) {
                 if (nextBooking != null) {
                     NextUpCard(
@@ -129,7 +130,7 @@ fun DiningListScreen(
             Spacer(Modifier.height(32.dp))
 
             // Tabs section
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(HubSurfaceCardDefaults.SectionSpacing)) {
             DiningTabBar(
                 selected = currentTab,
                 counts = tabCounts,
@@ -234,7 +235,10 @@ private fun TabContent(
             description = stringResource(emptyDescRes),
         )
     } else {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(HubSurfaceCardDefaults.SectionSpacing),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             items.forEachIndexed { index, booking ->
                 DiningStaggerItem(indexInGroup = index) {
                     renderItem(booking)

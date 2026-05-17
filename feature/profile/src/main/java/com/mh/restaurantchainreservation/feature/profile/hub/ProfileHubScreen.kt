@@ -58,6 +58,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingScreenTitleHeader
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
+import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroup
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroupItem
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroupVariant
@@ -133,7 +135,7 @@ fun ProfileHubScreen(
                 .verticalScroll(scroll)
                 .zIndex(0f),
             staggerMs = 40,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(HubSurfaceCardDefaults.SectionSpacing),
         ) {
             Spacer(Modifier.height(CollapsingTitleHeaderMetrics.expandedBodyHeight + statusBarTopDp))
 
@@ -301,7 +303,7 @@ private fun QuickActionsRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(HubSurfaceCardDefaults.RowCardSpacing),
     ) {
         QuickActionTile(
             label = stringResource(I18nR.string.profile_quick_topup),
@@ -340,13 +342,13 @@ private fun QuickActionTile(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val tileShape = RoundedCornerShape(20.dp)
     Column(
         modifier = modifier
-            .shadow(elevation = 6.dp, shape = tileShape, ambientColor = Color.Black.copy(alpha = 0.18f))
-            .clip(tileShape)
-            .background(palette.cardSurface)
-            .clickable(role = Role.Button, onClick = onClick)
+            .hubSurfaceCard(
+                palette = palette,
+                shape = HubSurfaceCardDefaults.QuickActionShape,
+                onClick = onClick,
+            )
             .padding(vertical = 12.dp, horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -377,16 +379,12 @@ private fun QuickActionTile(
 @Composable
 private fun DailyRewardCard(onClick: () -> Unit) {
     val palette = LocalRestaurantPalette.current
-    val cardShape = RoundedCornerShape(24.dp)
     Row(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .fillMaxWidth()
-            .shadow(elevation = 6.dp, shape = cardShape, ambientColor = Color.Black.copy(alpha = 0.18f))
-            .clip(cardShape)
-            .background(palette.cardSurface)
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(20.dp),
+            .hubSurfaceCard(palette = palette, onClick = onClick)
+            .padding(HubSurfaceCardDefaults.ContentPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -454,16 +452,12 @@ private fun DailyRewardCard(onClick: () -> Unit) {
 @Composable
 private fun ReferCard(onClick: () -> Unit) {
     val palette = LocalRestaurantPalette.current
-    val cardShape = RoundedCornerShape(24.dp)
     Row(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .fillMaxWidth()
-            .shadow(elevation = 6.dp, shape = cardShape, ambientColor = Color.Black.copy(alpha = 0.18f))
-            .clip(cardShape)
-            .background(palette.cardSurface)
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(20.dp),
+            .hubSurfaceCard(palette = palette, onClick = onClick)
+            .padding(HubSurfaceCardDefaults.ContentPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {

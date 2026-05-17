@@ -16,15 +16,21 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantDime
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 
 /**
- * Shared surface cards for Dining (Next Up, booking rows, stats).
+ * Profile hub card shell (daily reward, refer, top up / gift tiles) shared with Dining.
  * Shadow-first — no border unless [showBorder] is true.
  */
 object HubSurfaceCardDefaults {
     val Shape = RoundedCornerShape(RestaurantDimensions.RadiusLg)
     val QuickActionShape = RoundedCornerShape(20.dp)
 
-    val ShadowElevation = 6.dp
-    const val ShadowAmbientAlpha = 0.18f
+    /** Vertical gap between stacked hub cards (profile [Stagger], dining hero / lists). */
+    val SectionSpacing = 16.dp
+
+    /** Horizontal gap between cards in a row (quick actions, stats). */
+    val RowCardSpacing = 12.dp
+
+    val ShadowElevation = 8.dp
+    const val ShadowAmbientAlpha = 0.12f
 
     val ProminentShadowElevation = 8.dp
     const val ProminentShadowAmbientAlpha = 0.18f

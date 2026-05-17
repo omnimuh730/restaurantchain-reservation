@@ -819,7 +819,7 @@ fun StatsGrid(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(HubSurfaceCardDefaults.RowCardSpacing),
     ) {
         StatTile(
             value = placesVisited,
@@ -857,7 +857,7 @@ private fun StatTile(
         Text(
             text = label,
             color = palette.mutedForeground,
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
         )
     }
