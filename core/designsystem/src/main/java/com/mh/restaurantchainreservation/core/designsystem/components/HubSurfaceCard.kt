@@ -29,11 +29,9 @@ object HubSurfaceCardDefaults {
     /** Horizontal gap between cards in a row (quick actions, stats). */
     val RowCardSpacing = 12.dp
 
+    /** Matches profile hub container cards (credit cards, quick actions, etc.). */
     val ShadowElevation = 8.dp
     const val ShadowAmbientAlpha = 0.12f
-
-    val ProminentShadowElevation = 8.dp
-    const val ProminentShadowAmbientAlpha = 0.18f
 
     /** Primary inner padding for hero / summary cards (Next Up, stats). */
     val ContentPadding = 20.dp
@@ -51,13 +49,11 @@ fun Modifier.hubSurfaceCard(
     showBorder: Boolean = false,
     onClick: (() -> Unit)? = null,
 ): Modifier {
-    val ambient = Color.Black.copy(alpha = shadowAmbientAlpha)
     var modifier = this
         .shadow(
             elevation = shadowElevation,
             shape = shape,
-            ambientColor = ambient,
-            spotColor = ambient.copy(alpha = shadowAmbientAlpha * 0.9f),
+            ambientColor = Color.Black.copy(alpha = shadowAmbientAlpha),
         )
         .clip(shape)
     if (showBorder) {
@@ -69,18 +65,3 @@ fun Modifier.hubSurfaceCard(
     }
     return modifier
 }
-
-@Composable
-fun Modifier.hubSurfaceCardProminent(
-    palette: RestaurantPalette,
-    shape: Shape = HubSurfaceCardDefaults.Shape,
-    showBorder: Boolean = false,
-    onClick: (() -> Unit)? = null,
-): Modifier = hubSurfaceCard(
-    palette = palette,
-    shape = shape,
-    shadowElevation = HubSurfaceCardDefaults.ProminentShadowElevation,
-    shadowAmbientAlpha = HubSurfaceCardDefaults.ProminentShadowAmbientAlpha,
-    showBorder = showBorder,
-    onClick = onClick,
-)

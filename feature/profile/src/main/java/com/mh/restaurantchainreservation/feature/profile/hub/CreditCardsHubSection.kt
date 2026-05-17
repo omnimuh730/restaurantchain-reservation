@@ -35,7 +35,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
@@ -45,6 +44,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.feature.profile.data.MockProfileCreditCards
 
@@ -99,16 +100,12 @@ fun CreditCardsHubSection(
             stiffness = 320f,
         ),
     )
-    val containerShape = RoundedCornerShape(24.dp)
-
     Column(
         modifier = modifier
             .padding(horizontal = 16.dp)
             .fillMaxWidth()
-            .shadow(elevation = 8.dp, shape = containerShape, ambientColor = Color.Black.copy(alpha = 0.12f))
-            .clip(containerShape)
-            .background(palette.cardSurface)
-            .padding(top = 20.dp, bottom = 20.dp),
+            .hubSurfaceCard(palette = palette)
+            .padding(vertical = HubSurfaceCardDefaults.ContentPadding),
     ) {
         Row(
             modifier = Modifier

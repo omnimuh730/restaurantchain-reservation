@@ -32,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -44,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 
@@ -62,17 +63,12 @@ fun ProfileTopCard(
     val tierFreeLabel = stringResource(I18nR.string.profile_tier_free)
     val avatarAria = stringResource(I18nR.string.profile_avatar_aria, displayName)
 
-    val cardShape = RoundedCornerShape(24.dp)
-
     Box(
         modifier = modifier
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 16.dp)
             .fillMaxWidth()
-            .shadow(elevation = 8.dp, shape = cardShape, ambientColor = Color.Black.copy(alpha = 0.18f))
-            .clip(cardShape)
-            .background(palette.cardSurface)
-            .border(1.dp, palette.border.copy(alpha = 0.5f), cardShape)
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            .hubSurfaceCard(palette = palette, showBorder = true)
+            .padding(HubSurfaceCardDefaults.ContentPadding),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
