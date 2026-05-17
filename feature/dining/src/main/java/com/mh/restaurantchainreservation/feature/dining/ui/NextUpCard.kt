@@ -46,10 +46,10 @@ fun NextUpCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(elevation = 4.dp, shape = cardShape, ambientColor = Color.Black.copy(alpha = 0.05f))
+            .shadow(elevation = 2.dp, shape = cardShape, ambientColor = Color.Black.copy(alpha = 0.05f))
             .clip(cardShape)
-            .border(1.dp, palette.brand.copy(alpha = 0.20f), cardShape)
-            .background(palette.brand.copy(alpha = 0.05f))
+            .border(1.dp, palette.border, cardShape)
+            .background(palette.cardSurface)
             .clickable(onClick = onClick)
             .padding(20.dp),
     ) {
@@ -59,7 +59,7 @@ fun NextUpCard(
             contentDescription = null,
             tint = palette.brand.copy(alpha = 0.04f),
             modifier = Modifier
-                .size(192.dp)
+                .size(140.dp)
                 .align(Alignment.BottomEnd)
                 .padding(end = 0.dp, bottom = 0.dp),
         )
@@ -73,36 +73,36 @@ fun NextUpCard(
                 NextUpChip()
                 ChevronAffordance()
             }
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(16.dp))
             Text(
                 text = booking.restaurant,
                 color = palette.foreground,
-                fontSize = 22.sp,
-                lineHeight = 26.sp,
+                fontSize = 20.sp,
+                lineHeight = 24.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(4.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     text = booking.date,
-                    color = palette.foreground,
-                    fontSize = 14.sp,
+                    color = palette.mutedForeground,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Box(
                     modifier = Modifier
-                        .size(4.dp)
+                        .size(3.dp)
                         .clip(CircleShape)
-                        .background(palette.brand),
+                        .background(palette.brand.copy(alpha = 0.6f)),
                 )
                 Text(
                     text = booking.time,
-                    color = palette.foreground,
-                    fontSize = 14.sp,
+                    color = palette.mutedForeground,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
             }
@@ -115,10 +115,10 @@ private fun NextUpChip() {
     val palette = LocalRestaurantPalette.current
     Row(
         modifier = Modifier
-            .height(28.dp)
+            .height(24.dp)
             .clip(RoundedCornerShape(percent = 50))
             .background(palette.brand.copy(alpha = 0.10f))
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -126,13 +126,13 @@ private fun NextUpChip() {
             imageVector = Icons.Outlined.CalendarToday,
             contentDescription = null,
             tint = palette.brand,
-            modifier = Modifier.size(14.dp),
+            modifier = Modifier.size(12.dp),
         )
         Text(
             text = stringResource(I18nR.string.dining_next_up).uppercase(),
             color = palette.brand,
-            fontSize = 11.sp,
-            letterSpacing = 1.6.sp,
+            fontSize = 10.sp,
+            letterSpacing = 1.2.sp,
             fontWeight = FontWeight.ExtraBold,
         )
     }
@@ -143,16 +143,16 @@ private fun ChevronAffordance() {
     val palette = LocalRestaurantPalette.current
     Box(
         modifier = Modifier
-            .size(32.dp)
+            .size(28.dp)
             .clip(CircleShape)
-            .background(palette.cardSurface.copy(alpha = 0.5f)),
+            .background(palette.mutedSurface.copy(alpha = 0.5f)),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = Icons.Outlined.ChevronRight,
             contentDescription = null,
             tint = palette.brand,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(14.dp),
         )
     }
 }
@@ -166,10 +166,10 @@ fun EmptyNextCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(elevation = 4.dp, shape = cardShape, ambientColor = Color.Black.copy(alpha = 0.05f))
+            .shadow(elevation = 2.dp, shape = cardShape, ambientColor = Color.Black.copy(alpha = 0.05f))
             .clip(cardShape)
-            .border(1.dp, palette.border.copy(alpha = 0.5f), cardShape)
-            .background(palette.mutedSurface.copy(alpha = 0.40f))
+            .border(1.dp, palette.border, cardShape)
+            .background(palette.cardSurface)
             .padding(20.dp),
     ) {
         Row(
@@ -180,29 +180,29 @@ fun EmptyNextCard(
                 imageVector = Icons.Outlined.CalendarToday,
                 contentDescription = null,
                 tint = palette.mutedForeground,
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(14.dp),
             )
             Text(
                 text = stringResource(I18nR.string.dining_no_upcoming_plans).uppercase(),
                 color = palette.mutedForeground,
-                fontSize = 12.sp,
-                letterSpacing = 1.6.sp,
+                fontSize = 11.sp,
+                letterSpacing = 1.2.sp,
                 fontWeight = FontWeight.ExtraBold,
             )
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(8.dp))
         Text(
             text = stringResource(I18nR.string.dining_zero_upcoming),
             color = palette.foreground,
-            fontSize = 22.sp,
-            lineHeight = 26.sp,
+            fontSize = 20.sp,
+            lineHeight = 24.sp,
             fontWeight = FontWeight.Bold,
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(2.dp))
         Text(
             text = stringResource(I18nR.string.dining_discover_prompt),
             color = palette.mutedForeground,
-            fontSize = 14.sp,
+            fontSize = 13.sp,
         )
     }
 }
@@ -240,24 +240,24 @@ private fun StatTile(
     val cardShape = RoundedCornerShape(24.dp)
     Column(
         modifier = modifier
-            .shadow(elevation = 4.dp, shape = cardShape, ambientColor = Color.Black.copy(alpha = 0.05f))
+            .shadow(elevation = 2.dp, shape = cardShape, ambientColor = Color.Black.copy(alpha = 0.05f))
             .clip(cardShape)
-            .border(1.dp, palette.border.copy(alpha = 0.6f), cardShape)
+            .border(1.dp, palette.border, cardShape)
             .background(palette.cardSurface)
-            .padding(20.dp),
+            .padding(18.dp),
     ) {
         Text(
             text = value.toString(),
             color = palette.foreground,
-            fontSize = 28.sp,
-            lineHeight = 32.sp,
+            fontSize = 24.sp,
+            lineHeight = 28.sp,
             fontWeight = FontWeight.Bold,
         )
         Spacer(Modifier.height(4.dp))
         Text(
             text = label,
             color = palette.mutedForeground,
-            fontSize = 13.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
         )
     }
