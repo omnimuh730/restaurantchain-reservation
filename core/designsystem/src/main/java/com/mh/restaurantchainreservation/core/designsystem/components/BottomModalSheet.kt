@@ -7,13 +7,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -110,24 +106,9 @@ fun BottomModalSheet(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() },
                         onClick = {},
-                    )
-                    .padding(top = 8.dp),
+                    ),
             ) {
-                Box(
-                    modifier = Modifier
-                        .padding(top = 8.dp, bottom = 4.dp)
-                        .wrapContentSize(Alignment.TopCenter),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .height(4.dp)
-                            .width(40.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(palette.border),
-                    )
-                }
-                Spacer(Modifier.height(4.dp))
+                ModalSheetDragHandle()
                 content()
             }
         }

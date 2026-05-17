@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.mh.restaurantchainreservation.core.designsystem.components.ModalSheetDragHandle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.WishlistCollection
@@ -215,20 +216,7 @@ private fun SheetSurface(
             .background(palette.cardSurface)
             .windowInsetsPadding(WindowInsets.navigationBars),
     ) {
-        // Drag handle.
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(width = 36.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(palette.mutedForeground.copy(alpha = 0.45f)),
-            )
-        }
+        ModalSheetDragHandle(width = 36.dp)
         AnimatedContent(
             targetState = view,
             label = "wishlist-sheet-view",
