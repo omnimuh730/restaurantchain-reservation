@@ -45,7 +45,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -73,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.WishlistCollection
@@ -391,22 +391,14 @@ private fun CollectionCoverButton(
             // Saved-here indicator (small heart top-right) when this collection
             // currently holds the restaurant — helps the user "move" out.
             if (isCurrentlySavedHere && !isSaving) {
-                Box(
+                HeartDrawableIcon(
+                    active = true,
+                    contentDescription = "Saved in this list",
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(Color.White),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Favorite,
-                        contentDescription = null,
-                        tint = palette.brand,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
+                        .padding(8.dp),
+                    iconHeight = 22.dp,
+                )
             }
             // Saving overlay (animated check + sparkles). The overlay owns
             // its own enter animation via Animatable, so a plain conditional

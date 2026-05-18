@@ -1,5 +1,15 @@
 package com.mh.restaurantchainreservation.core.model
 
+/** Airbnb-style guest favorite tier for laurel badge artwork. */
+enum class GuestFavoriteLevel {
+    /** No laurel badge. */
+    None,
+    /** Standard guest favorite — black laurel (`leaf`). */
+    Normal,
+    /** Top-tier guest favorite — golden laurel (`goldenleaf`). */
+    High,
+}
+
 /**
  * Display-ready restaurant card model. Mirrors React `RestaurantData` from
  * `src/app/pages/detail/restaurantDetailData.ts` with the i18n labels already
@@ -16,7 +26,31 @@ data class Restaurant(
     val image: String,
     val area: String? = null,
     val tag: String? = null,
+    val guestFavoriteLevel: GuestFavoriteLevel = GuestFavoriteLevel.None,
 )
+
+/** Derives a guest-favorite tier from rating, review volume, and marketing tags. */
+fun deriveGuestFavoriteLevel(
+    rating: Double,
+    reviews: Int,
+    tag: String? = null,
+): GuestFavoriteLevel = when {
+    rating >= 4.75 && reviews >= 800 -> GuestFavoriteLevel.High
+    rating >= 4.5 && reviews >= 350 -> GuestFavoriteLevel.Normal
+    tag?.contains("favorite", ignoreCase = true) == true -> GuestFavoriteLevel.Normal
+    tag?.contains("Monthly Best", ignoreCase = true) == true && rating >= 4.65 ->
+        GuestFavoriteLevel.High
+    tag?.contains("Romantic", ignoreCase = true) == true && rating >= 4.7 ->
+        GuestFavoriteLevel.High
+    else -> GuestFavoriteLevel.None
+}
+
+fun Restaurant.withDerivedGuestFavoriteLevel(): Restaurant =
+    if (guestFavoriteLevel != GuestFavoriteLevel.None) {
+        this
+    } else {
+        copy(guestFavoriteLevel = deriveGuestFavoriteLevel(rating, reviews, tag))
+    }
 
 /** Mock reservation slot for discover list cards (available vs crossed-out). */
 data class RestaurantTimeSlot(
@@ -47,15 +81,6 @@ data class Banner(
 data class QuickCategory(
     val id: String,
     val label: String,
-)
-
-data class NewsItem(
-    val id: String,
-    val image: String,
-    val title: String,
-    val summary: String,
-    val category: String,
-    val readMinutes: Int,
 )
 
 /**
@@ -111,11 +136,11 @@ object DiscoverData {
 
     val QUICK_CATEGORIES: List<QuickCategory> = listOf(
         QuickCategory("trending", "Trending Now"),
-        QuickCategory("catch-only", "Catch Only"),
+        QuickCategory("catch-only", "Best Noodles"),
         QuickCategory("top-ranking", "Top Ranking"),
-        QuickCategory("hot-ny", "Hot in New York"),
-        QuickCategory("best-kbbq", "Best K-BBQ"),
-        QuickCategory("best-american", "Best American"),
+        QuickCategory("hot-ny", "Foreign Foods"),
+        QuickCategory("best-kbbq", "Best BBQ"),
+        QuickCategory("best-american", "Best Fast Food"),
         QuickCategory("local-fav", "Local Favorite"),
         QuickCategory("nearby-me", "Nearby Me"),
     )
@@ -125,6 +150,32 @@ object DiscoverData {
         City("ny", "New York", "https://images.unsplash.com/photo-1775144581014-bf6cb3ab9f06?w=400&h=300&fit=crop"),
         City("la", "Los Angeles", "https://images.unsplash.com/photo-1680627723996-5823e984e172?w=400&h=300&fit=crop"),
         City("seattle", "Seattle", "https://images.unsplash.com/photo-1589572546737-8377644cf951?w=400&h=300&fit=crop"),
+        City("chicago", "Chicago", "https://images.unsplash.com/photo-1494522358652-f30e61a603d5?w=400&h=300&fit=crop"),
+        City("boston", "Boston", "https://images.unsplash.com/photo-1506197067357-23c07593a9aa?w=400&h=300&fit=crop"),
+        City("miami", "Miami", "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=400&h=300&fit=crop"),
+        City("austin", "Austin", "https://images.unsplash.com/photo-1531218150217-54595bc2b79d?w=400&h=300&fit=crop"),
+        City("denver", "Denver", "https://images.unsplash.com/photo-1546156929-a1951014851e?w=400&h=300&fit=crop"),
+        City("portland", "Portland", "https://images.unsplash.com/photo-1541452880569-b95c1a5d8542?w=400&h=300&fit=crop"),
+        City("vancouver", "Vancouver", "https://images.unsplash.com/photo-1559511260-66a654ae982a?w=400&h=300&fit=crop"),
+        City("toronto", "Toronto", "https://images.unsplash.com/photo-1517935706615-2717063c2225?w=400&h=300&fit=crop"),
+        City("montreal", "Montreal", "https://images.unsplash.com/photo-1519178616552-771609cc6686?w=400&h=300&fit=crop"),
+        City("london", "London", "https://images.unsplash.com/photo-1513635269973-596154e42ae7?w=400&h=300&fit=crop"),
+        City("paris", "Paris", "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop"),
+        City("barcelona", "Barcelona", "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&h=300&fit=crop"),
+        City("berlin", "Berlin", "https://images.unsplash.com/photo-1560969184-10fe8719e047?w=400&h=300&fit=crop"),
+        City("amsterdam", "Amsterdam", "https://images.unsplash.com/photo-1534353436294-0dbd4bdac845?w=400&h=300&fit=crop"),
+        City("tokyo", "Tokyo", "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop"),
+        City("seoul", "Seoul", "https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=400&h=300&fit=crop"),
+        City("singapore", "Singapore", "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=400&h=300&fit=crop"),
+        City("hong-kong", "Hong Kong", "https://images.unsplash.com/photo-1536599018102-9f803c140fc1?w=400&h=300&fit=crop"),
+        City("sydney", "Sydney", "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=400&h=300&fit=crop"),
+        City("melbourne", "Melbourne", "https://images.unsplash.com/photo-1514395462725-fb4566210144?w=400&h=300&fit=crop"),
+        City("dublin", "Dublin", "https://images.unsplash.com/photo-1590089419295-328f9a0f1a8a?w=400&h=300&fit=crop"),
+        City("honolulu", "Honolulu", "https://images.unsplash.com/photo-1542259675220-9ba045d2a3d5?w=400&h=300&fit=crop"),
+        City("las-vegas", "Las Vegas", "https://images.unsplash.com/photo-1605833556227-1da40a469196?w=400&h=300&fit=crop"),
+        City("nashville", "Nashville", "https://images.unsplash.com/photo-1546412414-e1885e7e5c36?w=400&h=300&fit=crop"),
+        City("philadelphia", "Philadelphia", "https://images.unsplash.com/photo-1569767106989-64d9526a9e9a?w=400&h=300&fit=crop"),
+        City("washington-dc", "Washington, D.C.", "https://images.unsplash.com/photo-1617581629397-a72507c3de9e?w=400&h=300&fit=crop"),
     )
 
     val FOOD_TYPES: List<FoodType> = listOf(
@@ -138,6 +189,26 @@ object DiscoverData {
         FoodType("french", "French", "https://images.unsplash.com/photo-1657502996869-6ccd568b9d41?w=400&h=300&fit=crop"),
         FoodType("chinese", "Chinese", "https://images.unsplash.com/photo-1694834589398-27b369c6f7a6?w=400&h=300&fit=crop"),
         FoodType("healthy", "Healthy", "https://images.unsplash.com/photo-1692780941487-505d5d908aa6?w=400&h=300&fit=crop"),
+        FoodType("mexican", "Mexican", "https://images.unsplash.com/photo-1565299585323-38174cb3b886?w=400&h=300&fit=crop"),
+        FoodType("indian", "Indian", "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&h=300&fit=crop"),
+        FoodType("vietnamese", "Vietnamese", "https://images.unsplash.com/photo-1582878826628-29b7a1c89db4?w=400&h=300&fit=crop"),
+        FoodType("spanish", "Spanish", "https://images.unsplash.com/photo-1624300629298-e9de39c13be5?w=400&h=300&fit=crop"),
+        FoodType("greek", "Greek", "https://images.unsplash.com/photo-1608219992759-8d74ed8d76eb?w=400&h=300&fit=crop"),
+        FoodType("middle-eastern", "Middle Eastern", "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=400&h=300&fit=crop"),
+        FoodType("steakhouse", "Steakhouse", "https://images.unsplash.com/photo-1600891964092-4316c288032e?w=400&h=300&fit=crop"),
+        FoodType("seafood", "Seafood", "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop"),
+        FoodType("pizza", "Pizza", "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop"),
+        FoodType("burgers", "Burgers", "https://images.unsplash.com/photo-1550547660-d9450f859349?w=400&h=300&fit=crop"),
+        FoodType("vegan", "Vegan", "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop"),
+        FoodType("bakery", "Bakery", "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=300&fit=crop"),
+        FoodType("coffee", "Coffee", "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop"),
+        FoodType("wine-bar", "Wine Bar", "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&h=300&fit=crop"),
+        FoodType("korean-fried-chicken", "Korean Fried Chicken", "https://images.unsplash.com/photo-1590301157890-4810ed352e52?w=400&h=300&fit=crop"),
+        FoodType("ramen", "Ramen", "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&h=300&fit=crop"),
+        FoodType("sushi", "Sushi", "https://images.unsplash.com/photo-1579584425555-cb18d1714a92?w=400&h=300&fit=crop"),
+        FoodType("dim-sum", "Dim Sum", "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=400&h=300&fit=crop"),
+        FoodType("tapas", "Tapas", "https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop"),
+        FoodType("soul-food", "Soul Food", "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400&h=300&fit=crop"),
     )
 
     val MONTHLY_BEST: List<Restaurant> = listOf(
@@ -206,6 +277,7 @@ object DiscoverData {
             rating = 4.8, reviews = 3100, price = "$$$", distance = "1.5 mi",
             image = "https://images.unsplash.com/photo-1590189599125-67138c6509ef?w=400&h=300&fit=crop",
             tag = "3.1M views",
+            guestFavoriteLevel = GuestFavoriteLevel.High,
         ),
     )
 
@@ -307,7 +379,9 @@ object DiscoverData {
 
     /** Combined catalog used for search / detail lookups. */
     val ALL: List<Restaurant> by lazy {
-        (MONTHLY_BEST + LOVED_BY_LOCALS + VIRAL + DATE_NIGHT + buildPriceTierCatalog()).distinctBy { it.id }
+        (MONTHLY_BEST + LOVED_BY_LOCALS + VIRAL + DATE_NIGHT + buildPriceTierCatalog())
+            .distinctBy { it.id }
+            .map { it.withDerivedGuestFavoriteLevel() }
     }
 
     fun findById(id: String): Restaurant? = ALL.firstOrNull { it.id == id }
@@ -326,9 +400,31 @@ object DiscoverData {
     }
 
     fun byFoodType(id: String): List<Restaurant> {
-        val cuisineNeedle = FOOD_TYPES.firstOrNull { it.id == id }?.label?.lowercase()?.split(" ")?.firstOrNull()
-        if (cuisineNeedle.isNullOrBlank()) return ALL
-        return ALL.filter { it.cuisine.lowercase().contains(cuisineNeedle) }.ifEmpty { ALL.take(4) }
+        val ft = FOOD_TYPES.firstOrNull { it.id == id } ?: return ALL
+        val label = ft.label.lowercase()
+        val tokens = label.split(Regex("[^a-zA-Z0-9]+")).filter { it.length >= 3 }
+        val needles = buildList {
+            add(label)
+            addAll(tokens)
+        }.distinct()
+        return ALL.filter { r ->
+            val hay = "${r.name} ${r.cuisine} ${r.area.orEmpty()} ${r.tag.orEmpty()}".lowercase()
+            needles.any { needle -> hay.contains(needle) }
+        }.ifEmpty { ALL.take(6) }
+    }
+
+    /** Search-results query used when opening local favorites scoped to the user's city. */
+    val localFavoritesSearchQuery: String = "Local favorites"
+
+    /** Maps the user's selected location (name/address) to a catalog [City] id. */
+    fun cityForLocation(location: UserLocation): City {
+        val haystack = "${location.name} ${location.address}".lowercase()
+        CITIES.forEach { city ->
+            if (haystack.contains(city.label.lowercase())) return city
+            val idWords = city.id.replace('-', ' ')
+            if (haystack.contains(idWords)) return city
+        }
+        return CITIES.firstOrNull { it.id == "seoul" } ?: CITIES.first()
     }
 
     fun byCity(id: String): List<Restaurant> {
@@ -337,11 +433,20 @@ object DiscoverData {
         return ALL.shuffled(kotlin.random.Random(seed)).take(5)
     }
 
+    /** Loved-by-locals list, deterministically varied per city. */
+    fun localFavoritesForCity(cityId: String): List<Restaurant> {
+        val seed = cityId.hashCode()
+        val pool = LOVED_BY_LOCALS.ifEmpty { ALL }
+        return pool.shuffled(kotlin.random.Random(seed))
+    }
+
     fun bySection(id: String): List<Restaurant> = when (id) {
         "monthly-best" -> MONTHLY_BEST
         "loved-by-locals" -> LOVED_BY_LOCALS
         "viral" -> VIRAL
         "date-night" -> DATE_NIGHT
+        "where-to-eat" -> ALL.shuffled(kotlin.random.Random(42))
+        "top-picks-food" -> ALL.shuffled(kotlin.random.Random(43))
         else -> ALL
     }
 
@@ -350,45 +455,3 @@ object DiscoverData {
     )
 }
 
-fun mockNews(): List<NewsItem> = listOf(
-    NewsItem(
-        id = "n1",
-        image = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=400&fit=crop",
-        title = "5 Cozy Spots for a Rainy Date Night",
-        summary = "Editor-picked restaurants with candlelight, banquettes, and patient service.",
-        category = "Date Night",
-        readMinutes = 4,
-    ),
-    NewsItem(
-        id = "n2",
-        image = "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&h=400&fit=crop",
-        title = "Inside the Michelin 2026 Ceremony",
-        summary = "Three new two-stars and a wave of fresh one-stars across the city.",
-        category = "News",
-        readMinutes = 6,
-    ),
-    NewsItem(
-        id = "n3",
-        image = "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=600&h=400&fit=crop",
-        title = "How K-BBQ Took Over Friday Night",
-        summary = "Late nights, sticky tongs, and the obsession that keeps booking apps busy.",
-        category = "Trends",
-        readMinutes = 5,
-    ),
-    NewsItem(
-        id = "n4",
-        image = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&h=400&fit=crop",
-        title = "Counter Seats: Why Omakase Owns the Wishlist",
-        summary = "Twenty courses, one chef, and the most-saved listings on Tonight.",
-        category = "Editor",
-        readMinutes = 7,
-    ),
-    NewsItem(
-        id = "n5",
-        image = "https://images.unsplash.com/photo-1481833761820-0509d3217039?w=600&h=400&fit=crop",
-        title = "Brunch Crawl: 6 Stops Under $40",
-        summary = "From flaky croissants to a final espresso — a Saturday morning, mapped.",
-        category = "Guides",
-        readMinutes = 3,
-    ),
-)
