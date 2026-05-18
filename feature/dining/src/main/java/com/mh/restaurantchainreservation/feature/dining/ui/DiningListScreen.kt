@@ -78,6 +78,7 @@ private val DiningTabBarPinnedHorizontalPadding = 8.dp
 @Composable
 fun DiningListScreen(
     onOpenDetail: (String) -> Unit,
+    onExploreRestaurants: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -102,6 +103,7 @@ fun DiningListScreen(
             DiningTabId.Upcoming to upcoming.size,
             DiningTabId.Visited to visited.size,
             DiningTabId.Cancel to cancelled.size,
+            DiningTabId.EmptyPreview to 0,
         )
     }
     val nextBooking = approved.firstOrNull()
@@ -218,9 +220,8 @@ fun DiningListScreen(
                         when (tab) {
                             DiningTabId.Upcoming -> TabContent(
                                 items = upcoming,
-                                emptyIcon = Icons.Outlined.CalendarToday,
-                                emptyTitleRes = I18nR.string.dining_empty_upcoming_title,
-                                emptyDescRes = I18nR.string.dining_empty_upcoming_desc,
+                                onExploreRestaurants = onExploreRestaurants,
+                                onAddBooking = { DiningStore.openAddCode() },
                                 renderItem = { booking ->
                                     BookingCard(
                                         booking = booking,
@@ -244,9 +245,8 @@ fun DiningListScreen(
                             )
                             DiningTabId.Visited -> TabContent(
                                 items = visited,
-                                emptyIcon = Icons.Outlined.CheckCircle,
-                                emptyTitleRes = I18nR.string.dining_empty_visited_title,
-                                emptyDescRes = I18nR.string.dining_empty_visited_desc,
+                                onExploreRestaurants = onExploreRestaurants,
+                                onAddBooking = { DiningStore.openAddCode() },
                                 renderItem = { booking ->
                                     BookingCard(
                                         booking = booking,
@@ -258,9 +258,8 @@ fun DiningListScreen(
                             )
                             DiningTabId.Cancel -> TabContent(
                                 items = cancelled,
-                                emptyIcon = Icons.Outlined.Cancel,
-                                emptyTitleRes = I18nR.string.dining_empty_cancel_title,
-                                emptyDescRes = I18nR.string.dining_empty_cancel_desc,
+                                onExploreRestaurants = onExploreRestaurants,
+                                onAddBooking = { DiningStore.openAddCode() },
                                 renderItem = { booking ->
                                     BookingCard(
                                         booking = booking,
@@ -268,6 +267,12 @@ fun DiningListScreen(
                                         onBookAgain = { onOpenDetail(booking.id) },
                                     )
                                 },
+                            )
+                            DiningTabId.EmptyPreview -> TabContent(
+                                items = emptyList(),
+                                onExploreRestaurants = onExploreRestaurants,
+                                onAddBooking = { DiningStore.openAddCode() },
+                                renderItem = {},
                             )
                         }
                     }
@@ -332,16 +337,14 @@ private fun LazyListState.tabBarOverlayTopPx(pinnedTopPx: Int): Int? {
 @Composable
 private fun TabContent(
     items: List<Booking>,
-    emptyIcon: androidx.compose.ui.graphics.vector.ImageVector,
-    emptyTitleRes: Int,
-    emptyDescRes: Int,
+    onExploreRestaurants: () -> Unit,
+    onAddBooking: () -> Unit,
     renderItem: @Composable (Booking) -> Unit,
 ) {
     if (items.isEmpty()) {
-        EmptyDiningState(
-            icon = emptyIcon,
-            title = stringResource(emptyTitleRes),
-            description = stringResource(emptyDescRes),
+        DiningNoItemsCard(
+            onExploreRestaurants = onExploreRestaurants,
+            onAddBooking = onAddBooking,
         )
     } else {
         Column(

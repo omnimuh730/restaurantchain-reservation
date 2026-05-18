@@ -468,6 +468,13 @@
     <string name="dining_empty_cancel_desc">You haven\'t cancelled any bookings. Great dining streak!</string>
     <string name="dining_empty_find_restaurant">Find a restaurant</string>
 
+    <string name="dining_no_items_title">Looking for something new?</string>
+    <string name="dining_no_items_desc">Explore restaurants and book your next experience.</string>
+    <string name="dining_no_items_explore">Explore Restaurants</string>
+    <string name="dining_no_items_add_booking">+ Add Booking</string>
+    <string name="dining_no_items_or">or</string>
+    <string name="dining_tab_empty_preview_short">Preview</string>
+
     <!-- Booking card -->
     <string name="booking_status_now">Now</string>
     <string name="booking_status_pending">Pending</string>

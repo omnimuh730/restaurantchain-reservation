@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,7 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 
-enum class DiningTabId { Upcoming, Visited, Cancel }
+enum class DiningTabId { Upcoming, Visited, Cancel, EmptyPreview }
 
 /** Total height of [DiningTabBar] (track + vertical padding). */
 val DiningTabBarHeight = 48.dp
@@ -52,6 +53,8 @@ private val DiningTabs = listOf(
     DiningTabSpec(DiningTabId.Upcoming, Icons.Outlined.CalendarToday, I18nR.string.dining_tab_upcoming_short),
     DiningTabSpec(DiningTabId.Visited, Icons.Outlined.CheckCircle, I18nR.string.dining_tab_visited_short),
     DiningTabSpec(DiningTabId.Cancel, Icons.Outlined.Cancel, I18nR.string.dining_tab_cancel_short),
+  // TODO: remove preview tab after no-item card QA
+    DiningTabSpec(DiningTabId.EmptyPreview, Icons.Outlined.Inbox, I18nR.string.dining_tab_empty_preview_short),
 )
 
 @Composable

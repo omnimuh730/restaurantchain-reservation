@@ -210,6 +210,13 @@
     <string name="dining_empty_cancel_desc">취소된 예약이 없어요. 멋진 다이닝 기록이에요!</string>
     <string name="dining_empty_find_restaurant">레스토랑 찾기</string>
 
+    <string name="dining_no_items_title">새로운 곳을 찾고 계신가요?</string>
+    <string name="dining_no_items_desc">레스토랑을 둘러보고 다음 경험을 예약해 보세요.</string>
+    <string name="dining_no_items_explore">레스토랑 둘러보기</string>
+    <string name="dining_no_items_add_booking">+ 예약 추가</string>
+    <string name="dining_no_items_or">또는</string>
+    <string name="dining_tab_empty_preview_short">미리보기</string>
+
     <!-- Booking card -->
     <string name="booking_status_now">진행 중</string>
     <string name="booking_status_pending">대기</string>
