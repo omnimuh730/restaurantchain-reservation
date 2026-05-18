@@ -36,7 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mh.restaurantchainreservation.core.designsystem.components.ModalSheetDragHandle
+import com.mh.restaurantchainreservation.core.designsystem.components.CenteredMaterialDragHandle
 import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantSwitch
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
@@ -97,11 +97,16 @@ fun FilterSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                    .background(palette.cardSurface)
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                    .background(palette.cardSurface),
             ) {
-                ModalSheetDragHandle(width = 36.dp)
+                CenteredMaterialDragHandle()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                        .padding(top = 4.dp, bottom = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
                 Text(
                     text = "Filters",
                     color = palette.foreground,
@@ -247,6 +252,7 @@ fun FilterSheet(
                     ) {
                         Text("Apply", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
+                }
                 }
             }
         }

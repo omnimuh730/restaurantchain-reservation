@@ -107,7 +107,7 @@ fun AddBookingCodeModal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(0.dp, Color.Transparent)
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                    .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 16.dp),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

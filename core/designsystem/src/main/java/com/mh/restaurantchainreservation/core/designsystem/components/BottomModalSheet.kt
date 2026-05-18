@@ -108,7 +108,7 @@ fun BottomModalSheet(
                         onClick = {},
                     ),
             ) {
-                ModalSheetDragHandle()
+                CenteredMaterialDragHandle()
                 content()
             }
         }

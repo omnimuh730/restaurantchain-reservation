@@ -43,7 +43,7 @@ fun ManageSheet(
     val palette = LocalRestaurantPalette.current
     BottomModalSheet(onDismiss = onDismiss) {
         Column(
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp),
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(

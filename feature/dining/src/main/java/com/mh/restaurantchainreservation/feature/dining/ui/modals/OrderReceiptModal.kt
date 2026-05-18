@@ -1,10 +1,16 @@
 package com.mh.restaurantchainreservation.feature.dining.ui.modals
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +24,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,8 +56,10 @@ import com.mh.restaurantchainreservation.core.designsystem.components.BottomModa
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
+import com.mh.restaurantchainreservation.feature.dining.data.MealFeedback
 import com.mh.restaurantchainreservation.feature.dining.data.Receipt
 import com.mh.restaurantchainreservation.feature.dining.data.ReceiptItemCategory
+import com.mh.restaurantchainreservation.feature.dining.data.fmtR
 import com.mh.restaurantchainreservation.feature.dining.data.lineTotal
 
 private const val ReceiptSheetHeightFraction = 0.78f
@@ -86,7 +102,7 @@ fun OrderReceiptModal(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(sheetMaxHeight)
-                .padding(20.dp),
+                .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
         ) {
             Text(
                 text = stringResource(I18nR.string.receipt_title),
@@ -280,6 +296,8 @@ private fun CollapsibleReceiptStoreHeader(
             }
         }
 
+        Spacer(Modifier.height(8.dp))
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -361,14 +379,186 @@ private fun ReceiptSummaryFooter(
         }
         if (booking.rating != null) {
             Spacer(Modifier.height(10.dp))
+            ReceiptRatingSection(
+                rating = booking.rating,
+                feedback = booking.feedback,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReceiptRatingSection(
+    rating: Double,
+    feedback: MealFeedback?,
+) {
+    val palette = LocalRestaurantPalette.current
+    var showFeedbackDetails by remember { mutableStateOf(false) }
+    val canExpand = feedback != null
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(
+            modifier = Modifier
+                .then(
+                    if (canExpand) {
+                        Modifier
+                            .clip(RoundedCornerShape(percent = 50))
+                            .clickable { showFeedbackDetails = !showFeedbackDetails }
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    } else {
+                        Modifier.padding(vertical = 6.dp)
+                    },
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Star,
+                contentDescription = null,
+                tint = palette.warning,
+                modifier = Modifier.size(16.dp),
+            )
             Text(
-                text = "${booking.rating} – ${stringResource(I18nR.string.receipt_rating_label)}",
+                text = fmtR(rating),
+                color = palette.foreground,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.ExtraBold,
+            )
+            Text(
+                text = stringResource(I18nR.string.receipt_rating_label),
+                color = if (canExpand) palette.brand else palette.mutedForeground,
+                fontSize = 13.sp,
+                fontWeight = if (canExpand) FontWeight.SemiBold else FontWeight.Normal,
+            )
+            if (canExpand) {
+                Icon(
+                    imageVector = if (showFeedbackDetails) {
+                        Icons.Filled.KeyboardArrowDown
+                    } else {
+                        Icons.Filled.KeyboardArrowUp
+                    },
+                    contentDescription = null,
+                    tint = palette.mutedForeground,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+
+        if (feedback != null) {
+            AnimatedVisibility(
+                visible = showFeedbackDetails,
+                enter = fadeIn(tween(180)) + expandVertically(tween(220)),
+                exit = fadeOut(tween(150)) + shrinkVertically(tween(180)),
+            ) {
+                ReceiptFeedbackDetails(
+                    feedback = feedback,
+                    modifier = Modifier.padding(top = 10.dp),
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ReceiptFeedbackDetails(
+    feedback: MealFeedback,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(palette.mutedSurface.copy(alpha = 0.7f))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        FeedbackSubRatingReadOnly(
+            label = stringResource(I18nR.string.scan_review_taste),
+            value = feedback.taste,
+        )
+        FeedbackSubRatingReadOnly(
+            label = stringResource(I18nR.string.scan_review_ambience),
+            value = feedback.ambience,
+        )
+        FeedbackSubRatingReadOnly(
+            label = stringResource(I18nR.string.scan_review_service),
+            value = feedback.service,
+        )
+        FeedbackSubRatingReadOnly(
+            label = stringResource(I18nR.string.scan_review_value),
+            value = feedback.value,
+        )
+
+        if (!feedback.comment.isNullOrBlank()) {
+            Text(
+                text = feedback.comment,
                 color = palette.foreground,
                 fontSize = 13.sp,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
+                lineHeight = 18.sp,
+                modifier = Modifier.padding(top = 4.dp),
             )
+        }
+
+        if (feedback.tags.isNotEmpty()) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                feedback.tags.forEach { tag ->
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(percent = 50))
+                            .background(palette.brand.copy(alpha = 0.08f))
+                            .border(1.dp, palette.brand.copy(alpha = 0.35f), RoundedCornerShape(percent = 50))
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                    ) {
+                        Text(
+                            text = tag,
+                            color = palette.brand,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeedbackSubRatingReadOnly(
+    label: String,
+    value: Int,
+) {
+    val palette = LocalRestaurantPalette.current
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = label,
+            color = palette.foreground,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            repeat(5) { index ->
+                val filled = index < value
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = null,
+                    tint = if (filled) palette.warning else palette.border,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
         }
     }
 }

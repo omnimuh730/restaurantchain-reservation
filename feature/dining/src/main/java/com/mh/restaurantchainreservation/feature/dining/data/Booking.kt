@@ -34,6 +34,15 @@ data class Receipt(
     val paidAt: String,
 )
 
+data class MealFeedback(
+    val taste: Int,
+    val ambience: Int,
+    val service: Int,
+    val value: Int,
+    val comment: String? = null,
+    val tags: List<String> = emptyList(),
+)
+
 data class Booking(
     val id: String,
     val restaurant: String,
@@ -44,6 +53,7 @@ data class Booking(
     val guests: Int,
     val status: BookingStatus,
     val rating: Double? = null,
+    val feedback: MealFeedback? = null,
     val address: String,
     val phone: String,
     val diningPoints: Int,
