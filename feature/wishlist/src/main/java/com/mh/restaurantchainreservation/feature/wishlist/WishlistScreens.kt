@@ -58,7 +58,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -121,7 +120,13 @@ fun WishlistScreen(
     LaunchedEffect(openCollectionId) {
         if (openCollectionId != null) {
             managingCollections = false
-            createDialogOpen = false
+        }
+    }
+
+    LaunchedEffect(openCollectionId, collections) {
+        if (openCollectionId != null && collections.none { it.id == openCollectionId }) {
+            WishlistStore.closeOpenCollection()
+            editing = false
         }
     }
 
@@ -135,39 +140,42 @@ fun WishlistScreen(
         AnimatedContent(
             targetState = openCollectionId,
             modifier = Modifier.fillMaxSize(),
+            label = "wishlist_screen",
             transitionSpec = {
                 if (targetState != null) {
                     slideInHorizontally(
-                        initialOffsetX = { it },
+                        initialOffsetX = { fullWidth -> fullWidth },
                         animationSpec = spring(dampingRatio = 0.85f, stiffness = 200f),
-                    ) + fadeIn(tween(200)) togetherWith slideOutHorizontally(
-                        targetOffsetX = { -it / 3 },
-                        animationSpec = tween(220),
-                    ) + fadeOut(tween(180))
+                    ) + fadeIn(tween(200)) togetherWith
+                        slideOutHorizontally(
+                            targetOffsetX = { fullWidth -> -fullWidth / 4 },
+                            animationSpec = tween(220),
+                        ) + fadeOut(tween(180))
                 } else {
                     slideInHorizontally(
-                        initialOffsetX = { -it / 3 },
+                        initialOffsetX = { fullWidth -> -fullWidth / 4 },
                         animationSpec = spring(dampingRatio = 0.85f, stiffness = 200f),
-                    ) + fadeIn(tween(200)) togetherWith slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(220),
-                    ) + fadeOut(tween(180))
+                    ) + fadeIn(tween(200)) togetherWith
+                        slideOutHorizontally(
+                            targetOffsetX = { fullWidth -> fullWidth },
+                            animationSpec = tween(220),
+                        ) + fadeOut(tween(180))
                 }
             },
-            label = "wishlist_screen",
+            contentKey = { it },
         ) { collectionId ->
             if (collectionId == null) {
                 WishlistHomeContent(
                     collections = collections,
                     managingCollections = managingCollections,
-                    onOpenCollection = { id ->
-                        WishlistStore.openCollection(id)
+                    onNewList = { createDialogOpen = true },
+                    onToggleManage = { managingCollections = !managingCollections },
+                    onOpenCollection = { col ->
+                        WishlistStore.openCollection(col.id)
                         editing = false
                     },
                     onRename = { renameDialog = it },
                     onDelete = { deleteDialog = it },
-                    onNewList = { createDialogOpen = true },
-                    onToggleManageLists = { managingCollections = !managingCollections },
                 )
             } else {
                 val current = collections.firstOrNull { it.id == collectionId }
@@ -248,11 +256,11 @@ fun WishlistScreen(
 private fun WishlistHomeContent(
     collections: List<WishlistCollection>,
     managingCollections: Boolean,
-    onOpenCollection: (String) -> Unit,
+    onNewList: () -> Unit,
+    onToggleManage: () -> Unit,
+    onOpenCollection: (WishlistCollection) -> Unit,
     onRename: (WishlistCollection) -> Unit,
     onDelete: (WishlistCollection) -> Unit,
-    onNewList: () -> Unit,
-    onToggleManageLists: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val gridState = rememberLazyGridState()
@@ -297,7 +305,7 @@ private fun WishlistHomeContent(
                     managing = managingCollections,
                     onClick = {
                         if (!managingCollections) {
-                            onOpenCollection(col.id)
+                            onOpenCollection(col)
                         }
                     },
                     onRename = { onRename(col) },
@@ -309,9 +317,7 @@ private fun WishlistHomeContent(
         CollapsingScreenTitleHeader(
             title = "Wishlists",
             collapseProgress = collapseProgress,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .zIndex(2f),
+            modifier = Modifier.align(Alignment.TopCenter),
             trailing = {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -325,7 +331,7 @@ private fun WishlistHomeContent(
                     ToolbarTextButton(
                         text = if (managingCollections) "Done" else "Manage lists",
                         icon = null,
-                        onClick = onToggleManageLists,
+                        onClick = onToggleManage,
                     )
                 }
             },
