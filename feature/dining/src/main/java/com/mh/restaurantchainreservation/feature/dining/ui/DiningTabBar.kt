@@ -6,6 +6,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarToday
@@ -32,7 +34,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -73,6 +74,8 @@ fun DiningTabBar(
         label = "tab_track_shadow",
     )
 
+    val scrollState = rememberScrollState()
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -87,7 +90,9 @@ fun DiningTabBar(
             .padding(4.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(scrollState),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             DiningTabs.forEach { spec ->
@@ -99,7 +104,6 @@ fun DiningTabBar(
                     count = count,
                     active = active,
                     onClick = { onSelect(spec.id) },
-                    modifier = Modifier.weight(1f),
                 )
             }
         }
@@ -159,9 +163,9 @@ private fun DiningTabSegment(
             )
             .background(container)
             .clickable(onClick = onClick)
-            .padding(horizontal = 6.dp),
+            .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Icon(
             imageVector = icon,
@@ -175,22 +179,22 @@ private fun DiningTabSegment(
             fontSize = 12.sp,
             fontWeight = FontWeight.ExtraBold,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
         )
         Box(
             modifier = Modifier
-                .defaultMinSize(minWidth = 16.dp)
-                .height(16.dp)
+                .defaultMinSize(minWidth = 20.dp)
+                .height(18.dp)
                 .clip(segmentShape)
                 .background(badgeContainer)
-                .padding(horizontal = 4.dp),
+                .padding(horizontal = 6.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = count.toString(),
                 color = badgeContent,
-                fontSize = 10.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.ExtraBold,
+                maxLines = 1,
             )
         }
     }

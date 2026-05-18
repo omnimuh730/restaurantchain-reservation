@@ -57,12 +57,11 @@ import com.mh.restaurantchainreservation.feature.dining.data.DiningStore
 private const val LIST_TOP_SPACER_KEY = "dining_top_spacer"
 private const val LIST_HERO_KEY = "dining_hero"
 private const val LIST_SECTION_GAP_KEY = "dining_section_gap"
-private const val LIST_HEADER_KEY = "dining_section_header"
 private const val LIST_TABS_KEY = "dining_tabs"
 private const val LIST_TAB_CONTENT_KEY = "dining_tab_content"
 
-/** Lazy list index of [LIST_TABS_KEY] (spacer, hero, gap, header, tabs, content). */
-private const val DINING_TABS_ITEM_INDEX = 4
+/** Lazy list index of [LIST_TABS_KEY] (spacer, hero, gap, tabs, content). */
+private const val DINING_TABS_ITEM_INDEX = 3
 
 /** Transparent strip between collapsed header border and pinned tab card. */
 private val DiningTabBarPinnedGapBelowHeader = 10.dp
@@ -178,13 +177,6 @@ fun DiningListScreen(
 
             item(key = LIST_SECTION_GAP_KEY) {
                 Spacer(Modifier.height(32.dp))
-            }
-
-            item(key = LIST_HEADER_KEY) {
-                DiningListHeader(
-                    tab = currentTab,
-                    onAddByCode = { DiningStore.openAddCode() },
-                )
             }
 
             item(key = LIST_TABS_KEY) {
