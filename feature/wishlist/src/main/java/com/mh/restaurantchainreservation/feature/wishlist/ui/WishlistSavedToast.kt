@@ -22,18 +22,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -43,6 +39,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.WishlistToastState
 
@@ -58,7 +55,9 @@ fun WishlistSavedToast(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxWidth()
+            .wrapContentHeight(align = Alignment.Bottom),
         contentAlignment = Alignment.BottomCenter,
     ) {
         AnimatedVisibility(
@@ -92,7 +91,7 @@ private fun ToastCard(toast: WishlistToastState, onChange: () -> Unit) {
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Thumbnail with red heart badge.
+        // Thumbnail with red heart badge (asset matches in-card wishlist hearts — no circular chip).
         Box(modifier = Modifier.size(56.dp)) {
             AsyncImage(
                 model = toast.restaurant.image,
@@ -102,22 +101,14 @@ private fun ToastCard(toast: WishlistToastState, onChange: () -> Unit) {
                     .fillMaxSize()
                     .clip(RoundedCornerShape(10.dp)),
             )
-            Box(
+            HeartDrawableIcon(
+                active = true,
+                contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = 0.dp, end = 0.dp)
-                    .size(20.dp)
-                    .clip(CircleShape)
-                    .background(palette.brand),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Favorite,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(11.dp),
-                )
-            }
+                    .padding(2.dp),
+                iconHeight = 14.dp,
+            )
         }
         Spacer(Modifier.size(12.dp))
         Column(

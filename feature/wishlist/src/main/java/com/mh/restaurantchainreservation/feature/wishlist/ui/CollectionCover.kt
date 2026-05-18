@@ -7,16 +7,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 
 /**
@@ -39,11 +36,10 @@ fun ImageGrid(
     ) {
         when {
             images.isEmpty() -> {
-                Icon(
-                    imageVector = Icons.Outlined.FavoriteBorder,
+                HeartDrawableIcon(
+                    active = false,
                     contentDescription = null,
-                    tint = palette.mutedForeground.copy(alpha = 0.55f),
-                    modifier = Modifier.size(36.dp),
+                    iconHeight = 36.dp,
                 )
             }
             images.size == 1 -> {

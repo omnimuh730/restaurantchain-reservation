@@ -30,6 +30,8 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:i18n"))
     implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.animation)
+    implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)

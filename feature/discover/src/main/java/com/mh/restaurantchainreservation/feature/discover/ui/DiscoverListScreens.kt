@@ -129,6 +129,8 @@ fun SectionListScreen(
         "loved-by-locals" -> "Loved by Locals"
         "viral" -> "Trending Now"
         "date-night" -> "Date Night Picks"
+        "where-to-eat" -> "Where to Eat?"
+        "top-picks-food" -> "Top Picks by Food Type"
         else -> "Featured"
     }
     ListScaffold(

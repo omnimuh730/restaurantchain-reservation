@@ -1,19 +1,27 @@
-﻿@file:OptIn(ExperimentalFoundationApi::class)
+@file:OptIn(ExperimentalFoundationApi::class, ExperimentalHazeMaterialsApi::class)
 
 package com.mh.restaurantchainreservation.feature.discover.ui
 
-import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -24,6 +32,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,19 +43,25 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Navigation
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Place
+import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -57,11 +72,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -72,8 +84,10 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -83,12 +97,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import coil.compose.AsyncImage
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
+import dev.chrisbanes.haze.rememberHazeState
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleModifier
 import com.mh.restaurantchainreservation.core.model.Banner
 import com.mh.restaurantchainreservation.core.model.City
 import com.mh.restaurantchainreservation.core.model.DiscoverData
@@ -97,8 +121,9 @@ import com.mh.restaurantchainreservation.core.model.NewsItem
 import com.mh.restaurantchainreservation.core.model.QuickCategory
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.WishlistStore
-import com.mh.restaurantchainreservation.core.model.mockNews
+import com.mh.restaurantchainreservation.core.model.NewsData
 import com.mh.restaurantchainreservation.feature.discover.R
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -108,7 +133,8 @@ private val DiscoverRestaurantImageAspectWidthOverHeight = 110f / 105f
 
 private val DiningNewsCardWidth = 260.dp
 private val DiningNewsHeroImageHeight = 128.dp
-private val DiningNewsTextBlockHeight = 92.dp
+/** Title (2 lines) + summary (2 lines) + author row + padding; keeps every Dining News card the same height. */
+private val DiningNewsTextBlockHeight = 118.dp
 private val DiningNewsCardTotalHeight = DiningNewsHeroImageHeight + DiningNewsTextBlockHeight
 
 /** Fraction of the see-all stack area (width/height of [BoxWithConstraints]). */
@@ -168,19 +194,40 @@ private val RestaurantMiniCardTotalHeight = RestaurantMiniImageHeight + Restaura
 
 private val RestaurantSeeAllCardShape = RoundedCornerShape(18.dp)
 
+/** End caps for “Where to Eat?” (panorama) and “Top Picks by Food Type” (collage); width matches [RestaurantMiniCardWidth]. */
+private val RailExploreMoreCardShape = RoundedCornerShape(26.dp)
+private val WhereToEatExploreImageStackHeight = 108.dp
+private val FoodCollageMoreCardSide = RestaurantMiniCardWidth
+
+private enum class ImageRailExploreMoreKind {
+    WhereToEatPanorama,
+    FoodTypeCollage,
+}
+
+/** Status bar + compact discover bar inner padding (8+44+8); matches [CompactDiscoverBar]. */
+private val CompactDiscoverBarInnerHeight = 60.dp
+
+/** "Restaurants by Price" row thumbnail — slightly larger than early mock for design parity. */
+private val PriceListAvatarSize = 110.dp
+private val PriceListAvatarCorner = 16.dp
+private val PriceListAvatarOverlayPadding = 8.dp
+
 @Composable
 fun DiscoverHomeScreen(
     onOpenSearch: () -> Unit,
+    onOpenMap: () -> Unit,
     onOpenRestaurant: (String) -> Unit,
     onOpenCategory: (String) -> Unit,
     onOpenFood: (String) -> Unit,
     onOpenLocation: (String) -> Unit,
+    onOpenNewsList: () -> Unit,
+    onOpenNewsArticle: (String) -> Unit,
     onOpenSection: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
     val listState = rememberLazyListState()
-    val news = remember { mockNews() }
+    val news = remember { NewsData.all }
     val compact by remember {
         derivedStateOf {
             listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 250
@@ -207,7 +254,8 @@ fun DiscoverHomeScreen(
                 false
             } else {
                 val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
-                val lastRestaurantIndex = 2 + n - 1
+                // Items: 0 hero, 1 rails, 2 price header → first restaurant at 3; last at 2 + n.
+                val lastRestaurantIndex = 2 + n
                 lastVisible >= lastRestaurantIndex
             }
         }
@@ -232,26 +280,41 @@ fun DiscoverHomeScreen(
             .fillMaxSize()
             .background(palette.cardSurface),
     ) {
-        Column(Modifier.fillMaxSize()) {
-            if (compact) {
-                CompactDiscoverBar(
-                    listState = listState,
-                    onOpenSearch = onOpenSearch,
-                    onOpenMap = onOpenSearch,
-                )
+        val hazeState = rememberHazeState()
+        val density = LocalDensity.current
+        val statusBarInsets = WindowInsets.statusBars
+        val compactBarTotalHeight = remember(density, statusBarInsets) {
+            with(density) { statusBarInsets.getTop(this).toDp() } + CompactDiscoverBarInnerHeight
+        }
+
+        val headerTopPadding by remember(density, compactBarTotalHeight, compact) {
+            derivedStateOf {
+                val headerItem = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == "restaurants-by-price-header" }
+                if (headerItem != null) {
+                    val offsetDp = with(density) { headerItem.offset.toDp() }
+                    if (compact) {
+                        (compactBarTotalHeight - offsetDp).coerceIn(24.dp, compactBarTotalHeight)
+                    } else {
+                        24.dp
+                    }
+                } else {
+                    if (listState.firstVisibleItemIndex > 2) compactBarTotalHeight else 24.dp
+                }
             }
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = PaddingValues(bottom = 96.dp),
-            ) {
+        }
+
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeSource(state = hazeState),
+            contentPadding = PaddingValues(bottom = 16.dp),
+        ) {
             item {
                 HeroBanner(
                     banners = DiscoverData.BANNERS,
                     onOpenSearch = onOpenSearch,
-                    onOpenMap = onOpenSearch,
+                    onOpenMap = onOpenMap,
                     onViewAll = { onOpenSection("banners") },
                     onBannerClick = { bannerId -> onOpenSection(bannerId) },
                 )
@@ -259,26 +322,28 @@ fun DiscoverHomeScreen(
             item {
                 Column(
                     modifier = Modifier
-                        .offset(y = (-40).dp)
+                        .offset(y = (-32).dp)
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                         .background(palette.cardSurface)
-                        .padding(top = 16.dp, bottom = 10.dp),
+                        .padding(top = 18.dp, bottom = 0.dp),
                 ) {
                     QuickCategoryGrid(DiscoverData.QUICK_CATEGORIES, onOpenCategory)
                     RailSpacer(28.dp)
                     ImageRailSection(
                         title = "Where to Eat?",
-                        morePreset = MorePreset.CompactWide,
-                        onMore = { onOpenSection("where-to-eat") },
+                        exploreMoreKind = ImageRailExploreMoreKind.WhereToEatPanorama,
+                        seeAllPreviewImages = DiscoverData.CITIES.take(3).map { it.image },
+                        onSeeAll = { onOpenSection("where-to-eat") },
                     ) {
                         CityRail(cities = DiscoverData.CITIES, onClick = onOpenLocation)
                     }
                     RailSpacer(28.dp)
                     ImageRailSection(
                         title = "Top Picks by Food Type",
-                        morePreset = MorePreset.CompactNarrow,
-                        onMore = { onOpenSection("top-picks-food") },
+                        exploreMoreKind = ImageRailExploreMoreKind.FoodTypeCollage,
+                        seeAllPreviewImages = DiscoverData.FOOD_TYPES.take(4).map { it.image },
+                        onSeeAll = { onOpenSection("top-picks-food") },
                     ) {
                         FoodRail(foodTypes = DiscoverData.FOOD_TYPES, onClick = onOpenFood)
                     }
@@ -297,7 +362,11 @@ fun DiscoverHomeScreen(
                         onMore = { onOpenSection("loved-by-locals") },
                     )
                     RailSpacer(28.dp)
-                    NewsRail(news = news, onMore = { onOpenSection("news") })
+                    NewsRail(
+                        news = news,
+                        onOpenArticle = onOpenNewsArticle,
+                        onMore = onOpenNewsList,
+                    )
                     RailSpacer(28.dp)
                     RestaurantRail(
                         title = "New This Week",
@@ -312,15 +381,21 @@ fun DiscoverHomeScreen(
                         onOpenRestaurant = onOpenRestaurant,
                         onMore = { onOpenSection("late-night") },
                     )
-                    RailSpacer(12.dp)
                 }
             }
-            item {
-                RestaurantsByPriceHeaderAndTabs(
-                    selectedPrice = selectedPriceTab,
-                    onSelectPrice = { selectedPriceTab = it },
-                    placesLabel = "${priceTabBasePool.size.coerceAtLeast(6)}+ places",
-                )
+            stickyHeader(key = "restaurants-by-price-header") {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(palette.cardSurface)
+                        .padding(top = headerTopPadding),
+                ) {
+                    RestaurantsByPriceHeaderAndTabs(
+                        selectedPrice = selectedPriceTab,
+                        onSelectPrice = { selectedPriceTab = it },
+                        placesLabel = "${priceTabBasePool.size.coerceAtLeast(6)}+ places",
+                    )
+                }
             }
             itemsIndexed(
                 items = priceSectionRestaurants,
@@ -331,7 +406,7 @@ fun DiscoverHomeScreen(
                     onOpenRestaurant = {
                         onOpenRestaurant(resolveRestaurantNavigationId(selectedPriceTab, restaurant.id))
                     },
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 7.dp),
                 )
             }
             if (priceSectionLoadingMore) {
@@ -339,7 +414,28 @@ fun DiscoverHomeScreen(
                     PriceSectionLoadingMoreFooter()
                 }
             }
-            }
+        }
+
+        AnimatedVisibility(
+            visible = compact,
+            enter = slideInVertically(
+                initialOffsetY = { -it },
+                animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)
+            ) + fadeIn(tween(220)),
+            exit = slideOutVertically(
+                targetOffsetY = { -it },
+                animationSpec = tween(220)
+            ) + fadeOut(tween(180)),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .zIndex(4f),
+        ) {
+            CompactDiscoverBar(
+                hazeState = hazeState,
+                onOpenSearch = onOpenSearch,
+                onOpenMap = onOpenMap,
+            )
         }
     }
 }
@@ -444,7 +540,7 @@ private fun HeroBanner(
         ) {
             GlassSearchButton(
                 title = "Find a restaurant",
-                subtitle = "Today - 2 people - Anywhere",
+                subtitle = "Type of food, restaurant name…",
                 compact = false,
                 opaqueGlass = false,
                 palette = palette,
@@ -466,20 +562,71 @@ private fun HeroBanner(
         ) {
             Text("View All", color = Color(0xFF222222), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .zIndex(1f)
+                .fillMaxWidth()
+                .height(76.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color.Transparent, palette.cardSurface),
+                    ),
+                ),
+        )
+
+        HeroBannerPagerIndicators(
+            pageCount = banners.size,
+            pagerState = pagerState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .zIndex(3f)
+                .padding(bottom = 64.dp),
+        )
+    }
+}
+
+@Composable
+private fun HeroBannerPagerIndicators(
+    pageCount: Int,
+    pagerState: PagerState,
+    modifier: Modifier = Modifier,
+) {
+    if (pageCount <= 1) return
+    val scrollPosition = pagerState.currentPage + pagerState.currentPageOffsetFraction
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        repeat(pageCount) { index ->
+            val distance = abs(scrollPosition - index).coerceIn(0f, 1f)
+            val width = (5f + (14f - 5f) * (1f - distance)).dp
+            val dotAlpha = lerp(0.42f, 0.96f, 1f - distance)
+            Box(
+                modifier = Modifier
+                    .height(5.dp)
+                    .width(width)
+                    .clip(RoundedCornerShape(50))
+                    .background(Color.White.copy(alpha = dotAlpha)),
+            )
+        }
     }
 }
 
 @Composable
 private fun CompactDiscoverBar(
-    listState: LazyListState,
+    hazeState: HazeState,
     onOpenSearch: () -> Unit,
     onOpenMap: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .background(discoverGlassBarBackgroundBrush(palette))
+            .hazeEffect(state = hazeState, style = HazeMaterials.thin())
             .border(width = 1.dp, color = discoverGlassBarEdgeColor(palette))
             .windowInsetsPadding(WindowInsets.statusBars)
             .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
@@ -488,36 +635,19 @@ private fun CompactDiscoverBar(
     ) {
         GlassSearchButton(
             title = "Find a restaurant",
-            subtitle = if (listState.firstVisibleItemIndex > 0) "Explore nearby tables" else "Today - 2 people",
+            subtitle = "Type of food, restaurant name…",
             compact = true,
-            opaqueGlass = true,
+            opaqueGlass = false,
             palette = palette,
             onClick = onOpenSearch,
             modifier = Modifier.weight(1f),
         )
-        GlassMapButton(compact = true, opaqueGlass = true, palette = palette, onClick = onOpenMap)
+        GlassMapButton(compact = true, opaqueGlass = false, palette = palette, onClick = onOpenMap)
     }
 }
 
-private fun discoverGlassBarBackgroundBrush(palette: RestaurantPalette): Brush =
-    if (palette.isDark) {
-        Brush.verticalGradient(
-            colors = listOf(
-                palette.cardSurface.copy(alpha = 0.96f),
-                Color(0xFF2C2C2E).copy(alpha = 0.93f),
-            ),
-        )
-    } else {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color.White.copy(alpha = 0.94f),
-                palette.cardSurface.copy(alpha = 0.90f),
-            ),
-        )
-    }
-
 private fun discoverGlassBarEdgeColor(palette: RestaurantPalette): Color =
-    if (palette.isDark) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.58f)
+    if (palette.isDark) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.42f)
 
 private data class GlassPillLayers(
     val baseFill: Color,
@@ -534,33 +664,33 @@ private fun discoverGlassPillLayers(
     if (palette.isDark) {
         val strong = opaqueGlass && compact
         val base = when {
-            strong -> palette.cardSurface.copy(alpha = 0.90f)
-            compact -> palette.cardSurface.copy(alpha = 0.62f)
-            else -> palette.cardSurface.copy(alpha = 0.48f)
+            strong -> palette.cardSurface.copy(alpha = 0.88f)
+            compact -> palette.cardSurface.copy(alpha = 0.60f)
+            else -> palette.cardSurface.copy(alpha = 0.42f)
         }
         val border = when {
-            strong -> 0.30f
-            compact -> 0.24f
-            else -> 0.22f
+            strong -> 0.35f
+            compact -> 0.28f
+            else -> 0.26f
         }
-        val icon = Color.White.copy(alpha = if (strong) 0.20f else 0.14f)
+        val icon = Color.White.copy(alpha = if (strong) 0.18f else 0.12f)
         val grad = when {
-            strong -> 0.22f
-            compact -> 0.18f
-            else -> 0.15f
+            strong -> 0.28f
+            compact -> 0.24f
+            else -> 0.20f
         }
         return GlassPillLayers(base, border, icon, grad)
     }
     val strong = opaqueGlass && compact
     val baseAlpha = when {
-        strong -> 0.58f
-        compact -> 0.42f
-        else -> 0.32f
+        strong -> 0.52f
+        compact -> 0.38f
+        else -> 0.28f
     }
     val borderAlpha = when {
-        strong -> 0.62f
-        compact -> 0.52f
-        else -> 0.48f
+        strong -> 0.70f
+        compact -> 0.60f
+        else -> 0.56f
     }
     val iconAlpha = when {
         strong -> 0.52f
@@ -568,9 +698,9 @@ private fun discoverGlassPillLayers(
         else -> 0.40f
     }
     val gradTop = when {
-        strong -> 0.40f
-        compact -> 0.34f
-        else -> 0.30f
+        strong -> 0.50f
+        compact -> 0.44f
+        else -> 0.38f
     }
     return GlassPillLayers(
         baseFill = Color.White.copy(alpha = baseAlpha),
@@ -597,14 +727,14 @@ private fun GlassSearchButton(
     val height = if (compact) 44.dp else 56.dp
     val iconSize = if (compact) 32.dp else 38.dp
     val layers = discoverGlassPillLayers(palette, compact, opaqueGlass)
+    val horizontalPadding = if (compact) 10.dp else 14.dp
     PressableScale(
         onClick = onClick,
         modifier = modifier
             .height(height)
             .clip(RoundedCornerShape(999.dp))
             .border(1.dp, discoverGlassPillBorderColor(palette, layers.borderAlpha), RoundedCornerShape(999.dp))
-            .background(layers.baseFill)
-            .padding(horizontal = if (compact) 10.dp else 12.dp),
+            .background(layers.baseFill),
     ) {
         Box(modifier = Modifier.matchParentSize()) {
             Box(
@@ -614,6 +744,7 @@ private fun GlassSearchButton(
                         Brush.verticalGradient(
                             colors = listOf(
                                 Color.White.copy(alpha = layers.gradientTopAlpha),
+                                Color.White.copy(alpha = layers.gradientTopAlpha * 0.4f),
                                 Color.Transparent,
                             ),
                         ),
@@ -622,7 +753,7 @@ private fun GlassSearchButton(
             Row(
                 modifier = Modifier
                     .matchParentSize()
-                    .padding(horizontal = if (compact) 0.dp else 2.dp),
+                    .padding(horizontal = horizontalPadding),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
@@ -683,6 +814,7 @@ private fun GlassMapButton(
                     Brush.verticalGradient(
                         colors = listOf(
                             Color.White.copy(alpha = layers.gradientTopAlpha),
+                            Color.White.copy(alpha = layers.gradientTopAlpha * 0.4f),
                             Color.Transparent,
                         ),
                     ),
@@ -700,18 +832,20 @@ private fun QuickCategoryGrid(categories: List<QuickCategory>, onClick: (String)
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         categories.chunked(4).forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.Start,
             ) {
                 row.forEach { category ->
                     QuickCategoryButton(
                         category = category,
                         onClick = { onClick(category.id) },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
                     )
                 }
                 repeat(4 - row.size) {
@@ -760,8 +894,9 @@ private fun QuickCategoryButton(
 @Composable
 private fun ImageRailSection(
     title: String,
-    morePreset: MorePreset,
-    onMore: () -> Unit,
+    exploreMoreKind: ImageRailExploreMoreKind,
+    seeAllPreviewImages: List<Any>,
+    onSeeAll: () -> Unit,
     content: @Composable () -> Unit,
 ) {
     SectionHeader(title = title)
@@ -769,14 +904,288 @@ private fun ImageRailSection(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         item { content() }
         item {
-            MorePlaycardButton(
-                preset = morePreset,
-                label = "More",
-                onClick = onMore,
+            when (exploreMoreKind) {
+                ImageRailExploreMoreKind.WhereToEatPanorama ->
+                    WhereToEatPanoramaExploreCard(
+                        cityImageUrls = seeAllPreviewImages,
+                        onClick = onSeeAll,
+                    )
+                ImageRailExploreMoreKind.FoodTypeCollage ->
+                    FoodTypeCollageExploreCard(
+                        foodImageUrls = seeAllPreviewImages,
+                        onClick = onSeeAll,
+                    )
+            }
+        }
+    }
+}
+
+/** Panorama stack + footer (reference: “01 Panorama Stack”) for Where to Eat. */
+@Composable
+private fun WhereToEatPanoramaExploreCard(
+    cityImageUrls: List<Any>,
+    onClick: () -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val images = remember(cityImageUrls) {
+        when {
+            cityImageUrls.size >= 3 -> cityImageUrls.take(3)
+            cityImageUrls.size == 2 -> cityImageUrls + cityImageUrls.last()
+            cityImageUrls.size == 1 -> List(3) { cityImageUrls.first() }
+            else -> List(3) {
+                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop"
+            }
+        }
+    }
+    val cityCount = DiscoverData.CITIES.size
+    val cardBg = if (palette.isDark) palette.cardSurface else Color.White
+    val shape = RailExploreMoreCardShape
+    val ambient = if (palette.isDark) Color.Black.copy(alpha = 0.45f) else Color.Black.copy(alpha = 0.18f)
+    val spot = if (palette.isDark) Color.Black.copy(alpha = 0.55f) else Color.Black.copy(alpha = 0.38f)
+
+    PressableScale(
+        onClick = onClick,
+        modifier = Modifier
+            .width(RestaurantMiniCardWidth)
+            .shadow(
+                elevation = 12.dp,
+                shape = shape,
+                clip = false,
+                ambientColor = ambient,
+                spotColor = spot,
             )
+            .clip(shape)
+            .background(cardBg),
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(WhereToEatExploreImageStackHeight)
+                    .clip(RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)),
+            ) {
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    val w = maxWidth
+                    val h = maxHeight
+                    val backShape = RoundedCornerShape(14.dp)
+                    val midShape = RoundedCornerShape(16.dp)
+                    val frontShape = RoundedCornerShape(18.dp)
+                    AsyncImage(
+                        model = images[0],
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .offset(x = -w * 0.10f, y = h * 0.06f)
+                            .width(w * 0.70f)
+                            .height(h * 0.78f)
+                            .clip(backShape)
+                            .zIndex(0f),
+                    )
+                    AsyncImage(
+                        model = images[1],
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .offset(x = -w * 0.03f, y = h * 0.02f)
+                            .width(w * 0.78f)
+                            .height(h * 0.86f)
+                            .clip(midShape)
+                            .zIndex(1f),
+                    )
+                    AsyncImage(
+                        model = images[2],
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .offset(x = w * 0.05f, y = -h * 0.03f)
+                            .width(w * 0.88f)
+                            .height(h * 0.92f)
+                            .clip(frontShape)
+                            .zIndex(2f),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(10.dp)
+                            .size(34.dp)
+                            .zIndex(3f)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.96f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Navigation,
+                            contentDescription = null,
+                            tint = Color(0xFF111111),
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Explore more",
+                        color = palette.foreground,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.2).sp,
+                    )
+                    Text(
+                        text = "$cityCount+ cities",
+                        color = palette.mutedForeground,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(top = 3.dp),
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(if (palette.isDark) palette.mutedSurface else Color(0xFFF2F2F2)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = Color(0xFF111111),
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** 2×2 collage + glassy footer (reference: “04 Collage Card”) for Top Picks by Food Type. */
+@Composable
+private fun FoodTypeCollageExploreCard(
+    foodImageUrls: List<Any>,
+    onClick: () -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val images = remember(foodImageUrls) {
+        when {
+            foodImageUrls.size >= 4 -> foodImageUrls.take(4)
+            foodImageUrls.size == 3 -> foodImageUrls + foodImageUrls.first()
+            foodImageUrls.size == 2 -> foodImageUrls + foodImageUrls
+            foodImageUrls.size == 1 -> List(4) { foodImageUrls.first() }
+            else -> List(4) {
+                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop"
+            }
+        }
+    }
+    val shape = RailExploreMoreCardShape
+    val ambient = if (palette.isDark) Color.Black.copy(alpha = 0.45f) else Color.Black.copy(alpha = 0.18f)
+    val spot = if (palette.isDark) Color.Black.copy(alpha = 0.55f) else Color.Black.copy(alpha = 0.38f)
+    val overlayBg = if (palette.isDark) palette.cardSurface.copy(alpha = 0.92f) else Color.White.copy(alpha = 0.92f)
+
+    PressableScale(
+        onClick = onClick,
+        modifier = Modifier
+            .size(FoodCollageMoreCardSide)
+            .shadow(
+                elevation = 12.dp,
+                shape = shape,
+                clip = false,
+                ambientColor = ambient,
+                spotColor = spot,
+            )
+            .clip(shape),
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(modifier = Modifier.weight(1f)) {
+                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        AsyncImage(
+                            model = images[0],
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        AsyncImage(
+                            model = images[1],
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+                Row(modifier = Modifier.weight(1f)) {
+                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        AsyncImage(
+                            model = images[2],
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        AsyncImage(
+                            model = images[3],
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(10.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(overlayBg)
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "More picks",
+                        color = palette.foreground,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.15).sp,
+                    )
+                    Text(
+                        text = "Explore food types",
+                        color = palette.mutedForeground,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(if (palette.isDark) palette.mutedSurface else Color.White.copy(alpha = 0.95f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = Color(0xFF111111),
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
         }
     }
 }
@@ -909,6 +1318,10 @@ private fun AirbnbMiniCard(
     val palette = LocalRestaurantPalette.current
     val collections by WishlistStore.collections.collectAsState()
     val saved = collections.any { collection -> collection.restaurants.any { it.id == restaurant.id } }
+    val shared = LocalRestaurantSharedTransitionScope.current
+    val animatedContent = LocalAnimatedContentScope.current
+    val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
+    val titleModifier = rememberRestaurantSharedTitleModifier(restaurant.id, shared, animatedContent)
     val widthModifier = if (width > 0.dp) modifier.width(width) else modifier
     PressableScale(
         onClick = onClick,
@@ -926,7 +1339,9 @@ private fun AirbnbMiniCard(
                     model = restaurant.image,
                     contentDescription = restaurant.name,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(heroModifier),
                 )
                 val tag = restaurant.tag
                 if (!tag.isNullOrBlank()) {
@@ -945,6 +1360,7 @@ private fun AirbnbMiniCard(
                     active = saved,
                     onClick = { WishlistStore.openPicker(restaurant) },
                     size = HeartButtonSize.Medium,
+                    style = HeartButtonStyle.Overlay,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(8.dp),
@@ -955,7 +1371,7 @@ private fun AirbnbMiniCard(
                 color = palette.foreground,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp),
+                modifier = titleModifier.padding(top = 8.dp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -985,7 +1401,11 @@ private fun AirbnbMiniCard(
 }
 
 @Composable
-private fun NewsRail(news: List<NewsItem>, onMore: () -> Unit) {
+private fun NewsRail(
+    news: List<NewsItem>,
+    onOpenArticle: (String) -> Unit,
+    onMore: () -> Unit,
+) {
     val palette = LocalRestaurantPalette.current
     SectionHeader(title = "Dining News")
     LazyRow(
@@ -994,12 +1414,13 @@ private fun NewsRail(news: List<NewsItem>, onMore: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.Top,
     ) {
-        news.forEach { newsItem ->
+        news.forEachIndexed { index, newsItem ->
             item(key = newsItem.id) {
+                val cardWidth = if (index == 0) 288.dp else DiningNewsCardWidth
                 PressableScale(
-                    onClick = { },
+                    onClick = { onOpenArticle(newsItem.id) },
                     modifier = Modifier
-                        .width(DiningNewsCardWidth)
+                        .width(cardWidth)
                         .height(DiningNewsCardTotalHeight)
                         .clip(RoundedCornerShape(20.dp))
                         .border(1.dp, palette.border, RoundedCornerShape(20.dp))
@@ -1027,25 +1448,48 @@ private fun NewsRail(news: List<NewsItem>, onMore: () -> Unit) {
                                     .align(Alignment.TopStart)
                                     .padding(10.dp)
                                     .clip(RoundedCornerShape(999.dp))
-                                    .background(palette.brand)
+                                    .background(newsItem.category.badgeColor(palette))
                                     .padding(horizontal = 9.dp, vertical = 4.dp),
                             ) {
-                                Text(newsItem.category, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    newsItem.category.displayLabel(),
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
                             }
-                            Text(
-                                text = "${newsItem.readMinutes} min read",
-                                color = Color.White,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
+                            Row(
                                 modifier = Modifier
                                     .align(Alignment.BottomStart)
                                     .padding(10.dp),
-                            )
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.AccessTime,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(12.dp),
+                                )
+                                Text(
+                                    text = formatNewsTimeAgo(newsItem.publishedAtEpochMs),
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Text("·", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
+                                Text(
+                                    text = "${newsItem.readMinutes} mins read",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            }
                         }
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(DiningNewsTextBlockHeight)
+                                .weight(1f)
                                 .padding(horizontal = 12.dp, vertical = 10.dp),
                         ) {
                             Text(
@@ -1065,6 +1509,36 @@ private fun NewsRail(news: List<NewsItem>, onMore: () -> Unit) {
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.padding(top = 4.dp),
                             )
+                            Spacer(modifier = Modifier.weight(1f))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                AsyncImage(
+                                    model = newsItem.authorAvatar,
+                                    contentDescription = newsItem.author,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clip(CircleShape),
+                                )
+                                Text(
+                                    text = newsItem.author,
+                                    color = palette.mutedForeground,
+                                    fontSize = 11.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(horizontal = 8.dp),
+                                )
+                                Icon(
+                                    imageVector = Icons.Outlined.ChevronRight,
+                                    contentDescription = null,
+                                    tint = palette.mutedForeground,
+                                    modifier = Modifier.size(14.dp),
+                                )
+                            }
                         }
                     }
                 }
@@ -1253,12 +1727,12 @@ private fun NewsSeeAllCard(
                     .padding(top = 2.dp),
             )
             Text(
-                text = "See all",
+                text = "More",
                 color = Color(0xFF111111),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
-                    .offset(y = (-8).dp)
+                    .offset(y = (-10).dp)
                     .padding(bottom = 6.dp),
             )
         }
@@ -1266,7 +1740,9 @@ private fun NewsSeeAllCard(
 }
 
 @Composable
-private fun RestaurantSeeAllCard(
+private fun StackedSeeAllCard(
+    width: Dp,
+    imageAreaHeight: Dp,
     previewImages: List<Any>,
     onClick: () -> Unit,
 ) {
@@ -1284,8 +1760,8 @@ private fun RestaurantSeeAllCard(
     PressableScale(
         onClick = onClick,
         modifier = Modifier
-            .width(RestaurantMiniCardWidth)
-            .height(RestaurantMiniImageHeight)
+            .width(width)
+            .height(imageAreaHeight)
             .shadow(
                 elevation = 18.dp,
                 shape = cardShape,
@@ -1309,16 +1785,29 @@ private fun RestaurantSeeAllCard(
                     .padding(top = 2.dp),
             )
             Text(
-                text = "See all",
+                text = "More",
                 color = Color(0xFF111111),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
-                    .offset(y = (-8).dp)
+                    .offset(y = (-10).dp)
                     .padding(bottom = 6.dp),
             )
         }
     }
+}
+
+@Composable
+private fun RestaurantSeeAllCard(
+    previewImages: List<Any>,
+    onClick: () -> Unit,
+) {
+    StackedSeeAllCard(
+        width = RestaurantMiniCardWidth,
+        imageAreaHeight = RestaurantMiniImageHeight,
+        previewImages = previewImages,
+        onClick = onClick,
+    )
 }
 
 private fun restaurantsForPriceTab(selected: String): List<Restaurant> =
@@ -1514,8 +2003,8 @@ private fun RestaurantByPriceListRow(
         ) {
             Box(
                 modifier = Modifier
-                    .size(96.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .size(PriceListAvatarSize)
+                    .clip(RoundedCornerShape(PriceListAvatarCorner))
                     .background(palette.mutedSurface),
             ) {
                 AsyncImage(
@@ -1525,41 +2014,42 @@ private fun RestaurantByPriceListRow(
                     modifier = Modifier.fillMaxSize(),
                 )
                 val tag = restaurant.tag
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .fillMaxWidth()
-                        .padding(6.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top,
-                ) {
-                    if (!tag.isNullOrBlank()) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(999.dp))
-                                .background(Color.White.copy(alpha = 0.94f))
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                        ) {
-                            Text(
-                                tag,
-                                color = Color(0xFF222222),
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1,
+                if (!tag.isNullOrBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(
+                                start = PriceListAvatarOverlayPadding,
+                                top = PriceListAvatarOverlayPadding,
                             )
-                        }
-                    } else {
-                        Spacer(Modifier)
+                            .height(24.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(Color.White.copy(alpha = 0.94f))
+                            .padding(horizontal = 8.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            tag,
+                            color = Color(0xFF222222),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                        )
                     }
-                    HeartButton(
-                        active = saved,
-                        onClick = { WishlistStore.openPicker(restaurant) },
-                        size = HeartButtonSize.Small,
-                        style = HeartButtonStyle.Overlay,
-                        overlayContentAlignment = Alignment.TopCenter,
-                        modifier = Modifier,
-                    )
                 }
+                HeartButton(
+                    active = saved,
+                    onClick = { WishlistStore.openPicker(restaurant) },
+                    size = HeartButtonSize.ExtraSmall,
+                    style = HeartButtonStyle.Overlay,
+                    overlayContentAlignment = Alignment.TopCenter,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(
+                            top = PriceListAvatarOverlayPadding,
+                            end = PriceListAvatarOverlayPadding,
+                        ),
+                )
             }
             Column(
                 modifier = Modifier.weight(1f),
@@ -1650,121 +2140,6 @@ private fun SectionHeader(title: String, horizontalPadding: Dp = 16.dp) {
 }
 
 @Composable
-private fun MorePlaycardButton(
-    preset: MorePreset,
-    label: String,
-    onClick: () -> Unit,
-) {
-    val dimensions = moreDimensions(preset)
-    var entered by remember { mutableStateOf(false) }
-    val fanProgress by animateFloatAsState(
-        targetValue = if (entered) 1f else 0f,
-        animationSpec = tween(1550, delayMillis = 80, easing = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)),
-        label = "more-fan",
-    )
-    val labelAlpha by animateFloatAsState(
-        targetValue = if (entered) 1f else 0f,
-        animationSpec = tween(450, delayMillis = 700, easing = FastOutSlowInEasing),
-        label = "more-label",
-    )
-    LaunchedEffect(Unit) { entered = true }
-
-    PressableScale(
-        onClick = onClick,
-        modifier = Modifier
-            .size(width = dimensions.outerWidth, height = dimensions.outerHeight)
-            .clip(RoundedCornerShape(dimensions.radius))
-            .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xFFFAFAFC), Color(0xFFECEEF2)),
-                ),
-            )
-            .border(1.dp, Color.Black.copy(alpha = 0.08f), RoundedCornerShape(dimensions.radius))
-            .padding(horizontal = 10.dp, vertical = 12.dp),
-    ) {
-        Column(
-            modifier = Modifier.matchParentSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Box(
-                modifier = Modifier.size(width = dimensions.fanWidth, height = dimensions.fanHeight),
-                contentAlignment = Alignment.BottomCenter,
-            ) {
-                val layers = listOf(
-                    FanLayer(-15f, -dimensions.spread, 0.dp),
-                    FanLayer(15f, dimensions.spread, 0.dp),
-                    FanLayer(0f, 0.dp, -dimensions.lift),
-                )
-                layers.forEachIndexed { index, layer ->
-                    FannedMiniCard(
-                        size = dimensions.card,
-                        glyphSize = dimensions.glyph,
-                        progress = fanProgress,
-                        layer = layer,
-                        z = index + 1f,
-                    )
-                }
-            }
-            Spacer(Modifier.height(dimensions.labelGap))
-            Text(
-                text = label,
-                color = Color(0xFF222222),
-                fontSize = dimensions.labelSize,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.graphicsLayer { alpha = labelAlpha },
-            )
-        }
-    }
-}
-
-@Composable
-private fun FannedMiniCard(size: Dp, glyphSize: Dp, progress: Float, layer: FanLayer, z: Float) {
-    Box(
-        modifier = Modifier
-            .size(size)
-            .offset(x = layer.x * progress, y = (12.dp * (1f - progress)) + (layer.y * progress))
-            .zIndex(z)
-            .graphicsLayer {
-                rotationZ = layer.rotation * progress
-                scaleX = 0.55f + 0.45f * progress
-                scaleY = 0.55f + 0.45f * progress
-                alpha = progress
-                shadowElevation = 7f
-                this.cameraDistance = 14f
-            }
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color.White)
-            .border(1.dp, Color.Black.copy(alpha = 0.06f), RoundedCornerShape(12.dp)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(glyphSize)
-                .clip(RoundedCornerShape(6.dp))
-                .border(2.dp, Color(0xFF9CA3AF), RoundedCornerShape(6.dp))
-                .padding(4.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .fillMaxWidth(0.70f)
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(Color(0xFF9CA3AF).copy(alpha = 0.75f)),
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .size(5.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF9CA3AF).copy(alpha = 0.75f)),
-            )
-        }
-    }
-}
-
-@Composable
 private fun PressableScale(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -1816,31 +2191,6 @@ private fun rememberLateNight(): List<Restaurant> = remember {
     )
 }
 
-private data class FanLayer(val rotation: Float, val x: Dp, val y: Dp)
-
-private enum class MorePreset { CompactWide, CompactNarrow, Restaurant, News }
-
-private data class MoreDimensions(
-    val outerWidth: Dp,
-    val outerHeight: Dp,
-    val radius: Dp,
-    val card: Dp,
-    val glyph: Dp,
-    val fanWidth: Dp,
-    val fanHeight: Dp,
-    val spread: Dp,
-    val lift: Dp,
-    val labelGap: Dp,
-    val labelSize: androidx.compose.ui.unit.TextUnit,
-)
-
-private fun moreDimensions(preset: MorePreset): MoreDimensions = when (preset) {
-    MorePreset.CompactWide -> MoreDimensions(128.dp, 80.dp, 13.dp, 30.dp, 14.dp, 64.dp, 44.dp, 10.dp, 3.dp, 2.dp, 13.sp)
-    MorePreset.CompactNarrow -> MoreDimensions(112.dp, 80.dp, 13.dp, 30.dp, 14.dp, 64.dp, 44.dp, 10.dp, 3.dp, 2.dp, 12.sp)
-    MorePreset.Restaurant -> MoreDimensions(176.dp, 224.dp, 18.dp, 60.dp, 26.dp, 130.dp, 86.dp, 22.dp, 8.dp, 12.dp, 15.sp)
-    MorePreset.News -> MoreDimensions(256.dp, 264.dp, 20.dp, 76.dp, 32.dp, 162.dp, 104.dp, 28.dp, 10.dp, 16.dp, 17.sp)
-}
-
 /** Same WebP assets as `restaurantchain-reservation-ui-demo` / `public/icons/discover`. */
 private fun categoryDrawableRes(id: String): Int = when (id) {
     "trending" -> R.drawable.discover_cat_trending
@@ -1857,11 +2207,11 @@ private fun categoryDrawableRes(id: String): Int = when (id) {
 /** Matches web demo line breaks (`whitespace-pre-line` labels). */
 private fun categoryTwoLineLabel(id: String): String = when (id) {
     "trending" -> "Trending\nNow"
-    "catch-only" -> "Catch\nOnly"
+    "catch-only" -> "Best\nNoodles"
     "top-ranking" -> "Top\nRanking"
-    "hot-ny" -> "Hot in\nNew York"
-    "best-kbbq" -> "Best\nK-BBQ"
-    "best-american" -> "Best\nAmerican"
+    "hot-ny" -> "Foreign\nFoods"
+    "best-kbbq" -> "Best\nBBQ"
+    "best-american" -> "Best\nFast Food"
     "local-fav" -> "Local\nFavorite"
     "nearby-me" -> "Nearby\nMe"
     else -> "Explore\nMore"

@@ -23,9 +23,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
@@ -37,8 +37,13 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,6 +54,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -57,6 +63,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,6 +72,7 @@ import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
+import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.DiscoverData
 import com.mh.restaurantchainreservation.core.model.Restaurant
@@ -78,14 +86,18 @@ object WishlistRoutes {
     const val Home = "wishlist"
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WishlistScreen(modifier: Modifier = Modifier) {
+fun WishlistScreen(
+    onOpenRestaurant: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val palette = LocalRestaurantPalette.current
     val collections by WishlistStore.collections.collectAsState()
     val gatheredShown by WishlistStore.gatheredShown.collectAsState()
+    val openCollectionId by WishlistStore.openCollectionId.collectAsState()
 
-    var openCollectionId by remember { mutableStateOf<String?>(null) }
-    var editing by remember { mutableStateOf(false) }
+    var editing by rememberSaveable { mutableStateOf(false) }
     var managingCollections by remember { mutableStateOf(false) }
     var createDialogOpen by remember { mutableStateOf(false) }
     var renameDialog by remember { mutableStateOf<WishlistCollection?>(null) }
@@ -105,45 +117,55 @@ fun WishlistScreen(modifier: Modifier = Modifier) {
             .background(palette.cardSurface),
     ) {
         // List view (always rendered; the detail slides over it).
+        val topAppBarState = rememberTopAppBarState()
+        val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState)
         Column(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 12.dp),
-            ) {
-                Text(
-                    text = "Wishlists",
-                    color = palette.foreground,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.fillMaxWidth(),
+            Box(Modifier.fillMaxWidth()) {
+                LargeTopAppBar(
+                    title = {
+                        Text(
+                            text = "Wishlists",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = palette.foreground,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 0.dp)
+                        )
+                    },
+                    navigationIcon = {},
+                    actions = {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            ToolbarTextButton(
+                                text = "New list",
+                                icon = Icons.Outlined.Add,
+                                onClick = { createDialogOpen = true },
+                            )
+                            ToolbarTextButton(
+                                text = if (managingCollections) "Done" else "Manage lists",
+                                icon = null,
+                                onClick = { managingCollections = !managingCollections },
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = palette.cardSurface,
+                        scrolledContainerColor = palette.cardSurface,
+                        titleContentColor = palette.foreground,
+                        actionIconContentColor = palette.foreground,
+                    ),
+                    scrollBehavior = scrollBehavior,
                 )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ToolbarTextButton(
-                            text = "New list",
-                            icon = Icons.Outlined.Add,
-                            onClick = { createDialogOpen = true },
-                        )
-                        ToolbarTextButton(
-                            text = if (managingCollections) "Done" else "Manage lists",
-                            icon = null,
-                            onClick = { managingCollections = !managingCollections },
-                        )
-                    }
-                }
             }
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .nestedScroll(scrollBehavior.nestedScrollConnection),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 48.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
@@ -153,7 +175,7 @@ fun WishlistScreen(modifier: Modifier = Modifier) {
                         managing = managingCollections,
                         onClick = {
                             if (!managingCollections) {
-                                openCollectionId = col.id
+                                WishlistStore.openCollection(col.id)
                                 editing = false
                             }
                         },
@@ -182,8 +204,12 @@ fun WishlistScreen(modifier: Modifier = Modifier) {
                     collection = current,
                     editing = editing,
                     onToggleEdit = { editing = !editing },
-                    onBack = { openCollectionId = null; editing = false },
+                    onBack = {
+                        WishlistStore.closeOpenCollection()
+                        editing = false
+                    },
                     onRemove = { rid -> WishlistStore.removeFromAll(rid) },
+                    onOpenRestaurant = onOpenRestaurant,
                 )
             }
         }
@@ -297,6 +323,7 @@ private fun CollectionCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WishlistDetailPage(
     collection: WishlistCollection,
@@ -304,77 +331,91 @@ private fun WishlistDetailPage(
     onToggleEdit: () -> Unit,
     onBack: () -> Unit,
     onRemove: (String) -> Unit,
+    onOpenRestaurant: (String) -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
+    val topAppBarState = rememberTopAppBarState()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState)
+    val subtitle = if (collection.id == "recent") {
+        "Today"
+    } else {
+        "${collection.restaurants.size} saved"
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(palette.cardSurface),
     ) {
-        // Sticky top bar.
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .clickable { onBack() },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                    contentDescription = "Back",
-                    tint = palette.foreground,
-                    modifier = Modifier.size(22.dp),
-                )
-            }
-            Spacer(Modifier.weight(1f))
-            Text(
-                text = if (editing) "Done" else "Edit",
-                color = palette.foreground,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                textDecoration = TextDecoration.Underline,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { onToggleEdit() }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+        Box(Modifier.fillMaxWidth()) {
+            LargeTopAppBar(
+                title = {
+                    Text(
+                        text = collection.title,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = palette.foreground,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 0.dp)
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = "Back",
+                            tint = palette.foreground,
+                        )
+                    }
+                },
+                actions = {
+                    Text(
+                        text = if (editing) "Done" else "Edit",
+                        color = palette.foreground,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        textDecoration = TextDecoration.Underline,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { onToggleEdit() }
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = palette.cardSurface,
+                    scrolledContainerColor = palette.cardSurface,
+                    titleContentColor = palette.foreground,
+                    actionIconContentColor = palette.foreground,
+                    navigationIconContentColor = palette.foreground,
+                ),
+                scrollBehavior = scrollBehavior,
             )
         }
-        // Header.
-        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-            Text(
-                text = collection.title,
-                color = palette.foreground,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "${collection.restaurants.size} saved",
-                color = palette.mutedForeground,
-                fontSize = 14.sp,
-            )
-        }
-        Spacer(Modifier.height(12.dp))
-        // Grid.
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 100.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Text(
+                    text = subtitle,
+                    color = palette.mutedForeground,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 12.dp),
+                )
+            }
             items(collection.restaurants, key = { it.id }) { restaurant ->
                 DetailItem(
                     restaurant = restaurant,
-                    showRemove = collection.id == "recent" || editing,
+                    showRemove = editing,
                     onRemove = { onRemove(restaurant.id) },
+                    onClick = {
+                        if (!editing) onOpenRestaurant(restaurant.id)
+                    },
                 )
             }
         }
@@ -386,9 +427,14 @@ private fun DetailItem(
     restaurant: Restaurant,
     showRemove: Boolean,
     onRemove: () -> Unit,
+    onClick: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !showRemove, onClick = onClick),
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -407,6 +453,7 @@ private fun DetailItem(
                     active = true,
                     onClick = onRemove,
                     size = HeartButtonSize.Medium,
+                    style = HeartButtonStyle.Overlay,
                     contentDescription = "Remove",
                     modifier = Modifier
                         .align(Alignment.TopEnd)
