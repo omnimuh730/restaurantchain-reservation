@@ -2,6 +2,8 @@ package com.mh.restaurantchainreservation.core.navigation
 
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -25,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,11 +47,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavBar
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavTab
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavTabId
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationHost
 import com.mh.restaurantchainreservation.core.model.AuthSessionStore
+import com.mh.restaurantchainreservation.core.model.DiscoverData
 import com.mh.restaurantchainreservation.core.model.LocationStore
 import com.mh.restaurantchainreservation.feature.auth.AuthRoutes
 import com.mh.restaurantchainreservation.feature.auth.ForgotPasswordScreen
@@ -67,11 +73,13 @@ import com.mh.restaurantchainreservation.feature.discover.ui.CategoryResultsScre
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverHomeScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverSearchModal
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverSearchResultsScreen
+import com.mh.restaurantchainreservation.feature.discover.ui.FoodTypeCuisineListScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.FoodResultsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.LocationResultsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.NewsDetailScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.NewsListScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.SectionListScreen
+import com.mh.restaurantchainreservation.feature.discover.ui.WhereToEatAreaListScreen
 import com.mh.restaurantchainreservation.feature.profile.ContactSupportScreen
 import com.mh.restaurantchainreservation.feature.profile.CreditCardsScreen
 import com.mh.restaurantchainreservation.feature.profile.FriendsScreen
@@ -119,7 +127,7 @@ fun RestaurantNavHost(
 
     // Hide app chrome while auth, QR Pay, or other full-screen flows own the screen.
     val showAppChrome = shouldShowAppChrome(destination?.route)
-    val showBottomBar = isCompact && showAppChrome
+    val showBottomBar = isCompact && showAppChrome && shouldShowBottomNavBar(destination?.route)
 
     LaunchedEffect(authenticated, destination?.route) {
         val route = destination?.route ?: return@LaunchedEffect
@@ -147,6 +155,8 @@ fun RestaurantNavHost(
                         val route = routeForTab(id)
                         if (!authenticated && requiresAuthRoute(route)) {
                             navController.navigate(AuthRoutes.Login) { launchSingleTop = true }
+                        } else if (id == BottomNavTabId.Discover) {
+                            navController.navigateToDiscoverHome()
                         } else {
                             navController.navigateToTab(route)
                         }
@@ -187,6 +197,8 @@ fun RestaurantNavHost(
                                 val route = routeForTab(tab.id)
                                 if (!authenticated && requiresAuthRoute(route)) {
                                     navController.navigate(AuthRoutes.Login) { launchSingleTop = true }
+                                } else if (tab.id == BottomNavTabId.Discover) {
+                                    navController.navigateToDiscoverHome()
                                 } else {
                                     navController.navigateToTab(route)
                                 }
@@ -243,6 +255,20 @@ private fun NavHostController.navigateToTab(route: String) {
     }
 }
 
+/** Pops booking/dining overlays and returns to the discover home feed. */
+private fun NavHostController.navigateToDiscoverHome() {
+    if (popBackStack(DiscoverRoutes.Home, inclusive = false)) {
+        return
+    }
+    navigate(DiscoverRoutes.Home) {
+        popUpTo(DiscoverRoutes.Home) {
+            saveState = true
+        }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
 private fun routeForTab(tab: BottomNavTabId): String = when (tab) {
     BottomNavTabId.Discover -> DiscoverRoutes.Home
     BottomNavTabId.Wishlist -> WishlistRoutes.Home
@@ -263,6 +289,11 @@ private fun resolveActiveTab(hierarchyRoutes: List<String>): BottomNavTabId? {
         hierarchyRoutes.any { route -> route == ProfileRoutes.Home || route in ProfileRoutes.AllProfileSubRoutes } -> BottomNavTabId.Profile
         else -> null
     }
+}
+
+private fun shouldShowBottomNavBar(route: String?): Boolean {
+    if (route == null) return true
+    return !route.startsWith("discover/restaurant/")
 }
 
 /** QR Pay (and other full-screen overlays) own the entire viewport. */
@@ -290,6 +321,7 @@ private fun requiresAuthRoute(route: String?): Boolean {
         route in ProfileRoutes.AllProfileSubRoutes
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun AppGraph(
     navController: NavHostController,
@@ -303,45 +335,60 @@ private fun AppGraph(
     }
 
     Box(modifier = modifier) {
-        NavHost(
-            navController = navController,
-            startDestination = initialStartDestination,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPadding),
-        ) {
+        SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+            CompositionLocalProvider(LocalRestaurantSharedTransitionScope provides this) {
+                NavHost(
+                    navController = navController,
+                    startDestination = initialStartDestination,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(contentPadding),
+                ) {
             composable(DiscoverRoutes.Home) {
-                val currentLocation by LocationStore.current.collectAsState()
-                DiscoverHomeScreen(
-                    onOpenSearch = { navController.navigate(DiscoverRoutes.Search) },
-                    onOpenMap = {
-                        navController.navigate(
-                            "discover/search/results?q=" + Uri.encode("All restaurants") +
-                                "&summary=" + Uri.encode("Tonight, 7:00 PM, 2 people"),
-                        )
-                    },
-                    onOpenRestaurant = { id -> navController.navigate(BookingRoutes.restaurantDetail(id)) },
-                    onOpenCategory = { id ->
-                        if (id == "nearby-me") {
-                            navController.navigate(
-                                "discover/search/results?q=" + Uri.encode(currentLocation.name) +
-                                    "&summary=" + Uri.encode("Tonight, 7:00 PM, 2 people"),
+                CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                    val currentLocation by LocationStore.current.collectAsState()
+                    DiscoverHomeScreen(
+                        onOpenSearch = { navController.navigate(DiscoverRoutes.Search) },
+                        onOpenMap = {
+                            navController.navigateDiscoverSearchResults(
+                                q = "All restaurants",
+                                summary = "Tonight, 7:00 PM, 2 people",
                             )
-                        } else {
-                            navController.navigate(DiscoverRoutes.category(id))
-                        }
-                    },
-                    onOpenFood = { id -> navController.navigate(DiscoverRoutes.food(id)) },
-                    onOpenLocation = { id -> navController.navigate(DiscoverRoutes.location(id)) },
-                    onOpenNewsList = { navController.navigate(DiscoverRoutes.NewsList) },
-                    onOpenNewsArticle = { id -> navController.navigate(DiscoverRoutes.newsDetail(id)) },
-                    onOpenSection = { id ->
-                        when (id) {
-                            "banners" -> navController.navigate(DiscoverRoutes.AllPromotions)
-                            else -> navController.navigate(DiscoverRoutes.section(id))
-                        }
-                    },
-                )
+                        },
+                        onOpenRestaurant = { id -> navController.navigateToRestaurantDetail(id) },
+                        onOpenCategory = { id ->
+                            when (id) {
+                                "nearby-me" -> {
+                                    navController.navigateDiscoverSearchResults(
+                                        q = currentLocation.name,
+                                        summary = "Tonight, 7:00 PM, 2 people",
+                                    )
+                                }
+                                "local-fav" -> {
+                                    val city = DiscoverData.cityForLocation(currentLocation)
+                                    navController.navigateDiscoverSearchResults(
+                                        q = DiscoverData.localFavoritesSearchQuery,
+                                        summary = "Tonight, 7:00 PM, 2 people",
+                                        locationId = city.id,
+                                    )
+                                }
+                                else -> navController.navigate(DiscoverRoutes.category(id))
+                            }
+                        },
+                        onOpenFood = { id -> navController.navigate(DiscoverRoutes.food(id)) },
+                        onOpenLocation = { id -> navController.navigate(DiscoverRoutes.location(id)) },
+                        onOpenNewsList = { navController.navigate(DiscoverRoutes.NewsList) },
+                        onOpenNewsArticle = { id -> navController.navigate(DiscoverRoutes.newsDetail(id)) },
+                        onOpenSection = { id ->
+                            when (id) {
+                                "banners" -> navController.navigate(DiscoverRoutes.AllPromotions)
+                                "where-to-eat" -> navController.navigate(DiscoverRoutes.WhereToEatAreas)
+                                "top-picks-food" -> navController.navigate(DiscoverRoutes.FoodTypes)
+                                else -> navController.navigate(DiscoverRoutes.section(id))
+                            }
+                        },
+                    )
+                }
             }
             composable(DiscoverRoutes.NewsList) {
                 NewsListScreen(
@@ -368,34 +415,54 @@ private fun AppGraph(
                     },
                 )
             }
+            composable(DiscoverRoutes.WhereToEatAreas) {
+                WhereToEatAreaListScreen(
+                    onBack = { navController.popBackStack() },
+                    onSelectArea = { locationId, areaLabel ->
+                        navController.navigateDiscoverSearchResults(
+                            q = "Best of $areaLabel",
+                            summary = "Tonight, 7:00 PM, 2 people",
+                            locationId = locationId,
+                        )
+                    },
+                )
+            }
+            composable(DiscoverRoutes.FoodTypes) {
+                FoodTypeCuisineListScreen(
+                    onBack = { navController.popBackStack() },
+                    onSelectCuisine = { foodId -> navController.navigate(DiscoverRoutes.food(foodId)) },
+                )
+            }
             composable(DiscoverRoutes.Search) {
                 DiscoverSearchModal(
                     onClose = { navController.popBackStack() },
                     onSubmit = { q, summary ->
                         navController.popBackStack()
-                        navController.navigate(
-                            "discover/search/results?q=" + Uri.encode(q) +
-                                "&summary=" + Uri.encode(summary),
-                        )
+                        navController.navigateDiscoverSearchResults(q = q, summary = summary)
                     },
                 )
             }
             composable(
-                route = "discover/search/results?q={q}&summary={summary}",
+                route = DiscoverRoutes.SearchResults,
                 arguments = listOf(
                     navArgument("q") { type = NavType.StringType; defaultValue = "" },
                     navArgument("summary") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("locationId") { type = NavType.StringType; defaultValue = "" },
                 ),
             ) { entry ->
-                val q = entry.arguments?.getString("q").orEmpty()
-                val summary = entry.arguments?.getString("summary").orEmpty()
-                DiscoverSearchResultsScreen(
-                    query = q,
-                    planSummary = summary.ifBlank { "Tonight, 7:00 PM, 2 people" },
-                    onBack = { navController.popBackStack() },
-                    onOpenSearch = { navController.navigate(DiscoverRoutes.Search) },
-                    onOpenRestaurant = { id -> navController.navigate(BookingRoutes.restaurantDetail(id)) },
-                )
+                CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                    val q = entry.arguments?.getString("q").orEmpty()
+                    val summary = entry.arguments?.getString("summary").orEmpty()
+                    val locationId = entry.arguments?.getString("locationId").orEmpty()
+                    DiscoverSearchResultsScreen(
+                        query = q,
+                        planSummary = summary.ifBlank { "Tonight, 7:00 PM, 2 people" },
+                        locationId = locationId,
+                        onBack = { navController.popBackStack() },
+                        onOpenSearch = { navController.navigate(DiscoverRoutes.Search) },
+                        onOpenRestaurant = { id -> navController.navigateToRestaurantDetail(id) },
+                    )
+                }
             }
             composable(
                 route = DiscoverRoutes.Category,
@@ -405,7 +472,7 @@ private fun AppGraph(
                 CategoryResultsScreen(
                     categoryId = id,
                     onBack = { navController.popBackStack() },
-                    onOpenRestaurant = { rid -> navController.navigate(BookingRoutes.restaurantDetail(rid)) },
+                    onOpenRestaurant = { rid -> navController.navigateToRestaurantDetail(rid) },
                 )
             }
             composable(
@@ -416,7 +483,7 @@ private fun AppGraph(
                 FoodResultsScreen(
                     foodId = id,
                     onBack = { navController.popBackStack() },
-                    onOpenRestaurant = { rid -> navController.navigate(BookingRoutes.restaurantDetail(rid)) },
+                    onOpenRestaurant = { rid -> navController.navigateToRestaurantDetail(rid) },
                 )
             }
             composable(
@@ -427,7 +494,7 @@ private fun AppGraph(
                 LocationResultsScreen(
                     locationId = id,
                     onBack = { navController.popBackStack() },
-                    onOpenRestaurant = { rid -> navController.navigate(BookingRoutes.restaurantDetail(rid)) },
+                    onOpenRestaurant = { rid -> navController.navigateToRestaurantDetail(rid) },
                 )
             }
             composable(
@@ -438,19 +505,21 @@ private fun AppGraph(
                 SectionListScreen(
                     sectionId = id,
                     onBack = { navController.popBackStack() },
-                    onOpenRestaurant = { rid -> navController.navigate(BookingRoutes.restaurantDetail(rid)) },
+                    onOpenRestaurant = { rid -> navController.navigateToRestaurantDetail(rid) },
                 )
             }
             composable(
                 route = BookingRoutes.RestaurantDetail,
                 arguments = listOf(navArgument("restaurantId") { type = NavType.StringType }),
             ) { entry ->
-                val id = entry.arguments?.getString("restaurantId").orEmpty()
-                RestaurantDetailScreen(
-                    restaurantId = id,
-                    onBack = { navController.popBackStack() },
-                    onBookNow = { navController.navigate(BookingRoutes.bookTable(id)) },
-                )
+                CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                    val id = entry.arguments?.getString("restaurantId").orEmpty()
+                    RestaurantDetailScreen(
+                        restaurantId = id,
+                        onBack = { navController.popBackStack() },
+                        onBookNow = { navController.navigate(BookingRoutes.bookTable(id)) },
+                    )
+                }
             }
             composable(
                 route = BookingRoutes.BookTable,
@@ -460,9 +529,14 @@ private fun AppGraph(
                 BookTableScreen(
                     restaurantId = id,
                     onBack = { navController.popBackStack() },
-                    onComplete = {
-                        // Pop back to the discover home so the user lands somewhere sensible.
-                        navController.popBackStack(DiscoverRoutes.Home, inclusive = false)
+                    onNavigateToDining = {
+                        navController.navigate(DiningRoutes.Home) {
+                            popUpTo(DiscoverRoutes.Home) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    },
+                    onNavigateToDiscover = {
+                        navController.navigateToDiscoverHome()
                     },
                 )
             }
@@ -487,7 +561,9 @@ private fun AppGraph(
                 )
             }
             composable(WishlistRoutes.Home) {
-                WishlistScreen()
+                WishlistScreen(
+                    onOpenRestaurant = { id -> navController.navigateToRestaurantDetail(id) },
+                )
             }
             composable(ProfileRoutes.Home) {
                 ProfileHomeScreen(
@@ -595,7 +671,27 @@ private fun AppGraph(
                 }
             }
         }
+            }
+        }
     }
+}
+
+private fun NavHostController.navigateToRestaurantDetail(restaurantId: String) {
+    navigate(BookingRoutes.restaurantDetail(restaurantId)) {
+        launchSingleTop = true
+    }
+}
+
+private fun NavHostController.navigateDiscoverSearchResults(
+    q: String,
+    summary: String = "Tonight, 7:00 PM, 2 people",
+    locationId: String = "",
+) {
+    navigate(
+        "discover/search/results?q=" + Uri.encode(q) +
+            "&summary=" + Uri.encode(summary) +
+            "&locationId=" + Uri.encode(locationId),
+    )
 }
 
 private fun NavGraphBuilder.profileSubComposable(

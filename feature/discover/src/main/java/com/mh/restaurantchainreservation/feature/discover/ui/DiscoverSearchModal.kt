@@ -26,7 +26,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Navigation
@@ -45,6 +44,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -94,8 +96,21 @@ fun DiscoverSearchModal(
         formatPlanSummary("Tonight", "19:00", 2)
     }
 
-    val filteredLocations = remember(locationInputValue) {
-        val t = locationInputValue.trim().lowercase()
+    val locationFilterText = remember(selectedWhere, customWhere) {
+        when (whereSel()) {
+            WhereSelection.Custom -> customWhere.trim()
+            else -> ""
+        }
+    }
+
+    val filteredRecentLocations = remember(locationFilterText) {
+        val t = locationFilterText.lowercase()
+        if (t.isEmpty()) DiscoverSearchData.recentLocationLabels
+        else DiscoverSearchData.recentLocationLabels.filter { it.lowercase().contains(t) }
+    }
+
+    val filteredLocations = remember(locationFilterText) {
+        val t = locationFilterText.lowercase()
         if (t.isEmpty()) DiscoverSearchData.locationSuggestions
         else DiscoverSearchData.locationSuggestions.filter { row ->
             when (row) {
@@ -197,27 +212,29 @@ fun DiscoverSearchModal(
             }
 
             item {
-                if (activeInput == ActiveSearchInput.Location) {
-                    ShortcutRow(
-                        icon = Icons.Outlined.Navigation,
-                        label = "My current location",
-                        selected = whereSel() == WhereSelection.NearMe,
-                        onClick = {
-                            selectedWhere = WhereSelection.NearMe.name
-                            customWhere = ""
-                            activeInput = ActiveSearchInput.Food
-                        },
-                    )
-                } else {
-                    ShortcutRow(
-                        icon = Icons.Outlined.Restaurant,
-                        label = "See all restaurants",
-                        selected = false,
-                        onClick = {
-                            keyword = ""
-                            submitSearch()
-                        },
-                    )
+                when (activeInput) {
+                    ActiveSearchInput.Location -> {
+                        ShortcutRow(
+                            icon = Icons.Outlined.Navigation,
+                            label = "My current location",
+                            selected = whereSel() == WhereSelection.NearMe,
+                            onClick = {
+                                selectedWhere = WhereSelection.NearMe.name
+                                customWhere = ""
+                            },
+                        )
+                    }
+                    ActiveSearchInput.Food -> {
+                        ShortcutRow(
+                            icon = Icons.Outlined.Restaurant,
+                            label = "See all restaurants",
+                            selected = false,
+                            onClick = {
+                                keyword = ""
+                                submitSearch()
+                            },
+                        )
+                    }
                 }
                 Spacer(Modifier.height(12.dp))
                 Box(
@@ -229,105 +246,88 @@ fun DiscoverSearchModal(
                 Spacer(Modifier.height(12.dp))
             }
 
-            if (activeInput == ActiveSearchInput.Location) {
-                item {
-                    Text(
-                        "Suggested searches",
-                        color = palette.foreground,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 4.dp),
-                    )
-                }
-                items(filteredLocations) { row ->
-                    val label = when (row) {
-                        is LocationSuggestionRow.Preset -> row.label
-                        is LocationSuggestionRow.City -> row.label
-                    }
-                    val selected = when (row) {
-                        is LocationSuggestionRow.Preset -> whereSel() == row.where
-                        is LocationSuggestionRow.City -> whereSel() == WhereSelection.Custom && customWhere == row.label
-                    }
-                    SuggestionListRow(
-                        icon = Icons.Outlined.LocationOn,
-                        label = label,
-                        selected = selected,
-                        onClick = {
-                            when (row) {
-                                is LocationSuggestionRow.Preset -> {
-                                    selectedWhere = row.where.name
-                                    customWhere = ""
-                                }
-                                is LocationSuggestionRow.City -> {
-                                    selectedWhere = WhereSelection.Custom.name
-                                    customWhere = row.label
-                                }
-                            }
-                            activeInput = ActiveSearchInput.Food
-                        },
-                    )
-                }
-            } else {
-                item {
-                    Text(
-                        "Popular categories",
-                        color = palette.foreground,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 4.dp),
-                    )
-                }
-                items(filteredFood) { food ->
-                    val icon: ImageVector = if (food.trending) Icons.Outlined.TrendingUp else Icons.Outlined.Restaurant
-                    SuggestionListRow(
-                        icon = icon,
-                        label = food.label,
-                        selected = keyword.trim().equals(food.label, ignoreCase = true),
-                        onClick = { keyword = food.label },
-                    )
-                }
-                item {
-                    Spacer(Modifier.height(12.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(Color(0xFFEBEBEB)),
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        "Recent searches",
-                        color = palette.mutedForeground,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 4.dp),
-                    )
-                }
-                items(DiscoverSearchData.recentSearchLabels) { recent ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .clickable { keyword = recent }
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(palette.mutedSurface),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(Icons.Outlined.AccessTime, contentDescription = null, tint = palette.mutedForeground, modifier = Modifier.size(16.dp))
-                        }
+            when (activeInput) {
+                ActiveSearchInput.Location -> {
+                    item {
                         Text(
-                            recent,
+                            "Recent searches",
                             color = palette.foreground,
                             fontSize = 14.sp,
-                            modifier = Modifier.padding(start = 12.dp),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 4.dp),
+                        )
+                    }
+                    items(filteredRecentLocations, key = { it }) { label ->
+                        SuggestionListRow(
+                            icon = Icons.Outlined.LocationOn,
+                            label = label,
+                            selected = whereSel() == WhereSelection.Custom && customWhere.equals(label, ignoreCase = true),
+                            onClick = {
+                                selectedWhere = WhereSelection.Custom.name
+                                customWhere = label
+                            },
+                        )
+                    }
+                    item {
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            "Suggested searches",
+                            color = palette.foreground,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 4.dp),
+                        )
+                    }
+                    items(filteredLocations, key = { row ->
+                        when (row) {
+                            is LocationSuggestionRow.Preset -> "p:${row.where.name}"
+                            is LocationSuggestionRow.City -> "c:${row.label}"
+                        }
+                    }) { row ->
+                        val label = when (row) {
+                            is LocationSuggestionRow.Preset -> row.label
+                            is LocationSuggestionRow.City -> row.label
+                        }
+                        val selected = when (row) {
+                            is LocationSuggestionRow.Preset -> whereSel() == row.where
+                            is LocationSuggestionRow.City -> whereSel() == WhereSelection.Custom && customWhere == row.label
+                        }
+                        SuggestionListRow(
+                            icon = Icons.Outlined.LocationOn,
+                            label = label,
+                            selected = selected,
+                            onClick = {
+                                when (row) {
+                                    is LocationSuggestionRow.Preset -> {
+                                        selectedWhere = row.where.name
+                                        customWhere = ""
+                                    }
+                                    is LocationSuggestionRow.City -> {
+                                        selectedWhere = WhereSelection.Custom.name
+                                        customWhere = row.label
+                                    }
+                                }
+                            },
+                        )
+                    }
+                }
+                ActiveSearchInput.Food -> {
+                    item {
+                        Text(
+                            "Popular categories",
+                            color = palette.foreground,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 4.dp),
+                        )
+                    }
+                    items(filteredFood, key = { it.label }) { food ->
+                        val icon: ImageVector = if (food.trending) Icons.Outlined.TrendingUp else Icons.Outlined.Restaurant
+                        SuggestionListRow(
+                            icon = icon,
+                            label = food.label,
+                            selected = keyword.trim().equals(food.label, ignoreCase = true),
+                            onClick = { keyword = food.label },
                         )
                     }
                 }
@@ -379,6 +379,7 @@ private fun SearchInputRow(
     onClear: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
+    val focusRequester = remember { FocusRequester() }
     val border = if (focused) Color(0xFF222222) else Color(0xFFDDDDDD)
     Row(
         modifier = Modifier
@@ -387,7 +388,10 @@ private fun SearchInputRow(
             .clip(RoundedCornerShape(18.dp))
             .border(1.dp, border, RoundedCornerShape(18.dp))
             .background(palette.cardSurface)
-            .clickable { onFocus() }
+            .clickable {
+                focusRequester.requestFocus()
+                onFocus()
+            }
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -397,7 +401,11 @@ private fun SearchInputRow(
             onValueChange = onValueChange,
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 10.dp),
+                .padding(horizontal = 10.dp)
+                .focusRequester(focusRequester)
+                .onFocusChanged { state ->
+                    if (state.isFocused) onFocus()
+                },
             singleLine = true,
             textStyle = TextStyle(color = palette.foreground, fontSize = 15.sp),
             cursorBrush = SolidColor(palette.brand),

@@ -57,6 +57,21 @@ object WishlistStore {
     private val _gatheredShown = MutableStateFlow(false)
     val gatheredShown: StateFlow<Boolean> = _gatheredShown.asStateFlow()
 
+    /**
+     * Which wishlist collection detail overlay is open, if any. Kept on the store
+     * so it survives navigation to restaurant detail and back.
+     */
+    private val _openCollectionId = MutableStateFlow<String?>(null)
+    val openCollectionId: StateFlow<String?> = _openCollectionId.asStateFlow()
+
+    fun openCollection(id: String) {
+        _openCollectionId.value = id
+    }
+
+    fun closeOpenCollection() {
+        _openCollectionId.value = null
+    }
+
     /** Synchronous helper used by save buttons to render the heart fill state. */
     fun isSaved(restaurantId: String): Boolean =
         _collections.value.any { col -> col.restaurants.any { it.id == restaurantId } }

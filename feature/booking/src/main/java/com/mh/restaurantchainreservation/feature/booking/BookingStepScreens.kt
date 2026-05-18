@@ -3,6 +3,8 @@ package com.mh.restaurantchainreservation.feature.booking
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -50,6 +53,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,6 +64,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -200,6 +206,10 @@ private fun GuestStepperButton(icon: ImageVector, filled: Boolean, onClick: () -
     }
 }
 
+private val DateChipWidth = 68.dp
+private val DateChipHeight = 88.dp
+private val DateChipLabelHeight = 26.dp
+
 @Composable
 private fun DateChip(
     top: String,
@@ -209,25 +219,49 @@ private fun DateChip(
     onClick: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
+    val contentColor = if (selected) Color.White else palette.foreground
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
-            .width(68.dp)
+            .width(DateChipWidth)
+            .height(DateChipHeight)
             .clip(RoundedCornerShape(18.dp))
             .background(if (selected) palette.brand else palette.cardSurface)
             .border(1.dp, if (selected) palette.brand else palette.border, RoundedCornerShape(18.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 10.dp),
+            .padding(horizontal = 8.dp, vertical = 10.dp),
     ) {
-        Text(top, color = if (selected) Color.White else palette.foreground, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(DateChipLabelHeight),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = top,
+                color = contentColor,
+                fontSize = 10.sp,
+                lineHeight = 12.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+            )
+        }
         Text(
-            middle,
-            color = if (selected) Color.White else palette.foreground,
+            text = middle,
+            color = contentColor,
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(vertical = 2.dp),
         )
-        Text(bottom, color = if (selected) Color.White else palette.foreground, fontSize = 11.sp)
+        Text(
+            text = bottom,
+            color = contentColor,
+            fontSize = 11.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -310,28 +344,60 @@ internal fun BookingDetailsStep(
                 subtitle = "Allergies, seating, or celebration notes.",
             )
             Spacer(Modifier.height(12.dp))
-            TextField(
-                value = notes,
-                onValueChange = onNotesChange,
-                placeholder = {
-                    Text(
-                        "Allergies, dietary restrictions, celebrations…",
-                        color = palette.mutedForeground,
-                        fontSize = 14.sp,
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = palette.cardSurface,
-                    unfocusedContainerColor = palette.cardSurface,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                ),
+            BookingNotesField(
+                notes = notes,
+                onNotesChange = onNotesChange,
             )
         }
+    }
+}
+
+@Composable
+private fun BookingNotesField(
+    notes: String,
+    onNotesChange: (String) -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val focused by interactionSource.collectIsFocusedAsState()
+    val shape = RoundedCornerShape(20.dp)
+    val borderWidth = if (focused) 2.dp else 1.dp
+    val borderColor = if (focused) palette.brand else palette.border
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(120.dp)
+            .clip(shape)
+            .background(palette.cardSurface)
+            .border(borderWidth, borderColor, shape),
+    ) {
+        TextField(
+            value = notes,
+            onValueChange = onNotesChange,
+            interactionSource = interactionSource,
+            placeholder = {
+                Text(
+                    text = "Allergies, dietary restrictions, celebrations…",
+                    color = palette.mutedForeground,
+                    fontSize = 14.sp,
+                )
+            },
+            modifier = Modifier.fillMaxSize(),
+            shape = shape,
+            minLines = 4,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+                cursorColor = palette.brand,
+                focusedTextColor = palette.foreground,
+                unfocusedTextColor = palette.foreground,
+            ),
+        )
     }
 }
 

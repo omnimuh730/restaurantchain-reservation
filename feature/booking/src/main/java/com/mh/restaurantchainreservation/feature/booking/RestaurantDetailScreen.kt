@@ -1,5 +1,8 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,18 +39,16 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.DirectionsCar
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Shield
-import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,8 +59,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -67,9 +70,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteCenterBadge
+import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteRatingLaurelRow
+import com.mh.restaurantchainreservation.core.designsystem.badge.guestFavoriteDescription
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleModifier
 import com.mh.restaurantchainreservation.core.model.Restaurant
+import com.mh.restaurantchainreservation.core.model.withDerivedGuestFavoriteLevel
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -88,15 +100,16 @@ fun RestaurantDetailScreen(
     val restaurant = remember(restaurantId) {
         com.mh.restaurantchainreservation.core.model.DiscoverData.findById(restaurantId)
             ?: com.mh.restaurantchainreservation.core.model.DiscoverData.MONTHLY_BEST.first()
+                .withDerivedGuestFavoriteLevel()
     }
     val ext = remember(restaurant) { RestaurantDetailData.extendedData(restaurant) }
     val gallery = remember(restaurant) { RestaurantDetailData.galleryImages(restaurant) }
     val topReviews = remember { RestaurantDetailData.reviews.take(10) }
-    val menuWithImages = remember { RestaurantDetailData.menuItems.filter { it.imageUrl != null } }
-
     var saved by remember { mutableStateOf(false) }
     var showReviews by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
+    var showAmenities by remember { mutableStateOf(false) }
+    var galleryFullscreenIndex by remember { mutableStateOf<Int?>(null) }
     var headerSolid by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     val headerSolidDerived by remember {
@@ -106,30 +119,60 @@ fun RestaurantDetailScreen(
         headerSolid = headerSolidDerived
     }
 
+    val shared = LocalRestaurantSharedTransitionScope.current
+    val animatedContent = LocalAnimatedContentScope.current
+    val titleModifier = rememberRestaurantSharedTitleModifier(restaurant.id, shared, animatedContent)
+    val bodyReveal = remember { Animatable(0f) }
+    val density = LocalDensity.current
+    val bodySlidePx = remember(density) { with(density) { 28.dp.toPx() } }
+    LaunchedEffect(restaurantId) {
+        bodyReveal.snapTo(0f)
+        bodyReveal.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 420, delayMillis = 96, easing = FastOutSlowInEasing),
+        )
+    }
+
     Box(modifier = modifier.fillMaxSize().background(palette.cardSurface)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState),
         ) {
-            HeroCarousel(galleryImages = gallery, restaurantName = restaurant.name)
-            HeaderSummaryCard(restaurant = restaurant, ext = ext)
-            RatingsSummaryRow(restaurant = restaurant, onOpenReviews = { showReviews = true })
-            HighlightsSection(restaurant = restaurant)
-            AboutSection(ext = ext)
-            AmenitiesSection(ext = ext)
-            LocationSection(restaurant = restaurant, ext = ext)
-            GuestFavoriteSection(
-                restaurant = restaurant,
-                reviews = topReviews,
-                onOpenReviews = { showReviews = true },
+            HeroCarousel(
+                restaurantId = restaurant.id,
+                galleryImages = gallery,
+                restaurantName = restaurant.name,
+                onOpenFullscreen = { index -> galleryFullscreenIndex = index },
             )
-            CancellationPolicySection()
-            PopularMenuSection(
-                items = menuWithImages,
-                onShowMenu = { showMenu = true },
-            )
-            Spacer(Modifier.height(120.dp))
+            HeaderSummaryCard(restaurant = restaurant, ext = ext, titleModifier = titleModifier)
+            Column(
+                modifier = Modifier.graphicsLayer {
+                    val p = bodyReveal.value
+                    translationY = (1f - p) * bodySlidePx
+                    alpha = 0.22f + 0.78f * p
+                },
+            ) {
+                RatingsSummaryRow(restaurant = restaurant, onOpenReviews = { showReviews = true })
+                HighlightsSection(restaurant = restaurant)
+                AboutSection(ext = ext)
+                AmenitiesSection(
+                    restaurant = restaurant,
+                    ext = ext,
+                    onShowAll = { showAmenities = true },
+                )
+                LocationSection(restaurant = restaurant, ext = ext)
+                if (restaurant.guestFavoriteLevel.isGuestFavorite()) {
+                    GuestFavoriteSection(
+                        restaurant = restaurant,
+                        reviews = topReviews,
+                        onOpenReviews = { showReviews = true },
+                    )
+                }
+                CancellationPolicySection()
+                PopularMenuSection(onShowMenu = { showMenu = true })
+                Spacer(Modifier.height(120.dp))
+            }
         }
 
         DetailTopBar(
@@ -160,6 +203,21 @@ fun RestaurantDetailScreen(
                 modifier = Modifier.fillMaxSize(),
             )
         }
+        if (showAmenities) {
+            RestaurantAmenitiesScreen(
+                restaurant = restaurant,
+                onBack = { showAmenities = false },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        galleryFullscreenIndex?.let { startIndex ->
+            MenuImageFullscreenViewer(
+                images = gallery,
+                initialIndex = startIndex,
+                onDismiss = { galleryFullscreenIndex = null },
+            )
+        }
     }
 }
 
@@ -172,7 +230,7 @@ private fun DetailTopBar(
     onToggleSave: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val buttonBg = if (solid) palette.mutedSurface else Color.White.copy(alpha = 0.88f)
+    val buttonBg = Color.White
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -194,18 +252,24 @@ private fun DetailTopBar(
             GlassCircleButton(onClick = onBack, background = buttonBg) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = palette.foreground, modifier = Modifier.size(20.dp))
             }
-            Text(
-                text = restaurantName,
-                color = palette.foreground,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            Box(
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 12.dp),
-                textAlign = TextAlign.Center,
-            )
+                contentAlignment = Alignment.Center,
+            ) {
+                if (solid) {
+                    Text(
+                        text = restaurantName,
+                        color = palette.foreground,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 GlassCircleButton(onClick = { }, background = buttonBg) {
                     Icon(Icons.Default.Share, "Share", tint = palette.foreground, modifier = Modifier.size(18.dp))
@@ -238,8 +302,16 @@ private fun GlassCircleButton(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun HeroCarousel(galleryImages: List<String>, restaurantName: String) {
+private fun HeroCarousel(
+    restaurantId: String,
+    galleryImages: List<String>,
+    restaurantName: String,
+    onOpenFullscreen: (Int) -> Unit,
+) {
     val pagerState = rememberPagerState(pageCount = { galleryImages.size })
+    val shared = LocalRestaurantSharedTransitionScope.current
+    val animatedContent = LocalAnimatedContentScope.current
+    val heroSharedModifier = rememberRestaurantSharedHeroModifier(restaurantId, shared, animatedContent)
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -253,7 +325,10 @@ private fun HeroCarousel(galleryImages: List<String>, restaurantName: String) {
                 model = galleryImages[page],
                 contentDescription = restaurantName,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable { onOpenFullscreen(page) }
+                    .then(if (page == 0) heroSharedModifier else Modifier),
             )
         }
         Box(
@@ -275,7 +350,11 @@ private fun HeroCarousel(galleryImages: List<String>, restaurantName: String) {
 }
 
 @Composable
-private fun HeaderSummaryCard(restaurant: Restaurant, ext: RestaurantExtendedData) {
+private fun HeaderSummaryCard(
+    restaurant: Restaurant,
+    ext: RestaurantExtendedData,
+    titleModifier: Modifier = Modifier,
+) {
     val palette = LocalRestaurantPalette.current
     Column(
         modifier = Modifier
@@ -291,6 +370,7 @@ private fun HeaderSummaryCard(restaurant: Restaurant, ext: RestaurantExtendedDat
             fontSize = 32.sp,
             lineHeight = 38.sp,
             fontWeight = FontWeight.Bold,
+            modifier = titleModifier,
         )
         Text(
             text = "${restaurant.cuisine} restaurant in ${restaurant.distance} area",
@@ -310,6 +390,9 @@ private fun HeaderSummaryCard(restaurant: Restaurant, ext: RestaurantExtendedDat
 @Composable
 private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit) {
     val palette = LocalRestaurantPalette.current
+    val laurelTier = restaurant.guestFavoriteLevel.toLaurelTier()
+    val showBadge = restaurant.guestFavoriteLevel.isGuestFavorite()
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -318,7 +401,7 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit)
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
-            modifier = Modifier.weight(2f),
+            modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -333,18 +416,18 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit)
                 }
             }
         }
-        Column(
-            modifier = Modifier
-                .weight(4f)
-                .border(1.dp, palette.borderSoft)
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text("Guest", color = palette.foreground, fontSize = 18.sp, fontWeight = FontWeight.Bold, lineHeight = 20.sp)
-            Text("favorite", color = palette.foreground, fontSize = 18.sp, fontWeight = FontWeight.Bold, lineHeight = 20.sp)
+        if (showBadge) {
+            RatingsSummaryDivider(palette = palette)
+            GuestFavoriteCenterBadge(
+                tier = laurelTier,
+                modifier = Modifier.weight(1.35f),
+                laurelHeight = 34.dp,
+                titleSize = 15.sp,
+            )
         }
+        RatingsSummaryDivider(palette = palette)
         Column(
-            modifier = Modifier.weight(2f),
+            modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -363,6 +446,17 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit)
         }
     }
     HorizontalDivider(color = palette.borderSoft)
+}
+
+@Composable
+private fun RatingsSummaryDivider(palette: RestaurantPalette) {
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 12.dp)
+            .width(1.dp)
+            .height(44.dp)
+            .background(palette.borderSoft),
+    )
 }
 
 @Composable
@@ -415,16 +509,24 @@ private fun AboutSection(ext: RestaurantExtendedData) {
 }
 
 @Composable
-private fun AmenitiesSection(ext: RestaurantExtendedData) {
+private fun AmenitiesSection(
+    restaurant: Restaurant,
+    ext: RestaurantExtendedData,
+    onShowAll: () -> Unit,
+) {
     val palette = LocalRestaurantPalette.current
+    val previewItems = remember(restaurant, ext) {
+        RestaurantAmenitiesData.previewItems(restaurant, ext)
+    }
     Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)) {
         Text("What this place offers", color = palette.foreground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(20.dp))
-        AmenityRow(Icons.Outlined.AccessTime, "Service time: ${ext.deliveryTime}")
-        AmenityRow(Icons.Outlined.Wifi, "Fast WiFi and cozy seating")
-        AmenityRow(Icons.Outlined.DirectionsCar, "Convenient parking nearby")
-        AmenityRow(Icons.Outlined.Phone, "Phone support: ${ext.phone}")
-        AmenityRow(Icons.Outlined.AutoAwesome, ext.tags.joinToString(" · "))
+        previewItems.forEach { item ->
+            AmenityRow(
+                icon = item.icon.toImageVector(),
+                text = item.label,
+            )
+        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -432,7 +534,7 @@ private fun AmenitiesSection(ext: RestaurantExtendedData) {
                 .height(48.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(palette.mutedSurface)
-                .clickable { },
+                .clickable(onClick = onShowAll),
             contentAlignment = Alignment.Center,
         ) {
             Text("Show all amenities", color = palette.foreground, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -457,46 +559,31 @@ private fun AmenityRow(icon: ImageVector, text: String) {
 @Composable
 private fun LocationSection(restaurant: Restaurant, ext: RestaurantExtendedData) {
     val palette = LocalRestaurantPalette.current
+    val (lat, lng) = remember(restaurant.id) { RestaurantDetailData.mapCoordinate(restaurant) }
+    val locationLine = remember(restaurant.area, ext.address) {
+        listOfNotNull(restaurant.area, ext.address).joinToString(", ")
+    }
     Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)) {
         Text("Where you'll be", color = palette.foreground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-        Text(ext.address, color = palette.mutedForeground, fontSize = 15.sp, modifier = Modifier.padding(top = 8.dp, bottom = 16.dp))
-        Box(
+        Text(
+            text = locationLine,
+            color = palette.mutedForeground,
+            fontSize = 15.sp,
+            modifier = Modifier.padding(top = 8.dp, bottom = 16.dp),
+        )
+        RestaurantDetailLocationMap(
+            latitude = lat,
+            longitude = lng,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(272.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(palette.mutedSurface),
-        ) {
-            Icon(
-                Icons.Outlined.Place,
-                null,
-                tint = palette.mutedForeground,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(48.dp),
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(12.dp)
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.95f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Outlined.Place, null, tint = palette.foreground, modifier = Modifier.size(22.dp))
-            }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp)
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(Color.White.copy(alpha = 0.95f))
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-            ) {
-                Text("Verified location", color = palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-            }
-        }
+                .height(280.dp),
+        )
+        Text(
+            text = "Exact location will be provided after booking.",
+            color = palette.mutedForeground,
+            fontSize = 14.sp,
+            modifier = Modifier.padding(top = 12.dp),
+        )
     }
     HorizontalDivider(color = palette.borderSoft)
 }
@@ -513,20 +600,28 @@ private fun GuestFavoriteSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            GuestFavoriteRatingLaurelRow(
+                tier = restaurant.guestFavoriteLevel.toLaurelTier(),
+                ratingText = formatRating(restaurant.rating),
+                ratingFontSize = 52.sp,
+                laurelHeight = 56.dp,
+            )
             Text(
-                text = formatRating(restaurant.rating),
+                text = "Guest favorite",
                 color = palette.foreground,
-                fontSize = 52.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 8.dp),
             )
-            Text("Guest favorite", color = palette.foreground, fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
-            Text(
-                "This restaurant is in the top picks for quality, reviews, and reliability.",
-                color = palette.mutedForeground,
-                fontSize = 15.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
-            )
+            guestFavoriteDescription(restaurant.guestFavoriteLevel.toLaurelTier())?.let { description ->
+                Text(
+                    text = description,
+                    color = palette.mutedForeground,
+                    fontSize = 15.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+                )
+            }
         }
         LazyRow(
             contentPadding = PaddingValues(horizontal = 24.dp),
@@ -565,12 +660,15 @@ private fun GuestFavoriteSection(
     HorizontalDivider(color = palette.borderSoft, modifier = Modifier.padding(top = 8.dp))
 }
 
+private val GuestReviewCardHeight = 248.dp
+
 @Composable
 private fun GuestReviewCard(review: ReviewEntry, onShowMore: () -> Unit) {
     val palette = LocalRestaurantPalette.current
     Column(
         modifier = Modifier
             .width(300.dp)
+            .height(GuestReviewCardHeight)
             .clip(RoundedCornerShape(16.dp))
             .border(1.dp, palette.border, RoundedCornerShape(16.dp))
             .background(palette.cardSurface.copy(alpha = 0.5f))
@@ -599,8 +697,9 @@ private fun GuestReviewCard(review: ReviewEntry, onShowMore: () -> Unit) {
                 .padding(top = 8.dp)
                 .clickable(onClick = onShowMore),
         )
+        Spacer(Modifier.weight(1f))
         Row(
-            modifier = Modifier.padding(top = 16.dp),
+            modifier = Modifier.padding(top = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -637,9 +736,15 @@ private fun CancellationPolicySection() {
     HorizontalDivider(color = palette.borderSoft)
 }
 
+private const val PopularMenuPreviewCount = 6
+
 @Composable
-private fun PopularMenuSection(items: List<MenuItem>, onShowMenu: () -> Unit) {
+private fun PopularMenuSection(onShowMenu: () -> Unit) {
     val palette = LocalRestaurantPalette.current
+    val allImages = remember { RestaurantDetailData.popularMenuImages() }
+    var fullscreenIndex by remember { mutableStateOf<Int?>(null) }
+    val previewImages = remember(allImages) { allImages.take(PopularMenuPreviewCount) }
+
     Column(modifier = Modifier.padding(vertical = 24.dp)) {
         Text(
             "Popular menu",
@@ -652,17 +757,50 @@ private fun PopularMenuSection(items: List<MenuItem>, onShowMenu: () -> Unit) {
             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            items(items.take(8), key = { it.name }) { item ->
+            items(
+                count = previewImages.size,
+                key = { previewImages[it] },
+            ) { index ->
+                val imageUrl = previewImages[index]
                 AsyncImage(
-                    model = item.imageUrl,
-                    contentDescription = item.name,
+                    model = imageUrl,
+                    contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(112.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .border(1.dp, palette.border, RoundedCornerShape(16.dp)),
+                        .border(1.dp, palette.border, RoundedCornerShape(16.dp))
+                        .clickable { fullscreenIndex = index },
                 )
             }
+            if (allImages.isNotEmpty()) {
+                item(key = "popular-menu-see-all") {
+                    Box(
+                        modifier = Modifier
+                            .size(112.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(1.dp, palette.border, RoundedCornerShape(16.dp))
+                            .background(palette.mutedSurface)
+                            .clickable { fullscreenIndex = 0 },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "See all",
+                            color = palette.foreground,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+            }
+        }
+        fullscreenIndex?.let { startIndex ->
+            MenuImageFullscreenViewer(
+                images = allImages,
+                initialIndex = startIndex,
+                onDismiss = { fullscreenIndex = null },
+            )
         }
         Box(
             modifier = Modifier

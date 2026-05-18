@@ -21,6 +21,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -85,6 +86,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -95,6 +97,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import coil.compose.AsyncImage
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
@@ -107,6 +110,9 @@ import com.mh.restaurantchainreservation.core.designsystem.components.HeartButto
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleModifier
 import com.mh.restaurantchainreservation.core.model.Banner
 import com.mh.restaurantchainreservation.core.model.City
 import com.mh.restaurantchainreservation.core.model.DiscoverData
@@ -116,6 +122,7 @@ import com.mh.restaurantchainreservation.core.model.QuickCategory
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.WishlistStore
 import com.mh.restaurantchainreservation.core.model.NewsData
+import com.mh.restaurantchainreservation.feature.discover.R
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
@@ -856,38 +863,27 @@ private fun QuickCategoryButton(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    PressableScale(
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 4.dp),
-    ) {
+    PressableScale(onClick = onClick, modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(categoryTint(category.id).copy(alpha = 0.13f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = categoryIcon(category.id),
-                    contentDescription = null,
-                    tint = categoryTint(category.id),
-                    modifier = Modifier.size(28.dp),
-                )
-            }
+            Image(
+                painter = painterResource(categoryDrawableRes(category.id)),
+                contentDescription = category.label,
+                modifier = Modifier.size(48.dp),
+                contentScale = ContentScale.Fit,
+            )
             Text(
-                text = compactCategoryLabel(category.label),
+                text = categoryTwoLineLabel(category.id),
                 color = palette.foreground,
-                fontSize = 13.sp,
-                lineHeight = 15.sp,
+                fontSize = 12.sp,
+                lineHeight = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 7.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -956,7 +952,7 @@ private fun WhereToEatPanoramaExploreCard(
         modifier = Modifier
             .width(RestaurantMiniCardWidth)
             .shadow(
-                elevation = 28.dp,
+                elevation = 12.dp,
                 shape = shape,
                 clip = false,
                 ambientColor = ambient,
@@ -1102,7 +1098,7 @@ private fun FoodTypeCollageExploreCard(
         modifier = Modifier
             .size(FoodCollageMoreCardSide)
             .shadow(
-                elevation = 28.dp,
+                elevation = 12.dp,
                 shape = shape,
                 clip = false,
                 ambientColor = ambient,
@@ -1322,6 +1318,10 @@ private fun AirbnbMiniCard(
     val palette = LocalRestaurantPalette.current
     val collections by WishlistStore.collections.collectAsState()
     val saved = collections.any { collection -> collection.restaurants.any { it.id == restaurant.id } }
+    val shared = LocalRestaurantSharedTransitionScope.current
+    val animatedContent = LocalAnimatedContentScope.current
+    val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
+    val titleModifier = rememberRestaurantSharedTitleModifier(restaurant.id, shared, animatedContent)
     val widthModifier = if (width > 0.dp) modifier.width(width) else modifier
     PressableScale(
         onClick = onClick,
@@ -1339,7 +1339,9 @@ private fun AirbnbMiniCard(
                     model = restaurant.image,
                     contentDescription = restaurant.name,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(heroModifier),
                 )
                 val tag = restaurant.tag
                 if (!tag.isNullOrBlank()) {
@@ -1369,7 +1371,7 @@ private fun AirbnbMiniCard(
                 color = palette.foreground,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp),
+                modifier = titleModifier.padding(top = 8.dp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -2189,32 +2191,28 @@ private fun rememberLateNight(): List<Restaurant> = remember {
     )
 }
 
-private fun compactCategoryLabel(label: String): String = when (label) {
-    "Trending Now" -> "Trending\nNow"
-    "Top Ranking" -> "Top\nRanking"
-    "Hot in New York" -> "Hot in\nNew York"
-    "Best K-BBQ" -> "Best\nK-BBQ"
-    "Best American" -> "Best\nAmerican"
-    "Local Favorite" -> "Local\nFavorite"
-    "Nearby Me" -> "Nearby\nMe"
-    else -> label
+/** Same WebP assets as `restaurantchain-reservation-ui-demo` / `public/icons/discover`. */
+private fun categoryDrawableRes(id: String): Int = when (id) {
+    "trending" -> R.drawable.discover_cat_trending
+    "catch-only" -> R.drawable.discover_cat_catch_only
+    "top-ranking" -> R.drawable.discover_cat_top_ranking
+    "hot-ny" -> R.drawable.discover_cat_hot_ny
+    "best-kbbq" -> R.drawable.discover_cat_best_kbbq
+    "best-american" -> R.drawable.discover_cat_best_american
+    "local-fav" -> R.drawable.discover_cat_local_fav
+    "nearby-me" -> R.drawable.discover_cat_nearby_me
+    else -> R.drawable.discover_cat_trending
 }
 
-private fun categoryIcon(id: String): ImageVector = when (id) {
-    "nearby-me", "hot-ny" -> Icons.Outlined.Place
-    "local-fav", "catch-only" -> Icons.Outlined.FavoriteBorder
-    "best-kbbq", "best-american" -> Icons.Outlined.Restaurant
-    else -> Icons.Filled.Star
-}
-
-private fun categoryTint(id: String): Color = when (id) {
-    "trending" -> Color(0xFFFF385C)
-    "catch-only" -> Color(0xFFDB2777)
-    "top-ranking" -> Color(0xFFEAB308)
-    "hot-ny" -> Color(0xFF2563EB)
-    "best-kbbq" -> Color(0xFFEA580C)
-    "best-american" -> Color(0xFF059669)
-    "local-fav" -> Color(0xFFE11D48)
-    "nearby-me" -> Color(0xFF0891B2)
-    else -> Color(0xFFFF385C)
+/** Matches web demo line breaks (`whitespace-pre-line` labels). */
+private fun categoryTwoLineLabel(id: String): String = when (id) {
+    "trending" -> "Trending\nNow"
+    "catch-only" -> "Best\nNoodles"
+    "top-ranking" -> "Top\nRanking"
+    "hot-ny" -> "Foreign\nFoods"
+    "best-kbbq" -> "Best\nBBQ"
+    "best-american" -> "Best\nFast Food"
+    "local-fav" -> "Local\nFavorite"
+    "nearby-me" -> "Nearby\nMe"
+    else -> "Explore\nMore"
 }

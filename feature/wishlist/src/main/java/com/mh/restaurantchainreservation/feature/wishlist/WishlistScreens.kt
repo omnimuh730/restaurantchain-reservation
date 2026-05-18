@@ -88,13 +88,16 @@ object WishlistRoutes {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WishlistScreen(modifier: Modifier = Modifier) {
+fun WishlistScreen(
+    onOpenRestaurant: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val palette = LocalRestaurantPalette.current
     val collections by WishlistStore.collections.collectAsState()
     val gatheredShown by WishlistStore.gatheredShown.collectAsState()
+    val openCollectionId by WishlistStore.openCollectionId.collectAsState()
 
-    var openCollectionId by remember { mutableStateOf<String?>(null) }
-    var editing by remember { mutableStateOf(false) }
+    var editing by rememberSaveable { mutableStateOf(false) }
     var managingCollections by remember { mutableStateOf(false) }
     var createDialogOpen by remember { mutableStateOf(false) }
     var renameDialog by remember { mutableStateOf<WishlistCollection?>(null) }
@@ -172,7 +175,7 @@ fun WishlistScreen(modifier: Modifier = Modifier) {
                         managing = managingCollections,
                         onClick = {
                             if (!managingCollections) {
-                                openCollectionId = col.id
+                                WishlistStore.openCollection(col.id)
                                 editing = false
                             }
                         },
@@ -201,8 +204,12 @@ fun WishlistScreen(modifier: Modifier = Modifier) {
                     collection = current,
                     editing = editing,
                     onToggleEdit = { editing = !editing },
-                    onBack = { openCollectionId = null; editing = false },
+                    onBack = {
+                        WishlistStore.closeOpenCollection()
+                        editing = false
+                    },
                     onRemove = { rid -> WishlistStore.removeFromAll(rid) },
+                    onOpenRestaurant = onOpenRestaurant,
                 )
             }
         }
@@ -324,6 +331,7 @@ private fun WishlistDetailPage(
     onToggleEdit: () -> Unit,
     onBack: () -> Unit,
     onRemove: (String) -> Unit,
+    onOpenRestaurant: (String) -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
     val topAppBarState = rememberTopAppBarState()
@@ -405,6 +413,9 @@ private fun WishlistDetailPage(
                     restaurant = restaurant,
                     showRemove = editing,
                     onRemove = { onRemove(restaurant.id) },
+                    onClick = {
+                        if (!editing) onOpenRestaurant(restaurant.id)
+                    },
                 )
             }
         }
@@ -416,9 +427,14 @@ private fun DetailItem(
     restaurant: Restaurant,
     showRemove: Boolean,
     onRemove: () -> Unit,
+    onClick: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !showRemove, onClick = onClick),
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()

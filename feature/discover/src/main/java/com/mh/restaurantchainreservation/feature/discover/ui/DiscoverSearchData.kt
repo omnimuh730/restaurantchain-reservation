@@ -56,6 +56,13 @@ internal object DiscoverSearchData {
         "Brunch near SoHo",
     )
 
+    /** Shown when the address field is focused (recent place-style picks). */
+    val recentLocationLabels: List<String> = listOf(
+        "Los Angeles",
+        "Beverly Hills",
+        "Santa Monica",
+    )
+
     val planTimeSlots: List<String> = listOf(
         "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
         "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00",

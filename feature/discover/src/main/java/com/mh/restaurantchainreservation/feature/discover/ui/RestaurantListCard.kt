@@ -38,11 +38,15 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleModifier
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.RestaurantTimeSlot
 import com.mh.restaurantchainreservation.core.model.WishlistStore
@@ -62,6 +66,10 @@ fun RestaurantListCard(
     val palette = LocalRestaurantPalette.current
     val collections by WishlistStore.collections.collectAsState()
     val saved = collections.any { col -> col.restaurants.any { it.id == restaurant.id } }
+    val shared = LocalRestaurantSharedTransitionScope.current
+    val animatedContent = LocalAnimatedContentScope.current
+    val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
+    val titleModifier = rememberRestaurantSharedTitleModifier(restaurant.id, shared, animatedContent)
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -81,7 +89,9 @@ fun RestaurantListCard(
                     model = restaurant.image,
                     contentDescription = restaurant.name,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(heroModifier),
                 )
                 HeartButton(
                     active = saved,
@@ -122,6 +132,7 @@ fun RestaurantListCard(
                     fontWeight = FontWeight.Bold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = titleModifier,
                 )
                 Spacer(Modifier.height(6.dp))
                 Row(

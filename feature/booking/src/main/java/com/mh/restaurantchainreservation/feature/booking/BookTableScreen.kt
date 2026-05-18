@@ -53,8 +53,9 @@ import java.time.ZoneId
 @Composable
 fun BookTableScreen(
     restaurantId: String,
-    onComplete: () -> Unit,
     onBack: () -> Unit,
+    onNavigateToDining: () -> Unit,
+    onNavigateToDiscover: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -152,10 +153,14 @@ fun BookTableScreen(
         }
     }
 
+    val screenBackground = when (step) {
+        BookingFlowStep.Success, BookingFlowStep.Awaiting -> Color.White
+        else -> palette.cardSurface
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface)
+            .background(screenBackground)
             .windowInsetsPadding(WindowInsets.statusBars),
     ) {
         if (showHeader) {
@@ -277,9 +282,9 @@ fun BookTableScreen(
                         onClick = { showPaymentSheet = true },
                     )
                     BookingFlowStep.Success -> {
-                        BookingPrimaryButton(text = "View reservations", onClick = onComplete)
+                        BookingPrimaryButton(text = "View reservations", onClick = onNavigateToDining)
                         Spacer(Modifier.height(8.dp))
-                        BookingOutlineButton(text = "Back to discover", onClick = onComplete)
+                        BookingOutlineButton(text = "Back to discover", onClick = onNavigateToDiscover)
                     }
                     else -> Unit
                 }

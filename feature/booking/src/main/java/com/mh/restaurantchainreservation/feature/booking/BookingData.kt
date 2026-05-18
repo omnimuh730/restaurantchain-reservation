@@ -7,7 +7,12 @@ import java.util.Locale
 internal const val DEPOSIT_PER_GUEST = 10
 internal const val SERVICE_FEE = 2.99
 internal const val WALLET_BALANCE_USD = 5000.0
+internal const val INTERNAL_BALANCE_KRW = 13_000_000.0
+internal const val BONUS_BALANCE_KRW = 330_000.0
 internal const val POINTS_EARN = 45
+
+internal fun walletUsageProgress(payment: Double, balance: Double): Float =
+    if (balance <= 0.0) 0f else (payment / balance).toFloat().coerceIn(0f, 1f)
 internal const val BOOKING_DAY_RANGE = 14
 
 internal val TIME_SLOTS = listOf(
