@@ -10,6 +10,30 @@ private val sampleMenuJp = listOf(
     Triple("🥢", "Otoro Add-on" to 18.0, "Two pieces of fatty tuna belly"),
 )
 
+/** Long receipt for scroll testing in order receipt modal. */
+private val longReceiptItems = listOf(
+    ReceiptItem("Tagliatelle al Tartufo", 2, 28.0),
+    ReceiptItem("Burrata Caprese", 1, 18.0),
+    ReceiptItem("Chianti Classico (glass)", 2, 14.0, category = ReceiptItemCategory.Drink),
+    ReceiptItem("Tiramisu", 1, 12.0),
+    ReceiptItem("Margherita Pizza", 1, 16.0),
+    ReceiptItem("Prosciutto e Melone", 1, 14.0),
+    ReceiptItem("Risotto ai Funghi", 1, 24.0),
+    ReceiptItem("Branzino al Forno", 1, 32.0),
+    ReceiptItem("Panna Cotta", 2, 9.0),
+    ReceiptItem("Negroni", 2, 13.0, category = ReceiptItemCategory.Drink),
+    ReceiptItem("Caesar Salad", 1, 12.0),
+    ReceiptItem("Calamari Fritti", 1, 15.0),
+    ReceiptItem("Osso Buco", 1, 38.0),
+    ReceiptItem("Gelato Trio", 1, 11.0),
+    ReceiptItem("Espresso", 2, 4.0, category = ReceiptItemCategory.Drink),
+    ReceiptItem("Limoncello", 1, 10.0, category = ReceiptItemCategory.Drink),
+    ReceiptItem("Bread Basket", 1, 6.0),
+)
+
+private val longReceiptTotal: Double =
+    longReceiptItems.sumOf { it.price * it.qty }
+
 val MOCK_BOOKINGS: List<Booking> = listOf(
     Booking(
         id = "9",
@@ -106,16 +130,11 @@ val MOCK_BOOKINGS: List<Booking> = listOf(
         seating = "Indoor",
         confirmationNo = "CT-2026-0328C",
         receipt = Receipt(
-            items = listOf(
-                ReceiptItem("Tagliatelle al Tartufo", 2, 28.0, "🍝"),
-                ReceiptItem("Burrata Caprese", 1, 18.0, "🥗"),
-                ReceiptItem("Chianti Classico (glass)", 2, 14.0, "🍷"),
-                ReceiptItem("Tiramisu", 1, 12.0, "🍰"),
-            ),
-            subtotal = 114.0,
-            tax = 10.26,
-            tip = 22.80,
-            total = 147.06,
+            items = longReceiptItems,
+            subtotal = longReceiptTotal,
+            tax = 0.0,
+            tip = 0.0,
+            total = longReceiptTotal,
             paymentMethod = "Tonight Wallet",
             paidAt = "Fri, 28 Mar 2026 · 21:48",
         ),
@@ -140,7 +159,7 @@ val MOCK_BOOKINGS: List<Booking> = listOf(
                 ReceiptItem("Oyster Sampler (12 pc)", 1, 42.0, "🦪"),
                 ReceiptItem("Lobster Roll", 2, 36.0, "🦞"),
                 ReceiptItem("Garlic Shrimp", 1, 24.0, "🍤"),
-                ReceiptItem("Champagne (glass)", 3, 16.0, "🥂"),
+                ReceiptItem("Champagne (glass)", 3, 16.0, "🥂", ReceiptItemCategory.Drink),
             ),
             subtotal = 186.0,
             tax = 16.74,
@@ -170,7 +189,7 @@ val MOCK_BOOKINGS: List<Booking> = listOf(
                 ReceiptItem("Stack of Buttermilk Pancakes", 1, 16.0, "🥞"),
                 ReceiptItem("Eggs Benedict", 1, 18.0, "🍳"),
                 ReceiptItem("Avocado Toast", 1, 14.0, "🥑"),
-                ReceiptItem("Cappuccino", 2, 6.0, "☕"),
+                ReceiptItem("Cappuccino", 2, 6.0, "☕", ReceiptItemCategory.Drink),
             ),
             subtotal = 60.0,
             tax = 5.40,

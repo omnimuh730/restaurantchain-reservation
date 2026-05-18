@@ -603,6 +603,11 @@
     <string name="receipt_total">Total</string>
     <string name="receipt_paid_with">Paid with</string>
     <string name="receipt_qty">Qty %1$d</string>
+    <string name="receipt_item_order">%1$d</string>
+    <string name="receipt_food_count">Food: %1$d</string>
+    <string name="receipt_food_total">Total food price</string>
+    <string name="receipt_drinks_count">Drinks: %1$d</string>
+    <string name="receipt_drinks_total">Total drinks price</string>
     <string name="receipt_none">No receipt available for this visit.</string>
     <string name="receipt_save">Save</string>
     <string name="receipt_share">Share</string>

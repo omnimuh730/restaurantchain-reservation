@@ -345,6 +345,11 @@
     <string name="receipt_total">합계</string>
     <string name="receipt_paid_with">결제 수단</string>
     <string name="receipt_qty">수량 %1$d</string>
+    <string name="receipt_item_order">%1$d</string>
+    <string name="receipt_food_count">음식: %1$d</string>
+    <string name="receipt_food_total">음식 합계</string>
+    <string name="receipt_drinks_count">음료: %1$d</string>
+    <string name="receipt_drinks_total">음료 합계</string>
     <string name="receipt_none">이 방문에 대한 영수증이 없어요.</string>
     <string name="receipt_save">저장</string>
     <string name="receipt_share">공유</string>

@@ -9,12 +9,20 @@ enum class BookingStatus {
     NoShow,
 }
 
+enum class ReceiptItemCategory {
+    Food,
+    Drink,
+}
+
 data class ReceiptItem(
     val name: String,
     val qty: Int,
     val price: Double,
     val emoji: String? = null,
+    val category: ReceiptItemCategory = ReceiptItemCategory.Food,
 )
+
+fun ReceiptItem.lineTotal(): Double = price * qty
 
 data class Receipt(
     val items: List<ReceiptItem>,
