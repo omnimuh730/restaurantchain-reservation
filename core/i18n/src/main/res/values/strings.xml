@@ -107,10 +107,10 @@
     <string name="profile_wallet_foreign_usd">Foreign · USD</string>
     <string name="profile_wallet_bonus">+₩330,000 bonus</string>
     <string name="profile_wallet_label">Tonight Wallet</string>
-    <string name="profile_wallet_card_line">TONIGHT  WALLET  ·  ALEX CHEN</string>
+    <string name="profile_wallet_card_line">•••• •••• •••• 4242 · ALEX CHEN</string>
     <string name="profile_wallet_masked">••••••</string>
-    <string name="profile_wallet_krw_value">₩13,330,000</string>
-    <string name="profile_wallet_usd_value">$5,000.00</string>
+    <string name="profile_wallet_krw_value">₩940,000</string>
+    <string name="profile_wallet_usd_value">$300.45</string>
 
     <!-- Default location -->
     <string name="profile_default_location_name">Gangnam Station</string>
@@ -190,6 +190,8 @@
     <string name="settings_delete_modal_title">Delete account</string>
     <string name="settings_delete_modal_body">This action permanently deletes your account and removes your profile data. This cannot be undone.</string>
     <string name="settings_volume_aria">Volume adjustment</string>
+    <string name="settings_volume_mute">Mute</string>
+    <string name="settings_volume_increase">Increase volume</string>
     <string name="settings_row_order_updates">Order updates</string>
     <string name="settings_row_order_updates_desc">Status changes and delivery tracking</string>
     <string name="settings_row_promotions">Promotions</string>
@@ -434,6 +436,7 @@
     <!-- Dining list page -->
     <string name="dining_page_title">My Dining</string>
     <string name="dining_next_up">Next Up</string>
+    <string name="dining_next_up_reservation_number">Reservation Number</string>
     <string name="dining_no_upcoming_plans">No upcoming plans</string>
     <string name="dining_zero_upcoming">0 upcoming</string>
     <string name="dining_discover_prompt">Time to discover a new favorite spot.</string>
@@ -464,6 +467,13 @@
     <string name="dining_empty_cancel_title">No cancellations</string>
     <string name="dining_empty_cancel_desc">You haven\'t cancelled any bookings. Great dining streak!</string>
     <string name="dining_empty_find_restaurant">Find a restaurant</string>
+
+    <string name="dining_no_items_title">Looking for something new?</string>
+    <string name="dining_no_items_desc">Explore restaurants and book your next experience.</string>
+    <string name="dining_no_items_explore">Explore Restaurants</string>
+    <string name="dining_no_items_add_booking">+ Add Booking</string>
+    <string name="dining_no_items_or">or</string>
+    <string name="dining_tab_empty_preview_short">Preview</string>
 
     <!-- Booking card -->
     <string name="booking_status_now">Now</string>
@@ -600,6 +610,11 @@
     <string name="receipt_total">Total</string>
     <string name="receipt_paid_with">Paid with</string>
     <string name="receipt_qty">Qty %1$d</string>
+    <string name="receipt_item_order">%1$d</string>
+    <string name="receipt_food_count">Food: %1$d</string>
+    <string name="receipt_food_total">Total food price</string>
+    <string name="receipt_drinks_count">Drinks: %1$d</string>
+    <string name="receipt_drinks_total">Total drinks price</string>
     <string name="receipt_none">No receipt available for this visit.</string>
     <string name="receipt_save">Save</string>
     <string name="receipt_share">Share</string>

@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.CenteredMaterialDragHandle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 
@@ -64,6 +65,7 @@ fun TierStatusModal(
         containerColor = palette.cardSurface,
         contentColor = palette.foreground,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = { CenteredMaterialDragHandle() },
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             val maxSheetHeight = maxHeight * 0.85f

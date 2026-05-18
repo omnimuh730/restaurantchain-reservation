@@ -32,6 +32,7 @@ object DiningRoutes {
 @Composable
 fun DiningHomeScreen(
     onOpenDetail: (String) -> Unit,
+    onExploreRestaurants: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -40,6 +41,7 @@ fun DiningHomeScreen(
     Box(modifier = modifier.fillMaxSize()) {
         DiningListScreen(
             onOpenDetail = onOpenDetail,
+            onExploreRestaurants = onExploreRestaurants,
         )
         DiningModalsHost(
             onOpenBookingDetail = onOpenDetail,

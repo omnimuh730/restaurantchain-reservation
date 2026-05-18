@@ -1,9 +1,7 @@
 package com.mh.restaurantchainreservation.core.designsystem.components
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -35,7 +33,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,8 +54,6 @@ import com.mh.restaurantchainreservation.core.designsystem.components.icons.Toni
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
-import kotlinx.coroutines.launch
-
 enum class BottomNavTabId { Discover, Wishlist, Dining, Profile }
 
 data class BottomNavTab(
@@ -157,12 +152,8 @@ private fun TabButton(
     val primary = MaterialTheme.colorScheme.primary
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
 
-    val scale = remember { Animatable(1f) }
-    val translateYDp = remember { Animatable(0f) }
     val sparkleTrigger = remember { mutableLongStateOf(0L) }
     var prevActive by remember { mutableStateOf(isActive) }
-    val scope = rememberCoroutineScope()
-    val density = LocalDensity.current
     val interactionSource = remember { MutableInteractionSource() }
 
     LaunchedEffect(isActive) {
@@ -170,32 +161,6 @@ private fun TabButton(
         prevActive = isActive
         if (newlyActive) {
             sparkleTrigger.longValue = System.nanoTime()
-            scope.launch {
-                scale.snapTo(1f)
-                scale.animateTo(
-                    targetValue = 1f,
-                    animationSpec = keyframes {
-                        durationMillis = 350
-                        1f at 0
-                        0.8f at 88
-                        1.15f at 263
-                        1f at 350
-                    },
-                )
-            }
-            scope.launch {
-                translateYDp.snapTo(0f)
-                translateYDp.animateTo(
-                    targetValue = 0f,
-                    animationSpec = keyframes {
-                        durationMillis = 350
-                        0f at 0
-                        2f at 88
-                        -2f at 263
-                        0f at 350
-                    },
-                )
-            }
         }
     }
 
@@ -223,13 +188,7 @@ private fun TabButton(
         ) {
             Box(contentAlignment = Alignment.Center) {
                 SparkleEffect(triggerNanos = sparkleTrigger.longValue, color = primary)
-                Box(
-                    modifier = Modifier.graphicsLayer {
-                        scaleX = scale.value
-                        scaleY = scale.value
-                        translationY = with(density) { translateYDp.value.dp.toPx() }
-                    },
-                ) {
+                TabSelectionBounceBox(isActive = isActive) {
                     TabIcon(
                         tab = tab.id,
                         isActive = isActive,

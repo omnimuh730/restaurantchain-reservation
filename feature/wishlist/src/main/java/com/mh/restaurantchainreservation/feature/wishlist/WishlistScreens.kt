@@ -1,12 +1,13 @@
 package com.mh.restaurantchainreservation.feature.wishlist
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,14 +21,17 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -40,13 +44,11 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -70,7 +73,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingScreenTitleHeader
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
+import com.mh.restaurantchainreservation.core.designsystem.components.SubpageCollapsingTopBar
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberSubpageCollapsingTopBarScrollBehavior
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -86,7 +93,6 @@ object WishlistRoutes {
     const val Home = "wishlist"
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WishlistScreen(
     onOpenRestaurant: (String) -> Unit,
@@ -111,111 +117,87 @@ fun WishlistScreen(
         }
     }
 
+    LaunchedEffect(openCollectionId) {
+        if (openCollectionId != null) {
+            managingCollections = false
+        }
+    }
+
+    LaunchedEffect(openCollectionId, collections) {
+        if (openCollectionId != null && collections.none { it.id == openCollectionId }) {
+            WishlistStore.closeOpenCollection()
+            editing = false
+        }
+    }
+
+    val onHome = openCollectionId == null
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(palette.cardSurface),
     ) {
-        // List view (always rendered; the detail slides over it).
-        val topAppBarState = rememberTopAppBarState()
-        val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState)
-        Column(modifier = Modifier.fillMaxSize()) {
-            Box(Modifier.fillMaxWidth()) {
-                LargeTopAppBar(
-                    title = {
-                        Text(
-                            text = "Wishlists",
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = palette.foreground,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 0.dp)
-                        )
+        AnimatedContent(
+            targetState = openCollectionId,
+            modifier = Modifier.fillMaxSize(),
+            label = "wishlist_screen",
+            transitionSpec = {
+                if (targetState != null) {
+                    slideInHorizontally(
+                        initialOffsetX = { fullWidth -> fullWidth },
+                        animationSpec = spring(dampingRatio = 0.85f, stiffness = 200f),
+                    ) + fadeIn(tween(200)) togetherWith
+                        slideOutHorizontally(
+                            targetOffsetX = { fullWidth -> -fullWidth / 4 },
+                            animationSpec = tween(220),
+                        ) + fadeOut(tween(180))
+                } else {
+                    slideInHorizontally(
+                        initialOffsetX = { fullWidth -> -fullWidth / 4 },
+                        animationSpec = spring(dampingRatio = 0.85f, stiffness = 200f),
+                    ) + fadeIn(tween(200)) togetherWith
+                        slideOutHorizontally(
+                            targetOffsetX = { fullWidth -> fullWidth },
+                            animationSpec = tween(220),
+                        ) + fadeOut(tween(180))
+                }
+            },
+            contentKey = { it },
+        ) { collectionId ->
+            if (collectionId == null) {
+                WishlistHomeContent(
+                    collections = collections,
+                    managingCollections = managingCollections,
+                    onNewList = { createDialogOpen = true },
+                    onToggleManage = { managingCollections = !managingCollections },
+                    onOpenCollection = { col ->
+                        WishlistStore.openCollection(col.id)
+                        editing = false
                     },
-                    navigationIcon = {},
-                    actions = {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            ToolbarTextButton(
-                                text = "New list",
-                                icon = Icons.Outlined.Add,
-                                onClick = { createDialogOpen = true },
-                            )
-                            ToolbarTextButton(
-                                text = if (managingCollections) "Done" else "Manage lists",
-                                icon = null,
-                                onClick = { managingCollections = !managingCollections },
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = palette.cardSurface,
-                        scrolledContainerColor = palette.cardSurface,
-                        titleContentColor = palette.foreground,
-                        actionIconContentColor = palette.foreground,
-                    ),
-                    scrollBehavior = scrollBehavior,
+                    onRename = { renameDialog = it },
+                    onDelete = { deleteDialog = it },
                 )
-            }
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .nestedScroll(scrollBehavior.nestedScrollConnection),
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 48.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-            ) {
-                items(collections, key = { it.id }) { col ->
-                    CollectionCard(
-                        collection = col,
-                        managing = managingCollections,
-                        onClick = {
-                            if (!managingCollections) {
-                                WishlistStore.openCollection(col.id)
-                                editing = false
-                            }
+            } else {
+                val current = collections.firstOrNull { it.id == collectionId }
+                if (current != null) {
+                    WishlistDetailPage(
+                        collection = current,
+                        editing = editing,
+                        onToggleEdit = { editing = !editing },
+                        onBack = {
+                            WishlistStore.closeOpenCollection()
+                            editing = false
                         },
-                        onRename = { renameDialog = col },
-                        onDelete = { deleteDialog = col },
+                        onRemove = { rid -> WishlistStore.removeFromAll(rid) },
+                        onOpenRestaurant = onOpenRestaurant,
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
             }
         }
-
-        // Detail slide-in.
-        AnimatedVisibility(
-            visible = openCollectionId != null,
-            enter = slideInHorizontally(
-                initialOffsetX = { it },
-                animationSpec = spring(dampingRatio = 0.85f, stiffness = 200f),
-            ) + fadeIn(tween(200)),
-            exit = slideOutHorizontally(
-                targetOffsetX = { it },
-                animationSpec = tween(220),
-            ) + fadeOut(tween(180)),
-        ) {
-            val current = collections.firstOrNull { it.id == openCollectionId }
-            if (current != null) {
-                WishlistDetailPage(
-                    collection = current,
-                    editing = editing,
-                    onToggleEdit = { editing = !editing },
-                    onBack = {
-                        WishlistStore.closeOpenCollection()
-                        editing = false
-                    },
-                    onRemove = { rid -> WishlistStore.removeFromAll(rid) },
-                    onOpenRestaurant = onOpenRestaurant,
-                )
-            }
-        }
     }
 
-    if (showWelcome && !gatheredShown) {
+    if (onHome && showWelcome && !gatheredShown) {
         val recent = collections.firstOrNull { it.id == "recent" }?.restaurants
             ?: emptyList()
         val tileImages = if (recent.isEmpty()) {
@@ -232,7 +214,7 @@ fun WishlistScreen(
         )
     }
 
-    if (createDialogOpen) {
+    if (onHome && createDialogOpen) {
         WishlistNameDialog(
             title = "Create wishlist",
             initialValue = "",
@@ -245,7 +227,7 @@ fun WishlistScreen(
         )
     }
 
-    renameDialog?.let { collection ->
+    if (onHome) renameDialog?.let { collection ->
         WishlistNameDialog(
             title = "Rename wishlist",
             initialValue = collection.title,
@@ -258,13 +240,100 @@ fun WishlistScreen(
         )
     }
 
-    deleteDialog?.let { collection ->
+    if (onHome) deleteDialog?.let { collection ->
         ConfirmDeleteDialog(
             title = collection.title,
             onDismiss = { deleteDialog = null },
             onConfirm = {
                 WishlistStore.deleteCollection(collection.id)
                 deleteDialog = null
+            },
+        )
+    }
+}
+
+@Composable
+private fun WishlistHomeContent(
+    collections: List<WishlistCollection>,
+    managingCollections: Boolean,
+    onNewList: () -> Unit,
+    onToggleManage: () -> Unit,
+    onOpenCollection: (WishlistCollection) -> Unit,
+    onRename: (WishlistCollection) -> Unit,
+    onDelete: (WishlistCollection) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val gridState = rememberLazyGridState()
+    val density = LocalDensity.current
+    val collapseRangePx = remember(density) {
+        with(density) {
+            (CollapsingTitleHeaderMetrics.expandedBodyHeight - CollapsingTitleHeaderMetrics.collapsedBodyHeight)
+                .toPx()
+        }
+            .coerceAtLeast(1f)
+    }
+    val statusBarTopDp = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+    val collapseProgress by remember {
+        derivedStateOf {
+            if (gridState.firstVisibleItemIndex == 0) {
+                (gridState.firstVisibleItemScrollOffset / collapseRangePx).coerceIn(0f, 1f)
+            } else {
+                1f
+            }
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            state = gridState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 48.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Spacer(
+                    Modifier.height(
+                        CollapsingTitleHeaderMetrics.expandedBodyHeight + statusBarTopDp + 8.dp,
+                    ),
+                )
+            }
+            items(collections, key = { it.id }) { col ->
+                CollectionCard(
+                    collection = col,
+                    managing = managingCollections,
+                    onClick = {
+                        if (!managingCollections) {
+                            onOpenCollection(col)
+                        }
+                    },
+                    onRename = { onRename(col) },
+                    onDelete = { onDelete(col) },
+                )
+            }
+        }
+
+        CollapsingScreenTitleHeader(
+            title = "Wishlists",
+            collapseProgress = collapseProgress,
+            modifier = Modifier.align(Alignment.TopCenter),
+            trailing = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ToolbarTextButton(
+                        text = "New list",
+                        icon = Icons.Outlined.Add,
+                        onClick = onNewList,
+                    )
+                    ToolbarTextButton(
+                        text = if (managingCollections) "Done" else "Manage lists",
+                        icon = null,
+                        onClick = onToggleManage,
+                    )
+                }
             },
         )
     }
@@ -332,64 +401,39 @@ private fun WishlistDetailPage(
     onBack: () -> Unit,
     onRemove: (String) -> Unit,
     onOpenRestaurant: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val topAppBarState = rememberTopAppBarState()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState)
+    val scrollBehavior = rememberSubpageCollapsingTopBarScrollBehavior()
     val subtitle = if (collection.id == "recent") {
         "Today"
     } else {
         "${collection.restaurants.size} saved"
     }
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(palette.cardSurface),
     ) {
-        Box(Modifier.fillMaxWidth()) {
-            LargeTopAppBar(
-                title = {
-                    Text(
-                        text = collection.title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = palette.foreground,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 0.dp)
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = "Back",
-                            tint = palette.foreground,
-                        )
-                    }
-                },
-                actions = {
-                    Text(
-                        text = if (editing) "Done" else "Edit",
-                        color = palette.foreground,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        textDecoration = TextDecoration.Underline,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { onToggleEdit() }
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = palette.cardSurface,
-                    scrolledContainerColor = palette.cardSurface,
-                    titleContentColor = palette.foreground,
-                    actionIconContentColor = palette.foreground,
-                    navigationIconContentColor = palette.foreground,
-                ),
-                scrollBehavior = scrollBehavior,
-            )
-        }
+        SubpageCollapsingTopBar(
+            title = collection.title,
+            onBack = onBack,
+            backContentDescription = "Back",
+            scrollBehavior = scrollBehavior,
+            actions = {
+                Text(
+                    text = if (editing) "Done" else "Edit",
+                    color = palette.foreground,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onToggleEdit() }
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                )
+            },
+        )
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier

@@ -107,10 +107,10 @@
     <string name="profile_wallet_foreign_usd">해외 · USD</string>
     <string name="profile_wallet_bonus">+₩330,000 보너스</string>
     <string name="profile_wallet_label">투나잇 월렛</string>
-    <string name="profile_wallet_card_line">TONIGHT  WALLET  ·  ALEX CHEN</string>
+    <string name="profile_wallet_card_line">•••• •••• •••• 4242 · ALEX CHEN</string>
     <string name="profile_wallet_masked">••••••</string>
-    <string name="profile_wallet_krw_value">₩13,330,000</string>
-    <string name="profile_wallet_usd_value">$5,000.00</string>
+    <string name="profile_wallet_krw_value">₩940,000</string>
+    <string name="profile_wallet_usd_value">$300.45</string>
 
     <!-- Default location -->
     <string name="profile_default_location_name">강남역</string>
@@ -178,6 +178,7 @@
     <!-- Dining list page -->
     <string name="dining_page_title">나의 다이닝</string>
     <string name="dining_next_up">다음 일정</string>
+    <string name="dining_next_up_reservation_number">예약 번호</string>
     <string name="dining_no_upcoming_plans">예정된 일정 없음</string>
     <string name="dining_zero_upcoming">예정 0건</string>
     <string name="dining_discover_prompt">새로운 단골을 찾아보세요.</string>
@@ -208,6 +209,13 @@
     <string name="dining_empty_cancel_title">취소 내역이 없어요</string>
     <string name="dining_empty_cancel_desc">취소된 예약이 없어요. 멋진 다이닝 기록이에요!</string>
     <string name="dining_empty_find_restaurant">레스토랑 찾기</string>
+
+    <string name="dining_no_items_title">새로운 곳을 찾고 계신가요?</string>
+    <string name="dining_no_items_desc">레스토랑을 둘러보고 다음 경험을 예약해 보세요.</string>
+    <string name="dining_no_items_explore">레스토랑 둘러보기</string>
+    <string name="dining_no_items_add_booking">+ 예약 추가</string>
+    <string name="dining_no_items_or">또는</string>
+    <string name="dining_tab_empty_preview_short">미리보기</string>
 
     <!-- Booking card -->
     <string name="booking_status_now">진행 중</string>
@@ -344,6 +352,11 @@
     <string name="receipt_total">합계</string>
     <string name="receipt_paid_with">결제 수단</string>
     <string name="receipt_qty">수량 %1$d</string>
+    <string name="receipt_item_order">%1$d</string>
+    <string name="receipt_food_count">음식: %1$d</string>
+    <string name="receipt_food_total">음식 합계</string>
+    <string name="receipt_drinks_count">음료: %1$d</string>
+    <string name="receipt_drinks_total">음료 합계</string>
     <string name="receipt_none">이 방문에 대한 영수증이 없어요.</string>
     <string name="receipt_save">저장</string>
     <string name="receipt_share">공유</string>

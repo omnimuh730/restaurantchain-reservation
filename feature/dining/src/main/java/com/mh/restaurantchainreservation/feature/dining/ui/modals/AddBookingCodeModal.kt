@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.BottomModalSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
@@ -106,7 +107,7 @@ fun AddBookingCodeModal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(0.dp, Color.Transparent)
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                    .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 16.dp),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

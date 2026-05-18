@@ -53,7 +53,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -95,7 +94,6 @@ fun ScanQRFlowScreen(
 
     var step by remember { mutableStateOf(initialStep) }
     var scanned by remember { mutableStateOf(false) }
-    var tipPercent by remember { mutableIntStateOf(18) }
     var paymentDone by remember { mutableStateOf(false) }
     var showConfetti by remember { mutableStateOf(false) }
     var reviewSubmitted by remember { mutableStateOf(false) }
@@ -108,10 +106,7 @@ fun ScanQRFlowScreen(
     var serviceRating by remember { mutableStateOf<Int?>(null) }
     var valueRating by remember { mutableStateOf<Int?>(null) }
 
-    val subtotal = 428.0
-    val tax = subtotal * 0.0875
-    val tip = subtotal * (tipPercent / 100.0)
-    val total = subtotal + tax + tip
+    val total = 428.0
 
     val ratedSubs = listOfNotNull(tasteRating, ambienceRating, serviceRating, valueRating)
     val overallRating = if (ratedSubs.isEmpty()) 0 else (ratedSubs.average()).toInt().coerceIn(0, 5)
@@ -167,9 +162,6 @@ fun ScanQRFlowScreen(
         if (allDone) {
             AllDoneScreen(
                 booking = booking,
-                subtotal = subtotal,
-                tax = tax,
-                tip = tip,
                 total = total,
                 onClose = onClose,
             )
@@ -235,12 +227,8 @@ fun ScanQRFlowScreen(
                             )
 
                             ScanStep.Bill -> BillStepView(
-                                subtotal = subtotal,
-                                tax = tax,
-                                tip = tip,
+                                subtotal = total,
                                 total = total,
-                                tipPercent = tipPercent,
-                                onTipPercentChange = { tipPercent = it },
                                 onContinue = ::goNext,
                             )
 
@@ -510,11 +498,7 @@ private fun DiningStepView(booking: Booking, priceFmt: java.text.NumberFormat, o
 @Composable
 private fun BillStepView(
     subtotal: Double,
-    tax: Double,
-    tip: Double,
     total: Double,
-    tipPercent: Int,
-    onTipPercentChange: (Int) -> Unit,
     onContinue: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -528,11 +512,7 @@ private fun BillStepView(
         BillCard(
             items = FullScanMenu,
             subtotal = subtotal,
-            tax = tax,
-            tip = tip,
             total = total,
-            tipPercent = tipPercent,
-            onTipPercentChange = onTipPercentChange,
         )
         Spacer(Modifier.height(28.dp))
         PrimaryFlowButton(
@@ -734,9 +714,6 @@ private fun ReviewStepView(
 @Composable
 private fun AllDoneScreen(
     booking: Booking,
-    subtotal: Double,
-    tax: Double,
-    tip: Double,
     total: Double,
     onClose: () -> Unit,
 ) {
@@ -789,10 +766,6 @@ private fun AllDoneScreen(
                 }
             }
             Spacer(Modifier.height(10.dp))
-            DoneRow(stringResource(I18nR.string.scan_done_items, 8), priceFmt.format(subtotal), palette)
-            DoneRow(stringResource(I18nR.string.receipt_tax), priceFmt.format(tax), palette)
-            DoneRow(stringResource(I18nR.string.receipt_tip), priceFmt.format(tip), palette)
-            Spacer(Modifier.height(8.dp))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -851,19 +824,6 @@ private fun AllDoneScreen(
                 fontWeight = FontWeight.ExtraBold,
             )
         }
-    }
-}
-
-@Composable
-private fun DoneRow(label: String, value: String, palette: com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(label, color = palette.mutedForeground, fontSize = 13.sp)
-        Text(value, color = palette.foreground, fontSize = 13.sp)
     }
 }
 

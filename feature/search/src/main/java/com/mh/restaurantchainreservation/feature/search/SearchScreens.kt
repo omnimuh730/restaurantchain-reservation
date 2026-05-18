@@ -410,13 +410,6 @@ fun SearchFilterSheet(
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .size(width = 42.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(palette.border)
-                    .align(Alignment.CenterHorizontally),
-            )
             Text("Filters", color = palette.foreground, fontSize = 24.sp, fontWeight = FontWeight.Bold)
             FilterGroup("Sort by") {
                 OptionRow("Recommended", "Balanced by popularity, distance, and availability", sort == "Recommended") { sort = "Recommended" }

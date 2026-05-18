@@ -300,7 +300,7 @@ fun PrimaryAction(
     }
 }
 
-enum class ChipVariant { Primary, Outline, Destructive }
+enum class ChipVariant { Primary, Outline, BrandOutline, Destructive }
 
 @Composable
 fun ChipButton(
@@ -326,6 +326,11 @@ fun ChipButton(
             container = palette.cardSurface
             content = palette.foreground
             borderColor = palette.border
+        }
+        ChipVariant.BrandOutline -> {
+            container = palette.cardSurface
+            content = palette.brand
+            borderColor = palette.brand.copy(alpha = 0.28f)
         }
         ChipVariant.Destructive -> {
             container = palette.cardSurface

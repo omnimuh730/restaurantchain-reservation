@@ -543,6 +543,9 @@ private fun AppGraph(
             composable(DiningRoutes.Home) {
                 DiningHomeScreen(
                     onOpenDetail = { id -> navController.navigate(DiningRoutes.detail(id)) },
+                    onExploreRestaurants = {
+                        navController.navigateToTab(DiscoverRoutes.Home)
+                    },
                 )
             }
             composable(DiningRoutes.Detail) { entry ->

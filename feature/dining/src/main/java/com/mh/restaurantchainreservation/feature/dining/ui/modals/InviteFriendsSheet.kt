@@ -54,6 +54,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.BottomModalSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
 import kotlinx.coroutines.delay
@@ -116,7 +117,7 @@ fun InviteFriendsSheet(
     }
 
     BottomModalSheet(onDismiss = onDismiss) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 20.dp)) {
             // Header with icon + title + subtitle
             Row(
                 verticalAlignment = Alignment.CenterVertically,

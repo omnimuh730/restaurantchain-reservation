@@ -127,25 +127,34 @@ fun NotificationsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
         notifications.firstOrNull { it.kind == NotificationKind.Reservation }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(palette.cardSurface)
-            .statusBarsPadding(),
+    SubpageScaffold(
+        title = stringResource(I18nR.string.title_notifications),
+        onBack = onBack,
+        modifier = modifier,
+        horizontalPadding = 16,
+        headerActions = {
+            AnimatedVisibility(
+                visible = unreadCount > 0,
+                enter = fadeIn(tween(180)),
+                exit = fadeOut(tween(120)),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(percent = 50))
+                        .border(1.dp, palette.border, RoundedCornerShape(percent = 50))
+                        .clickable(onClick = { NotificationStore.markAllAsRead() })
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                ) {
+                    Text(
+                        text = stringResource(I18nR.string.notifications_mark_all_read),
+                        color = palette.foreground,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+        },
     ) {
-        StickyNotificationsHeader(
-            unreadCount = unreadCount,
-            onBack = onBack,
-            onMarkAllRead = { NotificationStore.markAllAsRead() },
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
-        ) {
-            Spacer(Modifier.height(8.dp))
             FilterTabs(
                 filter = filter,
                 onChange = { filter = it },
@@ -219,77 +228,7 @@ fun NotificationsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 }
             }
             Spacer(Modifier.height(40.dp))
-        }
     }
-}
-
-@Composable
-private fun StickyNotificationsHeader(
-    unreadCount: Int,
-    onBack: () -> Unit,
-    onMarkAllRead: () -> Unit,
-) {
-    val palette = LocalRestaurantPalette.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(palette.cardSurface.copy(alpha = 0.95f))
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(I18nR.string.common_action_back),
-                tint = palette.foreground,
-                modifier = Modifier.size(18.dp),
-            )
-        }
-        Text(
-            text = stringResource(I18nR.string.title_notifications),
-            color = palette.foreground,
-            fontSize = 26.sp,
-            fontWeight = FontWeight.SemiBold,
-            lineHeight = 26.sp,
-            letterSpacing = (-0.4).sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        AnimatedVisibility(
-            visible = unreadCount > 0,
-            enter = fadeIn(tween(180)),
-            exit = fadeOut(tween(120)),
-        ) {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(percent = 50))
-                    .border(1.dp, palette.border, RoundedCornerShape(percent = 50))
-                    .clickable(onClick = onMarkAllRead)
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-            ) {
-                Text(
-                    text = stringResource(I18nR.string.notifications_mark_all_read),
-                    color = palette.foreground,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-        }
-    }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(palette.border.copy(alpha = 0.4f)),
-    )
 }
 
 @Composable

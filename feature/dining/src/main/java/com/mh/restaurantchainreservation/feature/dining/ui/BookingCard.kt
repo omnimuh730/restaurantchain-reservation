@@ -38,7 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -54,6 +53,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
@@ -87,29 +88,25 @@ fun BookingCard(
     val isCancelled = booking.status == BookingStatus.Cancelled || booking.status == BookingStatus.NoShow
     val isLive = isScheduled && isCurrentlyDining(booking, checkedInIds = checkedInIds)
     val receiptTotal = booking.receipt?.let { "$%.2f".format(it.total) }
-    val cardShape = RoundedCornerShape(24.dp)
-
-    val borderColor = if (isLive) palette.success.copy(alpha = 0.45f) else palette.border
+    val cardShape = HubSurfaceCardDefaults.Shape
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(elevation = 4.dp, shape = cardShape, ambientColor = Color.Black.copy(alpha = 0.05f))
-            .clip(cardShape)
+            .hubSurfaceCard(palette = palette, shape = cardShape, onClick = onTap)
             .let { base ->
-                if (isLive) base.then(
-                    Modifier.border(2.dp, palette.success.copy(alpha = 0.15f), cardShape),
-                ) else base
-            }
-            .border(1.dp, borderColor, cardShape)
-            .background(palette.cardSurface)
-            .clickable(onClick = onTap)
+                if (isLive) {
+                    base.then(Modifier.border(2.dp, palette.success.copy(alpha = 0.15f), cardShape))
+                } else {
+                    base
+                }
+            },
     ) {
         // Top row: thumbnail + title + meta pills
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(HubSurfaceCardDefaults.CompactPadding),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             // Thumbnail column (108dp wide) with cuisine overlay + status badge below

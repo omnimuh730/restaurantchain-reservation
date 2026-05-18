@@ -1,8 +1,13 @@
 package com.mh.restaurantchainreservation.feature.dining.ui.modals
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,39 +20,68 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.CreditCard
-import androidx.compose.material.icons.outlined.Download
-import androidx.compose.material.icons.outlined.Receipt
-import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.BottomModalSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
+import com.mh.restaurantchainreservation.feature.dining.data.MealFeedback
+import com.mh.restaurantchainreservation.feature.dining.data.Receipt
+import com.mh.restaurantchainreservation.feature.dining.data.ReceiptItemCategory
+import com.mh.restaurantchainreservation.feature.dining.data.fmtR
+import com.mh.restaurantchainreservation.feature.dining.data.lineTotal
+
+private const val ReceiptSheetHeightFraction = 0.78f
+private const val ReceiptHeaderCollapseThresholdPx = 72f
+
+private data class ReceiptCategoryTotals(
+    val foodQty: Int,
+    val foodAmount: Double,
+    val drinkQty: Int,
+    val drinkAmount: Double,
+)
+
+private fun Receipt.categoryTotals(): ReceiptCategoryTotals {
+    val food = items.filter { it.category == ReceiptItemCategory.Food }
+    val drinks = items.filter { it.category == ReceiptItemCategory.Drink }
+    return ReceiptCategoryTotals(
+        foodQty = food.sumOf { it.qty },
+        foodAmount = food.sumOf { it.lineTotal() },
+        drinkQty = drinks.sumOf { it.qty },
+        drinkAmount = drinks.sumOf { it.lineTotal() },
+    )
+}
 
 @Composable
 fun OrderReceiptModal(
@@ -57,66 +91,35 @@ fun OrderReceiptModal(
     val palette = LocalRestaurantPalette.current
     val receipt = booking.receipt
     val priceFmt = remember { java.text.NumberFormat.getCurrencyInstance(java.util.Locale.US) }
+    val configuration = LocalConfiguration.current
+    val sheetMaxHeight = (configuration.screenHeightDp * ReceiptSheetHeightFraction).dp
 
-    var pop by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { pop = true }
-    val iconScale by animateFloatAsState(
-        targetValue = if (pop) 1f else 0.75f,
-        animationSpec = spring(stiffness = 280f, dampingRatio = 0.45f),
-        label = "receipt_icon_pop",
-    )
-    val iconAlpha by animateFloatAsState(
-        targetValue = if (pop) 1f else 0f,
-        animationSpec = tween(220),
-        label = "receipt_icon_alpha",
-    )
+    BottomModalSheet(
+        onDismiss = onDismiss,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(sheetMaxHeight)
+                .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
+        ) {
+            Text(
+                text = stringResource(I18nR.string.receipt_title),
+                color = palette.foreground,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
 
-    BottomModalSheet(onDismiss = onDismiss) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .graphicsLayer {
-                            scaleX = iconScale; scaleY = iconScale
-                            alpha = iconAlpha
-                        }
-                        .clip(CircleShape)
-                        .background(palette.success.copy(alpha = 0.10f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Receipt,
-                        contentDescription = null,
-                        tint = palette.success,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                Column {
-                    Text(
-                        text = stringResource(I18nR.string.receipt_title),
-                        color = palette.foreground,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                    Text(
-                        text = booking.restaurant,
-                        color = palette.mutedForeground,
-                        fontSize = 13.sp,
-                        maxLines = 1,
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(16.dp))
 
             if (receipt == null) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .weight(1f)
                         .clip(RoundedCornerShape(24.dp))
                         .background(palette.mutedSurface.copy(alpha = 0.5f))
                         .padding(vertical = 36.dp),
@@ -130,169 +133,10 @@ fun OrderReceiptModal(
                     )
                 }
             } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(24.dp))
-                        .border(1.dp, palette.border, RoundedCornerShape(24.dp))
-                        .background(palette.cardSurface),
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(palette.mutedSurface.copy(alpha = 0.55f))
-                            .padding(vertical = 14.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(
-                            text = booking.restaurant,
-                            color = palette.foreground,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                        )
-                        Text(
-                            text = booking.address,
-                            color = palette.mutedForeground,
-                            fontSize = 11.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
-                        )
-                        Text(
-                            text = receipt.paidAt,
-                            color = palette.mutedForeground,
-                            fontSize = 12.sp,
-                        )
-                    }
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 280.dp)
-                            .padding(horizontal = 16.dp),
-                    ) {
-                        itemsIndexed(receipt.items, key = { i, item -> "${item.name}-$i" }) { i, item ->
-                            ReceiptItemRow(
-                                emoji = item.emoji ?: "🍽",
-                                name = item.name,
-                                qty = item.qty,
-                                priceText = priceFmt.format(item.price * item.qty),
-                                index = i,
-                            )
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(palette.border),
-                    )
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        ReceiptLine(
-                            stringResource(I18nR.string.receipt_subtotal),
-                            priceFmt.format(receipt.subtotal),
-                        )
-                        ReceiptLine(
-                            stringResource(I18nR.string.receipt_tax),
-                            priceFmt.format(receipt.tax),
-                        )
-                        ReceiptLine(
-                            stringResource(I18nR.string.receipt_tip),
-                            priceFmt.format(receipt.tip),
-                        )
-                        Spacer(Modifier.height(10.dp))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(palette.brand.copy(alpha = 0.08f))
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text(
-                                text = stringResource(I18nR.string.receipt_total),
-                                color = palette.foreground,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                            )
-                            Text(
-                                text = priceFmt.format(receipt.total),
-                                color = palette.brand,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                            )
-                        }
-                        Spacer(Modifier.height(10.dp))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(palette.mutedSurface.copy(alpha = 0.7f))
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.CreditCard,
-                                contentDescription = null,
-                                tint = palette.mutedForeground,
-                                modifier = Modifier.size(16.dp),
-                            )
-                            Text(
-                                text = stringResource(I18nR.string.receipt_paid_with),
-                                color = palette.mutedForeground,
-                                fontSize = 13.sp,
-                            )
-                            Text(
-                                text = receipt.paymentMethod,
-                                color = palette.foreground,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                maxLines = 1,
-                            )
-                        }
-                        if (booking.rating != null) {
-                            Spacer(Modifier.height(10.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center,
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Star,
-                                    contentDescription = null,
-                                    tint = palette.warning,
-                                    modifier = Modifier.size(16.dp),
-                                )
-                                Spacer(Modifier.size(4.dp))
-                                Text(
-                                    text = "${booking.rating} – ${stringResource(I18nR.string.receipt_rating_label)}",
-                                    color = palette.foreground,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(20.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                ReceiptAction(
-                    text = stringResource(I18nR.string.receipt_save),
-                    icon = Icons.Outlined.Download,
-                    primary = false,
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                )
-                ReceiptAction(
-                    text = stringResource(I18nR.string.receipt_share),
-                    icon = Icons.Outlined.Share,
-                    primary = true,
-                    onClick = onDismiss,
+                ReceiptCard(
+                    booking = booking,
+                    receipt = receipt,
+                    priceFmt = priceFmt,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -301,7 +145,459 @@ fun OrderReceiptModal(
 }
 
 @Composable
-private fun ReceiptItemRow(emoji: String, name: String, qty: Int, priceText: String, index: Int) {
+private fun ReceiptCard(
+    booking: Booking,
+    receipt: Receipt,
+    priceFmt: java.text.NumberFormat,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    val categoryTotals = remember(receipt) { receipt.categoryTotals() }
+    val listState = rememberLazyListState()
+
+    val collapseProgress by remember {
+        derivedStateOf {
+            val offset = if (listState.firstVisibleItemIndex == 0) {
+                listState.firstVisibleItemScrollOffset.toFloat()
+            } else {
+                ReceiptHeaderCollapseThresholdPx
+            }
+            (offset / ReceiptHeaderCollapseThresholdPx).coerceIn(0f, 1f)
+        }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .border(1.dp, palette.border, RoundedCornerShape(24.dp))
+            .background(palette.cardSurface),
+    ) {
+        CollapsibleReceiptStoreHeader(
+            restaurant = booking.restaurant,
+            address = booking.address,
+            paidAt = receipt.paidAt,
+            collapseProgress = collapseProgress,
+        )
+
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(horizontal = 12.dp),
+        ) {
+            itemsIndexed(receipt.items, key = { i, item -> "${item.name}-$i" }) { i, item ->
+                ReceiptItemRow(
+                    orderNumber = i + 1,
+                    name = item.name,
+                    unitPriceText = priceFmt.format(item.price),
+                    qty = item.qty,
+                    lineTotalText = priceFmt.format(item.lineTotal()),
+                    index = i,
+                )
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(palette.border),
+        )
+
+        ReceiptSummaryFooter(
+            receipt = receipt,
+            booking = booking,
+            categoryTotals = categoryTotals,
+            priceFmt = priceFmt,
+        )
+    }
+}
+
+@Composable
+private fun CollapsibleReceiptStoreHeader(
+    restaurant: String,
+    address: String,
+    paidAt: String,
+    collapseProgress: Float,
+) {
+    val palette = LocalRestaurantPalette.current
+    val detailAlpha = 1f - collapseProgress
+    val collapsedDateAlpha = collapseProgress
+    val dividerAlpha = collapseProgress
+    val titleAlign = if (collapseProgress < 0.08f) TextAlign.Center else TextAlign.Start
+    val detailHeight by animateDpAsState(
+        targetValue = if (detailAlpha > 0.01f) 48.dp else 0.dp,
+        animationSpec = tween(180),
+        label = "receipt_header_detail_height",
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+            .background(palette.mutedSurface.copy(alpha = 0.55f))
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = restaurant,
+                color = palette.foreground,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = titleAlign,
+                modifier = Modifier.weight(1f),
+            )
+            if (collapsedDateAlpha > 0.01f) {
+                Text(
+                    text = paidAt,
+                    color = palette.mutedForeground,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier
+                        .weight(1f)
+                        .graphicsLayer { alpha = collapsedDateAlpha },
+                )
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(detailHeight)
+                .graphicsLayer { alpha = detailAlpha },
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            if (detailAlpha > 0.01f) {
+                Text(
+                    text = address,
+                    color = palette.mutedForeground,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+                Text(
+                    text = paidAt,
+                    color = palette.mutedForeground,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer { alpha = dividerAlpha }
+                .height(1.dp)
+                .background(palette.border),
+        )
+    }
+}
+
+@Composable
+private fun ReceiptSummaryFooter(
+    receipt: Receipt,
+    booking: Booking,
+    categoryTotals: ReceiptCategoryTotals,
+    priceFmt: java.text.NumberFormat,
+) {
+    val palette = LocalRestaurantPalette.current
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        if (categoryTotals.foodQty > 0) {
+            ReceiptCategorySummaryRow(
+                label = stringResource(I18nR.string.receipt_food_count, categoryTotals.foodQty),
+                amountText = priceFmt.format(categoryTotals.foodAmount),
+            )
+            Spacer(Modifier.height(8.dp))
+        }
+        if (categoryTotals.drinkQty > 0) {
+            ReceiptCategorySummaryRow(
+                label = stringResource(I18nR.string.receipt_drinks_count, categoryTotals.drinkQty),
+                amountText = priceFmt.format(categoryTotals.drinkAmount),
+            )
+            Spacer(Modifier.height(10.dp))
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(palette.brand.copy(alpha = 0.08f))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = stringResource(I18nR.string.receipt_total),
+                color = palette.foreground,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.ExtraBold,
+            )
+            Text(
+                text = priceFmt.format(receipt.total),
+                color = palette.brand,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(palette.mutedSurface.copy(alpha = 0.7f))
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                text = stringResource(I18nR.string.receipt_paid_with),
+                color = palette.mutedForeground,
+                fontSize = 13.sp,
+            )
+            Text(
+                text = receipt.paymentMethod,
+                color = palette.foreground,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1,
+            )
+        }
+        if (booking.rating != null) {
+            Spacer(Modifier.height(10.dp))
+            ReceiptRatingSection(
+                rating = booking.rating,
+                feedback = booking.feedback,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReceiptRatingSection(
+    rating: Double,
+    feedback: MealFeedback?,
+) {
+    val palette = LocalRestaurantPalette.current
+    var showFeedbackDetails by remember { mutableStateOf(false) }
+    val canExpand = feedback != null
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(
+            modifier = Modifier
+                .then(
+                    if (canExpand) {
+                        Modifier
+                            .clip(RoundedCornerShape(percent = 50))
+                            .clickable { showFeedbackDetails = !showFeedbackDetails }
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    } else {
+                        Modifier.padding(vertical = 6.dp)
+                    },
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Star,
+                contentDescription = null,
+                tint = palette.warning,
+                modifier = Modifier.size(16.dp),
+            )
+            Text(
+                text = fmtR(rating),
+                color = palette.foreground,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.ExtraBold,
+            )
+            Text(
+                text = stringResource(I18nR.string.receipt_rating_label),
+                color = if (canExpand) palette.brand else palette.mutedForeground,
+                fontSize = 13.sp,
+                fontWeight = if (canExpand) FontWeight.SemiBold else FontWeight.Normal,
+            )
+            if (canExpand) {
+                Icon(
+                    imageVector = if (showFeedbackDetails) {
+                        Icons.Filled.KeyboardArrowDown
+                    } else {
+                        Icons.Filled.KeyboardArrowUp
+                    },
+                    contentDescription = null,
+                    tint = palette.mutedForeground,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+
+        if (feedback != null) {
+            AnimatedVisibility(
+                visible = showFeedbackDetails,
+                enter = fadeIn(tween(180)) + expandVertically(tween(220)),
+                exit = fadeOut(tween(150)) + shrinkVertically(tween(180)),
+            ) {
+                ReceiptFeedbackDetails(
+                    feedback = feedback,
+                    modifier = Modifier.padding(top = 10.dp),
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ReceiptFeedbackDetails(
+    feedback: MealFeedback,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(palette.mutedSurface.copy(alpha = 0.7f))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        FeedbackSubRatingReadOnly(
+            label = stringResource(I18nR.string.scan_review_taste),
+            value = feedback.taste,
+        )
+        FeedbackSubRatingReadOnly(
+            label = stringResource(I18nR.string.scan_review_ambience),
+            value = feedback.ambience,
+        )
+        FeedbackSubRatingReadOnly(
+            label = stringResource(I18nR.string.scan_review_service),
+            value = feedback.service,
+        )
+        FeedbackSubRatingReadOnly(
+            label = stringResource(I18nR.string.scan_review_value),
+            value = feedback.value,
+        )
+
+        if (!feedback.comment.isNullOrBlank()) {
+            Text(
+                text = feedback.comment,
+                color = palette.foreground,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+
+        if (feedback.tags.isNotEmpty()) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                feedback.tags.forEach { tag ->
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(percent = 50))
+                            .background(palette.brand.copy(alpha = 0.08f))
+                            .border(1.dp, palette.brand.copy(alpha = 0.35f), RoundedCornerShape(percent = 50))
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                    ) {
+                        Text(
+                            text = tag,
+                            color = palette.brand,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeedbackSubRatingReadOnly(
+    label: String,
+    value: Int,
+) {
+    val palette = LocalRestaurantPalette.current
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = label,
+            color = palette.foreground,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            repeat(5) { index ->
+                val filled = index < value
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = null,
+                    tint = if (filled) palette.warning else palette.border,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReceiptCategorySummaryRow(
+    label: String,
+    amountText: String,
+) {
+    val palette = LocalRestaurantPalette.current
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = label,
+            color = palette.foreground,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = amountText,
+            color = palette.foreground,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.ExtraBold,
+        )
+    }
+}
+
+@Composable
+private fun ReceiptItemRow(
+    orderNumber: Int,
+    name: String,
+    unitPriceText: String,
+    qty: Int,
+    lineTotalText: String,
+    index: Int,
+) {
     val palette = LocalRestaurantPalette.current
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
@@ -324,83 +620,48 @@ private fun ReceiptItemRow(emoji: String, name: String, qty: Int, priceText: Str
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(palette.mutedSurface),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(text = emoji, fontSize = 16.sp)
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = name,
-                color = palette.foreground,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-            )
-            Text(
-                text = stringResource(I18nR.string.receipt_qty, qty),
-                color = palette.mutedForeground,
-                fontSize = 12.sp,
-            )
-        }
         Text(
-            text = priceText,
-            color = palette.foreground,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.ExtraBold,
+            text = stringResource(I18nR.string.receipt_item_order, orderNumber),
+            color = palette.mutedForeground,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.width(22.dp),
+            textAlign = TextAlign.Center,
         )
-    }
-}
-
-@Composable
-private fun ReceiptLine(label: String, value: String) {
-    val palette = LocalRestaurantPalette.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(text = label, color = palette.mutedForeground, fontSize = 14.sp)
-        Text(text = value, color = palette.foreground, fontSize = 14.sp)
-    }
-}
-
-@Composable
-private fun ReceiptAction(
-    text: String,
-    icon: ImageVector,
-    primary: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val palette = LocalRestaurantPalette.current
-    val shape = RoundedCornerShape(percent = 50)
-    val container = if (primary) palette.brand else palette.cardSurface
-    val content = if (primary) Color.White else palette.foreground
-    Row(
-        modifier = modifier
-            .height(48.dp)
-            .clip(shape)
-            .let { if (!primary) it.border(1.dp, palette.border, shape) else it }
-            .background(container)
-            .clickable(onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        Icon(imageVector = icon, contentDescription = null, tint = content, modifier = Modifier.size(16.dp))
-        Spacer(Modifier.size(8.dp))
         Text(
-            text = text,
-            color = content,
-            fontSize = 14.sp,
+            text = name,
+            color = palette.foreground,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = unitPriceText,
+            color = palette.foreground,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.End,
+            modifier = Modifier.width(52.dp),
+        )
+        Text(
+            text = qty.toString(),
+            color = palette.mutedForeground,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.width(24.dp),
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = lineTotalText,
+            color = palette.foreground,
+            fontSize = 13.sp,
             fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.End,
+            modifier = Modifier.width(56.dp),
         )
     }
 }

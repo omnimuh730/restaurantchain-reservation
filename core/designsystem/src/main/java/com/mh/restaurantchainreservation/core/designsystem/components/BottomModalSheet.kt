@@ -1,4 +1,4 @@
-package com.mh.restaurantchainreservation.feature.dining.ui.modals
+package com.mh.restaurantchainreservation.core.designsystem.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -7,13 +7,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -33,8 +30,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 
 /**
- * Bottom-anchored modal sheet that mimics framer-motion entry: scrim fades in, sheet
- * slides up + scales from 0.97 with a spring transition. Tap on the scrim closes.
+ * Bottom-anchored modal sheet: scrim fades in, sheet slides up + scales from 0.97 with a spring.
+ * Tap on the scrim closes.
  */
 @Composable
 fun BottomModalSheet(
@@ -85,7 +82,9 @@ fun BottomModalSheet(
                             interactionSource = remember { MutableInteractionSource() },
                             onClick = onDismiss,
                         )
-                    } else it
+                    } else {
+                        it
+                    }
                 },
             contentAlignment = Alignment.BottomCenter,
         ) {
@@ -97,7 +96,7 @@ fun BottomModalSheet(
                         translationY = sheetTranslate
                         scaleX = sheetScale
                         scaleY = sheetScale
-                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+                        transformOrigin = TransformOrigin(0.5f, 1f)
                         alpha = scrimAlpha
                     }
                     .shadow(elevation = 18.dp, shape = sheetShape, ambientColor = Color.Black.copy(alpha = 0.18f))
@@ -107,25 +106,9 @@ fun BottomModalSheet(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() },
                         onClick = {},
-                    )
-                    .padding(top = 8.dp),
+                    ),
             ) {
-                // Drag handle
-                Box(
-                    modifier = Modifier
-                        .padding(top = 8.dp, bottom = 4.dp)
-                        .wrapContentSize(Alignment.TopCenter),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .height(4.dp)
-                            .width(40.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(palette.border),
-                    )
-                }
-                Spacer(Modifier.height(4.dp))
+                CenteredMaterialDragHandle()
                 content()
             }
         }
@@ -177,7 +160,9 @@ fun CenterModalSheet(
                             interactionSource = remember { MutableInteractionSource() },
                             onClick = onDismiss,
                         )
-                    } else it
+                    } else {
+                        it
+                    }
                 }
                 .padding(horizontal = 24.dp),
             contentAlignment = Alignment.Center,

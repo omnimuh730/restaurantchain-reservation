@@ -22,6 +22,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
@@ -190,24 +191,17 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface)
-            .statusBarsPadding(),
+            .background(palette.cardSurface),
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            HeaderBar(
-                title = "Activity",
-                subtitle = "${filtered.size} transaction${if (filtered.size == 1) "" else "s"} in ${rangeLabel(range)}",
-                onBack = onBack,
-            )
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .navigationBarsPadding()
-                    .padding(top = 8.dp),
-            ) {
+        SubpageLazyScaffold(
+            title = "Activity",
+            subtitle = "${filtered.size} transaction${if (filtered.size == 1) "" else "s"} in ${rangeLabel(range)}",
+            onBack = onBack,
+            modifier = Modifier.fillMaxSize(),
+            horizontalPadding = 16,
+            bottomContentPadding = listBottomPadding,
+        ) {
+            item(key = "activity-summary") {
                 ActivitySummaryStatsCard(
                     spent = spent,
                     added = added,
@@ -221,14 +215,7 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     onCategoryChange = { category = it },
                 )
                 Spacer(Modifier.height(8.dp))
-
-                LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = listBottomPadding),
-                verticalArrangement = Arrangement.spacedBy(0.dp),
-            ) {
+            }
                 item(key = "activity-count") {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -268,14 +255,12 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         )
                     }
                 }
-            }
         }
-    }
-    }
 
-    val openTxn = filtered.firstOrNull { it.id == openInvoice }
-    if (openTxn != null) {
-        InvoiceDialog(txn = openTxn, onDismiss = { openInvoice = null })
+        val openTxn = filtered.firstOrNull { it.id == openInvoice }
+        if (openTxn != null) {
+            InvoiceDialog(txn = openTxn, onDismiss = { openInvoice = null })
+        }
     }
 }
 
@@ -382,57 +367,6 @@ private fun GroupCard(items: List<Txn>, onTap: (String) -> Unit) {
             }
             TxnRow(txn = t, onClick = { onTap(t.id) })
         }
-    }
-}
-
-@Composable
-private fun HeaderBar(title: String, subtitle: String, onBack: () -> Unit) {
-    val palette = LocalRestaurantPalette.current
-    Column(modifier = Modifier.fillMaxWidth().background(palette.cardSurface.copy(alpha = 0.95f))) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(palette.mutedSurface)
-                    .clickable(onClick = onBack),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = palette.foreground, modifier = Modifier.size(18.dp))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, color = palette.foreground, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
-                Text(
-                    subtitle,
-                    color = palette.mutedForeground,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 2.dp),
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(palette.brand.copy(alpha = 0.10f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Outlined.Receipt, null, tint = palette.brand, modifier = Modifier.size(20.dp))
-            }
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(palette.border.copy(alpha = 0.4f)),
-        )
     }
 }
 
