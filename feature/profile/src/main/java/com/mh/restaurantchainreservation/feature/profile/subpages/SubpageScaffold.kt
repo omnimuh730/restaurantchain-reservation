@@ -1,48 +1,139 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
-import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageScreenHeader
-import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
+import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.components.PageHeader
+import com.mh.restaurantchainreservation.core.designsystem.components.SubpageCollapsingTopBar
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberSubpageCollapsingTopBarScrollBehavior
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 
+@Composable
+private fun SubpageSubtitle(text: String, modifier: Modifier = Modifier) {
+    val palette = LocalRestaurantPalette.current
+    Text(
+        text = text,
+        color = palette.mutedForeground,
+        fontSize = 14.sp,
+        modifier = modifier.padding(bottom = 12.dp),
+    )
+}
+
+/**
+ * Shared layout for profile sub-pages and wishlist collection detail: [LargeTopAppBar] that
+ * collapses when the list below scrolls (same structure as Recently searched).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SubpageCollapsingLayout(
+    title: String,
+    onBack: () -> Unit,
+    backLabel: String,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    headerActions: (@Composable () -> Unit)? = null,
+    listState: LazyListState = rememberLazyListState(),
+    contentPadding: PaddingValues = PaddingValues(),
+    content: LazyListScope.() -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val scrollBehavior = rememberSubpageCollapsingTopBarScrollBehavior()
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(palette.cardSurface),
+    ) {
+        SubpageCollapsingTopBar(
+            title = title,
+            onBack = onBack,
+            backContentDescription = backLabel,
+            scrollBehavior = scrollBehavior,
+            actions = { headerActions?.invoke() },
+        )
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
+            contentPadding = contentPadding,
+        ) {
+            if (subtitle != null) {
+                item(key = "subpage_subtitle") {
+                    SubpageSubtitle(subtitle, Modifier.padding(top = 4.dp))
+                }
+            }
+            content()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SubpageLazyScaffold(
+    title: String,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    horizontalPadding: Int = 20,
+    contentHorizontalPadding: Int? = null,
+    subtitle: String? = null,
+    headerActions: (@Composable () -> Unit)? = null,
+    listState: LazyListState = rememberLazyListState(),
+    bottomContentPadding: Dp = 24.dp,
+    content: LazyListScope.() -> Unit,
+) {
+    val backLabel = stringResource(I18nR.string.common_action_back)
+    val contentPad = contentHorizontalPadding ?: horizontalPadding
+    SubpageCollapsingLayout(
+        title = title,
+        onBack = onBack,
+        backLabel = backLabel,
+        modifier = modifier,
+        subtitle = subtitle,
+        headerActions = headerActions,
+        listState = listState,
+        contentPadding = PaddingValues(
+            start = contentPad.dp,
+            end = contentPad.dp,
+            top = 4.dp,
+            bottom = bottomContentPadding,
+        ),
+        content = content,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubpageScaffold(
     title: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     horizontalPadding: Int = 20,
-    /** When set, applied to scrollable/main content instead of [horizontalPadding] (header still uses [horizontalPadding]). */
+    /** When set, applied to scrollable/main content instead of [horizontalPadding]. */
     contentHorizontalPadding: Int? = null,
     scrollable: Boolean = true,
     subtitle: String? = null,
-    headerActions: (@Composable (collapseProgress: Float) -> Unit)? = null,
-    /** Defaults match profile/dining hub (34→20sp). Use slightly lower values for a subtler title. */
-    titleFontExpandedSp: Float = 34f,
-    titleFontCollapsedSp: Float = 20f,
-    titleLineHeightExpandedSp: Float = 40f,
-    titleLineHeightCollapsedSp: Float = 24f,
+    headerActions: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -50,52 +141,25 @@ fun SubpageScaffold(
     val contentPad = contentHorizontalPadding ?: horizontalPadding
 
     if (scrollable) {
-        val scroll = rememberScrollState()
-        val density = LocalDensity.current
-        val expandedBodyDp =
-            CollapsingTitleHeaderMetrics.subpageExpandedBodyHeight(subtitle != null)
-        val collapseRangePx = remember(density, subtitle != null) {
-            with(density) {
-                (expandedBodyDp - CollapsingTitleHeaderMetrics.collapsedBodyHeight).toPx()
-            }
-                .coerceAtLeast(1f)
-        }
-        val collapseProgress = (scroll.value / collapseRangePx).coerceIn(0f, 1f)
-        val statusBarTopDp = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
-        val topInsetSpacerHeight = expandedBodyDp + statusBarTopDp
-
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(palette.cardSurface),
+        SubpageCollapsingLayout(
+            title = title,
+            onBack = onBack,
+            backLabel = backLabel,
+            modifier = modifier,
+            subtitle = subtitle,
+            headerActions = headerActions,
+            contentPadding = PaddingValues(
+                start = contentPad.dp,
+                end = contentPad.dp,
+                top = 4.dp,
+                bottom = 24.dp,
+            ),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scroll),
-            ) {
-                Spacer(Modifier.height(topInsetSpacerHeight))
-                Column(
-                    modifier = Modifier.padding(horizontal = contentPad.dp),
-                    content = content,
-                )
+            item(key = "subpage_body") {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    content()
+                }
             }
-            CollapsingSubpageScreenHeader(
-                title = title,
-                collapseProgress = collapseProgress,
-                onBack = onBack,
-                backContentDescription = backLabel,
-                subtitle = subtitle,
-                actions = headerActions,
-                horizontalPaddingDp = horizontalPadding,
-                titleFontExpandedSp = titleFontExpandedSp,
-                titleFontCollapsedSp = titleFontCollapsedSp,
-                titleLineHeightExpandedSp = titleLineHeightExpandedSp,
-                titleLineHeightCollapsedSp = titleLineHeightCollapsedSp,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .zIndex(2f),
-            )
         }
     } else {
         Column(
@@ -110,9 +174,7 @@ fun SubpageScaffold(
                 onBack = onBack,
                 backContentDescription = backLabel,
                 subtitle = subtitle,
-                actions = headerActions?.let { hp ->
-                    { hp(0f) }
-                },
+                actions = headerActions,
                 modifier = Modifier.padding(horizontal = horizontalPadding.dp),
             )
             Column(

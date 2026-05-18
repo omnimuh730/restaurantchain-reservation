@@ -79,7 +79,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
-import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageHeaderIconButton
+import androidx.compose.material3.IconButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DeterministicQrCode
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationCenter
 import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalBottomSheet
@@ -196,33 +196,20 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
         }
         SubpageScaffold(
             title = "Credit cards",
+            subtitle = "Multi-currency · Tonight Card",
             onBack = onBack,
+            modifier = Modifier.fillMaxSize(),
             contentHorizontalPadding = 0,
-            titleFontExpandedSp = 33f,
-            titleFontCollapsedSp = 19f,
-            titleLineHeightExpandedSp = 39f,
-            titleLineHeightCollapsedSp = 23f,
-            headerActions = { collapseProgress ->
-                CollapsingSubpageHeaderIconButton(
-                    collapseProgress = collapseProgress,
-                    onClick = openChooseNewCardTheme,
-                    contentDescription = "Add new card",
-                    imageVector = Icons.Outlined.Add,
-                )
+            headerActions = {
+                IconButton(onClick = openChooseNewCardTheme) {
+                    Icon(
+                        imageVector = Icons.Outlined.Add,
+                        contentDescription = "Add new card",
+                        tint = palette.foreground,
+                    )
+                }
             },
         ) {
-            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = "Multi-currency · Tonight Card",
-                    modifier = Modifier.fillMaxWidth(),
-                    color = palette.mutedForeground,
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp,
-                    fontWeight = FontWeight.Normal,
-                )
-            }
-            Spacer(Modifier.height(20.dp))
             CardCarousel(
                 cards = cards,
                 activeIndex = activeIndex,
