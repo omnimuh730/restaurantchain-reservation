@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
@@ -34,41 +33,15 @@ fun DiningListHeader(
     onAddByCode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val palette = LocalRestaurantPalette.current
-    val titleRes = when (tab) {
-        DiningTabId.Upcoming -> I18nR.string.dining_tab_upcoming_title
-        DiningTabId.Visited -> I18nR.string.dining_tab_visited_title
-        DiningTabId.Cancel -> I18nR.string.dining_tab_cancel_title
-    }
-    val descRes = when (tab) {
-        DiningTabId.Upcoming -> I18nR.string.dining_tab_upcoming_desc
-        DiningTabId.Visited -> I18nR.string.dining_tab_visited_desc
-        DiningTabId.Cancel -> I18nR.string.dining_tab_cancel_desc
-    }
-
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp),
     ) {
-        Text(
-            text = stringResource(titleRes),
-            color = palette.foreground,
-            fontSize = 18.sp,
-            lineHeight = 22.sp,
-            fontWeight = FontWeight.ExtraBold,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = stringResource(descRes),
-            color = palette.mutedForeground,
-            fontSize = 13.sp,
-            lineHeight = 18.sp,
-        )
         if (tab == DiningTabId.Upcoming) {
-            Spacer(Modifier.height(12.dp))
             AddByCodeChip(onClick = onAddByCode)
         }
+        Spacer(Modifier.height(16.dp))
     }
 }
 
