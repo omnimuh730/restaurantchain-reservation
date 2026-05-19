@@ -29,6 +29,15 @@
     <string name="title_qrpay">QR 결제</string>
 
     <string name="desc_sign_in">계속하려면 로그인하세요</string>
+    <string name="sign_in_required_title">로그인이 필요합니다</string>
+    <string name="sign_in_required_message_generic">Tonight을 계속 이용하려면 로그인하세요.</string>
+    <string name="sign_in_required_message_profile">프로필을 보려면 로그인하세요.</string>
+    <string name="sign_in_required_message_wishlist">위시리스트에 저장하려면 로그인하세요.</string>
+    <string name="sign_in_required_message_dining">예약을 보고 관리하려면 로그인하세요.</string>
+    <string name="sign_in_required_message_qr_pay">QR 결제를 사용하려면 로그인하세요.</string>
+    <string name="sign_in_required_message_booking">테이블을 예약하려면 로그인하세요.</string>
+    <string name="sign_in_required_action_sign_in">로그인</string>
+    <string name="sign_in_required_action_not_now">나중에</string>
     <string name="desc_discover_subtitle">레스토랑을 찾아보세요</string>
     <string name="desc_discover_search_hint">지역, 음식, 분위기로 검색하세요</string>
     <string name="desc_search_sheet">어디서 / 언제 / 몇 명</string>

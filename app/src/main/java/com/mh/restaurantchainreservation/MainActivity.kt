@@ -11,6 +11,7 @@ import com.mh.restaurantchainreservation.core.designsystem.theme.rememberThemeCo
 import com.mh.restaurantchainreservation.core.i18n.LocaleManager
 import com.mh.restaurantchainreservation.core.model.AuthSessionStore
 import com.mh.restaurantchainreservation.core.model.DailyBonusStore
+import com.mh.restaurantchainreservation.core.model.LocalDataSyncStore
 import com.mh.restaurantchainreservation.core.navigation.RestaurantNavHost
 
 class MainActivity : ComponentActivity() {
@@ -18,6 +19,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         LocaleManager.initialize(applicationContext)
         AuthSessionStore.initialize(applicationContext)
+        LocalDataSyncStore.init(applicationContext)
         super.onCreate(savedInstanceState)
         DailyBonusStore.init(applicationContext)
         enableEdgeToEdge()

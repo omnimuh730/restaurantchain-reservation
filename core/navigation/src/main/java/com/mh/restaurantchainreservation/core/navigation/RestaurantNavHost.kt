@@ -30,7 +30,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import android.net.Uri
@@ -57,11 +59,14 @@ import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavT
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationHost
 import com.mh.restaurantchainreservation.core.model.AuthSessionStore
 import com.mh.restaurantchainreservation.core.model.DiscoverData
+import com.mh.restaurantchainreservation.core.model.LocalDataSyncStore
 import com.mh.restaurantchainreservation.core.model.LocationStore
 import com.mh.restaurantchainreservation.feature.auth.AuthRoutes
 import com.mh.restaurantchainreservation.feature.auth.ForgotPasswordScreen
 import com.mh.restaurantchainreservation.feature.auth.LoginScreen
 import com.mh.restaurantchainreservation.feature.auth.RegisterScreen
+import com.mh.restaurantchainreservation.feature.auth.SignInRequiredDialog
+import com.mh.restaurantchainreservation.feature.auth.SignInRequiredReason
 import com.mh.restaurantchainreservation.feature.booking.BookTableScreen
 import com.mh.restaurantchainreservation.feature.booking.BookingRoutes
 import com.mh.restaurantchainreservation.feature.booking.RestaurantDetailScreen
@@ -73,6 +78,7 @@ import com.mh.restaurantchainreservation.feature.discover.DiscoverRoutes
 import com.mh.restaurantchainreservation.feature.discover.ui.AllPromotionsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.CategoryResultsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverHomeScreen
+import com.mh.restaurantchainreservation.feature.discover.ui.UpdateLocalDataDialog
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverSearchModal
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverSearchResultsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.FoodTypeCuisineListScreen
@@ -113,6 +119,18 @@ fun RestaurantNavHost(
     val context = LocalContext.current
     val isCompact = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
     val authenticated by AuthSessionStore.isAuthenticated.collectAsState()
+    val mandatorySyncAfterSignIn by LocalDataSyncStore.mandatorySyncAfterSignIn.collectAsState()
+    var updatePromptPostponed by remember { mutableStateOf(false) }
+
+    LaunchedEffect(mandatorySyncAfterSignIn) {
+        if (mandatorySyncAfterSignIn) {
+            updatePromptPostponed = false
+        }
+    }
+
+    val showUpdateModal = authenticated &&
+        LocalDataSyncStore.shouldShowUpdatePromptWhenSignedIn() &&
+        !updatePromptPostponed
 
     val bottomTabs = listOf(
         BottomNavTab(BottomNavTabId.Discover, stringResource(I18nR.string.tab_discover)),
@@ -126,6 +144,18 @@ fun RestaurantNavHost(
     val destination = navBackStackEntry?.destination
     val activeTabId = destination?.let { resolveActiveTab(it.hierarchy.mapNotNull { d -> d.route }.toList()) }
         ?: BottomNavTabId.Discover
+    var signInRequiredReason by remember { mutableStateOf<SignInRequiredReason?>(null) }
+
+    fun promptSignIn(reason: SignInRequiredReason) {
+        signInRequiredReason = reason
+    }
+
+    fun navigateToLogin() {
+        signInRequiredReason = null
+        navController.navigate(AuthRoutes.Login) {
+            launchSingleTop = true
+        }
+    }
 
     // Hide app chrome while auth, QR Pay, or other full-screen flows own the screen.
     val showAppChrome = shouldShowAppChrome(destination?.route)
@@ -134,9 +164,8 @@ fun RestaurantNavHost(
     LaunchedEffect(authenticated, destination?.route) {
         val route = destination?.route ?: return@LaunchedEffect
         if (!authenticated && requiresAuthRoute(route)) {
-            navController.navigate(AuthRoutes.Login) {
-                launchSingleTop = true
-            }
+            promptSignIn(signInReasonForRoute(route))
+            navController.navigateToDiscoverHome()
         } else if (authenticated && route.startsWith(AuthRoutes.Root)) {
             navController.navigate(DiscoverRoutes.Home) {
                 popUpTo(AuthRoutes.Login) { inclusive = true }
@@ -156,7 +185,7 @@ fun RestaurantNavHost(
                     onTabSelect = { id ->
                         val route = routeForTab(id)
                         if (!authenticated && requiresAuthRoute(route)) {
-                            navController.navigate(AuthRoutes.Login) { launchSingleTop = true }
+                            promptSignIn(signInReasonForTab(id))
                         } else if (id == BottomNavTabId.Discover) {
                             navController.navigateToDiscoverHome()
                         } else {
@@ -164,7 +193,11 @@ fun RestaurantNavHost(
                         }
                     },
                     onQrPay = {
-                        if (authenticated) navController.navigate(QrPayRoutes.Home) else navController.navigate(AuthRoutes.Login) { launchSingleTop = true }
+                        if (authenticated) {
+                            navController.navigate(QrPayRoutes.Home)
+                        } else {
+                            promptSignIn(SignInRequiredReason.QrPay)
+                        }
                     },
                     qrPayContentDescription = qrPayLabel,
                 )
@@ -178,6 +211,7 @@ fun RestaurantNavHost(
                     contentPadding = paddingValues,
                     authenticated = authenticated,
                     onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
+                    onRequireSignIn = { promptSignIn(it) },
                     modifier = Modifier.fillMaxSize(),
                 )
                 if (showAppChrome) {
@@ -187,6 +221,22 @@ fun RestaurantNavHost(
                     WishlistOverlayHost(bottomInset = paddingValues)
                 }
                 GlobalNotificationHost(bottomInset = if (showAppChrome) paddingValues else PaddingValues(0.dp))
+                signInRequiredReason?.let { reason ->
+                    SignInRequiredDialog(
+                        message = stringResource(reason.messageRes),
+                        onSignIn = { navigateToLogin() },
+                        onDismiss = { signInRequiredReason = null },
+                    )
+                }
+                UpdateLocalDataOverlay(
+                    show = showUpdateModal,
+                    mandatory = mandatorySyncAfterSignIn,
+                    onDismiss = {
+                        updatePromptPostponed = true
+                        LocalDataSyncStore.clearMandatorySyncRequest()
+                    },
+                    onUpdateComplete = { updatePromptPostponed = false },
+                )
             }
         } else if (showAppChrome) {
             Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
@@ -198,7 +248,7 @@ fun RestaurantNavHost(
                             onClick = {
                                 val route = routeForTab(tab.id)
                                 if (!authenticated && requiresAuthRoute(route)) {
-                                    navController.navigate(AuthRoutes.Login) { launchSingleTop = true }
+                                    promptSignIn(signInReasonForTab(tab.id))
                                 } else if (tab.id == BottomNavTabId.Discover) {
                                     navController.navigateToDiscoverHome()
                                 } else {
@@ -216,10 +266,27 @@ fun RestaurantNavHost(
                         contentPadding = PaddingValues(0.dp),
                         authenticated = authenticated,
                         onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
+                        onRequireSignIn = { promptSignIn(it) },
                         modifier = Modifier.fillMaxSize(),
                     )
                     WishlistOverlayHost()
                     GlobalNotificationHost()
+                    signInRequiredReason?.let { reason ->
+                        SignInRequiredDialog(
+                            message = stringResource(reason.messageRes),
+                            onSignIn = { navigateToLogin() },
+                            onDismiss = { signInRequiredReason = null },
+                        )
+                    }
+                    UpdateLocalDataOverlay(
+                        show = showUpdateModal,
+                        mandatory = mandatorySyncAfterSignIn,
+                        onDismiss = {
+                            updatePromptPostponed = true
+                            LocalDataSyncStore.clearMandatorySyncRequest()
+                        },
+                        onUpdateComplete = { updatePromptPostponed = false },
+                    )
                 }
             }
         } else {
@@ -229,11 +296,44 @@ fun RestaurantNavHost(
                     contentPadding = PaddingValues(0.dp),
                     authenticated = authenticated,
                     onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
+                    onRequireSignIn = { promptSignIn(it) },
                     modifier = Modifier.fillMaxSize(),
                 )
                 GlobalNotificationHost()
+                signInRequiredReason?.let { reason ->
+                    SignInRequiredDialog(
+                        message = stringResource(reason.messageRes),
+                        onSignIn = { navigateToLogin() },
+                        onDismiss = { signInRequiredReason = null },
+                    )
+                }
+                UpdateLocalDataOverlay(
+                    show = showUpdateModal,
+                    mandatory = mandatorySyncAfterSignIn,
+                    onDismiss = {
+                        updatePromptPostponed = true
+                        LocalDataSyncStore.clearMandatorySyncRequest()
+                    },
+                    onUpdateComplete = { updatePromptPostponed = false },
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun UpdateLocalDataOverlay(
+    show: Boolean,
+    mandatory: Boolean,
+    onDismiss: () -> Unit,
+    onUpdateComplete: () -> Unit,
+) {
+    if (show) {
+        UpdateLocalDataDialog(
+            mandatory = mandatory,
+            onDismiss = onDismiss,
+            onUpdateComplete = onUpdateComplete,
+        )
     }
 }
 
@@ -348,6 +448,24 @@ private fun requiresAuthRoute(route: String?): Boolean {
         route in ProfileRoutes.AllProfileSubRoutes
 }
 
+private fun signInReasonForTab(tab: BottomNavTabId): SignInRequiredReason = when (tab) {
+    BottomNavTabId.Wishlist -> SignInRequiredReason.Wishlist
+    BottomNavTabId.Dining -> SignInRequiredReason.Dining
+    BottomNavTabId.Profile -> SignInRequiredReason.Profile
+    BottomNavTabId.Discover -> SignInRequiredReason.Generic
+}
+
+private fun signInReasonForRoute(route: String): SignInRequiredReason = when {
+    route == WishlistRoutes.Home -> SignInRequiredReason.Wishlist
+    route == QrPayRoutes.Home -> SignInRequiredReason.QrPay
+    route == BookingRoutes.BookTable -> SignInRequiredReason.Booking
+    route == DiningRoutes.Home || route == DiningRoutes.Detail || route == DiningRoutes.Enjoy ->
+        SignInRequiredReason.Dining
+    route == ProfileRoutes.Home || route in ProfileRoutes.AllProfileSubRoutes ->
+        SignInRequiredReason.Profile
+    else -> SignInRequiredReason.Generic
+}
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun AppGraph(
@@ -355,12 +473,11 @@ private fun AppGraph(
     contentPadding: PaddingValues,
     authenticated: Boolean,
     onAuthenticated: () -> Unit,
+    onRequireSignIn: (SignInRequiredReason) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val initialStartDestination = remember {
-        if (authenticated) DiscoverRoutes.Home else AuthRoutes.Login
-    }
+    val initialStartDestination = remember { DiscoverRoutes.Home }
 
     Box(modifier = modifier) {
         SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
@@ -545,7 +662,13 @@ private fun AppGraph(
                     RestaurantDetailScreen(
                         restaurantId = id,
                         onBack = { navController.popBackStack() },
-                        onBookNow = { navController.navigate(BookingRoutes.bookTable(id)) },
+                        onBookNow = {
+                            if (authenticated) {
+                                navController.navigate(BookingRoutes.bookTable(id))
+                            } else {
+                                onRequireSignIn(SignInRequiredReason.Booking)
+                            }
+                        },
                     )
                 }
             }
