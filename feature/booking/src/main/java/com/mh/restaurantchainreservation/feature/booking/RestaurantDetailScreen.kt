@@ -88,7 +88,6 @@ import com.mh.restaurantchainreservation.core.designsystem.badge.AnimatedGuestFa
 import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteRatingLaurelRow
 import com.mh.restaurantchainreservation.core.designsystem.badge.guestFavoriteDescription
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
-import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
@@ -104,7 +103,7 @@ private val SheetTopRadius = 34.dp
 private val HeaderSheetShape = RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius)
 private val HeroHeight = 288.dp
 private val DetailInfoHorizontalPadding = 24.dp
-private val DetailListBottomPadding = 120.dp
+private val DetailListBottomPadding = 148.dp
 private val DetailStatsSideColumnWeight = 0.9f
 private val DetailStatsCenterColumnWeight = 1.75f
 private val DetailStatsDividerHeight = 36.dp
@@ -177,6 +176,7 @@ fun RestaurantDetailScreen(
     restaurantId: String,
     onBack: () -> Unit,
     onBookNow: () -> Unit,
+    onShowMenu: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -189,7 +189,6 @@ fun RestaurantDetailScreen(
     var loadedPayload by remember(restaurantId) { mutableStateOf<DetailLoadedPayload?>(null) }
     var saved by remember { mutableStateOf(false) }
     var showReviews by remember { mutableStateOf(false) }
-    var showMenu by remember { mutableStateOf(false) }
     var showAmenities by remember { mutableStateOf(false) }
     var galleryFullscreenIndex by remember { mutableStateOf<Int?>(null) }
     var headerSolid by remember { mutableStateOf(false) }
@@ -300,7 +299,7 @@ fun RestaurantDetailScreen(
                                     )
                                 }
                                 CancellationPolicySection()
-                                PopularMenuSection(onShowMenu = { showMenu = true })
+                                PopularMenuSection(onShowMenu = onShowMenu)
                             }
                         } else {
                             Spacer(Modifier.height(DetailListBottomPadding))
@@ -330,13 +329,6 @@ fun RestaurantDetailScreen(
             RestaurantReviewsScreen(
                 restaurant = restaurant,
                 onBack = { showReviews = false },
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-        if (showMenu) {
-            RestaurantMenuScreen(
-                restaurantName = restaurant.name,
-                onBack = { showMenu = false },
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -1137,7 +1129,7 @@ private fun PopularMenuSection(onShowMenu: () -> Unit) {
                             .clip(RoundedCornerShape(16.dp))
                             .border(1.dp, palette.border, RoundedCornerShape(16.dp))
                             .background(palette.mutedSurface)
-                            .clickable { fullscreenIndex = 0 },
+                            .clickable(onClick = onShowMenu),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
@@ -1162,6 +1154,7 @@ private fun PopularMenuSection(onShowMenu: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
+                .padding(top = 8.dp, bottom = 16.dp)
                 .height(48.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(palette.mutedSurface)
