@@ -128,9 +128,6 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-/** Thumbnail height:width = 105:110 → [Modifier.aspectRatio] uses width/height = 110/105. */
-private val DiscoverRestaurantImageAspectWidthOverHeight = 110f / 105f
-
 private val DiningNewsCardWidth = 260.dp
 private val DiningNewsHeroImageHeight = 128.dp
 /** Title (2 lines) + summary (2 lines) + author row + padding; keeps every Dining News card the same height. */
@@ -188,7 +185,8 @@ private val SeeAllThumbShape = RoundedCornerShape(9.dp)
 private val NewsSeeAllCardShape = RoundedCornerShape(20.dp)
 
 private val RestaurantMiniCardWidth = 176.dp
-private val RestaurantMiniImageHeight = RestaurantMiniCardWidth * (105f / 110f)
+private val RestaurantMiniImageHeight =
+    RestaurantMiniCardWidth / DiscoverRestaurantImageAspectWidthOverHeight
 private val RestaurantMiniMetaBlockHeight = 46.dp
 private val RestaurantMiniCardTotalHeight = RestaurantMiniImageHeight + RestaurantMiniMetaBlockHeight
 
@@ -207,8 +205,10 @@ private enum class ImageRailExploreMoreKind {
 /** Status bar + compact discover bar inner padding (8+44+8); matches [CompactDiscoverBar]. */
 private val CompactDiscoverBarInnerHeight = 60.dp
 
-/** "Restaurants by Price" row thumbnail — slightly larger than early mock for design parity. */
-private val PriceListAvatarSize = 110.dp
+/** "Restaurants by Price" row thumbnail — same width:height as other Discover restaurant heroes. */
+private val PriceListThumbnailWidth = 110.dp
+private val PriceListThumbnailHeight =
+    PriceListThumbnailWidth / DiscoverRestaurantImageAspectWidthOverHeight
 private val PriceListAvatarCorner = 16.dp
 private val PriceListAvatarOverlayPadding = 8.dp
 
@@ -1999,11 +1999,11 @@ private fun RestaurantByPriceListRow(
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
         ) {
             Box(
                 modifier = Modifier
-                    .size(PriceListAvatarSize)
+                    .size(PriceListThumbnailWidth, PriceListThumbnailHeight)
                     .clip(RoundedCornerShape(PriceListAvatarCorner))
                     .background(palette.mutedSurface),
             ) {

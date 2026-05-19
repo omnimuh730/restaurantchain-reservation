@@ -53,8 +53,9 @@ import com.mh.restaurantchainreservation.core.model.WishlistStore
 import kotlin.math.roundToInt
 
 /**
- * Discover list card — 16:9 hero, title, address row (pin + address | 5 stars + score),
- * reviews line, heart on image, and optional reservation time chips.
+ * Discover list card — hero at [DiscoverRestaurantImageAspectWidthOverHeight], title,
+ * address row (pin + address | 5 stars + score), reviews line, heart on image,
+ * and optional reservation time chips.
  */
 @Composable
 fun RestaurantListCard(
@@ -83,7 +84,7 @@ fun RestaurantListCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(16f / 9f),
+                    .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight),
             ) {
                 AsyncImage(
                     model = restaurant.image,

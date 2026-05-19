@@ -910,7 +910,7 @@ private fun RestaurantResultCard(restaurant: Restaurant, onOpen: () -> Unit) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(4f / 3f)
+                    .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
                     .clip(RoundedCornerShape(16.dp))
                     .background(palette.mutedSurface),
             ) {
@@ -1076,7 +1076,7 @@ private fun MapPreviewCard(
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .width(136.dp)
+                .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
                 .background(palette.mutedSurface),
         ) {
             AsyncImage(
