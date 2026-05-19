@@ -77,8 +77,9 @@ import com.mh.restaurantchainreservation.feature.dining.DiningRoutes
 import com.mh.restaurantchainreservation.feature.discover.DiscoverRoutes
 import com.mh.restaurantchainreservation.feature.discover.ui.AllPromotionsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.CategoryResultsScreen
+import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverHazeRegistry
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverHomeScreen
-import com.mh.restaurantchainreservation.feature.discover.ui.UpdateLocalDataDialog
+import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverUpdateModalHost
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverSearchModal
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverSearchResultsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.FoodTypeCuisineListScreen
@@ -119,19 +120,6 @@ fun RestaurantNavHost(
     val context = LocalContext.current
     val isCompact = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
     val authenticated by AuthSessionStore.isAuthenticated.collectAsState()
-    val mandatorySyncAfterSignIn by LocalDataSyncStore.mandatorySyncAfterSignIn.collectAsState()
-    var updatePromptPostponed by remember { mutableStateOf(false) }
-
-    LaunchedEffect(mandatorySyncAfterSignIn) {
-        if (mandatorySyncAfterSignIn) {
-            updatePromptPostponed = false
-        }
-    }
-
-    val showUpdateModal = authenticated &&
-        LocalDataSyncStore.shouldShowUpdatePromptWhenSignedIn() &&
-        !updatePromptPostponed
-
     val bottomTabs = listOf(
         BottomNavTab(BottomNavTabId.Discover, stringResource(I18nR.string.tab_discover)),
         BottomNavTab(BottomNavTabId.Wishlist, stringResource(I18nR.string.tab_wishlist)),
@@ -159,7 +147,14 @@ fun RestaurantNavHost(
 
     // Hide app chrome while auth, QR Pay, or other full-screen flows own the screen.
     val showAppChrome = shouldShowAppChrome(destination?.route)
-    val showBottomBar = isCompact && showAppChrome && shouldShowBottomNavBar(destination?.route)
+    val onDiscoverHome = destination?.route == DiscoverRoutes.Home
+    val shouldShowUpdatePrompt by LocalDataSyncStore.shouldShowUpdatePrompt.collectAsState()
+    // Keep bottom nav hidden until the post-login update flow finishes so Discover paints first.
+    val hideBottomBarForUpdateFlow = authenticated && onDiscoverHome && shouldShowUpdatePrompt
+    val showBottomBar = isCompact &&
+        showAppChrome &&
+        shouldShowBottomNavBar(destination?.route) &&
+        !hideBottomBarForUpdateFlow
 
     LaunchedEffect(authenticated, destination?.route) {
         val route = destination?.route ?: return@LaunchedEffect
@@ -174,8 +169,9 @@ fun RestaurantNavHost(
         }
     }
 
+    Box(modifier = modifier.fillMaxSize()) {
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             if (showBottomBar) {
@@ -228,15 +224,6 @@ fun RestaurantNavHost(
                         onDismiss = { signInRequiredReason = null },
                     )
                 }
-                UpdateLocalDataOverlay(
-                    show = showUpdateModal,
-                    mandatory = mandatorySyncAfterSignIn,
-                    onDismiss = {
-                        updatePromptPostponed = true
-                        LocalDataSyncStore.clearMandatorySyncRequest()
-                    },
-                    onUpdateComplete = { updatePromptPostponed = false },
-                )
             }
         } else if (showAppChrome) {
             Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
@@ -278,15 +265,6 @@ fun RestaurantNavHost(
                             onDismiss = { signInRequiredReason = null },
                         )
                     }
-                    UpdateLocalDataOverlay(
-                        show = showUpdateModal,
-                        mandatory = mandatorySyncAfterSignIn,
-                        onDismiss = {
-                            updatePromptPostponed = true
-                            LocalDataSyncStore.clearMandatorySyncRequest()
-                        },
-                        onUpdateComplete = { updatePromptPostponed = false },
-                    )
                 }
             }
         } else {
@@ -307,33 +285,13 @@ fun RestaurantNavHost(
                         onDismiss = { signInRequiredReason = null },
                     )
                 }
-                UpdateLocalDataOverlay(
-                    show = showUpdateModal,
-                    mandatory = mandatorySyncAfterSignIn,
-                    onDismiss = {
-                        updatePromptPostponed = true
-                        LocalDataSyncStore.clearMandatorySyncRequest()
-                    },
-                    onUpdateComplete = { updatePromptPostponed = false },
-                )
             }
         }
     }
-}
 
-@Composable
-private fun UpdateLocalDataOverlay(
-    show: Boolean,
-    mandatory: Boolean,
-    onDismiss: () -> Unit,
-    onUpdateComplete: () -> Unit,
-) {
-    if (show) {
-        UpdateLocalDataDialog(
-            mandatory = mandatory,
-            onDismiss = onDismiss,
-            onUpdateComplete = onUpdateComplete,
-        )
+        if (isCompact && onDiscoverHome) {
+            DiscoverUpdateModalHost(onDiscoverHome = onDiscoverHome)
+        }
     }
 }
 

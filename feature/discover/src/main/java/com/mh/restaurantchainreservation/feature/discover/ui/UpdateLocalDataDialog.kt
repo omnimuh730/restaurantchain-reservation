@@ -47,11 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
-import com.mh.restaurantchainreservation.core.designsystem.components.ModalGlassDialog
-import com.mh.restaurantchainreservation.core.designsystem.components.ModalGlassScrimStrength
 import com.mh.restaurantchainreservation.core.designsystem.components.TonightLogoBadge
-import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.LocalDataSyncStore
 import kotlin.math.roundToInt
@@ -67,62 +63,7 @@ private val SyncStepLabels = listOf(
 private enum class SyncStepState { Pending, Active, Done }
 
 @Composable
-fun UpdateLocalDataDialog(
-    onDismiss: () -> Unit,
-    onUpdateComplete: () -> Unit,
-    mandatory: Boolean = false,
-) {
-    val palette = LocalRestaurantPalette.current
-    var syncing by remember { mutableStateOf(false) }
-    val canDismissOverlay = !syncing && !mandatory
-
-    ModalGlassDialog(
-        onDismissRequest = { if (canDismissOverlay) onDismiss() },
-        dismissOnBackPress = canDismissOverlay,
-        dismissOnClickOutside = canDismissOverlay,
-        scrimStrength = ModalGlassScrimStrength.Strong,
-    ) {
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 22.dp)
-                .widthIn(max = 400.dp)
-                .fillMaxWidth()
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() },
-                    enabled = false,
-                ) {},
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .hubSurfaceCard(
-                        palette = palette,
-                        shape = HubSurfaceCardDefaults.Shape,
-                    ),
-            ) {
-                if (syncing) {
-                    SyncingLocalDataContent(
-                        onFinished = {
-                            LocalDataSyncStore.markCatalogSynced()
-                            syncing = false
-                            onUpdateComplete()
-                        },
-                    )
-                } else {
-                    UpdateLocalDataPromptContent(
-                        onDismiss = onDismiss,
-                        onUpdateNow = { syncing = true },
-                        showCloseButton = !mandatory,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun UpdateLocalDataPromptContent(
+internal fun UpdateLocalDataPromptContent(
     onDismiss: () -> Unit,
     onUpdateNow: () -> Unit,
     showCloseButton: Boolean = true,
@@ -215,7 +156,7 @@ private fun UpdateLocalDataPromptContent(
 }
 
 @Composable
-private fun SyncingLocalDataContent(onFinished: () -> Unit) {
+internal fun SyncingLocalDataContent(onFinished: () -> Unit) {
     val palette = LocalRestaurantPalette.current
     var progress by remember { mutableFloatStateOf(0f) }
 

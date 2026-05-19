@@ -68,6 +68,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -276,12 +278,26 @@ fun DiscoverHomeScreen(
             }
     }
 
+    val hazeState = rememberHazeState()
+    DisposableEffect(hazeState) {
+        DiscoverHazeRegistry.register(hazeState)
+        onDispose { DiscoverHazeRegistry.unregister(hazeState) }
+    }
+    LaunchedEffect(listState) {
+        snapshotFlow {
+            listState.layoutInfo.totalItemsCount > 0 &&
+                listState.layoutInfo.visibleItemsInfo.isNotEmpty()
+        }
+            .distinctUntilChanged()
+            .collect { ready -> DiscoverHazeRegistry.setDiscoverContentReady(ready) }
+    }
+
+    CompositionLocalProvider(LocalDiscoverHazeState provides hazeState) {
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(palette.cardSurface),
     ) {
-        val hazeState = rememberHazeState()
         val density = LocalDensity.current
         val statusBarInsets = WindowInsets.statusBars
         val compactBarTotalHeight = remember(density, statusBarInsets) {
@@ -439,6 +455,7 @@ fun DiscoverHomeScreen(
             )
         }
 
+    }
     }
 }
 

@@ -24,9 +24,16 @@ object LocalDataSyncStore {
     private val _mandatorySyncAfterSignIn = MutableStateFlow(false)
     val mandatorySyncAfterSignIn: StateFlow<Boolean> = _mandatorySyncAfterSignIn.asStateFlow()
 
+    private val _updatePromptPostponed = MutableStateFlow(false)
+    val updatePromptPostponed: StateFlow<Boolean> = _updatePromptPostponed.asStateFlow()
+
+    private val _shouldShowUpdatePrompt = MutableStateFlow(false)
+    val shouldShowUpdatePrompt: StateFlow<Boolean> = _shouldShowUpdatePrompt.asStateFlow()
+
     fun init(context: Context) {
         if (prefs != null) return
         prefs = context.applicationContext.getSharedPreferences(PrefsName, Context.MODE_PRIVATE)
+        refreshShouldShowUpdatePrompt()
     }
 
     fun syncedCatalogVersion(): String? = prefs?.getString(KeySyncedVersion, null)
@@ -39,18 +46,30 @@ object LocalDataSyncStore {
     /** Call when the user completes sign-in / registration so Discover must show the sync modal. */
     fun requestMandatorySyncAfterSignIn() {
         _mandatorySyncAfterSignIn.value = true
+        _updatePromptPostponed.value = false
+        refreshShouldShowUpdatePrompt()
     }
 
     fun clearMandatorySyncRequest() {
         _mandatorySyncAfterSignIn.value = false
+        refreshShouldShowUpdatePrompt()
     }
 
-    fun shouldShowUpdatePromptWhenSignedIn(): Boolean {
-        return shouldPromptForUpdate() || _mandatorySyncAfterSignIn.value
+    fun postponeUpdatePrompt() {
+        _updatePromptPostponed.value = true
+        clearMandatorySyncRequest()
     }
+
+    fun shouldShowUpdatePromptWhenSignedIn(): Boolean = _shouldShowUpdatePrompt.value
 
     fun markCatalogSynced() {
         prefs?.edit()?.putString(KeySyncedVersion, CURRENT_CATALOG_VERSION)?.apply()
         clearMandatorySyncRequest()
+        refreshShouldShowUpdatePrompt()
+    }
+
+    private fun refreshShouldShowUpdatePrompt() {
+        _shouldShowUpdatePrompt.value = !_updatePromptPostponed.value &&
+            (shouldPromptForUpdate() || _mandatorySyncAfterSignIn.value)
     }
 }

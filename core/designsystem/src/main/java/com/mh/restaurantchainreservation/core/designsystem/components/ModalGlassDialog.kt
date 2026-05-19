@@ -30,6 +30,12 @@ enum class ModalGlassScrimStrength {
 
     /** Darker base fade so content behind (including the status bar area) is subdued. */
     Strong,
+
+    /**
+     * Frosted glass: keeps scrims translucent on API 31+ so [Window.setBackgroundBlurRadius]
+     * and [WindowManager.LayoutParams.blurBehindRadius] stay visible through the backdrop.
+     */
+    FrostedGlass,
 }
 
 /**
@@ -75,6 +81,7 @@ fun ConfigureModalGlassDialogWindow(blurRadiusDp: Float = 16f) {
     DisposableEffect(view, blurRadiusDp) {
         val window = (view.parent as? DialogWindowProvider)?.window
         val previousDim = window?.attributes?.dimAmount
+        val previousBlurBehindRadius = window?.attributes?.blurBehindRadius
         val previousStatusBarColor = window?.statusBarColor
         val previousNavBarColor = window?.navigationBarColor
         if (window != null) {
@@ -85,11 +92,12 @@ fun ConfigureModalGlassDialogWindow(blurRadiusDp: Float = 16f) {
             val attrs = window.attributes
             attrs.dimAmount = 0f
             attrs.flags = attrs.flags or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-            window.attributes = attrs
             if (supportsBackdropBlur) {
                 val blurPx = (blurRadiusDp * density.density).roundToInt().coerceIn(1, 150)
                 window.setBackgroundBlurRadius(blurPx)
+                attrs.blurBehindRadius = blurPx
             }
+            window.attributes = attrs
         }
         onDispose {
             if (window != null) {
@@ -100,6 +108,9 @@ fun ConfigureModalGlassDialogWindow(blurRadiusDp: Float = 16f) {
                     val a = window.attributes
                     a.dimAmount = previousDim
                     a.flags = a.flags and WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS.inv()
+                    if (supportsBackdropBlur && previousBlurBehindRadius != null) {
+                        a.blurBehindRadius = previousBlurBehindRadius
+                    }
                     window.attributes = a
                 }
                 WindowCompat.setDecorFitsSystemWindows(window, true)
@@ -133,6 +144,15 @@ fun ModalGlassScrim(
             supportsBackdropBlur -> Triple(0.72f, 0.14f, 0.90f)
             palette.isDark -> Triple(0.80f, 0.10f, 0.94f)
             else -> Triple(0.76f, 0.16f, 0.94f)
+        }
+        ModalGlassScrimStrength.FrostedGlass -> when {
+            supportsBackdropBlur -> if (palette.isDark) {
+                Triple(0.22f, 0.26f, 0.84f)
+            } else {
+                Triple(0.28f, 0.38f, 0.88f)
+            }
+            palette.isDark -> Triple(0.68f, 0.14f, 0.90f)
+            else -> Triple(0.62f, 0.22f, 0.92f)
         }
     }
 
