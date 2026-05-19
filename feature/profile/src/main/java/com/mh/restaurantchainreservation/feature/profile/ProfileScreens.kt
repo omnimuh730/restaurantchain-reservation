@@ -53,6 +53,7 @@ fun ProfileHomeScreen(
     onOpenCards: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
     onOpenRefer: () -> Unit = {},
+    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     ProfileHubScreen(
@@ -68,6 +69,7 @@ fun ProfileHomeScreen(
         onOpenCards = onOpenCards,
         onOpenHistory = onOpenHistory,
         onOpenRefer = onOpenRefer,
+        onLogout = onLogout,
         modifier = modifier,
     )
 }

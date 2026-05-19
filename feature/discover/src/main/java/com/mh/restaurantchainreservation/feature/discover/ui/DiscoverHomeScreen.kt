@@ -68,6 +68,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -107,6 +109,7 @@ import dev.chrisbanes.haze.materials.HazeMaterials
 import dev.chrisbanes.haze.rememberHazeState
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
+import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
@@ -276,12 +279,28 @@ fun DiscoverHomeScreen(
             }
     }
 
+    val hazeState = rememberHazeState()
+    DisposableEffect(hazeState) {
+        DiscoverHazeRegistry.register(hazeState)
+        onDispose { DiscoverHazeRegistry.unregister(hazeState) }
+    }
+    // Latch ready once the list has items — visibleItemsInfo can briefly empty during scroll.
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.layoutInfo.totalItemsCount > 0 }
+            .distinctUntilChanged()
+            .collect { hasItems ->
+                if (hasItems) {
+                    DiscoverHazeRegistry.setDiscoverContentReady(true)
+                }
+            }
+    }
+
+    CompositionLocalProvider(LocalDiscoverHazeState provides hazeState) {
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(palette.cardSurface),
     ) {
-        val hazeState = rememberHazeState()
         val density = LocalDensity.current
         val statusBarInsets = WindowInsets.statusBars
         val compactBarTotalHeight = remember(density, statusBarInsets) {
@@ -308,6 +327,7 @@ fun DiscoverHomeScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
+                .trackBottomNavScroll()
                 .hazeSource(state = hazeState),
             contentPadding = PaddingValues(bottom = 16.dp),
         ) {
@@ -438,6 +458,8 @@ fun DiscoverHomeScreen(
                 onOpenMap = onOpenMap,
             )
         }
+
+    }
     }
 }
 

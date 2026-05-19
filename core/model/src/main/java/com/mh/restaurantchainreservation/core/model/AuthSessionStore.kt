@@ -25,6 +25,7 @@ object AuthSessionStore {
             .putBoolean(KeyAuthenticated, true)
             .apply()
         _isAuthenticated.value = true
+        LocalDataSyncStore.requestMandatorySyncAfterSignIn()
     }
 
     fun signOut(context: Context) {

@@ -496,7 +496,7 @@ private fun CardCarousel(
                     val target = maxWidth * 0.92f
                     val capped = if (target > 364.dp) 364.dp else target
                     val floored = if (capped < 272.dp) 272.dp else capped
-                    if (floored > maxWidth - 8.dp) maxWidth - 8.dp else floored
+                    (if (floored > maxWidth - 8.dp) maxWidth - 8.dp else floored).coerceAtLeast(1.dp)
                 }
             }
             val sidePad = remember(maxWidth, cardWidth, fullWidthPagerWithCenterGutters) {
