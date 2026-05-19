@@ -12,7 +12,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -34,9 +33,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -886,6 +884,7 @@ private val ReviewCarouselTopGap = 12.dp
 /** How much of the next card (avatar + text) peeks on the right while the active card is snapped. */
 private const val ReviewCarouselNextPeekFraction = 0.34f
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun GuestReviewsCarousel(
     reviews: List<ReviewEntry>,
@@ -898,30 +897,24 @@ private fun GuestReviewsCarousel(
         val viewportWidth = maxWidth - DetailInfoHorizontalPadding
         val nextPeekWidth = viewportWidth * ReviewCarouselNextPeekFraction
         val pageWidth = viewportWidth - nextPeekWidth
+        val pagerState = rememberPagerState(pageCount = { reviews.size })
 
-        val listState = rememberLazyListState()
-        val snapFling = rememberSnapFlingBehavior(lazyListState = listState)
-
-        LazyRow(
-            state = listState,
+        HorizontalPager(
+            state = pagerState,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = DetailInfoHorizontalPadding)
                 .clipToBounds(),
+            pageSize = PageSize.Fixed(pageWidth),
+            pageSpacing = 0.dp,
             contentPadding = PaddingValues(end = DetailInfoHorizontalPadding),
-            flingBehavior = snapFling,
-        ) {
-            itemsIndexed(
-                items = reviews,
-                key = { index, review -> "${review.name}-${review.publishedAtEpochMs}-$index" },
-            ) { index, review ->
-                GuestReviewCarouselPage(
-                    review = review,
-                    index = index,
-                    pageWidth = pageWidth,
-                    onShowMore = onShowMore,
-                )
-            }
+            beyondViewportPageCount = 1,
+        ) { page ->
+            GuestReviewCarouselPage(
+                review = reviews[page],
+                pageWidth = pageWidth,
+                onShowMore = onShowMore,
+            )
         }
     }
 }
@@ -929,26 +922,19 @@ private fun GuestReviewsCarousel(
 @Composable
 private fun GuestReviewCarouselPage(
     review: ReviewEntry,
-    index: Int,
     pageWidth: Dp,
     onShowMore: () -> Unit,
 ) {
-    val contentWidth =
-        if (index == 0) {
-            pageWidth
-        } else {
-            pageWidth - ReviewCarouselDividerWidth
-        }
     Row(
-        modifier = Modifier.width(pageWidth),
+        modifier = Modifier
+            .width(pageWidth)
+            .clipToBounds(),
         verticalAlignment = Alignment.Top,
     ) {
-        if (index > 0) {
-            ReviewPreviewColumnDivider(modifier = Modifier.padding(top = ReviewCarouselTopGap))
-        }
+        ReviewPreviewColumnDivider(modifier = Modifier.padding(top = ReviewCarouselTopGap))
         GuestReviewPreviewItem(
             review = review,
-            cardWidth = contentWidth,
+            cardWidth = pageWidth - ReviewCarouselDividerWidth,
             onShowMore = onShowMore,
         )
     }
