@@ -46,10 +46,8 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.Place
-import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -110,8 +108,7 @@ private val DetailListBottomPadding = 120.dp
 private val DetailStatsSideColumnWeight = 0.9f
 private val DetailStatsCenterColumnWeight = 1.75f
 private val DetailStatsDividerHeight = 36.dp
-private val DetailStatsRowTopPadding = 0.dp
-private val DetailStatsRowBottomPadding = 20.dp
+private val DetailStatsRowVerticalPadding = 20.dp
 private val BookingBarTopShadowElevation = 10.dp
 /** Matches CSS loader: 60×30, three dots bouncing on a 1s linear loop (l3). */
 private val DetailLoaderWidth = 60.dp
@@ -288,7 +285,6 @@ fun RestaurantDetailScreen(
                                     alpha = 0.22f + 0.78f * p
                                 },
                             ) {
-                                HighlightsSection(restaurant = restaurant)
                                 AboutSection(ext = payload.ext)
                                 AmenitiesSection(
                                     restaurant = restaurant,
@@ -535,7 +531,7 @@ private fun HeaderSummaryCard(
         }
         if (loadPhase == DetailLoadPhase.Ready && ext != null) {
             Text(
-                text = "${restaurant.cuisine} restaurant in ${restaurant.distance} area",
+                text = detailHeaderLocationLine(restaurant, ext),
                 color = palette.mutedForeground,
                 fontSize = 16.sp,
                 lineHeight = 22.sp,
@@ -545,7 +541,7 @@ private fun HeaderSummaryCard(
                     .padding(top = 10.dp),
             )
             Text(
-                text = "${restaurant.price} · Open until ${ext.closesAt}",
+                text = detailHeaderHoursLine(restaurant, ext),
                 color = palette.mutedForeground,
                 fontSize = 16.sp,
                 lineHeight = 22.sp,
@@ -622,8 +618,8 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit)
             .clickable(onClick = onOpenReviews)
             .padding(horizontal = DetailInfoHorizontalPadding)
             .padding(
-                top = DetailStatsRowTopPadding,
-                bottom = DetailStatsRowBottomPadding,
+                top = DetailStatsRowVerticalPadding,
+                bottom = DetailStatsRowVerticalPadding,
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -655,8 +651,8 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit)
                 tier = laurelTier,
                 animationKey = restaurant.id,
                 modifier = Modifier.weight(DetailStatsCenterColumnWeight),
-                laurelHeight = 32.dp,
-                titleSize = 14.sp,
+                laurelHeight = 38.dp,
+                titleSize = 20.sp,
             )
         }
         RatingsSummaryDivider(
@@ -676,8 +672,8 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit)
             Text(
                 text = "Reviews",
                 color = palette.foreground,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 4.dp),
             )
         }
@@ -711,39 +707,6 @@ private fun RatingsSummaryDivider(
 }
 
 @Composable
-private fun HighlightsSection(restaurant: Restaurant) {
-    val palette = LocalRestaurantPalette.current
-    Column(
-        modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
-        FeatureRow(
-            icon = Icons.Outlined.EmojiEvents,
-            title = "Exceptional dining experience",
-            subtitle = "Guests consistently praise this place for quality and atmosphere.",
-        )
-        FeatureRow(
-            icon = Icons.Outlined.Restaurant,
-            title = "${restaurant.cuisine} cuisine",
-            subtitle = "Chef-driven menu with seasonal ingredients and house specialties.",
-        )
-    }
-    DetailInsetDivider()
-}
-
-@Composable
-private fun FeatureRow(icon: ImageVector, title: String, subtitle: String) {
-    val palette = LocalRestaurantPalette.current
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        Icon(icon, null, tint = palette.foreground, modifier = Modifier.size(22.dp))
-        Column {
-            Text(title, color = palette.foreground, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            Text(subtitle, color = palette.mutedForeground, fontSize = 15.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
-        }
-    }
-}
-
-@Composable
 private fun AboutSection(ext: RestaurantExtendedData) {
     val palette = LocalRestaurantPalette.current
     Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)) {
@@ -760,24 +723,56 @@ private fun AboutSection(ext: RestaurantExtendedData) {
 }
 
 @Composable
+private fun DetailInfoRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = palette.foreground,
+            modifier = Modifier.size(22.dp),
+        )
+        Column {
+            Text(
+                text = title,
+                color = palette.foreground,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = subtitle,
+                color = palette.mutedForeground,
+                fontSize = 15.sp,
+                lineHeight = 22.sp,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+    }
+}
+
+@Composable
 private fun AmenitiesSection(
     restaurant: Restaurant,
     ext: RestaurantExtendedData,
     onShowAll: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val previewItems = remember(restaurant, ext) {
-        RestaurantAmenitiesData.previewItems(restaurant, ext)
+    val chipCategories = remember(ext) {
+        RestaurantAmenitiesData.placeOfferChipCategories(ext)
     }
     Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)) {
         Text("What this place offers", color = palette.foreground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(20.dp))
-        previewItems.forEach { item ->
-            AmenityRow(
-                icon = item.icon.toImageVector(),
-                text = item.label,
-            )
-        }
+        PlaceOfferChipsContent(categories = chipCategories)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -795,19 +790,6 @@ private fun AmenitiesSection(
 }
 
 @Composable
-private fun AmenityRow(icon: ImageVector, text: String) {
-    val palette = LocalRestaurantPalette.current
-    Row(
-        modifier = Modifier.padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Icon(icon, null, tint = palette.foreground, modifier = Modifier.size(22.dp))
-        Text(text, color = palette.foreground, fontSize = 16.sp)
-    }
-}
-
-@Composable
 private fun LocationSection(restaurant: Restaurant, ext: RestaurantExtendedData) {
     val palette = LocalRestaurantPalette.current
     val (lat, lng) = remember(restaurant.id) { RestaurantDetailData.mapCoordinate(restaurant) }
@@ -816,24 +798,25 @@ private fun LocationSection(restaurant: Restaurant, ext: RestaurantExtendedData)
     }
     Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)) {
         Text("Where you'll be", color = palette.foreground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-        Text(
-            text = locationLine,
-            color = palette.mutedForeground,
-            fontSize = 15.sp,
-            modifier = Modifier.padding(top = 8.dp, bottom = 16.dp),
-        )
         RestaurantDetailLocationMap(
             latitude = lat,
             longitude = lng,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(280.dp),
+                .height(280.dp)
+                .padding(top = 16.dp),
         )
-        Text(
-            text = "Exact location will be provided after booking.",
-            color = palette.mutedForeground,
-            fontSize = 14.sp,
-            modifier = Modifier.padding(top = 12.dp),
+        DetailInfoRow(
+            icon = Icons.Outlined.Place,
+            title = "Location",
+            subtitle = locationLine,
+            modifier = Modifier.padding(top = 20.dp),
+        )
+        DetailInfoRow(
+            icon = Icons.Outlined.Phone,
+            title = "Contact",
+            subtitle = ext.phone2,
+            modifier = Modifier.padding(top = 20.dp),
         )
     }
     DetailInsetDivider()

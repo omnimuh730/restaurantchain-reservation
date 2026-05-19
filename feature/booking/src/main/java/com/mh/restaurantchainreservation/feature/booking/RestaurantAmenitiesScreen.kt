@@ -27,6 +27,8 @@ import androidx.compose.material.icons.outlined.Cake
 import androidx.compose.material.icons.outlined.Checkroom
 import androidx.compose.material.icons.outlined.ChildCare
 import androidx.compose.material.icons.outlined.CreditCard
+import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.SignalCellularAlt
 import androidx.compose.material.icons.outlined.DirectionsCar
 import androidx.compose.material.icons.outlined.Eco
 import androidx.compose.material.icons.outlined.EventSeat
@@ -78,7 +80,10 @@ fun RestaurantAmenitiesScreen(
 ) {
     val palette = LocalRestaurantPalette.current
     val ext = remember(restaurant) { RestaurantDetailData.extendedData(restaurant) }
-    val categories = remember(restaurant, ext) { RestaurantAmenitiesData.categories(restaurant, ext) }
+    val chipCategories = remember(ext) { RestaurantAmenitiesData.placeOfferChipCategories(ext) }
+    val listCategories = remember(restaurant, ext) {
+        RestaurantAmenitiesData.extendedCategories(restaurant, ext)
+    }
 
     var entered by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { entered = true }
@@ -123,7 +128,16 @@ fun RestaurantAmenitiesScreen(
             }
         }
 
-        categories.forEach { category ->
+        if (chipCategories.isNotEmpty()) {
+            item(key = "place-offer-chips") {
+                PlaceOfferChipsContent(
+                    categories = chipCategories,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                )
+            }
+        }
+
+        listCategories.forEach { category ->
             item(key = "category-${category.title}") {
                 Text(
                     text = category.title,
@@ -214,6 +228,9 @@ internal fun AmenityIconType.toImageVector(): ImageVector = when (this) {
     AmenityIconType.Birthday -> Icons.Outlined.Cake
     AmenityIconType.DressCode -> Icons.Outlined.Checkroom
     AmenityIconType.CardPayment -> Icons.Outlined.CreditCard
+    AmenityIconType.Cash -> Icons.Outlined.Payments
+    AmenityIconType.Cuisine -> Icons.Outlined.RestaurantMenu
+    AmenityIconType.DataConnection -> Icons.Outlined.SignalCellularAlt
     AmenityIconType.OutdoorHeating -> Icons.Outlined.WbSunny
     AmenityIconType.FullBar -> Icons.Outlined.LocalBar
     AmenityIconType.Takeout -> Icons.Outlined.TakeoutDining
