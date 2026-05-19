@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -12,17 +13,20 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
+import kotlin.math.roundToInt
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -43,18 +47,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavIconPaths
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavStrokeIcon
-import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucideIcon
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucidePaths
-import com.mh.restaurantchainreservation.core.designsystem.components.icons.QrCodeIcon
+import com.mh.restaurantchainreservation.core.designsystem.components.icons.QrScannerIcon
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
+
 enum class BottomNavTabId { Discover, Wishlist, Dining, Profile }
 
 data class BottomNavTab(
@@ -62,20 +70,37 @@ data class BottomNavTab(
     val label: String,
 )
 
-private val TabVerticalPadding = 10.dp
 private val TabIconSize = 24.dp
-private val LabelTopGap = 2.dp
-private val QrButtonSize: Dp = 60.dp
-private val QrIconSize = 26.dp
-private val QrBorderWidth = 4.dp
-private val QrLift = 20.dp
+private val TabLabelFontSize = 12.sp
+private val TabLabelLineHeight = 14.sp
+private val TabLabelHeight = 14.dp
+private val LabelTopGap = 4.dp
+private val TabVerticalPadding = 6.dp
+private val TabLabelBottomPadding = 12.dp
+private val TabRowTopInset = 10.dp
+private val TabItemMinWidth = 52.dp
+private val TabContentHeight = TabIconSize + LabelTopGap + TabLabelHeight + TabVerticalPadding * 2
+private val TabRowHeight = TabContentHeight + TabRowTopInset + TabLabelBottomPadding
+
+private val QrInnerDiameter = 64.dp
+private val QrOuterDiameter = 76.dp // ~1.19× inner white field
+private val QrIconSize = 30.dp
+private val QrRingBorderWidth = 1.dp
+/** ~30% of outer QR diameter above nav top (reference: 28–32%). */
+private val QrAboveNavBarLift = 23.dp
+private val QrShadowElevation = 12.dp
+private val NavTopBorderWidth = 1.dp
+
+/** Horizontal center of each nav control as a fraction of screen width. */
+private const val DiscoverCenterFraction = 0.10f
+private const val WishlistCenterFraction = 0.31f
+private const val DiningCenterFraction = 0.69f
+private const val ProfileCenterFraction = 0.89f
+
 private val BadgeHeight = 16.dp
 private val DotSize = 10.dp
 private val DotBorder = 2.dp
-private val NavTopBorderWidth = 1.dp
 
-private const val ActiveBackgroundAlpha = 0.08f
-private const val ActiveIconFillAlpha = 0.15f
 private const val ActiveStrokeWidth = 2.5f
 private const val InactiveStrokeWidth = 1.8f
 private const val SurfaceTranslucentAlpha = 0.95f
@@ -93,40 +118,78 @@ fun BottomNavBar(
 ) {
     val cardSurface = MaterialTheme.colorScheme.surface
     val borderColor = MaterialTheme.colorScheme.outline
+    val discover = tabs.firstOrNull { it.id == BottomNavTabId.Discover }
+    val wishlist = tabs.firstOrNull { it.id == BottomNavTabId.Wishlist }
+    val dining = tabs.firstOrNull { it.id == BottomNavTabId.Dining }
+    val profile = tabs.firstOrNull { it.id == BottomNavTabId.Profile }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .wrapContentHeight(),
+            .wrapContentHeight()
+            .graphicsLayer { clip = false },
         contentAlignment = Alignment.TopCenter,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .wrapContentHeight(),
+                .wrapContentHeight()
+                .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
             HorizontalDivider(
                 color = borderColor,
                 thickness = NavTopBorderWidth,
             )
-            Row(
+            FractionalTabNavLayout(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(cardSurface.copy(alpha = SurfaceTranslucentAlpha))
-                    .windowInsetsPadding(WindowInsets.navigationBars),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                tabs.forEach { tab ->
-                    TabButton(
-                        tab = tab,
-                        isActive = tab.id == activeId,
-                        onSelect = { onTabSelect(tab.id) },
-                        badgeCount = if (tab.id == BottomNavTabId.Profile) profileBadgeCount else 0,
-                        showDot = tab.id == BottomNavTabId.Profile && showProfileDot,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
+                    .height(TabRowHeight)
+                    .background(cardSurface.copy(alpha = SurfaceTranslucentAlpha)),
+                discover = discover?.let { tab ->
+                    {
+                        TabButton(
+                            tab = tab,
+                            isActive = tab.id == activeId,
+                            onSelect = { onTabSelect(tab.id) },
+                            badgeCount = 0,
+                            showDot = false,
+                        )
+                    }
+                },
+                wishlist = wishlist?.let { tab ->
+                    {
+                        TabButton(
+                            tab = tab,
+                            isActive = tab.id == activeId,
+                            onSelect = { onTabSelect(tab.id) },
+                            badgeCount = 0,
+                            showDot = false,
+                        )
+                    }
+                },
+                dining = dining?.let { tab ->
+                    {
+                        TabButton(
+                            tab = tab,
+                            isActive = tab.id == activeId,
+                            onSelect = { onTabSelect(tab.id) },
+                            badgeCount = 0,
+                            showDot = false,
+                        )
+                    }
+                },
+                profile = profile?.let { tab ->
+                    {
+                        TabButton(
+                            tab = tab,
+                            isActive = tab.id == activeId,
+                            onSelect = { onTabSelect(tab.id) },
+                            badgeCount = profileBadgeCount,
+                            showDot = showProfileDot,
+                        )
+                    }
+                },
+            )
         }
 
         QrFloatingButton(
@@ -135,8 +198,57 @@ fun BottomNavBar(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = NavTopBorderWidth)
-                .graphicsLayer { translationY = -QrLift.toPx() },
+                .graphicsLayer { translationY = -QrAboveNavBarLift.toPx() },
         )
+    }
+}
+
+/**
+ * Places four tab items at fixed horizontal center fractions (not equal columns).
+ * Discover 10%, Wishlist 31%, Dining 69%, Profile 89% — center 50% reserved for QR FAB.
+ */
+@Composable
+private fun FractionalTabNavLayout(
+    modifier: Modifier = Modifier,
+    discover: (@Composable () -> Unit)?,
+    wishlist: (@Composable () -> Unit)?,
+    dining: (@Composable () -> Unit)?,
+    profile: (@Composable () -> Unit)?,
+) {
+    val slots = listOfNotNull(
+        discover?.let { DiscoverCenterFraction to it },
+        wishlist?.let { WishlistCenterFraction to it },
+        dining?.let { DiningCenterFraction to it },
+        profile?.let { ProfileCenterFraction to it },
+    )
+
+    Layout(
+        content = { slots.forEach { (_, content) -> content() } },
+        modifier = modifier,
+    ) { measurables, constraints ->
+        val width = constraints.maxWidth
+        val height = constraints.maxHeight
+        val placeables = measurables.map { measurable ->
+            measurable.measure(
+                Constraints(
+                    minWidth = 0,
+                    minHeight = 0,
+                    maxWidth = constraints.maxWidth,
+                    maxHeight = constraints.maxHeight,
+                ),
+            )
+        }
+        layout(width, height) {
+            val topInsetPx = TabRowTopInset.roundToPx()
+            val contentHeightPx = TabContentHeight.roundToPx()
+            placeables.forEachIndexed { index, placeable ->
+                val centerFraction = slots[index].first
+                val centerX = (width * centerFraction).roundToInt()
+                val x = (centerX - placeable.width / 2).coerceIn(0, (width - placeable.width).coerceAtLeast(0))
+                val y = topInsetPx + (contentHeightPx - placeable.height).coerceAtLeast(0)
+                placeable.placeRelative(x, y)
+            }
+        }
     }
 }
 
@@ -151,6 +263,7 @@ private fun TabButton(
 ) {
     val primary = MaterialTheme.colorScheme.primary
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    val density = LocalDensity.current
 
     val sparkleTrigger = remember { mutableLongStateOf(0L) }
     var prevActive by remember { mutableStateOf(isActive) }
@@ -166,6 +279,7 @@ private fun TabButton(
 
     Box(
         modifier = modifier
+            .defaultMinSize(minWidth = TabItemMinWidth, minHeight = TabContentHeight)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -174,19 +288,15 @@ private fun TabButton(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        if (isActive) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .background(primary.copy(alpha = ActiveBackgroundAlpha)),
-            )
-        }
         Column(
+            modifier = Modifier.padding(vertical = TabVerticalPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(vertical = TabVerticalPadding),
         ) {
-            Box(contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.size(TabIconSize),
+                contentAlignment = Alignment.Center,
+            ) {
                 SparkleEffect(triggerNanos = sparkleTrigger.longValue, color = primary)
                 TabSelectionBounceBox(isActive = isActive) {
                     TabIcon(
@@ -220,10 +330,20 @@ private fun TabButton(
             Spacer(modifier = Modifier.height(LabelTopGap))
             Text(
                 text = tab.label,
+                modifier = Modifier.heightIn(min = TabLabelHeight),
                 color = if (isActive) primary else muted,
-                fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
-                fontSize = 12.sp,
-                lineHeight = 14.sp,
+                style = TextStyle(
+                    fontSize = TabLabelFontSize,
+                    lineHeight = TabLabelLineHeight,
+                    fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+                    lineHeightStyle = LineHeightStyle(
+                        alignment = LineHeightStyle.Alignment.Center,
+                        trim = LineHeightStyle.Trim.None,
+                    ),
+                ),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
@@ -330,43 +450,56 @@ private fun QrFloatingButton(
     contentDescription: String,
     modifier: Modifier = Modifier,
 ) {
-    val card = MaterialTheme.colorScheme.surface
+    val ringSurface = MaterialTheme.colorScheme.surface
+    val ringBorder = MaterialTheme.colorScheme.outline
     val primary = MaterialTheme.colorScheme.primary
     val onPrimary = MaterialTheme.colorScheme.onPrimary
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val pressScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.9f else 1f,
+        targetValue = if (isPressed) 0.92f else 1f,
         animationSpec = tween(durationMillis = 120, easing = LinearOutSlowInEasing),
         label = "qrPressScale",
     )
 
     Box(
         modifier = modifier
-            .size(QrButtonSize)
+            .size(QrOuterDiameter)
             .graphicsLayer {
                 scaleX = pressScale
                 scaleY = pressScale
             }
-            .shadow(elevation = 6.dp, shape = CircleShape)
+            .shadow(
+                elevation = QrShadowElevation,
+                shape = CircleShape,
+                clip = false,
+                ambientColor = Color.Black.copy(alpha = 0.12f),
+                spotColor = Color.Black.copy(alpha = 0.18f),
+            )
             .clip(CircleShape)
-            .background(card)
+            .border(QrRingBorderWidth, ringBorder, CircleShape)
+            .background(ringSurface)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 role = Role.Button,
                 onClickLabel = contentDescription,
                 onClick = onClick,
-            )
-            .padding(QrBorderWidth)
-            .clip(CircleShape)
-            .background(primary),
+            ),
         contentAlignment = Alignment.Center,
     ) {
-        QrCodeIcon(
-            color = onPrimary,
-            modifier = Modifier.size(QrIconSize),
-        )
+        Box(
+            modifier = Modifier
+                .size(QrInnerDiameter)
+                .clip(CircleShape)
+                .background(primary),
+            contentAlignment = Alignment.Center,
+        ) {
+            QrScannerIcon(
+                color = onPrimary,
+                modifier = Modifier.size(QrIconSize),
+            )
+        }
     }
 }
 
