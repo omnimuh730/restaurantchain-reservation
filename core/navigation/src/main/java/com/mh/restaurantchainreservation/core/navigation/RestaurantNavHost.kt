@@ -208,7 +208,7 @@ fun RestaurantNavHost(
         bottomBar = {},
     ) { paddingValues ->
         val compactBottomInset = with(density) {
-            (bottomBarHeightPx * (1f - bottomNavHideFraction)).toDp()
+            (bottomBarHeightPx * (1f - bottomNavHideFraction)).toDp().coerceAtLeast(0.dp)
         }
         val compactContentPadding = PaddingValues(
             top = paddingValues.calculateTopPadding(),
