@@ -20,7 +20,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -50,7 +49,6 @@ import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRe
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.RestaurantTimeSlot
 import com.mh.restaurantchainreservation.core.model.WishlistStore
-import kotlin.math.roundToInt
 
 /**
  * Discover list card — hero at [DiscoverRestaurantImageAspectWidthOverHeight], title,
@@ -140,29 +138,28 @@ fun RestaurantListCard(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Place,
-                            contentDescription = null,
-                            tint = palette.mutedForeground,
-                            modifier = Modifier.size(14.dp),
-                        )
-                        Text(
-                            text = listCardAddressLine(restaurant),
-                            color = palette.mutedForeground,
-                            fontSize = 13.sp,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    ListCardStarRating(rating = restaurant.rating)
+                    val metaColor = palette.mutedForeground
+                    Icon(
+                        imageVector = Icons.Outlined.Place,
+                        contentDescription = null,
+                        tint = metaColor,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = listCardAddressLine(restaurant),
+                        color = metaColor,
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    DiscoverInlineDot(color = metaColor)
+                    Text(
+                        text = "★ %.1f".format(restaurant.rating),
+                        color = metaColor,
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                    )
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(
@@ -242,31 +239,3 @@ private fun listCardAddressLine(r: Restaurant): String {
 
 private fun formatReviewCount(count: Int): String =
     count.toString().reversed().chunked(3).joinToString(",").reversed()
-
-@Composable
-private fun ListCardStarRating(rating: Double) {
-    val palette = LocalRestaurantPalette.current
-    val goldStar = Color(0xFFEAB308)
-    val emptyStar = palette.mutedForeground.copy(alpha = 0.35f)
-    val filledStars = (rating + 0.25).roundToInt().coerceIn(0, 5)
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        repeat(5) { index ->
-            Icon(
-                imageVector = Icons.Filled.Star,
-                contentDescription = null,
-                tint = if (index < filledStars) goldStar else emptyStar,
-                modifier = Modifier.size(12.dp),
-            )
-        }
-        Spacer(Modifier.width(4.dp))
-        Text(
-            text = "%.1f".format(rating),
-            color = palette.foreground,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-        )
-    }
-}

@@ -204,6 +204,7 @@ private enum class ImageRailExploreMoreKind {
 
 /** Status bar + compact discover bar inner padding (8+44+8); matches [CompactDiscoverBar]. */
 private val CompactDiscoverBarInnerHeight = 60.dp
+private val QuickCategoryGridHorizontalPadding = 8.dp
 
 /** "Restaurants by Price" row thumbnail — same width:height as other Discover restaurant heroes. */
 private val PriceListThumbnailWidth = 110.dp
@@ -563,19 +564,6 @@ private fun HeroBanner(
             Text("View All", color = Color(0xFF222222), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
 
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .zIndex(1f)
-                .fillMaxWidth()
-                .height(76.dp)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, palette.cardSurface),
-                    ),
-                ),
-        )
-
         HeroBannerPagerIndicators(
             pageCount = banners.size,
             pagerState = pagerState,
@@ -831,7 +819,7 @@ private fun QuickCategoryGrid(categories: List<QuickCategory>, onClick: (String)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .padding(horizontal = QuickCategoryGridHorizontalPadding, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         categories.chunked(4).forEach { row ->
@@ -1380,21 +1368,22 @@ private fun AirbnbMiniCard(
                     .fillMaxWidth()
                     .padding(top = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                val metaColor = palette.mutedForeground
                 Text(
                     text = restaurant.area ?: restaurant.cuisine,
-                    color = palette.mutedForeground,
+                    color = metaColor,
                     fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
                 )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.Star, contentDescription = null, tint = palette.foreground, modifier = Modifier.size(13.dp))
-                    Spacer(Modifier.width(3.dp))
-                    Text("%.1f".format(restaurant.rating), color = palette.foreground, fontSize = 12.sp)
-                }
+                DiscoverInlineDot(color = metaColor)
+                Text(
+                    text = "★ %.1f".format(restaurant.rating),
+                    color = metaColor,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                )
             }
         }
     }
@@ -2109,13 +2098,33 @@ private fun RestaurantByPriceListRow(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                Text(
-                    text = "${cuisineDetailLabel(restaurant)} • ${restaurant.price} • ${restaurant.distance}",
-                    color = palette.mutedForeground,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val metaColor = palette.mutedForeground
+                    Text(
+                        text = cuisineDetailLabel(restaurant),
+                        color = metaColor,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    DiscoverInlineDot(color = metaColor)
+                    Text(
+                        text = restaurant.price,
+                        color = metaColor,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                    )
+                    DiscoverInlineDot(color = metaColor)
+                    Text(
+                        text = restaurant.distance,
+                        color = metaColor,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
     }
