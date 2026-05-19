@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -847,11 +848,11 @@ private fun GuestFavoriteSection(
                 )
             }
         }
-        DetailInsetDivider(modifier = Modifier.padding(top = 20.dp))
+        DetailInsetDivider(modifier = Modifier.padding(top = 20.dp, bottom = 10.dp))
         GuestReviewsCarousel(
             reviews = reviews,
             onShowMore = onOpenReviews,
-            modifier = Modifier.padding(top = 12.dp),
+            modifier = Modifier.padding(top = 20.dp),
         )
         Box(
             modifier = Modifier
@@ -875,14 +876,14 @@ private fun GuestFavoriteSection(
     DetailInsetDivider(modifier = Modifier.padding(top = 8.dp))
 }
 
-private val GuestReviewPreviewHeight = 236.dp
+private val GuestReviewPreviewHeight = 200.dp
 private val ReviewPreviewBodyLineHeight = 22.sp
-private val ReviewPreviewMaxBodyLines = 4
+private val ReviewPreviewShowMoreRowHeight = 22.dp
+private val ReviewPreviewMaxBodyLines = 3
 private val ReviewCarouselDividerWidth = 1.dp
 private val ReviewCarouselContentPadding = 24.dp
-private val ReviewCarouselTopGap = 12.dp
 /** How much of the next card (avatar + text) peeks on the right while the active card is snapped. */
-private const val ReviewCarouselNextPeekFraction = 0.34f
+private const val ReviewCarouselNextPeekFraction = 0.24f
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -912,6 +913,7 @@ private fun GuestReviewsCarousel(
         ) { page ->
             GuestReviewCarouselPage(
                 review = reviews[page],
+                index = page,
                 pageWidth = pageWidth,
                 onShowMore = onShowMore,
             )
@@ -922,19 +924,28 @@ private fun GuestReviewsCarousel(
 @Composable
 private fun GuestReviewCarouselPage(
     review: ReviewEntry,
+    index: Int,
     pageWidth: Dp,
     onShowMore: () -> Unit,
 ) {
+    val contentWidth =
+        if (index == 0) {
+            pageWidth
+        } else {
+            pageWidth - ReviewCarouselDividerWidth
+        }
     Row(
         modifier = Modifier
             .width(pageWidth)
             .clipToBounds(),
         verticalAlignment = Alignment.Top,
     ) {
-        ReviewPreviewColumnDivider(modifier = Modifier.padding(top = ReviewCarouselTopGap))
+        if (index > 0) {
+            ReviewPreviewColumnDivider()
+        }
         GuestReviewPreviewItem(
             review = review,
-            cardWidth = pageWidth - ReviewCarouselDividerWidth,
+            cardWidth = contentWidth,
             onShowMore = onShowMore,
         )
     }
@@ -946,7 +957,7 @@ private fun ReviewPreviewColumnDivider(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .width(ReviewCarouselDividerWidth)
-            .height(GuestReviewPreviewHeight - ReviewCarouselTopGap)
+            .height(GuestReviewPreviewHeight)
             .background(palette.borderSoft),
     )
 }
@@ -972,7 +983,7 @@ private fun GuestReviewPreviewItem(
         ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(40.dp)
                     .clip(CircleShape)
                     .background(palette.mutedSurface),
                 contentAlignment = Alignment.Center,
@@ -984,15 +995,22 @@ private fun GuestReviewPreviewItem(
                     fontWeight = FontWeight.Bold,
                 )
             }
-            Text(
-                text = review.name,
-                color = palette.foreground,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = review.name,
+                    color = palette.foreground,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = formatReviewMonthYear(review.publishedAtEpochMs),
+                    color = palette.mutedForeground,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
         }
         Row(
             modifier = Modifier.padding(top = 12.dp),
@@ -1007,46 +1025,45 @@ private fun GuestReviewPreviewItem(
                 )
             }
             Text(
-                text = "· ${formatReviewMonthYear(review.publishedAtEpochMs)}",
-                color = palette.mutedForeground,
+                text = "· ${formatReviewCarouselScore(review)}",
+                color = palette.foreground,
                 fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(start = 6.dp),
             )
         }
-        if (review.stayLabel.isNotBlank()) {
-            Text(
-                text = review.stayLabel,
-                color = palette.foreground,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                textDecoration = TextDecoration.Underline,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 10.dp),
-            )
-        }
-        Text(
-            text = review.text,
-            color = palette.foreground,
-            fontSize = 15.sp,
-            lineHeight = ReviewPreviewBodyLineHeight,
-            maxLines = ReviewPreviewMaxBodyLines,
-            overflow = TextOverflow.Ellipsis,
+        Column(
             modifier = Modifier
                 .padding(top = 10.dp)
-                .weight(1f)
                 .fillMaxWidth(),
-        )
-        Text(
-            text = "Show more",
-            color = palette.foreground,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            textDecoration = TextDecoration.Underline,
-            modifier = Modifier
-                .padding(top = 4.dp, bottom = 8.dp)
-                .clickable(onClick = onShowMore),
-        )
+        ) {
+            Text(
+                text = review.text,
+                color = palette.foreground,
+                fontSize = 16.sp,
+                lineHeight = ReviewPreviewBodyLineHeight,
+                maxLines = ReviewPreviewMaxBodyLines,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = ReviewPreviewShowMoreRowHeight),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Show more",
+                    color = palette.foreground,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable(onClick = onShowMore),
+                )
+            }
+        }
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
 

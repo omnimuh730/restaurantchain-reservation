@@ -25,6 +25,8 @@ data class ReviewEntry(
     val value: Int? = null,
     val text: String,
     val stayLabel: String = "",
+    /** When set, shown in the carousel as a decimal score (e.g. 4.5); otherwise `rating.0`. */
+    val ratingScore: Double? = null,
 )
 
 data class MenuItem(
@@ -126,6 +128,7 @@ object RestaurantDetailData {
             name = "Rachel",
             publishedAtEpochMs = daysAgo(24),
             rating = 5,
+            ratingScore = 4.5,
             stayLabel = "Premier King suite with balcony",
             text = "Wow. Great. Worth it. Central, clean and stylish. Also liked the slides. The host was very communicative. Would stay here again. Easy check in.",
         ),
@@ -140,6 +143,7 @@ object RestaurantDetailData {
             name = "Daniel",
             publishedAtEpochMs = daysAgo(38),
             rating = 4,
+            ratingScore = 4.5,
             stayLabel = "Studio with city view",
             text = "Check-in was smooth and the room matched the photos. A few small maintenance items but nothing that ruined the trip. Location made up for it — we walked everywhere.",
         ),
@@ -230,6 +234,11 @@ object RestaurantDetailData {
 
 fun formatRating(n: Double): String =
     if (n == n.toInt().toDouble()) n.toInt().toString() else n.toString()
+
+fun formatReviewCarouselScore(review: ReviewEntry): String {
+    val score = review.ratingScore ?: review.rating.toDouble()
+    return String.format(Locale.US, "%.1f", score)
+}
 
 fun formatReviewMonthYear(publishedAtEpochMs: Long): String =
     SimpleDateFormat("MMMM yyyy", Locale.US).format(Date(publishedAtEpochMs))
