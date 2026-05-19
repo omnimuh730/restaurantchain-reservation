@@ -77,6 +77,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.Collapsing
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.SubpageCollapsingTopBar
+import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberSubpageCollapsingTopBarScrollBehavior
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
@@ -287,7 +288,7 @@ private fun WishlistHomeContent(
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             state = gridState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().trackBottomNavScroll(),
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 48.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -439,7 +440,8 @@ private fun WishlistDetailPage(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .nestedScroll(scrollBehavior.nestedScrollConnection),
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .trackBottomNavScroll(),
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 100.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),

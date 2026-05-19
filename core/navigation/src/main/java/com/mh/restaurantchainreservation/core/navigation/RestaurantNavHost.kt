@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -12,8 +14,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -54,6 +65,8 @@ import com.mh.restaurantchainreservation.core.designsystem.components.icons.Bott
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavStrokeIcon
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucidePaths
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavBar
+import com.mh.restaurantchainreservation.core.designsystem.components.LocalBottomNavScrollBehavior
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberBottomNavScrollBehavior
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavTab
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavTabId
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationHost
@@ -151,10 +164,16 @@ fun RestaurantNavHost(
     val shouldShowUpdatePrompt by LocalDataSyncStore.shouldShowUpdatePrompt.collectAsState()
     // Keep bottom nav hidden until the post-login update flow finishes so Discover paints first.
     val hideBottomBarForUpdateFlow = authenticated && onDiscoverHome && shouldShowUpdatePrompt
-    val showBottomBar = isCompact &&
+    val bottomNavScrollBehavior = rememberBottomNavScrollBehavior()
+    val showBottomBarSlot = isCompact &&
         showAppChrome &&
         shouldShowBottomNavBar(destination?.route) &&
         !hideBottomBarForUpdateFlow
+    val showBottomBar = showBottomBarSlot && bottomNavScrollBehavior.isVisible
+
+    LaunchedEffect(destination?.route) {
+        bottomNavScrollBehavior.show()
+    }
 
     LaunchedEffect(authenticated, destination?.route) {
         val route = destination?.route ?: return@LaunchedEffect
@@ -170,58 +189,97 @@ fun RestaurantNavHost(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
+    val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
+    var bottomBarHeightPx by remember { mutableIntStateOf(0) }
+    val bottomNavHideFraction by animateFloatAsState(
+        targetValue = if (showBottomBar) 0f else 1f,
+        animationSpec = spring(
+            dampingRatio = 0.86f,
+            stiffness = 340f,
+        ),
+        label = "bottomNavHideFraction",
+    )
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = {
-            if (showBottomBar) {
-                BottomNavBar(
-                    tabs = bottomTabs,
-                    activeId = activeTabId,
-                    onTabSelect = { id ->
-                        val route = routeForTab(id)
-                        if (!authenticated && requiresAuthRoute(route)) {
-                            promptSignIn(signInReasonForTab(id))
-                        } else if (id == BottomNavTabId.Discover) {
-                            navController.navigateToDiscoverHome()
-                        } else {
-                            navController.navigateToTab(route)
-                        }
-                    },
-                    onQrPay = {
-                        if (authenticated) {
-                            navController.navigate(QrPayRoutes.Home)
-                        } else {
-                            promptSignIn(SignInRequiredReason.QrPay)
-                        }
-                    },
-                    qrPayContentDescription = qrPayLabel,
-                )
-            }
-        },
+        // Phone bottom nav is drawn as an overlay so hide/show can animate in sync with content inset.
+        bottomBar = {},
     ) { paddingValues ->
+        val compactBottomInset = with(density) {
+            (bottomBarHeightPx * (1f - bottomNavHideFraction)).toDp()
+        }
+        val compactContentPadding = PaddingValues(
+            top = paddingValues.calculateTopPadding(),
+            start = paddingValues.calculateStartPadding(layoutDirection),
+            end = paddingValues.calculateEndPadding(layoutDirection),
+            bottom = compactBottomInset,
+        )
         if (isCompact) {
             Box(modifier = Modifier.fillMaxSize()) {
-                AppGraph(
-                    navController = navController,
-                    contentPadding = paddingValues,
-                    authenticated = authenticated,
-                    onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
-                    onRequireSignIn = { promptSignIn(it) },
-                    modifier = Modifier.fillMaxSize(),
-                )
+                CompositionLocalProvider(
+                    LocalBottomNavScrollBehavior provides
+                        bottomNavScrollBehavior.takeIf { showBottomBarSlot },
+                ) {
+                    AppGraph(
+                        navController = navController,
+                        contentPadding = compactContentPadding,
+                        authenticated = authenticated,
+                        onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
+                        onRequireSignIn = { promptSignIn(it) },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
                 if (showAppChrome) {
                     // Wishlist overlay (sheet + toast) sits above app destinations.
                     // Toast is offset up by the bottom-bar inset so it floats just
                     // above the nav bar.
-                    WishlistOverlayHost(bottomInset = paddingValues)
+                    WishlistOverlayHost(bottomInset = compactContentPadding)
                 }
-                GlobalNotificationHost(bottomInset = if (showAppChrome) paddingValues else PaddingValues(0.dp))
+                GlobalNotificationHost(
+                    bottomInset = if (showAppChrome) compactContentPadding else PaddingValues(0.dp),
+                )
                 signInRequiredReason?.let { reason ->
                     SignInRequiredDialog(
                         message = stringResource(reason.messageRes),
                         onSignIn = { navigateToLogin() },
                         onDismiss = { signInRequiredReason = null },
+                    )
+                }
+                if (showBottomBarSlot) {
+                    BottomNavBar(
+                        tabs = bottomTabs,
+                        activeId = activeTabId,
+                        onTabSelect = { id ->
+                            bottomNavScrollBehavior.show()
+                            val route = routeForTab(id)
+                            if (!authenticated && requiresAuthRoute(route)) {
+                                promptSignIn(signInReasonForTab(id))
+                            } else if (id == BottomNavTabId.Discover) {
+                                navController.navigateToDiscoverHome()
+                            } else {
+                                navController.navigateToTab(route)
+                            }
+                        },
+                        onQrPay = {
+                            if (authenticated) {
+                                navController.navigate(QrPayRoutes.Home)
+                            } else {
+                                promptSignIn(SignInRequiredReason.QrPay)
+                            }
+                        },
+                        qrPayContentDescription = qrPayLabel,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .graphicsLayer {
+                                translationY = bottomBarHeightPx * bottomNavHideFraction
+                            }
+                            .onSizeChanged { size ->
+                                if (size.height > 0) {
+                                    bottomBarHeightPx = size.height
+                                }
+                            },
                     )
                 }
             }

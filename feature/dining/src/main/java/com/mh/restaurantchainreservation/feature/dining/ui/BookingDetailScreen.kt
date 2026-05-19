@@ -79,6 +79,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
+import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.core.model.DiscoverData
@@ -155,7 +156,8 @@ fun BookingDetailScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(scroll),
+                .verticalScroll(scroll)
+                .trackBottomNavScroll(),
         ) {
             BookingHeroCarousel(
                 galleryImages = galleryImages,

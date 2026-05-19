@@ -66,6 +66,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.ListGroupI
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroupVariant
 import com.mh.restaurantchainreservation.core.designsystem.components.Stagger
 import com.mh.restaurantchainreservation.core.designsystem.components.StaggerItem
+import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.LocaleManager
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
@@ -135,6 +136,7 @@ fun ProfileHubScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scroll)
+                .trackBottomNavScroll()
                 .zIndex(0f),
             staggerMs = 40,
             verticalArrangement = Arrangement.spacedBy(HubSurfaceCardDefaults.SectionSpacing),

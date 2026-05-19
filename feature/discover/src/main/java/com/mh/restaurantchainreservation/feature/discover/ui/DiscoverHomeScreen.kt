@@ -109,6 +109,7 @@ import dev.chrisbanes.haze.materials.HazeMaterials
 import dev.chrisbanes.haze.rememberHazeState
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
+import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
@@ -283,13 +284,15 @@ fun DiscoverHomeScreen(
         DiscoverHazeRegistry.register(hazeState)
         onDispose { DiscoverHazeRegistry.unregister(hazeState) }
     }
+    // Latch ready once the list has items — visibleItemsInfo can briefly empty during scroll.
     LaunchedEffect(listState) {
-        snapshotFlow {
-            listState.layoutInfo.totalItemsCount > 0 &&
-                listState.layoutInfo.visibleItemsInfo.isNotEmpty()
-        }
+        snapshotFlow { listState.layoutInfo.totalItemsCount > 0 }
             .distinctUntilChanged()
-            .collect { ready -> DiscoverHazeRegistry.setDiscoverContentReady(ready) }
+            .collect { hasItems ->
+                if (hasItems) {
+                    DiscoverHazeRegistry.setDiscoverContentReady(true)
+                }
+            }
     }
 
     CompositionLocalProvider(LocalDiscoverHazeState provides hazeState) {
@@ -324,6 +327,7 @@ fun DiscoverHomeScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
+                .trackBottomNavScroll()
                 .hazeSource(state = hazeState),
             contentPadding = PaddingValues(bottom = 16.dp),
         ) {

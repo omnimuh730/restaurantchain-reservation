@@ -52,16 +52,23 @@ fun DiscoverUpdateModalHost(
         onDispose { DiscoverHazeRegistry.setUpdateModalVisible(false) }
     }
 
+    LaunchedEffect(shouldQueue, onDiscoverHome) {
+        if (!shouldQueue || !onDiscoverHome) {
+            revealModal = false
+        }
+    }
+
     LaunchedEffect(shouldQueue, discoverHaze, discoverContentReady, onDiscoverHome) {
-        if (shouldQueue && onDiscoverHome && discoverHaze != null && discoverContentReady) {
-            revealModal = false
-            // Let Discover paint at least one frame before the modal enters.
-            withFrameNanos { }
-            withFrameNanos { }
-            delay(DiscoverUpdateModalRevealDelayMs)
+        if (!shouldQueue || !onDiscoverHome || discoverHaze == null || !discoverContentReady) {
+            return@LaunchedEffect
+        }
+        if (revealModal) return@LaunchedEffect
+        // Let Discover paint at least one frame before the modal enters.
+        withFrameNanos { }
+        withFrameNanos { }
+        delay(DiscoverUpdateModalRevealDelayMs)
+        if (shouldQueue && onDiscoverHome) {
             revealModal = true
-        } else {
-            revealModal = false
         }
     }
 
