@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
@@ -94,6 +95,7 @@ fun ProfileHubScreen(
     onOpenCards: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
     onOpenRefer: () -> Unit = {},
+    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -196,6 +198,7 @@ fun ProfileHubScreen(
                     onSettingsClick = onOpenSettings,
                     onHelpClick = onOpenHelp,
                     onContactSupportClick = onOpenContactSupport,
+                    onLogoutClick = onLogout,
                 )
             }
 
@@ -511,6 +514,7 @@ private fun AccountSettingsBlock(
     onSettingsClick: () -> Unit,
     onHelpClick: () -> Unit,
     onContactSupportClick: () -> Unit,
+    onLogoutClick: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
     val proLabel = stringResource(I18nR.string.profile_menu_pro)
@@ -588,6 +592,12 @@ private fun AccountSettingsBlock(
                     label = stringResource(I18nR.string.profile_menu_contact_support),
                     icon = { MenuIcon(Icons.Outlined.ChatBubbleOutline) },
                     onClick = onContactSupportClick,
+                ),
+                ListGroupItem(
+                    id = "log-out",
+                    label = stringResource(I18nR.string.profile_menu_log_out),
+                    icon = { MenuIcon(Icons.AutoMirrored.Outlined.Logout) },
+                    onClick = onLogoutClick,
                 ),
             ),
         )
