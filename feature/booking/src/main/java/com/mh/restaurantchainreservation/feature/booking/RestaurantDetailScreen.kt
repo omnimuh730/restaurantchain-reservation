@@ -2,6 +2,10 @@ package com.mh.restaurantchainreservation.feature.booking
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -14,6 +18,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -70,7 +75,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteCenterBadge
+import com.mh.restaurantchainreservation.core.designsystem.badge.AnimatedGuestFavoriteCenterBadge
 import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteRatingLaurelRow
 import com.mh.restaurantchainreservation.core.designsystem.badge.guestFavoriteDescription
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
@@ -84,9 +89,62 @@ import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.withDerivedGuestFavoriteLevel
 import java.text.NumberFormat
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 
 private val SheetTopRadius = 34.dp
 private val HeroHeight = 288.dp
+private val DetailInfoHorizontalPadding = 24.dp
+private val DetailStatsSideColumnWeight = 0.9f
+private val DetailStatsCenterColumnWeight = 1.75f
+private val DetailStatsDividerHeight = 36.dp
+private val DetailStatsRowTopPadding = 8.dp
+private val DetailStatsRowBottomPadding = 20.dp
+/** Matches CSS loader: 60×30, three dots bouncing on a 1s linear loop (l3). */
+private val DetailLoaderWidth = 60.dp
+private val DetailLoaderHeight = 30.dp
+private val DetailLoadingDotDiameter = 10.dp
+private const val DetailLoaderAnimationMillis = 1_000
+/** Minimum time the loading dots stay visible while detail data is fetched. */
+private const val DetailLoadingMinFetchMillis = 1_600L
+
+/** Per-dot vertical keyframes (time → 0=top, 0.5=center, 1=bottom), CSS `l3` animation. */
+private val DetailLoaderDotKeyframes: List<List<Pair<Float, Float>>> = listOf(
+    listOf(0f to 0.5f, 0.2f to 0f, 0.4f to 1f, 0.6f to 0.5f, 0.8f to 0.5f, 1f to 0.5f),
+    listOf(0f to 0.5f, 0.2f to 0.5f, 0.4f to 0f, 0.6f to 1f, 0.8f to 0.5f, 1f to 0.5f),
+    listOf(0f to 0.5f, 0.2f to 0.5f, 0.4f to 0.5f, 0.6f to 0f, 0.8f to 1f, 1f to 0.5f),
+)
+
+private fun interpolateLoaderKeyframes(
+    keyframes: List<Pair<Float, Float>>,
+    progress: Float,
+): Float {
+    val p = progress.coerceIn(0f, 1f)
+    if (p <= keyframes.first().first) return keyframes.first().second
+    for (i in 0 until keyframes.lastIndex) {
+        val (t0, v0) = keyframes[i]
+        val (t1, v1) = keyframes[i + 1]
+        if (p <= t1) {
+            val fraction = if (t1 == t0) 0f else (p - t0) / (t1 - t0)
+            return v0 + (v1 - v0) * fraction
+        }
+    }
+    return keyframes.last().second
+}
+
+private enum class DetailLoadPhase {
+    Shell,
+    Loading,
+    Ready,
+}
+
+private data class DetailLoadedPayload(
+    val ext: RestaurantExtendedData,
+    val gallery: List<String>,
+    val topReviews: List<ReviewEntry>,
+)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -102,9 +160,8 @@ fun RestaurantDetailScreen(
             ?: com.mh.restaurantchainreservation.core.model.DiscoverData.MONTHLY_BEST.first()
                 .withDerivedGuestFavoriteLevel()
     }
-    val ext = remember(restaurant) { RestaurantDetailData.extendedData(restaurant) }
-    val gallery = remember(restaurant) { RestaurantDetailData.galleryImages(restaurant) }
-    val topReviews = remember { RestaurantDetailData.reviews.take(10) }
+    var loadPhase by remember(restaurantId) { mutableStateOf(DetailLoadPhase.Shell) }
+    var loadedPayload by remember(restaurantId) { mutableStateOf<DetailLoadedPayload?>(null) }
     var saved by remember { mutableStateOf(false) }
     var showReviews by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
@@ -125,13 +182,41 @@ fun RestaurantDetailScreen(
     val bodyReveal = remember { Animatable(0f) }
     val density = LocalDensity.current
     val bodySlidePx = remember(density) { with(density) { 28.dp.toPx() } }
-    LaunchedEffect(restaurantId) {
+
+    LaunchedEffect(restaurantId, restaurant) {
+        loadPhase = DetailLoadPhase.Shell
+        loadedPayload = null
         bodyReveal.snapTo(0f)
-        bodyReveal.animateTo(
-            targetValue = 1f,
-            animationSpec = tween(durationMillis = 420, delayMillis = 96, easing = FastOutSlowInEasing),
-        )
+        delay(72)
+        loadPhase = DetailLoadPhase.Loading
+        val payload = coroutineScope {
+            val fetch = async(Dispatchers.Default) {
+                DetailLoadedPayload(
+                    ext = RestaurantDetailData.extendedData(restaurant),
+                    gallery = RestaurantDetailData.galleryImages(restaurant),
+                    topReviews = RestaurantDetailData.reviews.take(10),
+                )
+            }
+            delay(DetailLoadingMinFetchMillis)
+            fetch.await()
+        }
+        loadedPayload = payload
+        loadPhase = DetailLoadPhase.Ready
     }
+
+    LaunchedEffect(loadPhase) {
+        if (loadPhase == DetailLoadPhase.Ready) {
+            bodyReveal.snapTo(0f)
+            bodyReveal.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 420, delayMillis = 48, easing = FastOutSlowInEasing),
+            )
+        }
+    }
+
+    val contentReady = loadPhase == DetailLoadPhase.Ready && loadedPayload != null
+    val payload = loadedPayload
+    val heroImages = payload?.gallery ?: listOf(restaurant.image)
 
     Box(modifier = modifier.fillMaxSize().background(palette.cardSurface)) {
         Column(
@@ -141,36 +226,48 @@ fun RestaurantDetailScreen(
         ) {
             HeroCarousel(
                 restaurantId = restaurant.id,
-                galleryImages = gallery,
+                galleryImages = heroImages,
                 restaurantName = restaurant.name,
-                onOpenFullscreen = { index -> galleryFullscreenIndex = index },
-            )
-            HeaderSummaryCard(restaurant = restaurant, ext = ext, titleModifier = titleModifier)
-            Column(
-                modifier = Modifier.graphicsLayer {
-                    val p = bodyReveal.value
-                    translationY = (1f - p) * bodySlidePx
-                    alpha = 0.22f + 0.78f * p
+                showPageIndicator = contentReady && heroImages.size > 1,
+                onOpenFullscreen = { index ->
+                    if (contentReady) galleryFullscreenIndex = index
                 },
-            ) {
-                RatingsSummaryRow(restaurant = restaurant, onOpenReviews = { showReviews = true })
-                HighlightsSection(restaurant = restaurant)
-                AboutSection(ext = ext)
-                AmenitiesSection(
-                    restaurant = restaurant,
-                    ext = ext,
-                    onShowAll = { showAmenities = true },
-                )
-                LocationSection(restaurant = restaurant, ext = ext)
-                if (restaurant.guestFavoriteLevel.isGuestFavorite()) {
-                    GuestFavoriteSection(
+            )
+            HeaderSummaryCard(
+                restaurant = restaurant,
+                ext = payload?.ext,
+                loadPhase = loadPhase,
+                titleModifier = titleModifier,
+            )
+            if (contentReady && payload != null) {
+                Column(
+                    modifier = Modifier.graphicsLayer {
+                        val p = bodyReveal.value
+                        translationY = (1f - p) * bodySlidePx
+                        alpha = 0.22f + 0.78f * p
+                    },
+                ) {
+                    RatingsSummaryRow(restaurant = restaurant, onOpenReviews = { showReviews = true })
+                    HighlightsSection(restaurant = restaurant)
+                    AboutSection(ext = payload.ext)
+                    AmenitiesSection(
                         restaurant = restaurant,
-                        reviews = topReviews,
-                        onOpenReviews = { showReviews = true },
+                        ext = payload.ext,
+                        onShowAll = { showAmenities = true },
                     )
+                    LocationSection(restaurant = restaurant, ext = payload.ext)
+                    if (restaurant.guestFavoriteLevel.isGuestFavorite()) {
+                        GuestFavoriteSection(
+                            restaurant = restaurant,
+                            reviews = payload.topReviews,
+                            onOpenReviews = { showReviews = true },
+                        )
+                    }
+                    CancellationPolicySection()
+                    PopularMenuSection(onShowMenu = { showMenu = true })
+                    Spacer(Modifier.height(120.dp))
                 }
-                CancellationPolicySection()
-                PopularMenuSection(onShowMenu = { showMenu = true })
+            } else {
                 Spacer(Modifier.height(120.dp))
             }
         }
@@ -183,11 +280,13 @@ fun RestaurantDetailScreen(
             onToggleSave = { saved = !saved },
         )
 
-        BookingBar(
-            restaurant = restaurant,
-            onBookNow = onBookNow,
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
+        if (contentReady) {
+            BookingBar(
+                restaurant = restaurant,
+                onBookNow = onBookNow,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
 
         if (showReviews) {
             RestaurantReviewsScreen(
@@ -211,12 +310,14 @@ fun RestaurantDetailScreen(
             )
         }
 
-        galleryFullscreenIndex?.let { startIndex ->
-            MenuImageFullscreenViewer(
-                images = gallery,
-                initialIndex = startIndex,
-                onDismiss = { galleryFullscreenIndex = null },
-            )
+        if (contentReady) {
+            galleryFullscreenIndex?.let { startIndex ->
+                MenuImageFullscreenViewer(
+                    images = payload?.gallery.orEmpty(),
+                    initialIndex = startIndex,
+                    onDismiss = { galleryFullscreenIndex = null },
+                )
+            }
         }
     }
 }
@@ -306,9 +407,10 @@ private fun HeroCarousel(
     restaurantId: String,
     galleryImages: List<String>,
     restaurantName: String,
+    showPageIndicator: Boolean,
     onOpenFullscreen: (Int) -> Unit,
 ) {
-    val pagerState = rememberPagerState(pageCount = { galleryImages.size })
+    val pagerState = rememberPagerState(pageCount = { galleryImages.size.coerceAtLeast(1) })
     val shared = LocalRestaurantSharedTransitionScope.current
     val animatedContent = LocalAnimatedContentScope.current
     val heroSharedModifier = rememberRestaurantSharedHeroModifier(restaurantId, shared, animatedContent)
@@ -320,6 +422,7 @@ private fun HeroCarousel(
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
+            userScrollEnabled = showPageIndicator,
         ) { page ->
             AsyncImage(
                 model = galleryImages[page],
@@ -327,24 +430,32 @@ private fun HeroCarousel(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
-                    .clickable { onOpenFullscreen(page) }
+                    .then(
+                        if (showPageIndicator) {
+                            Modifier.clickable { onOpenFullscreen(page) }
+                        } else {
+                            Modifier
+                        },
+                    )
                     .then(if (page == 0) heroSharedModifier else Modifier),
             )
         }
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 48.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.Black.copy(alpha = 0.6f))
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-        ) {
-            Text(
-                text = "${pagerState.currentPage + 1} / ${galleryImages.size}",
-                color = Color.White,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
+        if (showPageIndicator) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 20.dp, bottom = 48.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+            ) {
+                Text(
+                    text = "${pagerState.currentPage + 1} / ${galleryImages.size}",
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
         }
     }
 }
@@ -352,7 +463,8 @@ private fun HeroCarousel(
 @Composable
 private fun HeaderSummaryCard(
     restaurant: Restaurant,
-    ext: RestaurantExtendedData,
+    ext: RestaurantExtendedData?,
+    loadPhase: DetailLoadPhase,
     titleModifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -362,7 +474,16 @@ private fun HeaderSummaryCard(
             .offset(y = (-24).dp)
             .clip(RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius))
             .background(palette.cardSurface)
-            .padding(horizontal = 24.dp, vertical = 24.dp),
+            .padding(horizontal = DetailInfoHorizontalPadding)
+            .padding(
+                top = 28.dp,
+                bottom = when (loadPhase) {
+                    DetailLoadPhase.Ready -> 0.dp
+                    DetailLoadPhase.Loading -> 16.dp
+                    DetailLoadPhase.Shell -> 20.dp
+                },
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = restaurant.name,
@@ -370,21 +491,88 @@ private fun HeaderSummaryCard(
             fontSize = 32.sp,
             lineHeight = 38.sp,
             fontWeight = FontWeight.Bold,
-            modifier = titleModifier,
+            textAlign = TextAlign.Center,
+            modifier = titleModifier.fillMaxWidth(),
         )
-        Text(
-            text = "${restaurant.cuisine} restaurant in ${restaurant.distance} area",
-            color = palette.mutedForeground,
-            fontSize = 16.sp,
-            modifier = Modifier.padding(top = 6.dp),
-        )
-        Text(
-            text = "${restaurant.price} · Open until ${ext.closesAt}",
-            color = palette.mutedForeground,
-            fontSize = 16.sp,
-        )
+        if (loadPhase == DetailLoadPhase.Loading) {
+            RestaurantDetailLoadingDots(
+                modifier = Modifier.padding(top = 24.dp),
+            )
+        }
+        if (loadPhase == DetailLoadPhase.Ready && ext != null) {
+            Text(
+                text = "${restaurant.cuisine} restaurant in ${restaurant.distance} area",
+                color = palette.mutedForeground,
+                fontSize = 16.sp,
+                lineHeight = 22.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
+            )
+            Text(
+                text = "${restaurant.price} · Open until ${ext.closesAt}",
+                color = palette.mutedForeground,
+                fontSize = 16.sp,
+                lineHeight = 22.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp, bottom = 2.dp),
+            )
+        }
     }
-    HorizontalDivider(color = palette.borderSoft)
+}
+
+@Composable
+private fun RestaurantDetailLoadingDots(modifier: Modifier = Modifier) {
+    val palette = LocalRestaurantPalette.current
+    val density = LocalDensity.current
+    val transition = rememberInfiniteTransition(label = "detail-loading-dots")
+    val progress by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = DetailLoaderAnimationMillis,
+                easing = LinearEasing,
+            ),
+        ),
+        label = "detail-loader-l3-progress",
+    )
+    val bounceTravelPx = remember(density) {
+        with(density) { (DetailLoaderHeight - DetailLoadingDotDiameter).toPx() / 2f }
+    }
+
+    Box(
+        modifier = modifier
+            .width(DetailLoaderWidth)
+            .height(DetailLoaderHeight),
+    ) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            repeat(3) { index ->
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    val yFraction = interpolateLoaderKeyframes(
+                        keyframes = DetailLoaderDotKeyframes[index],
+                        progress = progress,
+                    )
+                    val offsetY = (yFraction - 0.5f) * 2f * bounceTravelPx
+                    Box(
+                        modifier = Modifier
+                            .offset(y = with(density) { offsetY.toDp() })
+                            .size(DetailLoadingDotDiameter)
+                            .clip(CircleShape)
+                            .background(palette.foreground),
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -393,15 +581,20 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit)
     val laurelTier = restaurant.guestFavoriteLevel.toLaurelTier()
     val showBadge = restaurant.guestFavoriteLevel.isGuestFavorite()
 
+    val sideWeight = if (showBadge) DetailStatsSideColumnWeight else 1f
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onOpenReviews)
-            .padding(vertical = 24.dp, horizontal = 24.dp),
+            .padding(horizontal = DetailInfoHorizontalPadding)
+            .padding(
+                top = DetailStatsRowTopPadding,
+                bottom = DetailStatsRowBottomPadding,
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(sideWeight),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -410,28 +603,38 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit)
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
             )
-            Row(modifier = Modifier.padding(top = 8.dp)) {
+            Row(
+                modifier = Modifier.padding(top = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
                 repeat(5) {
-                    Icon(Icons.Filled.Star, null, tint = palette.foreground, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Filled.Star, null, tint = palette.foreground, modifier = Modifier.size(13.dp))
                 }
             }
         }
         if (showBadge) {
-            RatingsSummaryDivider(palette = palette)
-            GuestFavoriteCenterBadge(
+            RatingsSummaryDivider(
+                palette = palette,
+                modifier = Modifier.align(Alignment.CenterVertically),
+            )
+            AnimatedGuestFavoriteCenterBadge(
                 tier = laurelTier,
-                modifier = Modifier.weight(1.35f),
-                laurelHeight = 34.dp,
-                titleSize = 15.sp,
+                animationKey = restaurant.id,
+                modifier = Modifier.weight(DetailStatsCenterColumnWeight),
+                laurelHeight = 32.dp,
+                titleSize = 14.sp,
             )
         }
-        RatingsSummaryDivider(palette = palette)
+        RatingsSummaryDivider(
+            palette = palette,
+            modifier = Modifier.align(Alignment.CenterVertically),
+        )
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(sideWeight),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = restaurant.reviews.toString(),
+                text = NumberFormat.getIntegerInstance(Locale.US).format(restaurant.reviews),
                 color = palette.foreground,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
@@ -440,21 +643,27 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit)
                 text = "Reviews",
                 color = palette.foreground,
                 fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.Normal,
                 modifier = Modifier.padding(top = 4.dp),
             )
         }
     }
-    HorizontalDivider(color = palette.borderSoft)
+    HorizontalDivider(
+        color = palette.borderSoft,
+        modifier = Modifier.padding(horizontal = DetailInfoHorizontalPadding),
+    )
 }
 
 @Composable
-private fun RatingsSummaryDivider(palette: RestaurantPalette) {
+private fun RatingsSummaryDivider(
+    palette: RestaurantPalette,
+    modifier: Modifier = Modifier,
+) {
     Box(
-        modifier = Modifier
-            .padding(horizontal = 12.dp)
+        modifier = modifier
+            .padding(horizontal = 10.dp)
             .width(1.dp)
-            .height(44.dp)
+            .height(DetailStatsDividerHeight)
             .background(palette.borderSoft),
     )
 }

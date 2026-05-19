@@ -1,5 +1,8 @@
 package com.mh.restaurantchainreservation.core.designsystem.badge
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,11 +12,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -87,6 +93,7 @@ fun GuestFavoriteCenterBadge(
     modifier: Modifier = Modifier,
     laurelHeight: Dp = 36.dp,
     titleSize: TextUnit = 16.sp,
+    singleLineTitle: Boolean = false,
 ) {
     if (tier == GuestFavoriteLaurelTier.None) return
     val palette = LocalRestaurantPalette.current
@@ -97,8 +104,82 @@ fun GuestFavoriteCenterBadge(
         horizontalArrangement = Arrangement.Center,
     ) {
         GuestFavoriteLaurel(tier = tier, height = laurelHeight)
+        if (singleLineTitle) {
+            Text(
+                text = "Guest favorite",
+                color = palette.foreground,
+                fontSize = titleSize,
+                fontWeight = FontWeight.Bold,
+                lineHeight = titleSize * 1.15f,
+                modifier = Modifier.padding(horizontal = 8.dp),
+            )
+        } else {
+            Column(
+                modifier = Modifier.padding(horizontal = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "Guest",
+                    color = palette.foreground,
+                    fontSize = titleSize,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = titleSize * 1.1f,
+                )
+                Text(
+                    text = "favorite",
+                    color = palette.foreground,
+                    fontSize = titleSize,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = titleSize * 1.1f,
+                )
+            }
+        }
+        GuestFavoriteLaurel(tier = tier, height = laurelHeight, mirror = true)
+    }
+}
+
+/**
+ * Center “Guest / favorite” badge with laurels that slide outward on first show, then title fades in.
+ */
+@Composable
+fun AnimatedGuestFavoriteCenterBadge(
+    tier: GuestFavoriteLaurelTier,
+    animationKey: Any?,
+    modifier: Modifier = Modifier,
+    laurelHeight: Dp = 32.dp,
+    titleSize: TextUnit = 14.sp,
+) {
+    if (tier == GuestFavoriteLaurelTier.None) return
+    val palette = LocalRestaurantPalette.current
+    val density = LocalDensity.current
+    val laurelTravelPx = remember(density) { with(density) { 20.dp.toPx() } }
+    val progress = remember(animationKey) { Animatable(0f) }
+
+    LaunchedEffect(animationKey) {
+        progress.snapTo(0f)
+        progress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
+        )
+    }
+
+    val laurelOffset = laurelTravelPx * (1f - progress.value)
+    val textAlpha = ((progress.value - 0.52f) / 0.48f).coerceIn(0f, 1f)
+
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        GuestFavoriteLaurel(
+            tier = tier,
+            height = laurelHeight,
+            modifier = Modifier.graphicsLayer { translationX = laurelOffset },
+        )
         Column(
-            modifier = Modifier.padding(horizontal = 6.dp),
+            modifier = Modifier
+                .padding(horizontal = 6.dp)
+                .graphicsLayer { alpha = textAlpha },
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -116,7 +197,12 @@ fun GuestFavoriteCenterBadge(
                 lineHeight = titleSize * 1.1f,
             )
         }
-        GuestFavoriteLaurel(tier = tier, height = laurelHeight, mirror = true)
+        GuestFavoriteLaurel(
+            tier = tier,
+            height = laurelHeight,
+            mirror = true,
+            modifier = Modifier.graphicsLayer { translationX = -laurelOffset },
+        )
     }
 }
 
