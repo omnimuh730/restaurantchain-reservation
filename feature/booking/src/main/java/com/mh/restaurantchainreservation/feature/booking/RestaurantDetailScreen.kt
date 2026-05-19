@@ -12,7 +12,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -32,6 +34,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -62,6 +66,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -74,6 +79,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -197,7 +203,7 @@ fun RestaurantDetailScreen(
                 DetailLoadedPayload(
                     ext = RestaurantDetailData.extendedData(restaurant),
                     gallery = RestaurantDetailData.galleryImages(restaurant),
-                    topReviews = RestaurantDetailData.reviews.take(10),
+                    topReviews = RestaurantDetailData.carouselReviews,
                 )
             }
             delay(DetailLoadingMinFetchMillis)
@@ -843,19 +849,17 @@ private fun GuestFavoriteSection(
                 )
             }
         }
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(top = 16.dp),
-        ) {
-            items(reviews, key = { "${it.name}-${it.publishedAtEpochMs}" }) { review ->
-                GuestReviewCard(review = review, onShowMore = onOpenReviews)
-            }
-        }
+        DetailInsetDivider(modifier = Modifier.padding(top = 20.dp))
+        GuestReviewsCarousel(
+            reviews = reviews,
+            onShowMore = onOpenReviews,
+            modifier = Modifier.padding(top = 12.dp),
+        )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .padding(horizontal = DetailInfoHorizontalPadding)
+                .padding(top = 20.dp)
                 .height(48.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(palette.mutedSurface)
@@ -863,80 +867,200 @@ private fun GuestFavoriteSection(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                "Show all ${restaurant.reviews} reviews",
+                text = "Show all ${NumberFormat.getIntegerInstance(Locale.US).format(restaurant.reviews)} reviews",
                 color = palette.foreground,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
             )
         }
-        Text(
-            "Drag to browse guest reviews",
-            color = palette.mutedForeground,
-            fontSize = 14.sp,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-        )
     }
     DetailInsetDivider(modifier = Modifier.padding(top = 8.dp))
 }
 
-private val GuestReviewCardHeight = 248.dp
+private val GuestReviewPreviewHeight = 236.dp
+private val ReviewPreviewBodyLineHeight = 22.sp
+private val ReviewPreviewMaxBodyLines = 4
+private val ReviewCarouselDividerWidth = 1.dp
+private val ReviewCarouselContentPadding = 24.dp
+private val ReviewCarouselTopGap = 12.dp
+/** How much of the next card (avatar + text) peeks on the right while the active card is snapped. */
+private const val ReviewCarouselNextPeekFraction = 0.34f
 
 @Composable
-private fun GuestReviewCard(review: ReviewEntry, onShowMore: () -> Unit) {
+private fun GuestReviewsCarousel(
+    reviews: List<ReviewEntry>,
+    onShowMore: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (reviews.isEmpty()) return
+
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val viewportWidth = maxWidth - DetailInfoHorizontalPadding
+        val nextPeekWidth = viewportWidth * ReviewCarouselNextPeekFraction
+        val pageWidth = viewportWidth - nextPeekWidth
+
+        val listState = rememberLazyListState()
+        val snapFling = rememberSnapFlingBehavior(lazyListState = listState)
+
+        LazyRow(
+            state = listState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = DetailInfoHorizontalPadding)
+                .clipToBounds(),
+            contentPadding = PaddingValues(end = DetailInfoHorizontalPadding),
+            flingBehavior = snapFling,
+        ) {
+            itemsIndexed(
+                items = reviews,
+                key = { index, review -> "${review.name}-${review.publishedAtEpochMs}-$index" },
+            ) { index, review ->
+                GuestReviewCarouselPage(
+                    review = review,
+                    index = index,
+                    pageWidth = pageWidth,
+                    onShowMore = onShowMore,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GuestReviewCarouselPage(
+    review: ReviewEntry,
+    index: Int,
+    pageWidth: Dp,
+    onShowMore: () -> Unit,
+) {
+    val contentWidth =
+        if (index == 0) {
+            pageWidth
+        } else {
+            pageWidth - ReviewCarouselDividerWidth
+        }
+    Row(
+        modifier = Modifier.width(pageWidth),
+        verticalAlignment = Alignment.Top,
+    ) {
+        if (index > 0) {
+            ReviewPreviewColumnDivider(modifier = Modifier.padding(top = ReviewCarouselTopGap))
+        }
+        GuestReviewPreviewItem(
+            review = review,
+            cardWidth = contentWidth,
+            onShowMore = onShowMore,
+        )
+    }
+}
+
+@Composable
+private fun ReviewPreviewColumnDivider(modifier: Modifier = Modifier) {
     val palette = LocalRestaurantPalette.current
+    Box(
+        modifier = modifier
+            .width(ReviewCarouselDividerWidth)
+            .height(GuestReviewPreviewHeight - ReviewCarouselTopGap)
+            .background(palette.borderSoft),
+    )
+}
+
+@Composable
+private fun GuestReviewPreviewItem(
+    review: ReviewEntry,
+    cardWidth: Dp,
+    onShowMore: () -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val filledStars = review.rating.coerceIn(0, 5)
+
     Column(
         modifier = Modifier
-            .width(300.dp)
-            .height(GuestReviewCardHeight)
-            .clip(RoundedCornerShape(16.dp))
-            .border(1.dp, palette.border, RoundedCornerShape(16.dp))
-            .background(palette.cardSurface.copy(alpha = 0.5f))
-            .padding(16.dp),
+            .width(cardWidth)
+            .height(GuestReviewPreviewHeight)
+            .padding(horizontal = ReviewCarouselContentPadding),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Icon(Icons.Filled.Star, null, tint = palette.foreground, modifier = Modifier.size(16.dp))
-            Text(formatReviewTimeAgo(review.publishedAtEpochMs), color = palette.foreground, fontSize = 14.sp)
-        }
-        Text(
-            review.text,
-            color = palette.foreground,
-            fontSize = 15.sp,
-            lineHeight = 24.sp,
-            maxLines = 4,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-        Text(
-            "Show more",
-            color = palette.foreground,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            textDecoration = TextDecoration.Underline,
-            modifier = Modifier
-                .padding(top = 8.dp)
-                .clickable(onClick = onShowMore),
-        )
-        Spacer(Modifier.weight(1f))
         Row(
-            modifier = Modifier.padding(top = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     .background(palette.mutedSurface),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(review.name.take(1), fontWeight = FontWeight.Bold, color = palette.foreground)
+                Text(
+                    text = review.name.take(1).uppercase(),
+                    color = palette.foreground,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                )
             }
-            Column {
-                Text(review.name, fontWeight = FontWeight.SemiBold, color = palette.foreground, fontSize = 15.sp)
-                Text("Verified diner", color = palette.mutedForeground, fontSize = 13.sp)
-            }
+            Text(
+                text = review.name,
+                color = palette.foreground,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
         }
+        Row(
+            modifier = Modifier.padding(top = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            repeat(5) { index ->
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = null,
+                    tint = if (index < filledStars) palette.foreground else palette.borderSoft,
+                    modifier = Modifier.size(12.dp),
+                )
+            }
+            Text(
+                text = "· ${formatReviewMonthYear(review.publishedAtEpochMs)}",
+                color = palette.mutedForeground,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(start = 6.dp),
+            )
+        }
+        if (review.stayLabel.isNotBlank()) {
+            Text(
+                text = review.stayLabel,
+                color = palette.foreground,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                textDecoration = TextDecoration.Underline,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 10.dp),
+            )
+        }
+        Text(
+            text = review.text,
+            color = palette.foreground,
+            fontSize = 15.sp,
+            lineHeight = ReviewPreviewBodyLineHeight,
+            maxLines = ReviewPreviewMaxBodyLines,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .padding(top = 10.dp)
+                .weight(1f)
+                .fillMaxWidth(),
+        )
+        Text(
+            text = "Show more",
+            color = palette.foreground,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            textDecoration = TextDecoration.Underline,
+            modifier = Modifier
+                .padding(top = 4.dp, bottom = 8.dp)
+                .clickable(onClick = onShowMore),
+        )
     }
 }
 

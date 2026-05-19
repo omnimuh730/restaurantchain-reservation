@@ -1,6 +1,9 @@
 package com.mh.restaurantchainreservation.feature.booking
 
 import com.mh.restaurantchainreservation.core.model.Restaurant
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.roundToInt
 
 data class RestaurantExtendedData(
@@ -21,6 +24,7 @@ data class ReviewEntry(
     val service: Int? = null,
     val value: Int? = null,
     val text: String,
+    val stayLabel: String = "",
 )
 
 data class MenuItem(
@@ -104,6 +108,50 @@ object RestaurantDetailData {
     fun bookingPrice(restaurant: Restaurant): Int =
         (restaurant.rating * 50 + 80).roundToInt().coerceAtLeast(60)
 
+    val carouselReviews: List<ReviewEntry> = listOf(
+        ReviewEntry(
+            name = "Margarida",
+            publishedAtEpochMs = daysAgo(22),
+            rating = 5,
+            text = "Comfortable. Quiet. Just like home. The staff were kind. Good communication. Fresh linens. Would return.",
+        ),
+        ReviewEntry(
+            name = "Patrick",
+            publishedAtEpochMs = daysAgo(18),
+            rating = 5,
+            stayLabel = "Deluxe suite",
+            text = "Great place to stay. However, the hosts forgot some of the furniture when we entered. Nice neighborhood. The bedroom is spacious. The sofa bed is comfortable. We didn't have any issues during the stay. Great value!",
+        ),
+        ReviewEntry(
+            name = "Rachel",
+            publishedAtEpochMs = daysAgo(24),
+            rating = 5,
+            stayLabel = "Premier King suite with balcony",
+            text = "Wow. Great. Worth it. Central, clean and stylish. Also liked the slides. The host was very communicative. Would stay here again. Easy check in.",
+        ),
+        ReviewEntry(
+            name = "Chadae",
+            publishedAtEpochMs = daysAgo(31),
+            rating = 5,
+            stayLabel = "Premier king suite with balcony",
+            text = "Wow everything was exactly perfect the building the unit the valet and the host amazing Five star service. Short walk to everything.",
+        ),
+        ReviewEntry(
+            name = "Daniel",
+            publishedAtEpochMs = daysAgo(38),
+            rating = 4,
+            stayLabel = "Studio with city view",
+            text = "Check-in was smooth and the room matched the photos. A few small maintenance items but nothing that ruined the trip. Location made up for it — we walked everywhere.",
+        ),
+        ReviewEntry(
+            name = "Aisha",
+            publishedAtEpochMs = daysAgo(45),
+            rating = 5,
+            stayLabel = "Penthouse dining room",
+            text = "Stunning. Memorable. Every course surprised us. Service was warm without being intrusive. Book ahead.",
+        ),
+    )
+
     val reviews: List<ReviewEntry> = listOf(
         ReviewEntry("Matthew Y.", daysAgo(7), 5, 5, 5, 5, 4, "Absolutely incredible experience. The omakase was a journey through flavors I never knew existed."),
         ReviewEntry("Sarah L.", daysAgo(9), 5, 5, 4, 5, 4, "Best sushi in the city, hands down. The wagyu tataki melts in your mouth."),
@@ -182,6 +230,9 @@ object RestaurantDetailData {
 
 fun formatRating(n: Double): String =
     if (n == n.toInt().toDouble()) n.toInt().toString() else n.toString()
+
+fun formatReviewMonthYear(publishedAtEpochMs: Long): String =
+    SimpleDateFormat("MMMM yyyy", Locale.US).format(Date(publishedAtEpochMs))
 
 fun formatReviewTimeAgo(publishedAtEpochMs: Long, nowEpochMs: Long = System.currentTimeMillis()): String {
     val minutes = ((nowEpochMs - publishedAtEpochMs).coerceAtLeast(0L)) / 60_000L
