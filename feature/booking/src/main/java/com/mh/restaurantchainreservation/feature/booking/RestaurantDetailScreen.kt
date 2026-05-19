@@ -62,8 +62,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -100,8 +102,9 @@ private val DetailInfoHorizontalPadding = 24.dp
 private val DetailStatsSideColumnWeight = 0.9f
 private val DetailStatsCenterColumnWeight = 1.75f
 private val DetailStatsDividerHeight = 36.dp
-private val DetailStatsRowTopPadding = 8.dp
+private val DetailStatsRowTopPadding = 0.dp
 private val DetailStatsRowBottomPadding = 20.dp
+private val BookingBarTopShadowElevation = 10.dp
 /** Matches CSS loader: 60×30, three dots bouncing on a 1s linear loop (l3). */
 private val DetailLoaderWidth = 60.dp
 private val DetailLoaderHeight = 30.dp
@@ -240,6 +243,7 @@ fun RestaurantDetailScreen(
                 titleModifier = titleModifier,
             )
             if (contentReady && payload != null) {
+                RatingsSummaryRow(restaurant = restaurant, onOpenReviews = { showReviews = true })
                 Column(
                     modifier = Modifier.graphicsLayer {
                         val p = bodyReveal.value
@@ -247,7 +251,6 @@ fun RestaurantDetailScreen(
                         alpha = 0.22f + 0.78f * p
                     },
                 ) {
-                    RatingsSummaryRow(restaurant = restaurant, onOpenReviews = { showReviews = true })
                     HighlightsSection(restaurant = restaurant)
                     AboutSection(ext = payload.ext)
                     AmenitiesSection(
@@ -518,7 +521,7 @@ private fun HeaderSummaryCard(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 4.dp, bottom = 2.dp),
+                    .padding(top = 4.dp),
             )
         }
     }
@@ -648,9 +651,17 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit)
             )
         }
     }
+    DetailInsetDivider()
+}
+
+@Composable
+private fun DetailInsetDivider(modifier: Modifier = Modifier) {
+    val palette = LocalRestaurantPalette.current
     HorizontalDivider(
         color = palette.borderSoft,
-        modifier = Modifier.padding(horizontal = DetailInfoHorizontalPadding),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = DetailInfoHorizontalPadding),
     )
 }
 
@@ -686,7 +697,7 @@ private fun HighlightsSection(restaurant: Restaurant) {
             subtitle = "Chef-driven menu with seasonal ingredients and house specialties.",
         )
     }
-    HorizontalDivider(color = palette.borderSoft)
+    DetailInsetDivider()
 }
 
 @Composable
@@ -714,7 +725,7 @@ private fun AboutSection(ext: RestaurantExtendedData) {
             modifier = Modifier.padding(top = 12.dp),
         )
     }
-    HorizontalDivider(color = palette.borderSoft)
+    DetailInsetDivider()
 }
 
 @Composable
@@ -749,7 +760,7 @@ private fun AmenitiesSection(
             Text("Show all amenities", color = palette.foreground, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
     }
-    HorizontalDivider(color = palette.borderSoft)
+    DetailInsetDivider()
 }
 
 @Composable
@@ -794,7 +805,7 @@ private fun LocationSection(restaurant: Restaurant, ext: RestaurantExtendedData)
             modifier = Modifier.padding(top = 12.dp),
         )
     }
-    HorizontalDivider(color = palette.borderSoft)
+    DetailInsetDivider()
 }
 
 @Composable
@@ -866,7 +877,7 @@ private fun GuestFavoriteSection(
             textAlign = TextAlign.Center,
         )
     }
-    HorizontalDivider(color = palette.borderSoft, modifier = Modifier.padding(top = 8.dp))
+    DetailInsetDivider(modifier = Modifier.padding(top = 8.dp))
 }
 
 private val GuestReviewCardHeight = 248.dp
@@ -942,7 +953,7 @@ private fun CancellationPolicySection() {
             modifier = Modifier.padding(top = 12.dp),
         )
     }
-    HorizontalDivider(color = palette.borderSoft)
+    DetailInsetDivider()
 }
 
 private const val PopularMenuPreviewCount = 6
@@ -1052,7 +1063,6 @@ private fun BookingBar(
                 fontWeight = FontWeight.Bold,
                 textDecoration = TextDecoration.Underline,
             )
-            Text("for 2 guests · Tonight", color = palette.mutedForeground, fontSize = 14.sp)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(top = 4.dp),
