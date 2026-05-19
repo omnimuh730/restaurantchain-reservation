@@ -47,10 +47,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavIconPaths
+import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavStrokeIcon
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucideIcon
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucidePaths
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.QrCodeIcon
-import com.mh.restaurantchainreservation.core.designsystem.components.icons.TonightLogoMark
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
@@ -62,8 +63,7 @@ data class BottomNavTab(
 )
 
 private val TabVerticalPadding = 10.dp
-private val IconSizeStandard = 22.dp
-private val IconSizeLogo = 26.dp
+private val TabIconSize = 24.dp
 private val LabelTopGap = 2.dp
 private val QrButtonSize: Dp = 60.dp
 private val QrIconSize = 26.dp
@@ -237,33 +237,45 @@ private fun TabIcon(
     muted: Color,
 ) {
     when (tab) {
-        BottomNavTabId.Discover -> TonightLogoMark(
-            modifier = Modifier.size(IconSizeLogo),
-            color = if (isActive) primary else muted,
+        BottomNavTabId.Discover -> BottomNavStrokeIcon(
+            paths = BottomNavIconPaths.DiscoverSearch,
+            isActive = isActive,
+            activeColor = primary,
+            inactiveColor = muted,
+            iconSize = TabIconSize,
+            activeStrokeWidth = 2.67f,
+            inactiveStrokeWidth = 2f,
         )
 
-        BottomNavTabId.Wishlist -> LucideIcon(
-            paths = LucidePaths.Heart,
-            modifier = Modifier.size(IconSizeStandard),
-            strokeColor = if (isActive) primary else muted,
-            fillColor = if (isActive) primary.copy(alpha = ActiveIconFillAlpha) else Color.Transparent,
-            strokeWidth = if (isActive) ActiveStrokeWidth else InactiveStrokeWidth,
+        BottomNavTabId.Wishlist -> BottomNavStrokeIcon(
+            paths = BottomNavIconPaths.WishlistHeart,
+            isActive = isActive,
+            activeColor = primary,
+            inactiveColor = muted,
+            iconSize = TabIconSize,
+            activeStrokeWidth = ActiveStrokeWidth,
+            inactiveStrokeWidth = InactiveStrokeWidth,
         )
 
-        BottomNavTabId.Dining -> LucideIcon(
+        BottomNavTabId.Dining -> BottomNavStrokeIcon(
             paths = LucidePaths.UtensilsCrossed,
-            modifier = Modifier.size(IconSizeStandard),
-            strokeColor = if (isActive) primary else muted,
-            fillColor = if (isActive) primary.copy(alpha = ActiveIconFillAlpha) else Color.Transparent,
-            strokeWidth = if (isActive) ActiveStrokeWidth else InactiveStrokeWidth,
+            isActive = isActive,
+            activeColor = primary,
+            inactiveColor = muted,
+            iconSize = TabIconSize,
+            activeStrokeWidth = ActiveStrokeWidth,
+            inactiveStrokeWidth = InactiveStrokeWidth,
+            viewportSize = 24f,
         )
 
-        BottomNavTabId.Profile -> LucideIcon(
-            paths = LucidePaths.User,
-            modifier = Modifier.size(IconSizeStandard),
-            strokeColor = if (isActive) primary else muted,
-            fillColor = if (isActive) primary.copy(alpha = ActiveIconFillAlpha) else Color.Transparent,
-            strokeWidth = if (isActive) ActiveStrokeWidth else InactiveStrokeWidth,
+        BottomNavTabId.Profile -> BottomNavStrokeIcon(
+            paths = BottomNavIconPaths.ProfileInCircle,
+            isActive = isActive,
+            activeColor = primary,
+            inactiveColor = muted,
+            iconSize = TabIconSize,
+            activeStrokeWidth = ActiveStrokeWidth,
+            inactiveStrokeWidth = InactiveStrokeWidth,
         )
     }
 }

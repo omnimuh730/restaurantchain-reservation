@@ -18,8 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.PersonOutline
-import androidx.compose.material.icons.outlined.TravelExplore
-import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
@@ -49,6 +48,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavIconPaths
+import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavStrokeIcon
+import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucidePaths
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavBar
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavTab
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavTabId
@@ -203,7 +205,7 @@ fun RestaurantNavHost(
                                     navController.navigateToTab(route)
                                 }
                             },
-                            icon = { RailIconFor(tab.id) },
+                            icon = { RailIconFor(tab.id, selected = selected) },
                             label = { Text(tab.label) },
                         )
                     }
@@ -236,12 +238,37 @@ fun RestaurantNavHost(
 }
 
 @Composable
-private fun RailIconFor(tab: BottomNavTabId) {
+private fun RailIconFor(tab: BottomNavTabId, selected: Boolean) {
+    val primary = MaterialTheme.colorScheme.primary
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
     when (tab) {
-        BottomNavTabId.Discover -> Icon(Icons.Outlined.TravelExplore, contentDescription = null)
-        BottomNavTabId.Wishlist -> Icon(Icons.Outlined.BookmarkBorder, contentDescription = null)
-        BottomNavTabId.Dining -> Icon(Icons.Outlined.CalendarMonth, contentDescription = null)
-        BottomNavTabId.Profile -> Icon(Icons.Outlined.PersonOutline, contentDescription = null)
+        BottomNavTabId.Discover -> BottomNavStrokeIcon(
+            paths = BottomNavIconPaths.DiscoverSearch,
+            isActive = selected,
+            activeColor = primary,
+            inactiveColor = muted,
+            activeStrokeWidth = 2.67f,
+            inactiveStrokeWidth = 2f,
+        )
+        BottomNavTabId.Wishlist -> BottomNavStrokeIcon(
+            paths = BottomNavIconPaths.WishlistHeart,
+            isActive = selected,
+            activeColor = primary,
+            inactiveColor = muted,
+        )
+        BottomNavTabId.Dining -> BottomNavStrokeIcon(
+            paths = LucidePaths.UtensilsCrossed,
+            isActive = selected,
+            activeColor = primary,
+            inactiveColor = muted,
+            viewportSize = 24f,
+        )
+        BottomNavTabId.Profile -> BottomNavStrokeIcon(
+            paths = BottomNavIconPaths.ProfileInCircle,
+            isActive = selected,
+            activeColor = primary,
+            inactiveColor = muted,
+        )
     }
 }
 
