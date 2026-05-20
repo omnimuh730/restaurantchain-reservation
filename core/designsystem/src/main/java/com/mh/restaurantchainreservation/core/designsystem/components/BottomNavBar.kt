@@ -47,7 +47,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -66,6 +65,8 @@ import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavIconPaths
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavStrokeIcon
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucidePaths
+import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.QrPayNavIcon
 import kotlin.math.cos
 import kotlin.math.sin
@@ -92,12 +93,12 @@ private val TabRowHeight = TabContentHeight + TabRowTopInset + TabLabelBottomPad
 
 private val QrOuterDiameter = 76.dp
 private val QrIconSize = 30.dp
-private val QrFabBorderWidth = 1.5.dp
-private val QrGlowHaloPadding = 10.dp
-/** ~30% of outer QR diameter above nav top (reference: 28–32%). */
-private val QrAboveNavBarLift = 23.dp
-private val QrShadowElevationRest = 16.dp
-private val QrShadowElevationActive = 22.dp
+private val QrFabBorderWidth = 3.dp
+private val QrGlowHaloPadding = 12.dp
+/** Vertical offset above the nav top edge (~30% of QR diameter + extra float). */
+private val QrAboveNavBarLift = 30.dp
+private val QrShadowElevationRest = HubSurfaceCardDefaults.ShadowElevation
+private val QrShadowElevationActive = 15.dp
 
 private val QrFabPressSpring = spring<Float>(
     dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -504,17 +505,14 @@ private fun QrFloatingButton(
         label = "qrGlowAlpha",
     )
     val shadowAmbientAlpha by animateFloatAsState(
-        targetValue = if (isHighlighted) 0.28f else 0.20f,
+        targetValue = if (isHighlighted) {
+            HubSurfaceCardDefaults.ShadowAmbientAlpha + 0.03f
+        } else {
+            HubSurfaceCardDefaults.ShadowAmbientAlpha
+        },
         animationSpec = QrFabVisualSpring,
         label = "qrShadowAmbient",
     )
-    val shadowSpotAlpha by animateFloatAsState(
-        targetValue = if (isHighlighted) 0.34f else 0.26f,
-        animationSpec = QrFabVisualSpring,
-        label = "qrShadowSpot",
-    )
-    val shadowAmbient = primary.copy(alpha = shadowAmbientAlpha)
-    val shadowSpot = Color(0xFF8E6A74).copy(alpha = shadowSpotAlpha)
     val glowBrush = remember(primary, glowAlpha) {
         Brush.radialGradient(
             0f to primary.copy(alpha = glowAlpha * 0.85f),
@@ -541,12 +539,10 @@ private fun QrFloatingButton(
                     scaleY = pressScale
                     clip = false
                 }
-                .shadow(
-                    elevation = shadowElevation,
+                .hubSurfaceShadow(
                     shape = CircleShape,
-                    clip = false,
-                    ambientColor = shadowAmbient,
-                    spotColor = shadowSpot,
+                    elevation = shadowElevation,
+                    ambientAlpha = shadowAmbientAlpha,
                 )
                 .clip(CircleShape)
                 .background(fabGradient)

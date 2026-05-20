@@ -50,10 +50,10 @@ fun Modifier.hubSurfaceCard(
     onClick: (() -> Unit)? = null,
 ): Modifier {
     var modifier = this
-        .shadow(
-            elevation = shadowElevation,
+        .hubSurfaceShadow(
             shape = shape,
-            ambientColor = Color.Black.copy(alpha = shadowAmbientAlpha),
+            elevation = shadowElevation,
+            ambientAlpha = shadowAmbientAlpha,
         )
         .clip(shape)
     if (showBorder) {
@@ -65,3 +65,15 @@ fun Modifier.hubSurfaceCard(
     }
     return modifier
 }
+
+/** Profile hub card drop shadow (black ambient) — reuse on FABs and other elevated surfaces. */
+fun Modifier.hubSurfaceShadow(
+    shape: Shape,
+    elevation: Dp = HubSurfaceCardDefaults.ShadowElevation,
+    ambientAlpha: Float = HubSurfaceCardDefaults.ShadowAmbientAlpha,
+): Modifier = shadow(
+    elevation = elevation,
+    shape = shape,
+    clip = false,
+    ambientColor = Color.Black.copy(alpha = ambientAlpha),
+)
