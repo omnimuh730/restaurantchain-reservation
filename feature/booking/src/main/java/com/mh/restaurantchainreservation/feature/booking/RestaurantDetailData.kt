@@ -2,17 +2,35 @@ package com.mh.restaurantchainreservation.feature.booking
 
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
+
+data class RestaurantNextDayOff(
+    val dateLabel: String,
+    val dayName: String,
+)
+
+data class RestaurantPlaceOffers(
+    val cuisineChips: List<PlaceOfferChip>,
+    val hoursChips: List<PlaceOfferChip>,
+    val paymentChips: List<PlaceOfferChip>,
+    val amenityChips: List<PlaceOfferChip>,
+)
 
 data class RestaurantExtendedData(
     val description: String,
     val address: String,
     val phone: String,
+    val phone2: String,
     val tags: List<String>,
     val closesAt: String,
     val deliveryTime: String,
+    val openFrom: String,
+    val openUntil: String,
+    val availableNow: Boolean,
+    val placeOffers: RestaurantPlaceOffers,
 )
 
 data class ReviewEntry(
@@ -38,6 +56,117 @@ data class MenuItem(
 )
 
 object RestaurantDetailData {
+    private val weekDays = listOf(
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    )
+
+    private val amenityChipPool = listOf(
+        "Outdoor seating" to AmenityIconType.Terrace,
+        "Private dining room" to AmenityIconType.PrivateDining,
+        "Street parking nearby" to AmenityIconType.Parking,
+        "Wheelchair-accessible entrance" to AmenityIconType.Wheelchair,
+        "Full bar" to AmenityIconType.FullBar,
+        "Vegan options" to AmenityIconType.Vegan,
+        "Reservations recommended" to AmenityIconType.Reservations,
+        "Takeout available" to AmenityIconType.Takeout,
+    )
+
+    private val servicePeriods = listOf("10am – 12pm", "12pm – 10pm")
+
+    private fun openFromLabel(): String =
+        servicePeriods.first().substringBefore('–').trim()
+
+    private fun openUntilLabel(): String =
+        servicePeriods.last().substringAfter('–').trim()
+
+    private val paymentChips = listOf(
+        PlaceOfferChip("Foreign", AmenityIconType.Cash),
+        PlaceOfferChip("National", AmenityIconType.Cash),
+        PlaceOfferChip("PayPal", AmenityIconType.CardPayment),
+        PlaceOfferChip("Payoneer", AmenityIconType.CardPayment),
+    )
+
+    private fun calendarDayForIndex(index: Int): Int = when (index) {
+        0 -> Calendar.MONDAY
+        1 -> Calendar.TUESDAY
+        2 -> Calendar.WEDNESDAY
+        3 -> Calendar.THURSDAY
+        4 -> Calendar.FRIDAY
+        5 -> Calendar.SATURDAY
+        else -> Calendar.SUNDAY
+    }
+
+    private fun nextDayOff(seed: Int): RestaurantNextDayOff {
+        val dayOffIndex = seed % 7
+        val targetDay = calendarDayForIndex(dayOffIndex)
+        val cal = Calendar.getInstance(Locale.US).apply { add(Calendar.DAY_OF_YEAR, 1) }
+        while (cal.get(Calendar.DAY_OF_WEEK) != targetDay) {
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        val dateLabel = SimpleDateFormat("MM/dd", Locale.US).format(cal.time)
+        return RestaurantNextDayOff(dateLabel = dateLabel, dayName = weekDays[dayOffIndex])
+    }
+
+    private fun cuisineChips(restaurant: Restaurant, seed: Int): List<PlaceOfferChip> {
+        val fromCuisine = restaurant.cuisine
+            .split("·", ",", "/")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+        val labels = fromCuisine.toMutableList()
+        if (labels.none { it.contains("vegan", ignoreCase = true) } && seed % 3 != 1) {
+            labels.add("Vegan options")
+        }
+        if (labels.size < 2) {
+            labels.add(restaurant.cuisine.trim())
+        }
+        return labels.distinct().take(4).map { PlaceOfferChip(label = it) }
+    }
+
+    private fun amenityChips(seed: Int): List<PlaceOfferChip> {
+        val connectivity = PlaceOfferChip(
+            label = "Data connection available",
+            icon = AmenityIconType.DataConnection,
+        )
+        val preferred = listOf("Full bar", "Reservations recommended")
+        val preferredChips = amenityChipPool
+            .filter { (label, _) -> label in preferred }
+            .map { (label, icon) -> PlaceOfferChip(label = label, icon = icon) }
+        val extras = amenityChipPool
+            .filter { (label, _) -> label !in preferred }
+            .sortedBy { (label, _) -> (label.hashCode() + seed) % amenityChipPool.size }
+            .take(seed % 2)
+            .map { (label, icon) -> PlaceOfferChip(label = label, icon = icon) }
+        return listOf(connectivity) + preferredChips + extras
+    }
+
+    private fun isAvailableNow(): Boolean {
+        val hour = Calendar.getInstance(Locale.US).get(Calendar.HOUR_OF_DAY)
+        return hour in 10..21
+    }
+
+    private fun hoursChips(seed: Int): List<PlaceOfferChip> {
+        val dayOff = nextDayOff(seed)
+        return buildList {
+            if (isAvailableNow()) add(PlaceOfferChip("Available now"))
+            add(PlaceOfferChip("Today: ${servicePeriods.joinToString(", ")}"))
+            add(PlaceOfferChip("Next day off: ${dayOff.dateLabel} ${dayOff.dayName}"))
+        }
+    }
+
+    private fun placeOffers(restaurant: Restaurant, seed: Int): RestaurantPlaceOffers =
+        RestaurantPlaceOffers(
+            cuisineChips = cuisineChips(restaurant, seed),
+            hoursChips = hoursChips(seed),
+            paymentChips = paymentChips,
+            amenityChips = amenityChips(seed),
+        )
+
     private val galleryExtras = listOf(
         "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=1200&h=800&fit=crop",
         "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=800&fit=crop",
@@ -96,14 +225,21 @@ object RestaurantDetailData {
             "m1" to listOf("Sushi", "Omakase", "Fine Dining"),
             "m3" to listOf("Bistro", "Wine", "Brunch"),
         )
+        val closesAt = openUntilLabel()
+        val availableNow = isAvailableNow()
         return RestaurantExtendedData(
             description = descriptions[restaurant.id]
                 ?: "Experience the best of ${restaurant.cuisine} at ${restaurant.name}. A perfect spot for any occasion.",
             address = "${streetNum} W ${stNum}th St",
             phone = "(212) 555-$phoneNum",
+            phone2 = "(415) 555-${((phoneNum + 137) % 9000) + 1000}",
             tags = tags[restaurant.id] ?: listOf(restaurant.cuisine.split("·").first().trim(), "Dining"),
-            closesAt = "23:00",
+            closesAt = closesAt,
             deliveryTime = "$delivMin–$delivMax min",
+            openFrom = openFromLabel(),
+            openUntil = openUntilLabel(),
+            availableNow = availableNow,
+            placeOffers = placeOffers(restaurant, idSeed),
         )
     }
 
@@ -230,6 +366,16 @@ object RestaurantDetailData {
 
     private fun daysAgo(days: Int): Long =
         System.currentTimeMillis() - days * 86_400_000L
+}
+
+fun detailHeaderLocationLine(restaurant: Restaurant, ext: RestaurantExtendedData): String {
+    val location = restaurant.area?.takeIf { it.isNotBlank() } ?: ext.address
+    return "${restaurant.cuisine} restaurant in $location"
+}
+
+fun detailHeaderHoursLine(restaurant: Restaurant, ext: RestaurantExtendedData): String {
+    val availability = if (ext.availableNow) "Available now" else "Closed now"
+    return "${restaurant.price} · From ${ext.openFrom} · Until ${ext.openUntil} · $availability"
 }
 
 fun formatRating(n: Double): String =

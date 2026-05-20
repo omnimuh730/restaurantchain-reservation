@@ -65,6 +65,7 @@ import com.mh.restaurantchainreservation.feature.auth.RegisterScreen
 import com.mh.restaurantchainreservation.feature.booking.BookTableScreen
 import com.mh.restaurantchainreservation.feature.booking.BookingRoutes
 import com.mh.restaurantchainreservation.feature.booking.RestaurantDetailScreen
+import com.mh.restaurantchainreservation.feature.booking.RestaurantMenuScreen
 import com.mh.restaurantchainreservation.feature.dining.DiningDetailScreen
 import com.mh.restaurantchainreservation.feature.dining.DiningEnjoyScreen
 import com.mh.restaurantchainreservation.feature.dining.DiningHomeScreen
@@ -546,8 +547,22 @@ private fun AppGraph(
                         restaurantId = id,
                         onBack = { navController.popBackStack() },
                         onBookNow = { navController.navigate(BookingRoutes.bookTable(id)) },
+                        onShowMenu = { navController.navigate(BookingRoutes.restaurantMenu(id)) },
                     )
                 }
+            }
+            composable(
+                route = BookingRoutes.RestaurantMenu,
+                arguments = listOf(navArgument("restaurantId") { type = NavType.StringType }),
+            ) { entry ->
+                val id = entry.arguments?.getString("restaurantId").orEmpty()
+                val restaurant = DiscoverData.findById(id)
+                    ?: DiscoverData.MONTHLY_BEST.first()
+                RestaurantMenuScreen(
+                    restaurantName = restaurant.name,
+                    onBack = { navController.popBackStack() },
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
             composable(
                 route = BookingRoutes.BookTable,
