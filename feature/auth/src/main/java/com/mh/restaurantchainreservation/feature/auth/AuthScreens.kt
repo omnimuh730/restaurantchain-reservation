@@ -2,9 +2,14 @@ package com.mh.restaurantchainreservation.feature.auth
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -23,6 +28,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -44,7 +51,9 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.CardGiftcard
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Lock
@@ -52,17 +61,23 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -74,6 +89,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.components.DeterministicQrCode
@@ -132,6 +148,9 @@ private enum class FeedbackType { Success, Error, Warning }
 private data class Feedback(val type: FeedbackType, val message: String)
 
 private enum class RegisterStep { Refer, Credentials, Profile, Security, Done }
+
+/** Reserve scroll space before the bottom bar is measured (tallest step: invite + sign-in link). */
+private val RegisterBottomBarScrollPaddingMin = 132.dp
 
 private enum class ForgotStep { Username, Security, Reset, Done }
 
@@ -295,7 +314,14 @@ fun RegisterScreen(
     var fieldErrors by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var questionIndexes by rememberSaveable { mutableStateOf(listOf(0, 1, 2)) }
     var securityAnswers by rememberSaveable { mutableStateOf(listOf("", "", "")) }
+    var expandedQuestionSlot by rememberSaveable { mutableStateOf<Int?>(null) }
     var loading by rememberSaveable { mutableStateOf(false) }
+
+    androidx.compose.runtime.LaunchedEffect(step) {
+        if (step != RegisterStep.Security) {
+            expandedQuestionSlot = null
+        }
+    }
 
     fun goBack() {
         when (step) {
@@ -362,213 +388,236 @@ fun RegisterScreen(
     }
 
     val labels = listOf("Invite", "Account", "Profile", "Secure", "Done")
-    AuthSurface(modifier = modifier, scrollable = step != RegisterStep.Done) {
-        AuthHeader(
-            title = "Create account",
-            subtitle = "Join Tonight dining",
-            onBack = ::goBack,
-            onClose = onClose,
-            showClose = allowDismiss,
-        )
-        AuthProgress(labels = labels, activeIndex = RegisterStep.entries.indexOf(step))
-
-        AnimatedVisibility(feedback != null) {
-            feedback?.let {
-                FeedbackBanner(feedback = it, onDismiss = { feedback = null })
-                Spacer(Modifier.height(12.dp))
-            }
+    val density = LocalDensity.current
+    var bottomBarHeightPx by remember { mutableIntStateOf(0) }
+    val bottomBarHeight = with(density) { bottomBarHeightPx.toDp() }
+        .coerceAtLeast(RegisterBottomBarScrollPaddingMin)
+    val securitySetupComplete by remember(securityAnswers, questionIndexes) {
+        derivedStateOf {
+            securityAnswers.size == 3 &&
+                securityAnswers.all { it.trim().isNotEmpty() } &&
+                questionIndexes.distinct().size == questionIndexes.size
         }
+    }
 
-        AnimatedContent(
-            targetState = step,
-            transitionSpec = {
-                (fadeIn(tween(180)) + slideInHorizontally { it / 8 }) togetherWith
-                    (fadeOut(tween(150)) + slideOutHorizontally { -it / 8 })
-            },
-            label = "register_step",
-        ) { current ->
-            Column {
-                when (current) {
-                    RegisterStep.Refer -> {
-                        AuthHero(
-                            icon = { IconBadge(icon = Icons.Outlined.CardGiftcard) },
-                            title = "Have an invite?",
-                            subtitle = "Enter a referral code or scan a friend's QR. You can also skip this.",
-                        )
-                        if (!showScanner) {
-                            AuthInputField(
-                                value = referCode,
-                                onChange = { referCode = it.uppercase().filterNot { ch -> ch.isWhitespace() } },
-                                placeholder = "Referral code (optional)",
-                                icon = Icons.Outlined.CardGiftcard,
-                            )
-                            SecondaryButton(
-                                text = "Scan QR code",
-                                icon = Icons.Outlined.QrCodeScanner,
-                                onClick = { showScanner = true },
-                                modifier = Modifier.padding(top = 12.dp),
-                            )
-                        } else {
-                            ReferralScanner(
-                                onSimulate = {
-                                    referCode = "FRIEND-" + username.ifBlank { "DEMO" }.take(5).uppercase()
-                                    showScanner = false
-                                },
-                                onCancel = { showScanner = false },
-                            )
-                        }
-                        PrimaryButton(
-                            text = if (referCode.isBlank()) "Continue" else "Apply and continue",
-                            onClick = { step = RegisterStep.Credentials },
-                            trailingIcon = Icons.Outlined.ChevronRight,
-                            modifier = Modifier.padding(top = 20.dp),
-                        )
-                        TextAction(
-                            text = "Skip for now",
-                            onClick = {
-                                referCode = ""
-                                step = RegisterStep.Credentials
-                            },
-                            modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .padding(top = 12.dp),
-                            muted = true,
-                        )
-                    }
-                    RegisterStep.Credentials -> {
-                        AuthHero(
-                            icon = { LogoBadge() },
-                            title = "Choose credentials",
-                            subtitle = "Create a username and a password strong enough for reservation security.",
-                        )
-                        AuthInputField(
-                            value = username,
-                            onChange = {
-                                    username = it.filterNot { ch -> ch.isWhitespace() }
-                                clear()
-                            },
-                            placeholder = "Username",
-                            icon = Icons.Outlined.Person,
-                            error = fieldErrors["username"],
-                        )
+    AuthSurface(modifier = modifier, scrollable = false, pinContentToBottom = true) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                AuthHeader(
+                    title = "Create account",
+                    subtitle = "Join Tonight dining",
+                    onBack = ::goBack,
+                    onClose = onClose,
+                    showClose = allowDismiss,
+                )
+                AuthProgress(labels = labels, activeIndex = RegisterStep.entries.indexOf(step))
+
+                AnimatedVisibility(feedback != null) {
+                    feedback?.let {
+                        FeedbackBanner(feedback = it, onDismiss = { feedback = null })
                         Spacer(Modifier.height(12.dp))
-                        AuthInputField(
-                            value = password,
-                            onChange = {
-                                password = it
-                                clear()
-                            },
-                            placeholder = "Password",
-                            icon = Icons.Outlined.Lock,
-                            password = true,
-                            error = fieldErrors["password"],
-                        )
-                        Spacer(Modifier.height(12.dp))
-                        AuthInputField(
-                            value = confirmPassword,
-                            onChange = {
-                                confirmPassword = it
-                                clear()
-                            },
-                            placeholder = "Confirm password",
-                            icon = Icons.Outlined.Lock,
-                            password = true,
-                            error = fieldErrors["confirm"],
-                            onDone = ::validateCredentials,
-                        )
-                        PasswordStrength(password = password)
-                        PrimaryButton(
-                            text = "Next",
-                            onClick = ::validateCredentials,
-                            trailingIcon = Icons.Outlined.ChevronRight,
-                            modifier = Modifier.padding(top = 20.dp),
-                        )
                     }
-                    RegisterStep.Profile -> {
-                        AuthHero(
-                            icon = { IconBadge(icon = Icons.Outlined.Person) },
-                            title = "Set up profile",
-                            subtitle = "Tell us what to call you on reservations and invites.",
-                        )
-                        AuthInputField(
-                            value = displayName,
-                            onChange = {
-                                displayName = it
-                                clear()
-                            },
-                            placeholder = "Display name",
-                            icon = Icons.Outlined.Person,
-                            error = fieldErrors["displayName"],
-                            onDone = ::validateProfile,
-                        )
-                        PrimaryButton(
-                            text = "Next",
-                            onClick = ::validateProfile,
-                            trailingIcon = Icons.Outlined.ChevronRight,
-                            modifier = Modifier.padding(top = 20.dp),
-                        )
-                    }
-                    RegisterStep.Security -> {
-                        AuthHero(
-                            icon = { IconBadge(icon = Icons.Outlined.HelpOutline) },
-                            title = "Recovery setup",
-                            subtitle = "Pick three questions so you can safely recover your account.",
-                        )
-                        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                            repeat(3) { index ->
-                                SecurityQuestionCard(
-                                    index = index,
-                                    questionIndex = questionIndexes[index],
-                                    answer = securityAnswers[index],
-                                    error = fieldErrors["security$index"],
-                                    onCycleQuestion = {
-                                        questionIndexes = questionIndexes.toMutableList().also { list ->
-                                            list[index] = (list[index] + 1) % securityQuestions.size
-                                        }
-                                        feedback = null
-                                    },
-                                    onAnswer = { value ->
-                                        securityAnswers = securityAnswers.toMutableList().also { list ->
-                                            list[index] = value
-                                        }
-                                        clear()
-                                    },
+                }
+
+                AnimatedContent(
+                    targetState = step,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    transitionSpec = {
+                            val forward = targetState.ordinal > initialState.ordinal
+                            if (forward) {
+                                (
+                                    slideInHorizontally(
+                                        animationSpec = tween(320, easing = FastOutSlowInEasing),
+                                        initialOffsetX = { width -> width },
+                                    ) + fadeIn(tween(220, easing = FastOutSlowInEasing))
+                                    ).togetherWith(
+                                    slideOutHorizontally(
+                                        animationSpec = tween(300, easing = FastOutSlowInEasing),
+                                        targetOffsetX = { width -> -width / 3 },
+                                    ) + fadeOut(tween(200)),
+                                )
+                            } else {
+                                (
+                                    slideInHorizontally(
+                                        animationSpec = tween(320, easing = FastOutSlowInEasing),
+                                        initialOffsetX = { width -> -width / 3 },
+                                    ) + fadeIn(tween(220, easing = FastOutSlowInEasing))
+                                    ).togetherWith(
+                                    slideOutHorizontally(
+                                        animationSpec = tween(300, easing = FastOutSlowInEasing),
+                                        targetOffsetX = { width -> width },
+                                    ) + fadeOut(tween(200)),
                                 )
                             }
+                        },
+                    label = "register_step",
+                ) { current ->
+                    when (current) {
+                        RegisterStep.Security -> {
+                            RecoverySetupStepContent(
+                                questionIndexes = questionIndexes,
+                                securityAnswers = securityAnswers,
+                                fieldErrors = fieldErrors,
+                                expandedQuestionSlot = expandedQuestionSlot,
+                                bottomPadding = bottomBarHeight,
+                                onToggleExpand = { index ->
+                                    expandedQuestionSlot =
+                                        if (expandedQuestionSlot == index) null else index
+                                },
+                                onSelectQuestion = { index, selected ->
+                                    questionIndexes = questionIndexes.toMutableList().also { list ->
+                                        list[index] = selected
+                                    }
+                                    expandedQuestionSlot = null
+                                    feedback = null
+                                },
+                                onAnswer = { index, value ->
+                                    securityAnswers = securityAnswers.toMutableList().also { list ->
+                                        list[index] = value
+                                    }
+                                    clear()
+                                },
+                            )
                         }
-                        PrimaryButton(
-                            text = "Create account",
-                            onClick = ::validateSecurity,
-                            trailingIcon = Icons.Outlined.ChevronRight,
-                            modifier = Modifier.padding(top = 20.dp),
-                            loading = loading,
-                        )
-                    }
-                    RegisterStep.Done -> {
-                        SuccessPanel(
-                            title = "Welcome, ${displayName.ifBlank { "friend" }}",
-                            body = "Your account is ready. Start discovering memorable restaurants tonight.",
-                            action = "Get started",
-                            onAction = onComplete,
-                        )
+                        else -> {
+                            val scrollState = rememberScrollState()
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(scrollState)
+                                    .imePadding()
+                                    .padding(bottom = bottomBarHeight),
+                            ) {
+                                when (current) {
+                                RegisterStep.Refer -> {
+                                    AuthHero(
+                                        icon = { IconBadge(icon = Icons.Outlined.CardGiftcard) },
+                                        title = "Have an invite?",
+                                        subtitle = "Enter a referral code or scan a friend's QR. You can also skip this.",
+                                    )
+                                    if (!showScanner) {
+                                        AuthInputField(
+                                            value = referCode,
+                                            onChange = { referCode = it.uppercase().filterNot { ch -> ch.isWhitespace() } },
+                                            placeholder = "Referral code (optional)",
+                                            icon = Icons.Outlined.CardGiftcard,
+                                        )
+                                        SecondaryButton(
+                                            text = "Scan QR code",
+                                            icon = Icons.Outlined.QrCodeScanner,
+                                            onClick = { showScanner = true },
+                                            modifier = Modifier.padding(top = 12.dp),
+                                        )
+                                    } else {
+                                        ReferralScanner(
+                                            onSimulate = {
+                                                referCode = "FRIEND-" + username.ifBlank { "DEMO" }.take(5).uppercase()
+                                                showScanner = false
+                                            },
+                                            onCancel = { showScanner = false },
+                                        )
+                                    }
+                                }
+                                RegisterStep.Credentials -> {
+                                    AuthHero(
+                                        icon = { LogoBadge() },
+                                        title = "Choose credentials",
+                                        subtitle = "Create a username and a password strong enough for reservation security.",
+                                    )
+                                    AuthInputField(
+                                        value = username,
+                                        onChange = {
+                                            username = it.filterNot { ch -> ch.isWhitespace() }
+                                            clear()
+                                        },
+                                        placeholder = "Username",
+                                        icon = Icons.Outlined.Person,
+                                        error = fieldErrors["username"],
+                                    )
+                                    Spacer(Modifier.height(12.dp))
+                                    AuthInputField(
+                                        value = password,
+                                        onChange = {
+                                            password = it
+                                            clear()
+                                        },
+                                        placeholder = "Password",
+                                        icon = Icons.Outlined.Lock,
+                                        password = true,
+                                        error = fieldErrors["password"],
+                                    )
+                                    Spacer(Modifier.height(12.dp))
+                                    AuthInputField(
+                                        value = confirmPassword,
+                                        onChange = {
+                                            confirmPassword = it
+                                            clear()
+                                        },
+                                        placeholder = "Confirm password",
+                                        icon = Icons.Outlined.Lock,
+                                        password = true,
+                                        error = fieldErrors["confirm"],
+                                        onDone = ::validateCredentials,
+                                    )
+                                    PasswordStrength(password = password)
+                                }
+                                RegisterStep.Profile -> {
+                                    AuthHero(
+                                        icon = { IconBadge(icon = Icons.Outlined.Person) },
+                                        title = "Set up profile",
+                                        subtitle = "Tell us what to call you on reservations and invites.",
+                                    )
+                                    AuthInputField(
+                                        value = displayName,
+                                        onChange = {
+                                            displayName = it
+                                            clear()
+                                        },
+                                        placeholder = "Display name",
+                                        icon = Icons.Outlined.Person,
+                                        error = fieldErrors["displayName"],
+                                        onDone = ::validateProfile,
+                                    )
+                                }
+                                RegisterStep.Done -> {
+                                    SuccessPanel(
+                                        title = "Welcome, ${displayName.ifBlank { "friend" }}",
+                                        body = "Your account is ready. Start discovering memorable restaurants tonight.",
+                                        action = "Get started",
+                                        onAction = onComplete,
+                                        showActionInPanel = false,
+                                    )
+                                }
+                                else -> Unit
+                                }
+                            }
+                        }
                     }
                 }
             }
-        }
 
-        if (step == RegisterStep.Refer || step == RegisterStep.Credentials) {
-            Row(
+            RegisterStepBottomBar(
+                step = step,
+                referCode = referCode,
+                loading = loading,
+                securitySetupComplete = securitySetupComplete,
+                onReferContinue = { step = RegisterStep.Credentials },
+                onReferSkip = {
+                    referCode = ""
+                    step = RegisterStep.Credentials
+                },
+                onCredentialsNext = ::validateCredentials,
+                onProfileNext = ::validateProfile,
+                onSecuritySubmit = ::validateSecurity,
+                onComplete = onComplete,
+                onGoLogin = onGoLogin,
                 modifier = Modifier
+                    .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(top = 28.dp, bottom = 12.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                val palette = LocalRestaurantPalette.current
-                Text("Already have an account?", color = palette.mutedForeground, fontSize = 13.sp)
-                Spacer(Modifier.width(4.dp))
-                TextAction(text = "Sign in", onClick = onGoLogin)
-            }
+                    .onSizeChanged { bottomBarHeightPx = it.height },
+            )
         }
     }
 }
@@ -784,6 +833,7 @@ fun ForgotPasswordScreen(
 private fun AuthSurface(
     modifier: Modifier = Modifier,
     scrollable: Boolean = true,
+    pinContentToBottom: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -795,7 +845,11 @@ private fun AuthSurface(
         val columnModifier = Modifier
             .fillMaxSize()
             .widthIn(max = 460.dp)
-            .padding(horizontal = 20.dp, vertical = 18.dp)
+            .padding(horizontal = 20.dp)
+            .padding(
+                top = 18.dp,
+                bottom = if (pinContentToBottom) 0.dp else 18.dp,
+            )
         Column(
             modifier = if (scrollable) columnModifier.verticalScroll(rememberScrollState()) else columnModifier,
             content = content,
@@ -1268,18 +1322,189 @@ private fun PasswordStrength(password: String) {
 }
 
 @Composable
-private fun SecurityQuestionCard(
+private fun RegisterStepBottomBar(
+    step: RegisterStep,
+    referCode: String,
+    loading: Boolean,
+    securitySetupComplete: Boolean,
+    onReferContinue: () -> Unit,
+    onReferSkip: () -> Unit,
+    onCredentialsNext: () -> Unit,
+    onProfileNext: () -> Unit,
+    onSecuritySubmit: () -> Unit,
+    onComplete: () -> Unit,
+    onGoLogin: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    Column(
+        modifier = modifier
+            .background(palette.cardSurface)
+            .navigationBarsPadding()
+            .imePadding(),
+    ) {
+        HorizontalDivider(color = palette.border.copy(alpha = 0.65f))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp, bottom = 12.dp),
+        ) {
+        when (step) {
+            RegisterStep.Refer -> {
+                PrimaryButton(
+                    text = if (referCode.isBlank()) "Continue" else "Apply and continue",
+                    onClick = onReferContinue,
+                    trailingIcon = Icons.Outlined.ChevronRight,
+                )
+                TextAction(
+                    text = "Skip for now",
+                    onClick = onReferSkip,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(top = 12.dp),
+                    muted = true,
+                )
+            }
+            RegisterStep.Credentials -> {
+                PrimaryButton(
+                    text = "Next",
+                    onClick = onCredentialsNext,
+                    trailingIcon = Icons.Outlined.ChevronRight,
+                )
+            }
+            RegisterStep.Profile -> {
+                PrimaryButton(
+                    text = "Next",
+                    onClick = onProfileNext,
+                    trailingIcon = Icons.Outlined.ChevronRight,
+                )
+            }
+            RegisterStep.Security -> {
+                PrimaryButton(
+                    text = "Create account",
+                    onClick = onSecuritySubmit,
+                    trailingIcon = Icons.Outlined.ChevronRight,
+                    enabled = securitySetupComplete,
+                    loading = loading,
+                )
+            }
+            RegisterStep.Done -> {
+                PrimaryButton(
+                    text = "Get started",
+                    onClick = onComplete,
+                    trailingIcon = Icons.Outlined.ChevronRight,
+                )
+            }
+        }
+        if (step == RegisterStep.Refer || step == RegisterStep.Credentials) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Already have an account?", color = palette.mutedForeground, fontSize = 13.sp)
+                Spacer(Modifier.width(4.dp))
+                TextAction(text = "Sign in", onClick = onGoLogin)
+            }
+        }
+        }
+    }
+}
+
+@Composable
+private fun RecoverySetupStepContent(
+    questionIndexes: List<Int>,
+    securityAnswers: List<String>,
+    fieldErrors: Map<String, String>,
+    expandedQuestionSlot: Int?,
+    bottomPadding: Dp,
+    onToggleExpand: (Int) -> Unit,
+    onSelectQuestion: (Int, Int) -> Unit,
+    onAnswer: (Int, String) -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val scrollState = rememberScrollState()
+    val showScrollTopBorder by remember {
+        derivedStateOf { scrollState.value > 0 }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        AuthHero(
+            icon = { IconBadge(icon = Icons.Outlined.HelpOutline) },
+            title = "Recovery setup",
+            subtitle = "Pick three questions so you can safely recover your account.",
+        )
+        Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            AnimatedVisibility(
+                visible = showScrollTopBorder,
+                enter = fadeIn(tween(160, easing = FastOutSlowInEasing)),
+                exit = fadeOut(tween(140)),
+            ) {
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth(),
+                    thickness = 1.dp,
+                    color = palette.border,
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .imePadding()
+                    .padding(bottom = bottomPadding),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    repeat(3) { index ->
+                        val takenElsewhere = questionIndexes.mapIndexedNotNull { slot, question ->
+                            if (slot != index) question else null
+                        }.toSet()
+                        SecurityQuestionDropdownCard(
+                            index = index,
+                            questionIndex = questionIndexes[index],
+                            answer = securityAnswers[index],
+                            error = fieldErrors["security$index"],
+                            expanded = expandedQuestionSlot == index,
+                            takenElsewhere = takenElsewhere,
+                            onToggleExpand = { onToggleExpand(index) },
+                            onSelectQuestion = { selected -> onSelectQuestion(index, selected) },
+                            onAnswer = { value -> onAnswer(index, value) },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SecurityQuestionDropdownCard(
     index: Int,
     questionIndex: Int,
     answer: String,
     error: String?,
-    onCycleQuestion: () -> Unit,
+    expanded: Boolean,
+    takenElsewhere: Set<Int>,
+    onToggleExpand: () -> Unit,
+    onSelectQuestion: (Int) -> Unit,
     onAnswer: (String) -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(280, easing = FastOutSlowInEasing),
+        label = "security_dropdown_chevron",
+    )
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing))
             .clip(RoundedCornerShape(22.dp))
             .background(palette.cardSurface)
             .border(1.dp, palette.border, RoundedCornerShape(22.dp))
@@ -1297,7 +1522,7 @@ private fun SecurityQuestionCard(
                 .padding(top = 8.dp)
                 .clip(RoundedCornerShape(percent = 50))
                 .background(palette.mutedSurface)
-                .clickable(onClick = onCycleQuestion)
+                .clickable(onClick = onToggleExpand)
                 .padding(horizontal = 14.dp, vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -1307,9 +1532,76 @@ private fun SecurityQuestionCard(
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f),
-                maxLines = 1,
             )
-            Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = palette.mutedForeground, modifier = Modifier.size(16.dp))
+            Icon(
+                imageVector = Icons.Outlined.ExpandMore,
+                contentDescription = if (expanded) "Collapse questions" else "Expand questions",
+                tint = palette.mutedForeground,
+                modifier = Modifier
+                    .size(20.dp)
+                    .rotate(chevronRotation),
+            )
+        }
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(
+                animationSpec = tween(300, easing = FastOutSlowInEasing),
+                expandFrom = Alignment.Top,
+            ) + fadeIn(tween(220, easing = FastOutSlowInEasing)),
+            exit = shrinkVertically(
+                animationSpec = tween(260, easing = FastOutSlowInEasing),
+                shrinkTowards = Alignment.Top,
+            ) + fadeOut(tween(180)),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(palette.mutedSurface.copy(alpha = 0.65f))
+                    .padding(vertical = 4.dp),
+            ) {
+                securityQuestions.forEachIndexed { optionIndex, (_, label) ->
+                    val selected = optionIndex == questionIndex
+                    val disabled = takenElsewhere.contains(optionIndex)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                when {
+                                    selected -> palette.brand.copy(alpha = 0.10f)
+                                    disabled -> Color.Transparent
+                                    else -> Color.Transparent
+                                },
+                            )
+                            .clickable(enabled = !disabled, onClick = { onSelectQuestion(optionIndex) })
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = label,
+                            color = when {
+                                disabled -> palette.mutedForeground.copy(alpha = 0.45f)
+                                selected -> palette.foreground
+                                else -> palette.foreground
+                            },
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp,
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (selected) {
+                            Icon(
+                                imageVector = Icons.Outlined.Check,
+                                contentDescription = null,
+                                tint = palette.brand,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    }
+                }
+            }
         }
         AuthInputField(
             value = answer,
@@ -1359,7 +1651,13 @@ private fun QuestionPrompt(text: String) {
 }
 
 @Composable
-private fun SuccessPanel(title: String, body: String, action: String, onAction: () -> Unit) {
+private fun SuccessPanel(
+    title: String,
+    body: String,
+    action: String,
+    onAction: () -> Unit,
+    showActionInPanel: Boolean = true,
+) {
     val palette = LocalRestaurantPalette.current
     Column(
         modifier = Modifier
@@ -1386,6 +1684,8 @@ private fun SuccessPanel(title: String, body: String, action: String, onAction: 
                 .padding(top = 8.dp)
                 .widthIn(max = 320.dp),
         )
-        PrimaryButton(text = action, onClick = onAction, modifier = Modifier.padding(top = 28.dp))
+        if (showActionInPanel) {
+            PrimaryButton(text = action, onClick = onAction, modifier = Modifier.padding(top = 28.dp))
+        }
     }
 }
