@@ -1,13 +1,18 @@
 package com.mh.restaurantchainreservation.core.designsystem.components
 
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -43,8 +49,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
@@ -58,7 +66,7 @@ import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavIconPaths
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavStrokeIcon
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucidePaths
-import com.mh.restaurantchainreservation.core.designsystem.components.icons.QrScannerIcon
+import com.mh.restaurantchainreservation.core.designsystem.components.icons.QrPayNavIcon
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
@@ -82,13 +90,27 @@ private val TabItemMinWidth = 52.dp
 private val TabContentHeight = TabIconSize + LabelTopGap + TabLabelHeight + TabVerticalPadding * 2
 private val TabRowHeight = TabContentHeight + TabRowTopInset + TabLabelBottomPadding
 
-private val QrInnerDiameter = 64.dp
-private val QrOuterDiameter = 76.dp // ~1.19× inner white field
+private val QrOuterDiameter = 76.dp
 private val QrIconSize = 30.dp
-private val QrRingBorderWidth = 1.dp
+private val QrFabBorderWidth = 1.5.dp
+private val QrGlowHaloPadding = 10.dp
 /** ~30% of outer QR diameter above nav top (reference: 28–32%). */
 private val QrAboveNavBarLift = 23.dp
-private val QrShadowElevation = 12.dp
+private val QrShadowElevationRest = 16.dp
+private val QrShadowElevationActive = 22.dp
+
+private val QrFabPressSpring = spring<Float>(
+    dampingRatio = Spring.DampingRatioMediumBouncy,
+    stiffness = Spring.StiffnessMedium,
+)
+private val QrFabVisualSpring = spring<Float>(
+    dampingRatio = Spring.DampingRatioNoBouncy,
+    stiffness = Spring.StiffnessMediumLow,
+)
+private val QrFabElevationSpring = spring<Dp>(
+    dampingRatio = Spring.DampingRatioNoBouncy,
+    stiffness = Spring.StiffnessMediumLow,
+)
 private val NavTopBorderWidth = 1.dp
 
 /** Horizontal center of each nav control as a fraction of screen width. */
@@ -450,52 +472,96 @@ private fun QrFloatingButton(
     contentDescription: String,
     modifier: Modifier = Modifier,
 ) {
-    val ringSurface = MaterialTheme.colorScheme.surface
-    val ringBorder = MaterialTheme.colorScheme.outline
     val primary = MaterialTheme.colorScheme.primary
     val onPrimary = MaterialTheme.colorScheme.onPrimary
+    val fabGradient = remember(primary) {
+        Brush.verticalGradient(
+            colors = listOf(
+                lerp(primary, Color.White, 0.14f),
+                primary,
+                lerp(primary, Color.Black, 0.07f),
+            ),
+        )
+    }
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val isHighlighted = isPressed || isHovered
+
     val pressScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.92f else 1f,
-        animationSpec = tween(durationMillis = 120, easing = LinearOutSlowInEasing),
+        targetValue = if (isPressed) 0.90f else 1f,
+        animationSpec = QrFabPressSpring,
         label = "qrPressScale",
     )
+    val shadowElevation by animateDpAsState(
+        targetValue = if (isHighlighted) QrShadowElevationActive else QrShadowElevationRest,
+        animationSpec = QrFabElevationSpring,
+        label = "qrShadowElevation",
+    )
+    val glowAlpha by animateFloatAsState(
+        targetValue = if (isHighlighted) 0.48f else 0.30f,
+        animationSpec = QrFabVisualSpring,
+        label = "qrGlowAlpha",
+    )
+    val shadowAmbientAlpha by animateFloatAsState(
+        targetValue = if (isHighlighted) 0.28f else 0.20f,
+        animationSpec = QrFabVisualSpring,
+        label = "qrShadowAmbient",
+    )
+    val shadowSpotAlpha by animateFloatAsState(
+        targetValue = if (isHighlighted) 0.34f else 0.26f,
+        animationSpec = QrFabVisualSpring,
+        label = "qrShadowSpot",
+    )
+    val shadowAmbient = primary.copy(alpha = shadowAmbientAlpha)
+    val shadowSpot = Color(0xFF8E6A74).copy(alpha = shadowSpotAlpha)
+    val glowBrush = remember(primary, glowAlpha) {
+        Brush.radialGradient(
+            0f to primary.copy(alpha = glowAlpha * 0.85f),
+            0.45f to primary.copy(alpha = glowAlpha * 0.35f),
+            1f to Color.Transparent,
+        )
+    }
 
     Box(
-        modifier = modifier
-            .size(QrOuterDiameter)
-            .graphicsLayer {
-                scaleX = pressScale
-                scaleY = pressScale
-            }
-            .shadow(
-                elevation = QrShadowElevation,
-                shape = CircleShape,
-                clip = false,
-                ambientColor = Color.Black.copy(alpha = 0.12f),
-                spotColor = Color.Black.copy(alpha = 0.18f),
-            )
-            .clip(CircleShape)
-            .border(QrRingBorderWidth, ringBorder, CircleShape)
-            .background(ringSurface)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                role = Role.Button,
-                onClickLabel = contentDescription,
-                onClick = onClick,
-            ),
+        modifier = modifier.size(QrOuterDiameter + QrGlowHaloPadding * 2),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
-                .size(QrInnerDiameter)
+                .fillMaxSize()
+                .graphicsLayer { clip = false }
+                .background(glowBrush, CircleShape),
+        )
+        Box(
+            modifier = Modifier
+                .size(QrOuterDiameter)
+                .graphicsLayer {
+                    scaleX = pressScale
+                    scaleY = pressScale
+                    clip = false
+                }
+                .shadow(
+                    elevation = shadowElevation,
+                    shape = CircleShape,
+                    clip = false,
+                    ambientColor = shadowAmbient,
+                    spotColor = shadowSpot,
+                )
                 .clip(CircleShape)
-                .background(primary),
+                .background(fabGradient)
+                .border(QrFabBorderWidth, Color.White, CircleShape)
+                .hoverable(interactionSource = interactionSource)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    role = Role.Button,
+                    onClickLabel = contentDescription,
+                    onClick = onClick,
+                ),
             contentAlignment = Alignment.Center,
         ) {
-            QrScannerIcon(
+            QrPayNavIcon(
                 color = onPrimary,
                 modifier = Modifier.size(QrIconSize),
             )
