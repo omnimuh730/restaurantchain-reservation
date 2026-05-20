@@ -34,5 +34,7 @@ object AuthSessionStore {
             .putBoolean(KeyAuthenticated, false)
             .apply()
         _isAuthenticated.value = false
+        UpdateDataModalStore.dismiss()
+        UpdateDataModalStore.revealBottomNavUnderUpdateModal()
     }
 }

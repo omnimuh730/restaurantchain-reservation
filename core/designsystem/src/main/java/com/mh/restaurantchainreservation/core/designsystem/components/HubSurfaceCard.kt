@@ -30,8 +30,8 @@ object HubSurfaceCardDefaults {
     val RowCardSpacing = 12.dp
 
     /** Matches profile hub container cards (credit cards, quick actions, etc.). */
-    val ShadowElevation = 8.dp
-    const val ShadowAmbientAlpha = 0.12f
+    val ShadowElevation = 6.dp
+    const val ShadowAmbientAlpha = 0.10f
 
     /** Primary inner padding for hero / summary cards (Next Up, stats). */
     val ContentPadding = 20.dp

@@ -1,3 +1,5 @@
+@file:OptIn(dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi::class)
+
 package com.mh.restaurantchainreservation.core.navigation
 
 import androidx.compose.animation.AnimatedContentScope
@@ -56,6 +58,8 @@ import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavT
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavTabId
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationHost
 import com.mh.restaurantchainreservation.core.model.AuthSessionStore
+import com.mh.restaurantchainreservation.core.model.UpdateDataModalStore
+import com.mh.restaurantchainreservation.feature.auth.UpdateDataModalHost
 import com.mh.restaurantchainreservation.core.model.DiscoverData
 import com.mh.restaurantchainreservation.core.model.LocationStore
 import com.mh.restaurantchainreservation.feature.auth.AuthRoutes
@@ -104,6 +108,9 @@ import com.mh.restaurantchainreservation.feature.wishlist.WishlistRoutes
 import com.mh.restaurantchainreservation.feature.wishlist.WishlistScreen
 import com.mh.restaurantchainreservation.feature.wishlist.ui.WishlistOverlayHost
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 
 @Composable
 fun RestaurantNavHost(
@@ -127,10 +134,15 @@ fun RestaurantNavHost(
     val destination = navBackStackEntry?.destination
     val activeTabId = destination?.let { resolveActiveTab(it.hierarchy.mapNotNull { d -> d.route }.toList()) }
         ?: BottomNavTabId.Discover
+    val suppressBottomNav by UpdateDataModalStore.suppressBottomNav.collectAsState()
 
     // Hide app chrome while auth, QR Pay, or other full-screen flows own the screen.
     val showAppChrome = shouldShowAppChrome(destination?.route)
-    val showBottomBar = isCompact && showAppChrome && shouldShowBottomNavBar(destination?.route)
+    val showBottomBar = isCompact &&
+        showAppChrome &&
+        shouldShowBottomNavBar(destination?.route) &&
+        !suppressBottomNav
+    val updateDataHazeState = rememberHazeState()
 
     LaunchedEffect(authenticated, destination?.route) {
         val route = destination?.route ?: return@LaunchedEffect
@@ -146,72 +158,87 @@ fun RestaurantNavHost(
         }
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = {
-            if (showBottomBar) {
-                BottomNavBar(
-                    tabs = bottomTabs,
-                    activeId = activeTabId,
-                    onTabSelect = { id ->
-                        val route = routeForTab(id)
-                        if (!authenticated && requiresAuthRoute(route)) {
-                            navController.navigate(AuthRoutes.Login) { launchSingleTop = true }
-                        } else if (id == BottomNavTabId.Discover) {
-                            navController.navigateToDiscoverHome()
-                        } else {
-                            navController.navigateToTab(route)
-                        }
-                    },
-                    onQrPay = {
-                        if (authenticated) navController.navigate(QrPayRoutes.Home) else navController.navigate(AuthRoutes.Login) { launchSingleTop = true }
-                    },
-                    qrPayContentDescription = qrPayLabel,
-                )
-            }
-        },
-    ) { paddingValues ->
-        if (isCompact) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                AppGraph(
-                    navController = navController,
-                    contentPadding = paddingValues,
-                    authenticated = authenticated,
-                    onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
-                    modifier = Modifier.fillMaxSize(),
-                )
-                if (showAppChrome) {
-                    // Wishlist overlay (sheet + toast) sits above app destinations.
-                    // Toast is offset up by the bottom-bar inset so it floats just
-                    // above the nav bar.
-                    WishlistOverlayHost(bottomInset = paddingValues)
-                }
-                GlobalNotificationHost(bottomInset = if (showAppChrome) paddingValues else PaddingValues(0.dp))
-            }
-        } else if (showAppChrome) {
-            Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-                NavigationRail {
-                    bottomTabs.forEach { tab ->
-                        val selected = tab.id == activeTabId
-                        NavigationRailItem(
-                            selected = selected,
-                            onClick = {
-                                val route = routeForTab(tab.id)
+    // Haze source wraps the full scaffold (content + bottom nav) so the update modal
+    // overlay can blur and cover the entire screen, including the tab bar.
+    Box(modifier = modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeSource(state = updateDataHazeState),
+        ) {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                bottomBar = {
+                    if (showBottomBar) {
+                        BottomNavBar(
+                            tabs = bottomTabs,
+                            activeId = activeTabId,
+                            onTabSelect = { id ->
+                                val route = routeForTab(id)
                                 if (!authenticated && requiresAuthRoute(route)) {
                                     navController.navigate(AuthRoutes.Login) { launchSingleTop = true }
-                                } else if (tab.id == BottomNavTabId.Discover) {
+                                } else if (id == BottomNavTabId.Discover) {
                                     navController.navigateToDiscoverHome()
                                 } else {
                                     navController.navigateToTab(route)
                                 }
                             },
-                            icon = { RailIconFor(tab.id, selected = selected) },
-                            label = { Text(tab.label) },
+                            onQrPay = {
+                                if (authenticated) navController.navigate(QrPayRoutes.Home) else navController.navigate(AuthRoutes.Login) { launchSingleTop = true }
+                            },
+                            qrPayContentDescription = qrPayLabel,
                         )
                     }
-                }
-                Box(modifier = Modifier.fillMaxSize()) {
+                },
+            ) { paddingValues ->
+                if (isCompact) {
+                    AppGraph(
+                        navController = navController,
+                        contentPadding = paddingValues,
+                        authenticated = authenticated,
+                        onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    if (showAppChrome) {
+                        WishlistOverlayHost(bottomInset = paddingValues)
+                    }
+                    GlobalNotificationHost(bottomInset = if (showAppChrome) paddingValues else PaddingValues(0.dp))
+                } else if (showAppChrome) {
+                    Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                        NavigationRail {
+                            bottomTabs.forEach { tab ->
+                                val selected = tab.id == activeTabId
+                                NavigationRailItem(
+                                    selected = selected,
+                                    onClick = {
+                                        val route = routeForTab(tab.id)
+                                        if (!authenticated && requiresAuthRoute(route)) {
+                                            navController.navigate(AuthRoutes.Login) { launchSingleTop = true }
+                                        } else if (tab.id == BottomNavTabId.Discover) {
+                                            navController.navigateToDiscoverHome()
+                                        } else {
+                                            navController.navigateToTab(route)
+                                        }
+                                    },
+                                    icon = { RailIconFor(tab.id, selected = selected) },
+                                    label = { Text(tab.label) },
+                                )
+                            }
+                        }
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            AppGraph(
+                                navController = navController,
+                                contentPadding = PaddingValues(0.dp),
+                                authenticated = authenticated,
+                                onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                            WishlistOverlayHost()
+                            GlobalNotificationHost()
+                        }
+                    }
+                } else {
                     AppGraph(
                         navController = navController,
                         contentPadding = PaddingValues(0.dp),
@@ -219,22 +246,14 @@ fun RestaurantNavHost(
                         onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
                         modifier = Modifier.fillMaxSize(),
                     )
-                    WishlistOverlayHost()
                     GlobalNotificationHost()
                 }
             }
-        } else {
-            Box(modifier = Modifier.fillMaxSize()) {
-                AppGraph(
-                    navController = navController,
-                    contentPadding = PaddingValues(0.dp),
-                    authenticated = authenticated,
-                    onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
-                    modifier = Modifier.fillMaxSize(),
-                )
-                GlobalNotificationHost()
-            }
         }
+        UpdateDataModalHost(
+            authenticated = authenticated,
+            hazeState = updateDataHazeState,
+        )
     }
 }
 
@@ -686,6 +705,7 @@ private fun AppGraph(
                     onNavigateRegister = { navController.navigate(AuthRoutes.Register) },
                     onNavigateForgot = { navController.navigate(AuthRoutes.Forgot) },
                     onAuthenticated = {
+                        UpdateDataModalStore.requestAfterLogin()
                         onAuthenticated()
                         navController.navigate(DiscoverRoutes.Home) {
                             popUpTo(AuthRoutes.Login) { inclusive = true }
@@ -700,6 +720,7 @@ private fun AppGraph(
                 RegisterScreen(
                     onGoLogin = { navController.popBackStack(AuthRoutes.Login, inclusive = false) },
                     onComplete = {
+                        UpdateDataModalStore.requestAfterLogin()
                         onAuthenticated()
                         navController.navigate(DiscoverRoutes.Home) {
                             popUpTo(AuthRoutes.Login) { inclusive = true }

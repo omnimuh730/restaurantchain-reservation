@@ -74,6 +74,12 @@ object LucidePaths {
         "M15.54 8.46a5 5 0 0 1 0 7.07",
         "M19.07 4.93a10 10 0 0 1 0 14.14",
     )
+
+    /** Lucide `shield-check` (24×24) — update complete badge. */
+    val ShieldCheck = listOf(
+        "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67 0C8.5 20.5 5 18 5 13V7a2 2 0 0 1 2-2h1a2 2 0 0 0 1-1 1 1 0 0 1 1-1h4a1 1 0 0 1 1 1 1 1 0 0 1 1 1h1a2 2 0 0 1 2 2z",
+        "m9 12 2 2 4-4",
+    )
 }
 
 /** Stroke-only icon for bottom navigation tabs. */
