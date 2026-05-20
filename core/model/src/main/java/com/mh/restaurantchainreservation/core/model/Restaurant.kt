@@ -236,6 +236,31 @@ object DiscoverData {
             image = "https://images.unsplash.com/photo-1681270507609-e2a5f21969b0?w=400&h=300&fit=crop",
             area = "Midtown", tag = "Monthly Best",
         ),
+        Restaurant(
+            id = "m5", name = "K-BBQ King", cuisine = "Korean · BBQ",
+            rating = 4.8, reviews = 3100, price = "$$$", distance = "1.5 mi",
+            image = "https://images.unsplash.com/photo-1590189599125-67138c6509ef?w=400&h=300&fit=crop",
+            area = "Koreatown", tag = "Monthly Best",
+            guestFavoriteLevel = GuestFavoriteLevel.High,
+        ),
+        Restaurant(
+            id = "m6", name = "Candlelit Terrace", cuisine = "Mediterranean",
+            rating = 4.9, reviews = 1100, price = "$$$$", distance = "1.0 mi",
+            image = "https://images.unsplash.com/photo-1773188243397-29591fa09047?w=400&h=300&fit=crop",
+            area = "Waterfront", tag = "Monthly Best",
+        ),
+        Restaurant(
+            id = "m7", name = "Skyline Rooftop", cuisine = "Contemporary",
+            rating = 4.8, reviews = 1250, price = "$$$$", distance = "1.8 mi",
+            image = "https://images.unsplash.com/photo-1768397003905-a202ea6325f5?w=400&h=300&fit=crop",
+            area = "Uptown", tag = "Monthly Best",
+        ),
+        Restaurant(
+            id = "m8", name = "Harbor Kitchen · 12", cuisine = "Seafood",
+            rating = 4.6, reviews = 1640, price = "$$$", distance = "2.1 mi",
+            image = "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop",
+            area = "Harbor District", tag = "Monthly Best",
+        ),
     )
 
     val LOVED_BY_LOCALS: List<Restaurant> = listOf(
@@ -256,6 +281,36 @@ object DiscoverData {
             rating = 4.7, reviews = 1456, price = "$$$", distance = "0.5 mi",
             image = "https://images.unsplash.com/photo-1731460202531-bf8389d565f7?w=400&h=300&fit=crop",
             tag = "Must Try",
+        ),
+        Restaurant(
+            id = "l4", name = "Neon Bites", cuisine = "Fusion · Street Food",
+            rating = 4.4, reviews = 2300, price = "$", distance = "1.2 mi",
+            image = "https://images.unsplash.com/photo-1564759319376-a60b400ced8e?w=400&h=300&fit=crop",
+            area = "Arts District", tag = "Local Pick",
+        ),
+        Restaurant(
+            id = "l5", name = "The Sweet Spot", cuisine = "Dessert · Pastry",
+            rating = 4.6, reviews = 1800, price = "$$", distance = "0.7 mi",
+            image = "https://images.unsplash.com/photo-1753722157947-8a50f04a9309?w=400&h=300&fit=crop",
+            area = "Old Town", tag = "Popular",
+        ),
+        Restaurant(
+            id = "l6", name = "Wine & Whisper", cuisine = "Wine Bar · French",
+            rating = 4.7, reviews = 850, price = "$$$", distance = "0.6 mi",
+            image = "https://images.unsplash.com/photo-1763867641400-96b9cccdbf7d?w=400&h=300&fit=crop",
+            area = "North End", tag = "Local gem",
+        ),
+        Restaurant(
+            id = "l7", name = "Urban Grill · 8", cuisine = "American · Grill",
+            rating = 4.5, reviews = 920, price = "$$", distance = "1.0 mi",
+            image = "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=400&h=300&fit=crop",
+            area = "West Loop", tag = "Must Try",
+        ),
+        Restaurant(
+            id = "l8", name = "Lotus Noodle · 14", cuisine = "Vietnamese",
+            rating = 4.6, reviews = 740, price = "$$", distance = "0.9 mi",
+            image = "https://images.unsplash.com/photo-1692780941487-505d5d908aa6?w=400&h=300&fit=crop",
+            area = "Japantown", tag = "Popular",
         ),
     )
 

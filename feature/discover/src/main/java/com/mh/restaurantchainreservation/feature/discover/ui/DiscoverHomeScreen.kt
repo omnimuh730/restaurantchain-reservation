@@ -184,15 +184,18 @@ private val SeeAllThumbnailSlideStart = ThumbnailLayer(
 )
 
 private val SeeAllThumbShape = RoundedCornerShape(9.dp)
-private val DiningNewsCardShape = HubSurfaceCardDefaults.QuickActionShape
+/** Profile hub card shell for Dining News + restaurant “More” tiles. */
+private val MoreCardShape = HubSurfaceCardDefaults.QuickActionShape
+private val DiningNewsCardShape = MoreCardShape
+
+/** Restaurant cards shown per home rail before the More tile. */
+private const val RestaurantRailVisibleCount = 8
 
 private val RestaurantMiniCardWidth = 176.dp
 private val RestaurantMiniImageHeight =
     RestaurantMiniCardWidth / DiscoverRestaurantImageAspectWidthOverHeight
 private val RestaurantMiniMetaBlockHeight = 46.dp
 private val RestaurantMiniCardTotalHeight = RestaurantMiniImageHeight + RestaurantMiniMetaBlockHeight
-
-private val RestaurantSeeAllCardShape = RoundedCornerShape(18.dp)
 
 /** End caps for “Where to Eat?” (panorama) and “Top Picks by Food Type” (collage); width matches [RestaurantMiniCardWidth]. */
 private val RailExploreMoreCardShape = RoundedCornerShape(26.dp)
@@ -1275,7 +1278,7 @@ private fun RestaurantRail(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.Top,
     ) {
-        restaurants.forEach { restaurant ->
+        restaurants.take(RestaurantRailVisibleCount).forEach { restaurant ->
             item(key = restaurant.id) {
                 AirbnbMiniCard(
                     restaurant = restaurant,
@@ -1693,7 +1696,7 @@ private fun NewsSeeAllCard(
         modifier = Modifier
             .width(DiningNewsCardWidth)
             .height(DiningNewsCardTotalHeight)
-            .hubSurfaceCard(palette = palette, shape = DiningNewsCardShape),
+            .hubSurfaceCard(palette = palette, shape = MoreCardShape),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -1707,26 +1710,33 @@ private fun NewsSeeAllCard(
                     .weight(1f)
                     .padding(top = 2.dp),
             )
-            Text(
-                text = "More",
-                color = Color(0xFF111111),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .offset(y = (-10).dp)
-                    .padding(bottom = 6.dp),
-            )
+            MoreCardFooterLabel()
         }
     }
 }
 
 @Composable
+private fun MoreCardFooterLabel() {
+    val palette = LocalRestaurantPalette.current
+    Text(
+        text = "More",
+        color = palette.foreground,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier
+            .offset(y = (-10).dp)
+            .padding(bottom = 6.dp),
+    )
+}
+
+@Composable
 private fun StackedSeeAllCard(
     width: Dp,
-    imageAreaHeight: Dp,
+    height: Dp,
     previewImages: List<Any>,
     onClick: () -> Unit,
 ) {
+    val palette = LocalRestaurantPalette.current
     val images = remember(previewImages) {
         when {
             previewImages.size >= 3 -> previewImages.take(3)
@@ -1737,21 +1747,12 @@ private fun StackedSeeAllCard(
             }
         }
     }
-    val cardShape = RestaurantSeeAllCardShape
     PressableScale(
         onClick = onClick,
         modifier = Modifier
             .width(width)
-            .height(imageAreaHeight)
-            .shadow(
-                elevation = 18.dp,
-                shape = cardShape,
-                clip = false,
-                ambientColor = Color.Black.copy(alpha = 0.18f),
-                spotColor = Color.Black.copy(alpha = 0.30f),
-            )
-            .clip(cardShape)
-            .background(Color.White),
+            .height(height)
+            .hubSurfaceCard(palette = palette, shape = MoreCardShape),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -1765,15 +1766,7 @@ private fun StackedSeeAllCard(
                     .weight(1f)
                     .padding(top = 2.dp),
             )
-            Text(
-                text = "More",
-                color = Color(0xFF111111),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .offset(y = (-10).dp)
-                    .padding(bottom = 6.dp),
-            )
+            MoreCardFooterLabel()
         }
     }
 }
@@ -1785,7 +1778,7 @@ private fun RestaurantSeeAllCard(
 ) {
     StackedSeeAllCard(
         width = RestaurantMiniCardWidth,
-        imageAreaHeight = RestaurantMiniImageHeight,
+        height = RestaurantMiniImageHeight,
         previewImages = previewImages,
         onClick = onClick,
     )
@@ -2176,20 +2169,51 @@ private fun RailSpacer(height: Dp) {
 
 @Composable
 private fun rememberNewThisWeek(): List<Restaurant> = remember {
-    listOf(
-        (DiscoverData.findById("m4") ?: DiscoverData.MONTHLY_BEST[3]).copy(area = "Just opened", tag = "New"),
-        (DiscoverData.findById("l3") ?: DiscoverData.LOVED_BY_LOCALS.last()).copy(area = "Fresh tables", tag = "New"),
-        (DiscoverData.findById("d1") ?: DiscoverData.DATE_NIGHT.first()).copy(area = "Soft launch", tag = "New"),
+    homeRailRestaurants(
+        seed = 101,
+        tag = "New",
+        areaFor = { index ->
+            when (index % 4) {
+                0 -> "Just opened"
+                1 -> "Fresh tables"
+                2 -> "Soft launch"
+                else -> "New this week"
+            }
+        },
     )
 }
 
 @Composable
 private fun rememberLateNight(): List<Restaurant> = remember {
-    listOf(
-        (DiscoverData.findById("l3") ?: DiscoverData.LOVED_BY_LOCALS.last()).copy(area = "Open until 1 AM", tag = "Late night"),
-        (DiscoverData.findById("v3") ?: DiscoverData.VIRAL.last()).copy(area = "Open until 2 AM", tag = "Late night"),
-        (DiscoverData.findById("v1") ?: DiscoverData.VIRAL.first()).copy(area = "Last call tables", tag = "Late night"),
+    homeRailRestaurants(
+        seed = 102,
+        tag = "Late night",
+        areaFor = { index ->
+            when (index % 4) {
+                0 -> "Open until 1 AM"
+                1 -> "Open until 2 AM"
+                2 -> "Last call tables"
+                else -> "Open late"
+            }
+        },
     )
+}
+
+private fun homeRailRestaurants(
+    seed: Int,
+    tag: String,
+    areaFor: (index: Int) -> String,
+): List<Restaurant> {
+    val areas = listOf("Just opened", "Fresh tables", "Soft launch", "New this week")
+    return DiscoverData.ALL
+        .shuffled(kotlin.random.Random(seed))
+        .take(RestaurantRailVisibleCount)
+        .mapIndexed { index, restaurant ->
+            restaurant.copy(
+                area = areaFor(index).ifBlank { areas[index % areas.size] },
+                tag = tag,
+            )
+        }
 }
 
 /** Same WebP assets as `restaurantchain-reservation-ui-demo` / `public/icons/discover`. */
