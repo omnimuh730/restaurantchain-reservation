@@ -91,14 +91,14 @@ private val TabItemMinWidth = 52.dp
 private val TabContentHeight = TabIconSize + LabelTopGap + TabLabelHeight + TabVerticalPadding * 2
 private val TabRowHeight = TabContentHeight + TabRowTopInset + TabLabelBottomPadding
 
-private val QrOuterDiameter = 76.dp
-private val QrIconSize = 30.dp
-private val QrFabBorderWidth = 3.dp
-private val QrGlowHaloPadding = 12.dp
+private val QrOuterDiameter = 68.dp
+private val QrIconSize = 24.dp
+private val QrFabBorderWidth = 4.dp
+private val QrGlowHaloPadding = 10.dp
 /** Vertical offset above the nav top edge (~30% of QR diameter + extra float). */
-private val QrAboveNavBarLift = 30.dp
+private val QrAboveNavBarLift = 24.dp
 private val QrShadowElevationRest = HubSurfaceCardDefaults.ShadowElevation
-private val QrShadowElevationActive = 15.dp
+private val QrShadowElevationActive = 10.dp
 
 private val QrFabPressSpring = spring<Float>(
     dampingRatio = Spring.DampingRatioMediumBouncy,
