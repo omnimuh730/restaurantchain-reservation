@@ -56,6 +56,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.NewsCategory
 import com.mh.restaurantchainreservation.core.model.NewsData
@@ -63,7 +65,7 @@ import com.mh.restaurantchainreservation.core.model.NewsItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private val NewsCardShape = RoundedCornerShape(16.dp)
+private val NewsCardShape = HubSurfaceCardDefaults.QuickActionShape
 private val DetailSheetTopRadius = 34.dp
 
 @Composable
@@ -424,9 +426,7 @@ private fun NewsListCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(NewsCardShape)
-            .border(1.dp, palette.border, NewsCardShape)
-            .background(palette.cardSurface)
+            .hubSurfaceCard(palette = palette, shape = NewsCardShape)
             .clickable(role = Role.Button, onClick = onClick),
     ) {
         Box(

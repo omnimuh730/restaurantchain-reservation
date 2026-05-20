@@ -108,6 +108,8 @@ import dev.chrisbanes.haze.rememberHazeState
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
+import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
@@ -182,7 +184,7 @@ private val SeeAllThumbnailSlideStart = ThumbnailLayer(
 )
 
 private val SeeAllThumbShape = RoundedCornerShape(9.dp)
-private val NewsSeeAllCardShape = RoundedCornerShape(20.dp)
+private val DiningNewsCardShape = HubSurfaceCardDefaults.QuickActionShape
 
 private val RestaurantMiniCardWidth = 176.dp
 private val RestaurantMiniImageHeight =
@@ -1411,9 +1413,7 @@ private fun NewsRail(
                     modifier = Modifier
                         .width(cardWidth)
                         .height(DiningNewsCardTotalHeight)
-                        .clip(RoundedCornerShape(20.dp))
-                        .border(1.dp, palette.border, RoundedCornerShape(20.dp))
-                        .background(palette.cardSurface),
+                        .hubSurfaceCard(palette = palette, shape = DiningNewsCardShape),
                 ) {
                     Column(modifier = Modifier.fillMaxSize()) {
                         Box(
@@ -1687,21 +1687,13 @@ private fun NewsSeeAllCard(
             }
         }
     }
-    val cardShape = NewsSeeAllCardShape
+    val palette = LocalRestaurantPalette.current
     PressableScale(
         onClick = onClick,
         modifier = Modifier
             .width(DiningNewsCardWidth)
             .height(DiningNewsCardTotalHeight)
-            .shadow(
-                elevation = 18.dp,
-                shape = cardShape,
-                clip = false,
-                ambientColor = Color.Black.copy(alpha = 0.18f),
-                spotColor = Color.Black.copy(alpha = 0.30f),
-            )
-            .clip(cardShape)
-            .background(Color.White),
+            .hubSurfaceCard(palette = palette, shape = DiningNewsCardShape),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
