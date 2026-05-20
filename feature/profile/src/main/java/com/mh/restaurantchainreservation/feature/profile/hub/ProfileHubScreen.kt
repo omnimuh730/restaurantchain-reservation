@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.CreditCard
+import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.NorthEast
 import androidx.compose.material.icons.outlined.NotificationsNone
@@ -94,6 +95,7 @@ fun ProfileHubScreen(
     onOpenCards: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
     onOpenRefer: () -> Unit = {},
+    onLogOut: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -196,6 +198,7 @@ fun ProfileHubScreen(
                     onSettingsClick = onOpenSettings,
                     onHelpClick = onOpenHelp,
                     onContactSupportClick = onOpenContactSupport,
+                    onLogOut = onLogOut,
                 )
             }
 
@@ -511,6 +514,7 @@ private fun AccountSettingsBlock(
     onSettingsClick: () -> Unit,
     onHelpClick: () -> Unit,
     onContactSupportClick: () -> Unit,
+    onLogOut: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
     val proLabel = stringResource(I18nR.string.profile_menu_pro)
@@ -589,18 +593,27 @@ private fun AccountSettingsBlock(
                     icon = { MenuIcon(Icons.Outlined.ChatBubbleOutline) },
                     onClick = onContactSupportClick,
                 ),
+                ListGroupItem(
+                    id = "log-out",
+                    label = stringResource(I18nR.string.profile_menu_log_out),
+                    icon = { MenuIcon(Icons.AutoMirrored.Outlined.Logout, tint = palette.destructive) },
+                    onClick = onLogOut,
+                ),
             ),
         )
     }
 }
 
 @Composable
-private fun MenuIcon(icon: ImageVector) {
+private fun MenuIcon(
+    icon: ImageVector,
+    tint: Color? = null,
+) {
     val palette = LocalRestaurantPalette.current
     Icon(
         imageVector = icon,
         contentDescription = null,
-        tint = palette.foreground.copy(alpha = 0.70f),
+        tint = tint ?: palette.foreground.copy(alpha = 0.70f),
         modifier = Modifier.size(24.dp),
     )
 }

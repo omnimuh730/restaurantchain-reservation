@@ -82,6 +82,7 @@
     <string name="profile_menu_settings">설정</string>
     <string name="profile_menu_help">도움말</string>
     <string name="profile_menu_contact_support">고객센터 문의</string>
+    <string name="profile_menu_log_out">로그아웃</string>
     <string name="profile_menu_language">언어</string>
     <string name="profile_lang_korean">한국어</string>
     <string name="profile_lang_english">English</string>

@@ -357,6 +357,7 @@ private fun AppGraph(
     onAuthenticated: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val initialStartDestination = remember {
         if (authenticated) DiscoverRoutes.Home else AuthRoutes.Login
     }
@@ -609,6 +610,15 @@ private fun AppGraph(
                     onOpenCards = { navController.navigate(ProfileRoutes.Cards) },
                     onOpenHistory = { navController.navigate(ProfileRoutes.History) },
                     onOpenRefer = { navController.navigate(ProfileRoutes.Refer) },
+                    onLogOut = {
+                        AuthSessionStore.signOut(context)
+                        navController.navigate(AuthRoutes.Login) {
+                            popUpTo(navController.graph.id) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    },
                 )
             }
             profileSubComposable(ProfileRoutes.Settings) {
