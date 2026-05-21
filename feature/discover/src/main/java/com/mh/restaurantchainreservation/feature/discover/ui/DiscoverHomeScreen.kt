@@ -64,6 +64,7 @@ import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -271,10 +272,6 @@ private val PriceListThumbnailHeight =
     PriceListThumbnailWidth / DiscoverRestaurantImageAspectWidthOverHeight
 private val PriceListAvatarCorner = 16.dp
 private val PriceListAvatarOverlayPadding = 8.dp
-private val PriceTabIndicatorWidth = 38.dp
-private val PriceTabIndicatorHeight = 3.dp
-private val PriceTabIndicatorTopCornerRadius = 3.dp
-private val PriceStickyHeaderBottomShadowHeight = 10.dp
 private val RestaurantRailImageShape = RoundedCornerShape(18.dp)
 
 /** Default hub card shadow + clip for Discover image tiles. */
@@ -467,19 +464,17 @@ fun DiscoverHomeScreen(
                 }
             }
             stickyHeader(key = "restaurants-by-price-header") {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(palette.cardSurface),
-                    ) {
-                        RestaurantsByPriceHeaderAndTabs(
-                            selectedPrice = selectedPriceTab,
-                            onSelectPrice = { selectedPriceTab = it },
-                            placesLabel = "${priceTabBasePool.size.coerceAtLeast(6)}+ places",
-                        )
-                    }
-                    PriceStickyHeaderBottomShadow()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(palette.cardSurface)
+                        .padding(top = headerTopPadding),
+                ) {
+                    RestaurantsByPriceHeaderAndTabs(
+                        selectedPrice = selectedPriceTab,
+                        onSelectPrice = { selectedPriceTab = it },
+                        placesLabel = "${priceTabBasePool.size.coerceAtLeast(6)}+ places",
+                    )
                 }
             }
             itemsIndexed(
@@ -1997,24 +1992,6 @@ private fun RestaurantByPriceListRowWithLazyEnter(
 }
 
 @Composable
-private fun PriceStickyHeaderBottomShadow() {
-    val shadowAlpha = HubSurfaceCardDefaults.ShadowAmbientAlpha.coerceIn(0f, 0.35f)
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(PriceStickyHeaderBottomShadowHeight)
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Black.copy(alpha = shadowAlpha),
-                        Color.Transparent,
-                    ),
-                ),
-            ),
-    )
-}
-
-@Composable
 private fun RestaurantsByPriceHeaderAndTabs(
     selectedPrice: String,
     onSelectPrice: (String) -> Unit,
@@ -2022,74 +1999,67 @@ private fun RestaurantsByPriceHeaderAndTabs(
 ) {
     val palette = LocalRestaurantPalette.current
     val tabs = listOf("$", "$$", "$$$", "$$$$")
-    val indicatorShape = RoundedCornerShape(
-        topStart = PriceTabIndicatorTopCornerRadius,
-        topEnd = PriceTabIndicatorTopCornerRadius,
-    )
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = "Restaurants by Price",
-                    color = palette.foreground,
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = placesLabel,
-                    color = palette.mutedForeground,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
-            ) {
-                tabs.forEach { tab ->
-                    val selected = selectedPrice == tab
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                role = Role.Tab,
-                                onClick = { onSelectPrice(tab) },
-                            )
-                            .padding(top = 10.dp),
-                        contentAlignment = Alignment.BottomCenter,
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = tab,
-                                color = if (selected) palette.foreground else palette.mutedForeground,
-                                fontSize = 16.sp,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                modifier = Modifier.padding(bottom = 4.dp),
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .width(PriceTabIndicatorWidth)
-                                    .height(PriceTabIndicatorHeight)
-                                    .clip(indicatorShape)
-                                    .background(
-                                        if (selected) palette.foreground else Color.Transparent,
-                                        indicatorShape,
-                                    ),
-                            )
-                        }
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = "Restaurants by Price",
+                color = palette.foreground,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = placesLabel,
+                color = palette.mutedForeground,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+        ) {
+            tabs.forEach { tab ->
+                val selected = selectedPrice == tab
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            role = Role.Tab,
+                            onClick = { onSelectPrice(tab) },
+                        )
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = tab,
+                            color = if (selected) palette.foreground else palette.mutedForeground,
+                            fontSize = 16.sp,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(3.dp)
+                                .background(if (selected) palette.foreground else Color.Transparent),
+                        )
                     }
                 }
             }
         }
+        HorizontalDivider(
+            thickness = 1.dp,
+            color = palette.border,
+        )
     }
 }
 
@@ -2118,7 +2088,7 @@ private fun RestaurantByPriceListRow(
             Box(
                 modifier = Modifier
                     .size(PriceListThumbnailWidth, PriceListThumbnailHeight)
-                    .discoverImageCardSurface(RoundedCornerShape(PriceListAvatarCorner))
+                    .clip(RoundedCornerShape(PriceListAvatarCorner))
                     .background(palette.mutedSurface),
             ) {
                 AsyncImage(
