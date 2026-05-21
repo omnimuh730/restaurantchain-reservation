@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
@@ -55,8 +56,6 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -66,6 +65,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucideIcon
@@ -75,6 +75,7 @@ import com.mh.restaurantchainreservation.core.designsystem.R as DsR
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
+import com.mh.restaurantchainreservation.core.model.LocalDataSyncStore
 import com.mh.restaurantchainreservation.core.model.UpdateDataModalStore
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
@@ -96,8 +97,8 @@ private const val UpdateModalCompleteVisibleMs = 1500
 private const val UpdateModalMaxHeightFraction = 0.88f
 private const val UpdateModalMaxVisibleFeatures = 4
 private val WhatsNewTitleCollapseRange = 36.dp
-private val WhatsNewTitleExpandedHeight = 44.dp
-private val WhatsNewTitleCollapsedHeight = 32.dp
+private val WhatsNewTitleToDividerGap = 6.dp
+private val WhatsNewDividerToListGap = 4.dp
 private const val WhatsNewTitleFontExpandedSp = 17f
 private const val WhatsNewTitleFontCollapsedSp = 14f
 private const val WhatsNewTitleLineExpandedSp = 22f
@@ -177,6 +178,7 @@ fun UpdateDataModalHost(
         hazeState = hazeState,
         onDismiss = {
             showModal = false
+            LocalDataSyncStore.postponeUpdatePrompt()
             UpdateDataModalStore.dismiss()
         },
     )
@@ -253,6 +255,7 @@ fun UpdateDataModal(
                 phase = UpdateDataPhase.Complete
             }
             UpdateDataPhase.Complete -> {
+                LocalDataSyncStore.markCatalogSynced()
                 delay(UpdateModalCompleteVisibleMs.toLong())
                 dismissSheet()
             }
@@ -693,13 +696,7 @@ private fun WhatsNewCard(
             title = titleText,
             collapseProgress = collapseProgress,
         )
-        Spacer(
-            Modifier.height(
-                with(density) {
-                    lerp(12.dp.toPx(), 8.dp.toPx(), collapseProgress).toDp()
-                },
-            ),
-        )
+        Spacer(Modifier.height(WhatsNewDividerToListGap))
         Column(
             modifier = Modifier.then(
                 if (shouldScrollFeatures) {
@@ -728,45 +725,14 @@ private fun WhatsNewCollapsingTitle(
     collapseProgress: Float,
 ) {
     val palette = LocalRestaurantPalette.current
-    val density = LocalDensity.current
-    val strokePx = with(density) { 1.dp.toPx() }
     val borderAlpha = collapseProgress * 0.45f
-    val bodyHeight = with(density) {
-        lerp(
-            WhatsNewTitleExpandedHeight.toPx(),
-            WhatsNewTitleCollapsedHeight.toPx(),
-            collapseProgress,
-        ).toDp()
-    }
     val titleFontSp = lerp(WhatsNewTitleFontExpandedSp, WhatsNewTitleFontCollapsedSp, collapseProgress)
     val titleLineHeightSp = lerp(WhatsNewTitleLineExpandedSp, WhatsNewTitleLineCollapsedSp, collapseProgress)
-    val iconSize = with(density) {
-        lerp(20.dp.toPx(), 18.dp.toPx(), collapseProgress).toDp()
-    }
-    val titleOffsetY = with(density) {
-        lerp(0f, (-4).dp.toPx(), collapseProgress).toDp()
-    }
+    val iconSize = lerp(20.dp, 18.dp, collapseProgress)
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(bodyHeight)
-            .drawBehind {
-                if (borderAlpha > 0.004f) {
-                    drawLine(
-                        color = palette.border.copy(alpha = borderAlpha),
-                        start = Offset(0f, size.height - strokePx * 0.5f),
-                        end = Offset(size.width, size.height - strokePx * 0.5f),
-                        strokeWidth = strokePx,
-                    )
-                }
-            },
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .offset(y = titleOffsetY)
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -783,6 +749,12 @@ private fun WhatsNewCollapsingTitle(
                 lineHeight = titleLineHeightSp.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
+            )
+        }
+        if (borderAlpha > 0.004f) {
+            HorizontalDivider(
+                modifier = Modifier.padding(top = WhatsNewTitleToDividerGap),
+                color = palette.border.copy(alpha = borderAlpha),
             )
         }
     }

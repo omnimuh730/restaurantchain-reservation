@@ -97,9 +97,7 @@ import com.mh.restaurantchainreservation.feature.dining.DiningRoutes
 import com.mh.restaurantchainreservation.feature.discover.DiscoverRoutes
 import com.mh.restaurantchainreservation.feature.discover.ui.AllPromotionsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.CategoryResultsScreen
-import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverHazeRegistry
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverHomeScreen
-import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverUpdateModalHost
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverSearchModal
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverSearchResultsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.FoodTypeCuisineListScreen
@@ -155,6 +153,7 @@ fun RestaurantNavHost(
     val activeTabId = destination?.let { resolveActiveTab(it.hierarchy.mapNotNull { d -> d.route }.toList()) }
         ?: BottomNavTabId.Discover
     val suppressBottomNav by UpdateDataModalStore.suppressBottomNav.collectAsState()
+    val pendingUpdateModal by UpdateDataModalStore.pendingAfterLogin.collectAsState()
     val updateDataHazeState = rememberHazeState()
     var signInRequiredReason by remember { mutableStateOf<SignInRequiredReason?>(null) }
 
@@ -173,13 +172,22 @@ fun RestaurantNavHost(
     val showAppChrome = shouldShowAppChrome(destination?.route)
     val onDiscoverHome = destination?.route == DiscoverRoutes.Home
     val shouldShowUpdatePrompt by LocalDataSyncStore.shouldShowUpdatePrompt.collectAsState()
-    // Keep bottom nav hidden until the post-login update flow finishes so Discover paints first.
-    val hideBottomBarForUpdateFlow = authenticated && onDiscoverHome && shouldShowUpdatePrompt
+
+    LaunchedEffect(authenticated, onDiscoverHome, shouldShowUpdatePrompt, pendingUpdateModal) {
+        if (
+            authenticated &&
+            onDiscoverHome &&
+            shouldShowUpdatePrompt &&
+            !pendingUpdateModal
+        ) {
+            UpdateDataModalStore.requestAfterLogin()
+        }
+    }
+
     val bottomNavScrollBehavior = rememberBottomNavScrollBehavior()
     val showBottomBarSlot = isCompact &&
         showAppChrome &&
         shouldShowBottomNavBar(destination?.route) &&
-        !hideBottomBarForUpdateFlow &&
         !suppressBottomNav
     val scrollNavShowProgress by animateFloatAsState(
         targetValue = if (!showBottomBarSlot || !bottomNavScrollBehavior.isVisible) 0f else 1f,
@@ -361,9 +369,6 @@ fun RestaurantNavHost(
         }
     }
 
-        if (isCompact && onDiscoverHome) {
-            DiscoverUpdateModalHost(onDiscoverHome = onDiscoverHome)
-        }
         }
         UpdateDataModalHost(
             authenticated = authenticated,

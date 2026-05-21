@@ -5,13 +5,11 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import dev.chrisbanes.haze.HazeState
 
 /**
- * Holds the active Discover [HazeState] so a full-screen nav overlay can apply the same
- * [HazeMaterials.thin] blur as [CompactDiscoverBar] over the entire window (including bottom nav).
+ * Holds the active Discover [HazeState] so in-screen glass surfaces (e.g. [CompactDiscoverBar])
+ * can share the same blur source as the feed.
  */
 object DiscoverHazeRegistry {
     internal val hazeStateState = mutableStateOf<HazeState?>(null)
-    val updateModalVisibleState = mutableStateOf(false)
-    val discoverContentReadyState = mutableStateOf(false)
 
     fun register(state: HazeState) {
         hazeStateState.value = state
@@ -21,15 +19,6 @@ object DiscoverHazeRegistry {
         if (hazeStateState.value === state) {
             hazeStateState.value = null
         }
-        setDiscoverContentReady(false)
-    }
-
-    fun setUpdateModalVisible(visible: Boolean) {
-        updateModalVisibleState.value = visible
-    }
-
-    fun setDiscoverContentReady(ready: Boolean) {
-        discoverContentReadyState.value = ready
     }
 }
 

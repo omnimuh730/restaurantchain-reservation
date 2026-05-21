@@ -349,16 +349,6 @@ fun DiscoverHomeScreen(
         DiscoverHazeRegistry.register(hazeState)
         onDispose { DiscoverHazeRegistry.unregister(hazeState) }
     }
-    // Latch ready once the list has items — visibleItemsInfo can briefly empty during scroll.
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.layoutInfo.totalItemsCount > 0 }
-            .distinctUntilChanged()
-            .collect { hasItems ->
-                if (hasItems) {
-                    DiscoverHazeRegistry.setDiscoverContentReady(true)
-                }
-            }
-    }
 
     CompositionLocalProvider(LocalDiscoverHazeState provides hazeState) {
     Box(
