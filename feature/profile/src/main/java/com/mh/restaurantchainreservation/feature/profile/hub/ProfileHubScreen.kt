@@ -12,14 +12,15 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.Logout
@@ -27,7 +28,6 @@ import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.NorthEast
@@ -39,6 +39,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,12 +62,12 @@ import androidx.compose.ui.zIndex
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingScreenTitleHeader
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavContentBottomPadding
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroup
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroupItem
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroupVariant
-import com.mh.restaurantchainreservation.core.designsystem.components.Stagger
-import com.mh.restaurantchainreservation.core.designsystem.components.StaggerItem
+import com.mh.restaurantchainreservation.core.designsystem.components.hubTitleCollapseProgress
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.LocaleManager
@@ -121,8 +122,9 @@ fun ProfileHubScreen(
             .fillMaxSize()
             .background(palette.cardSurface),
     ) {
-        val scroll = rememberScrollState()
+        val listState = rememberLazyListState()
         val density = LocalDensity.current
+        val navBottomPadding = LocalNavContentBottomPadding.current
         val collapseRangePx = remember(density) {
             with(density) {
                 (CollapsingTitleHeaderMetrics.expandedBodyHeight - CollapsingTitleHeaderMetrics.collapsedBodyHeight)
@@ -130,21 +132,25 @@ fun ProfileHubScreen(
             }
                 .coerceAtLeast(1f)
         }
-        val collapseProgress = (scroll.value / collapseRangePx).coerceIn(0f, 1f)
+        val collapseProgress by remember {
+            derivedStateOf { listState.hubTitleCollapseProgress(collapseRangePx) }
+        }
         val statusBarTopDp = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+        val sectionSpacing = HubSurfaceCardDefaults.SectionSpacing
 
-        Stagger(
+        LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(scroll)
                 .trackBottomNavScroll()
                 .zIndex(0f),
-            staggerMs = 40,
-            verticalArrangement = Arrangement.spacedBy(HubSurfaceCardDefaults.SectionSpacing),
+            contentPadding = PaddingValues(bottom = 24.dp + navBottomPadding),
+            verticalArrangement = Arrangement.spacedBy(sectionSpacing),
         ) {
-            Spacer(Modifier.height(CollapsingTitleHeaderMetrics.expandedBodyHeight + statusBarTopDp))
-
-            StaggerItem {
+            item(key = "profile_hub_top_spacer") {
+                Spacer(Modifier.height(CollapsingTitleHeaderMetrics.expandedBodyHeight + statusBarTopDp))
+            }
+            item(key = "profile_top_card") {
                 ProfileTopCard(
                     selectedAvatarUrl = selectedAvatar,
                     onOpenAvatarPicker = {
@@ -155,41 +161,35 @@ fun ProfileHubScreen(
                     isPro = plan.type == PlanType.Pro,
                 )
             }
-
-            StaggerItem {
+            item(key = "wallet_stack") {
                 WalletCardStack(
                     showBalance = showBalance,
                     onToggleBalance = { showBalance = !showBalance },
                 )
             }
-
-            StaggerItem {
+            item(key = "credit_cards") {
                 CreditCardsHubSection(
                     onManageCards = onOpenCards,
                     onOpenCardInfo = onOpenCards,
                     onAddNewCard = onOpenCards,
                 )
             }
-
-            StaggerItem {
+            item(key = "quick_actions") {
                 QuickActionsRow(
                     onTopUp = onOpenTopUp,
                     onGift = onOpenSendGift,
                     onActivity = onOpenHistory,
                 )
             }
-
             if (!dailyClaimed) {
-                StaggerItem {
+                item(key = "daily_reward") {
                     DailyRewardCard(onClick = { bonusOpen = true })
                 }
             }
-
-            StaggerItem {
+            item(key = "refer") {
                 ReferCard(onClick = onOpenRefer)
             }
-
-            StaggerItem {
+            item(key = "account_settings") {
                 AccountSettingsBlock(
                     locationName = currentLocation.name,
                     locationAddress = currentLocation.address,
@@ -197,20 +197,14 @@ fun ProfileHubScreen(
                     onLocationClick = onOpenLocation,
                     onSubscriptionClick = onOpenSubscription,
                     onFriendsClick = onOpenFriends,
-                    onCardsClick = onOpenCards,
                     onSettingsClick = onOpenSettings,
                     onHelpClick = onOpenHelp,
                     onContactSupportClick = onOpenContactSupport,
                     onLogoutClick = onLogout,
                 )
             }
-
-            StaggerItem {
+            item(key = "version_footer") {
                 VersionFooter()
-            }
-
-            StaggerItem {
-                Spacer(Modifier.height(24.dp))
             }
         }
 
@@ -513,7 +507,6 @@ private fun AccountSettingsBlock(
     onLocationClick: () -> Unit,
     onSubscriptionClick: () -> Unit,
     onFriendsClick: () -> Unit,
-    onCardsClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onHelpClick: () -> Unit,
     onContactSupportClick: () -> Unit,
@@ -571,12 +564,6 @@ private fun AccountSettingsBlock(
                     label = stringResource(I18nR.string.profile_menu_friends),
                     icon = { MenuIcon(Icons.Outlined.PeopleOutline) },
                     onClick = onFriendsClick,
-                ),
-                ListGroupItem(
-                    id = "cards",
-                    label = "Credit cards",
-                    icon = { MenuIcon(Icons.Outlined.CreditCard) },
-                    onClick = onCardsClick,
                 ),
                 ListGroupItem(
                     id = "settings",

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -126,6 +127,13 @@ object CollapsingTitleHeaderMetrics {
         }
         return statusBarTopDp + bodyHeight + contentGap
     }
+}
+
+/** Collapse progress for hub screens using [CollapsingScreenTitleHeader] + [LazyListState]. */
+fun LazyListState.hubTitleCollapseProgress(collapseRangePx: Float): Float {
+    if (collapseRangePx <= 0f) return 0f
+    if (firstVisibleItemIndex > 0) return 1f
+    return (firstVisibleItemScrollOffset / collapseRangePx).coerceIn(0f, 1f)
 }
 
 /**

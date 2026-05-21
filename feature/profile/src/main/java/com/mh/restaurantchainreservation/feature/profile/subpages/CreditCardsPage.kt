@@ -79,7 +79,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
-import androidx.compose.material3.IconButton
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageHeaderIconButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DeterministicQrCode
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationCenter
 import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalBottomSheet
@@ -94,6 +94,7 @@ import com.mh.restaurantchainreservation.feature.profile.subpages.components.bac
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.formatAmountString
 import com.mh.restaurantchainreservation.feature.profile.data.MockProfileCreditCards
 import com.mh.restaurantchainreservation.feature.profile.hub.AddNewCreditCardTile
+import com.mh.restaurantchainreservation.feature.profile.hub.hubCardClickable
 import com.mh.restaurantchainreservation.feature.profile.hub.HubCardPattern
 import com.mh.restaurantchainreservation.feature.profile.hub.HubCardThemeId
 import com.mh.restaurantchainreservation.feature.profile.hub.SharedHubCardFace
@@ -196,18 +197,16 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
         }
         SubpageScaffold(
             title = "Credit cards",
-            subtitle = "Multi-currency · Tonight Card",
             onBack = onBack,
             modifier = Modifier.fillMaxSize(),
             contentHorizontalPadding = 0,
-            headerActions = {
-                IconButton(onClick = openChooseNewCardTheme) {
-                    Icon(
-                        imageVector = Icons.Outlined.Add,
-                        contentDescription = "Add new card",
-                        tint = palette.foreground,
-                    )
-                }
+            headerActions = { progress ->
+                CollapsingSubpageHeaderIconButton(
+                    collapseProgress = progress,
+                    onClick = openChooseNewCardTheme,
+                    contentDescription = "Add new card",
+                    imageVector = Icons.Outlined.Add,
+                )
             },
         ) {
             CardCarousel(
@@ -538,8 +537,7 @@ private fun CardCarousel(
                         AddNewCreditCardTile(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(
-                                    role = Role.Button,
+                                .hubCardClickable(
                                     onClickLabel = "Add new card",
                                     onClick = onAddNewCard,
                                 ),
@@ -550,8 +548,7 @@ private fun CardCarousel(
                             reveal = false,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(
-                                    role = Role.Button,
+                                .hubCardClickable(
                                     onClickLabel = "Card settings",
                                     onClick = { onCardClick(page) },
                                 ),
@@ -872,7 +869,10 @@ private fun TransactionsCard(card: ProfileCreditCard) {
 private fun CardListRow(card: ProfileCreditCard, selected: Boolean, onClick: () -> Unit) {
     val palette = LocalRestaurantPalette.current
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(14.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .hubCardClickable(onClick = onClick)
+            .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {

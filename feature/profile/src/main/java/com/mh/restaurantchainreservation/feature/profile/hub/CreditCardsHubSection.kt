@@ -202,14 +202,14 @@ fun CreditCardsHubSection(
                         AddNewCreditCardTile(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(role = Role.Button, onClick = onAddNewCard),
+                                .hubCardClickable(onClick = onAddNewCard),
                         )
                     } else {
                         HubCreditCardFace(
                             card = cards[page],
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(role = Role.Button, onClick = onOpenCardInfo),
+                                .hubCardClickable(onClick = onOpenCardInfo),
                         )
                     }
                 }
