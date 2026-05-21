@@ -82,6 +82,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -109,6 +110,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.HeartButto
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
@@ -221,6 +223,12 @@ private val PriceTabIndicatorWidth = 38.dp
 private val PriceTabIndicatorHeight = 3.dp
 private val PriceTabIndicatorTopCornerRadius = 3.dp
 private val PriceStickyHeaderBottomShadowHeight = 10.dp
+private val WhereToEatCityTileShape = RoundedCornerShape(13.dp)
+private val RestaurantRailImageShape = RoundedCornerShape(18.dp)
+
+/** Default hub card shadow + clip for Discover image tiles. */
+private fun Modifier.discoverImageCardSurface(shape: Shape): Modifier =
+    hubSurfaceShadow(shape = shape).clip(shape)
 
 @Composable
 fun DiscoverHomeScreen(
@@ -419,7 +427,7 @@ fun DiscoverHomeScreen(
                             placesLabel = "${priceTabBasePool.size.coerceAtLeast(6)}+ places",
                         )
                     }
-                    PriceStickyHeaderBottomShadow(palette)
+                    PriceStickyHeaderBottomShadow()
                 }
             }
             itemsIndexed(
@@ -957,20 +965,12 @@ private fun WhereToEatPanoramaExploreCard(
     val cityCount = DiscoverData.CITIES.size
     val cardBg = if (palette.isDark) palette.cardSurface else Color.White
     val shape = RailExploreMoreCardShape
-    val ambient = if (palette.isDark) Color.Black.copy(alpha = 0.45f) else Color.Black.copy(alpha = 0.18f)
-    val spot = if (palette.isDark) Color.Black.copy(alpha = 0.55f) else Color.Black.copy(alpha = 0.38f)
 
     PressableScale(
         onClick = onClick,
         modifier = Modifier
             .width(RestaurantMiniCardWidth)
-            .shadow(
-                elevation = 12.dp,
-                shape = shape,
-                clip = false,
-                ambientColor = ambient,
-                spotColor = spot,
-            )
+            .hubSurfaceShadow(shape = shape)
             .clip(shape)
             .background(cardBg),
     ) {
@@ -1131,7 +1131,7 @@ private fun FoodTypeRailTile(
                 modifier = Modifier
                     .fillMaxWidth()
                     .size(DiscoverPopularMenuTileSize)
-                    .clip(shape)
+                    .discoverImageCardSurface(shape)
                     .background(palette.mutedSurface),
             ) {
                 AsyncImage(
@@ -1191,7 +1191,7 @@ private fun ImageRailTile(
         onClick = onClick,
         modifier = Modifier
             .size(width = width, height = 80.dp)
-            .clip(RoundedCornerShape(13.dp)),
+            .discoverImageCardSurface(WhereToEatCityTileShape),
     ) {
         Box(modifier = Modifier.matchParentSize()) {
             AsyncImage(
@@ -1291,7 +1291,7 @@ private fun AirbnbMiniCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
-                    .clip(RoundedCornerShape(18.dp))
+                    .discoverImageCardSurface(RestaurantRailImageShape)
                     .background(palette.mutedSurface),
             ) {
                 AsyncImage(
@@ -1861,14 +1861,8 @@ private fun RestaurantByPriceListRowWithLazyEnter(
 }
 
 @Composable
-private fun PriceStickyHeaderBottomShadow(palette: RestaurantPalette) {
-    val shadowAlpha = (
-        if (palette.isDark) {
-            HubSurfaceCardDefaults.ShadowAmbientAlpha * 2.4f
-        } else {
-            HubSurfaceCardDefaults.ShadowAmbientAlpha
-        }
-        ).coerceIn(0f, 0.35f)
+private fun PriceStickyHeaderBottomShadow() {
+    val shadowAlpha = HubSurfaceCardDefaults.ShadowAmbientAlpha.coerceIn(0f, 0.35f)
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -1988,7 +1982,7 @@ private fun RestaurantByPriceListRow(
             Box(
                 modifier = Modifier
                     .size(PriceListThumbnailWidth, PriceListThumbnailHeight)
-                    .clip(RoundedCornerShape(PriceListAvatarCorner))
+                    .discoverImageCardSurface(RoundedCornerShape(PriceListAvatarCorner))
                     .background(palette.mutedSurface),
             ) {
                 AsyncImage(

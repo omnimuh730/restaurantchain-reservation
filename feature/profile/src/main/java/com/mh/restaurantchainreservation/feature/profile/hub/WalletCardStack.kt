@@ -22,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -35,6 +34,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.TonightLogoMark
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.feature.profile.data.MockProfileCreditCards
@@ -53,7 +54,7 @@ fun WalletCardStack(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val cardShape = RoundedCornerShape(20.dp)
+    val cardShape = HubSurfaceCardDefaults.QuickActionShape
     val masked = stringResource(I18nR.string.profile_wallet_masked)
 
     Box(
@@ -72,12 +73,7 @@ fun WalletCardStack(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(
-                    elevation = 18.dp,
-                    shape = cardShape,
-                    ambientColor = palette.brand.copy(alpha = 0.55f),
-                    spotColor = palette.brand.copy(alpha = 0.55f),
-                )
+                .hubSurfaceShadow(shape = cardShape)
                 .clip(cardShape)
                 .background(
                     brush = Brush.linearGradient(

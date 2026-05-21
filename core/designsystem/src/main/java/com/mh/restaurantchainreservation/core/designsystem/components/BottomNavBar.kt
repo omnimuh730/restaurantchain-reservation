@@ -97,7 +97,7 @@ private val QrFabBorderWidth = 4.dp
 private val QrGlowHaloPadding = 10.dp
 /** Vertical offset above the nav top edge (~30% of QR diameter + extra float). */
 private val QrAboveNavBarLift = 24.dp
-private val QrShadowElevationRest = HubSurfaceCardDefaults.ShadowElevation
+private val QrShadowElevationRest = 6.dp
 private val QrShadowElevationActive = 10.dp
 
 private val QrFabPressSpring = spring<Float>(
