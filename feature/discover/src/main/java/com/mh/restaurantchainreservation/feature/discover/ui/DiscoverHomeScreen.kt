@@ -187,8 +187,11 @@ private val SeeAllThumbnailSlideStart = ThumbnailLayer(
 )
 
 private val SeeAllThumbShape = RoundedCornerShape(12.dp)
+private val FoodTypeSeeAllThumbShape = RoundedCornerShape(8.dp)
+private const val FoodTypeSeeAllLabelFontScale = 1.18f
 /** Profile hub card shell for Dining News + restaurant “More” tiles. */
 private val MoreCardShape = HubSurfaceCardDefaults.QuickActionShape
+private val FoodTypeSeeAllCardShape = RoundedCornerShape(DiscoverPopularMenuTileCornerRadius)
 private val DiningNewsCardShape = MoreCardShape
 
 /** Restaurant cards shown per home rail before the More tile. */
@@ -206,9 +209,49 @@ private val RestaurantMiniCardTotalHeight = RestaurantMiniImageHeight + Restaura
 private val WhereToEatCityTileWidth = 220.dp
 private val WhereToEatCityTileHeight = 150.dp
 /** Portrait see-all thumbs in Where to Eat card (height > width). */
-private const val WhereToEatSeeAllThumbAspectHeightOverWidth = 1.32f
-private val WhereToEatSeeAllThumbClusterWidth = 118.dp
-private val WhereToEatSeeAllLabelFontSize = 16.sp
+private const val WhereToEatSeeAllThumbAspectHeightOverWidth = 1.36f
+private const val WhereToEatSeeAllThumbSizeScale = 1.08f
+/** Wider tiles without changing height (height follows base width × aspect). */
+private const val WhereToEatSeeAllThumbWidthStretch = 1.14f
+private const val WhereToEatSeeAllLabelFontScale = 1.14f
+private val WhereToEatSeeAllThumbClusterWidth = 172.dp
+/** Fan stack: left on top, center middle, right back; wings overlap center from below. */
+private val WhereToEatFanThumbLeft = ThumbnailLayer(
+    layerName = "Where to eat fan left",
+    topPercent = 20f,
+    leftPercent = 14f,
+    widthPercent = 31f,
+    heightPercent = 34f,
+    zIndex = 3f,
+)
+private val WhereToEatFanThumbCenter = ThumbnailLayer(
+    layerName = "Where to eat fan center",
+    topPercent = 12f,
+    leftPercent = 34f,
+    widthPercent = 33f,
+    heightPercent = 38f,
+    zIndex = 2f,
+)
+private val WhereToEatFanThumbRight = ThumbnailLayer(
+    layerName = "Where to eat fan right",
+    topPercent = 20f,
+    leftPercent = 50f,
+    widthPercent = 31f,
+    heightPercent = 34f,
+    zIndex = 1f,
+)
+private val WhereToEatFanThumbSlideStart = ThumbnailLayer(
+    layerName = "Where to eat fan slide start",
+    topPercent = 26f,
+    leftPercent = 36f,
+    widthPercent = 27f,
+    heightPercent = 27f,
+    zIndex = 0f,
+)
+private val WhereToEatFanThumbRotations = floatArrayOf(-11f, 0f, 11f)
+private val WhereToEatFanThumbPivotLeft = TransformOrigin(0.88f, 0.94f)
+private val WhereToEatFanThumbPivotCenter = TransformOrigin(0.5f, 0.94f)
+private val WhereToEatFanThumbPivotRight = TransformOrigin(0.12f, 0.94f)
 private val WhereToEatTileTitlePaddingStart = 10.dp
 private val WhereToEatTileTitlePaddingEnd = 10.dp
 private val WhereToEatTileTitlePaddingBottom = 15.dp
@@ -1500,60 +1543,85 @@ private fun SeeAllSlideThumbnailStack(
     }
 }
 
-/** Two-thumbnail see-all stack (back + front), portrait tiles, same corner radius as other More cards. */
+/** Three-thumbnail fan for Where to Eat see-all (left top, center middle, right back). */
 @Composable
-private fun SeeAllDualThumbnailStack(
+private fun WhereToEatFanThumbnailStack(
     images: List<Any>,
     thumbCornerShape: RoundedCornerShape,
     thumbBorderWidth: Dp,
     modifier: Modifier = Modifier,
     thumbAspectHeightOverWidth: Float = WhereToEatSeeAllThumbAspectHeightOverWidth,
+    thumbSizeScale: Float = WhereToEatSeeAllThumbSizeScale,
+    thumbWidthStretch: Float = WhereToEatSeeAllThumbWidthStretch,
 ) {
     var started by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { started = true }
     val t by animateFloatAsState(
         targetValue = if (started) 1f else 0f,
         animationSpec = tween(880, easing = FastOutSlowInEasing),
-        label = "see-all-dual-slide",
+        label = "where-to-eat-fan-slide",
     )
-    val pBack = staggerProgress(t, 0f, 0.45f)
-    val pFront = staggerProgress(t, 0.22f, 1f)
+    val pLeft = staggerProgress(t, 0f, 0.36f)
+    val pCenter = staggerProgress(t, 0.18f, 0.62f)
+    val pRight = staggerProgress(t, 0.38f, 1f)
 
     BoxWithConstraints(modifier = modifier) {
         val w = maxWidth
         val h = maxHeight
-        val gBack = SeeAllThumbnailMiddle.lerpedFrom(SeeAllThumbnailSlideStart, pBack)
-        val gFront = SeeAllThumbnailFront.lerpedFrom(SeeAllThumbnailSlideStart, pFront)
-        val wBack = w * (gBack.widthPercent / 100f)
-        val wFront = w * (gFront.widthPercent / 100f)
-        val hBack = wBack * thumbAspectHeightOverWidth
-        val hFront = wFront * thumbAspectHeightOverWidth
+        val gLeft = WhereToEatFanThumbLeft.lerpedFrom(WhereToEatFanThumbSlideStart, pLeft)
+        val gCenter = WhereToEatFanThumbCenter.lerpedFrom(WhereToEatFanThumbSlideStart, pCenter)
+        val gRight = WhereToEatFanThumbRight.lerpedFrom(WhereToEatFanThumbSlideStart, pRight)
+        val baseLeft = w * (gLeft.widthPercent / 100f) * thumbSizeScale
+        val baseCenter = w * (gCenter.widthPercent / 100f) * thumbSizeScale
+        val baseRight = w * (gRight.widthPercent / 100f) * thumbSizeScale
+        val hLeft = baseLeft * thumbAspectHeightOverWidth
+        val hCenter = baseCenter * thumbAspectHeightOverWidth
+        val hRight = baseRight * thumbAspectHeightOverWidth
+        val wLeft = baseLeft * thumbWidthStretch
+        val wCenter = baseCenter * thumbWidthStretch
+        val wRight = baseRight * thumbWidthStretch
 
         AnimatedSeeAllThumbnail(
-            imageModel = images[0],
+            imageModel = images[2],
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .offset(w * (gBack.leftPercent / 100f), h * (gBack.topPercent / 100f))
-                .zIndex(gBack.zIndex),
-            width = wBack,
-            height = hBack,
+                .offset(w * (gRight.leftPercent / 100f), h * (gRight.topPercent / 100f))
+                .zIndex(gRight.zIndex),
+            width = wRight,
+            height = hRight,
             cornerShape = thumbCornerShape,
             borderWidth = thumbBorderWidth,
-            slideProgress = pBack,
-            endRotationDegrees = SeeAllStackLayerRotations[2],
+            slideProgress = pRight,
+            endRotationDegrees = WhereToEatFanThumbRotations[2],
+            transformOrigin = WhereToEatFanThumbPivotRight,
         )
         AnimatedSeeAllThumbnail(
             imageModel = images[1],
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .offset(w * (gFront.leftPercent / 100f), h * (gFront.topPercent / 100f))
-                .zIndex(gFront.zIndex),
-            width = wFront,
-            height = hFront,
+                .offset(w * (gCenter.leftPercent / 100f), h * (gCenter.topPercent / 100f))
+                .zIndex(gCenter.zIndex),
+            width = wCenter,
+            height = hCenter,
             cornerShape = thumbCornerShape,
             borderWidth = thumbBorderWidth,
-            slideProgress = pFront,
-            endRotationDegrees = SeeAllStackLayerRotations[1],
+            slideProgress = pCenter,
+            endRotationDegrees = WhereToEatFanThumbRotations[1],
+            transformOrigin = WhereToEatFanThumbPivotCenter,
+        )
+        AnimatedSeeAllThumbnail(
+            imageModel = images[0],
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(w * (gLeft.leftPercent / 100f), h * (gLeft.topPercent / 100f))
+                .zIndex(gLeft.zIndex),
+            width = wLeft,
+            height = hLeft,
+            cornerShape = thumbCornerShape,
+            borderWidth = thumbBorderWidth,
+            slideProgress = pLeft,
+            endRotationDegrees = WhereToEatFanThumbRotations[0],
+            transformOrigin = WhereToEatFanThumbPivotLeft,
         )
     }
 }
@@ -1566,9 +1634,10 @@ private fun WhereToEatSeeAllCard(
     val palette = LocalRestaurantPalette.current
     val images = remember(previewImages) {
         when {
-            previewImages.size >= 2 -> previewImages.take(2)
-            previewImages.size == 1 -> List(2) { previewImages.first() }
-            else -> List(2) {
+            previewImages.size >= 3 -> previewImages.take(3)
+            previewImages.size == 2 -> previewImages + previewImages.last()
+            previewImages.size == 1 -> List(3) { previewImages.first() }
+            else -> List(3) {
                 "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200&h=200&fit=crop"
             }
         }
@@ -1581,34 +1650,33 @@ private fun WhereToEatSeeAllCard(
             .size(WhereToEatCityTileWidth, WhereToEatCityTileHeight)
             .hubSurfaceCard(palette = palette, shape = MoreCardShape),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(
                 modifier = Modifier
-                    .width(WhereToEatSeeAllThumbClusterWidth)
-                    .fillMaxHeight(),
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center,
             ) {
-                SeeAllDualThumbnailStack(
-                    images = images,
-                    thumbCornerShape = SeeAllThumbShape,
-                    thumbBorderWidth = thumbBorder,
-                    modifier = Modifier.fillMaxSize(),
-                )
+                Box(
+                    modifier = Modifier
+                        .width(WhereToEatSeeAllThumbClusterWidth)
+                        .fillMaxHeight(),
+                ) {
+                    WhereToEatFanThumbnailStack(
+                        images = images,
+                        thumbCornerShape = SeeAllThumbShape,
+                        thumbBorderWidth = thumbBorder,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             }
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = "See all",
-                color = palette.foreground,
-                fontSize = WhereToEatSeeAllLabelFontSize,
-                lineHeight = 18.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = (-0.2).sp,
-                maxLines = 1,
-                softWrap = false,
+            MoreCardFooterLabel(
+                cardWidth = WhereToEatCityTileWidth,
+                cardHeight = WhereToEatCityTileHeight,
+                fontScale = WhereToEatSeeAllLabelFontScale,
             )
         }
     }
@@ -1624,6 +1692,7 @@ private fun AnimatedSeeAllThumbnail(
     borderWidth: Dp,
     slideProgress: Float,
     endRotationDegrees: Float,
+    transformOrigin: TransformOrigin = TransformOrigin.Center,
 ) {
     val p = slideProgress.coerceIn(0f, 1f)
     Box(
@@ -1631,7 +1700,7 @@ private fun AnimatedSeeAllThumbnail(
             .width(width)
             .height(height)
             .graphicsLayer {
-                transformOrigin = TransformOrigin.Center
+                this.transformOrigin = transformOrigin
                 rotationZ = lerp(0f, endRotationDegrees, p)
                 scaleX = lerp(0.82f, 1f, p)
                 scaleY = lerp(0.82f, 1f, p)
@@ -1718,11 +1787,15 @@ private fun seeAllThumbBorderWidth(cardWidth: Dp, cardHeight: Dp): Dp {
 }
 
 /** Scales “See all” label with [StackedSeeAllCard] size (restaurant rail as reference). */
-private fun moreCardFooterMetrics(cardWidth: Dp, cardHeight: Dp): MoreCardFooterMetrics {
+private fun moreCardFooterMetrics(
+    cardWidth: Dp,
+    cardHeight: Dp,
+    fontScale: Float = 1f,
+): MoreCardFooterMetrics {
     val reference = RestaurantMiniImageHeight.value.coerceAtLeast(1f)
     val scale = (minOf(cardWidth.value, cardHeight.value) / reference).coerceIn(0.72f, 1.12f)
     return MoreCardFooterMetrics(
-        fontSize = (13f * scale).sp,
+        fontSize = (13f * scale * fontScale).sp,
         offsetY = (-10f * scale).dp,
         bottomPadding = (6f * scale).dp,
     )
@@ -1732,9 +1805,10 @@ private fun moreCardFooterMetrics(cardWidth: Dp, cardHeight: Dp): MoreCardFooter
 private fun MoreCardFooterLabel(
     cardWidth: Dp,
     cardHeight: Dp,
+    fontScale: Float = 1f,
 ) {
     val palette = LocalRestaurantPalette.current
-    val metrics = moreCardFooterMetrics(cardWidth, cardHeight)
+    val metrics = moreCardFooterMetrics(cardWidth, cardHeight, fontScale = fontScale)
     Text(
         text = "See all",
         color = palette.foreground,
@@ -1752,6 +1826,9 @@ private fun StackedSeeAllCard(
     height: Dp,
     previewImages: List<Any>,
     onClick: () -> Unit,
+    cardShape: Shape = MoreCardShape,
+    thumbCornerShape: RoundedCornerShape = SeeAllThumbShape,
+    footerFontScale: Float = 1f,
 ) {
     val palette = LocalRestaurantPalette.current
     val images = remember(previewImages) {
@@ -1769,7 +1846,7 @@ private fun StackedSeeAllCard(
         modifier = Modifier
             .width(width)
             .height(height)
-            .hubSurfaceCard(palette = palette, shape = MoreCardShape),
+            .hubSurfaceCard(palette = palette, shape = cardShape),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -1777,14 +1854,18 @@ private fun StackedSeeAllCard(
         ) {
             SeeAllSlideThumbnailStack(
                 images = images,
-                thumbCornerShape = SeeAllThumbShape,
+                thumbCornerShape = thumbCornerShape,
                 thumbBorderWidth = seeAllThumbBorderWidth(width, height),
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .padding(top = 2.dp),
             )
-            MoreCardFooterLabel(cardWidth = width, cardHeight = height)
+            MoreCardFooterLabel(
+                cardWidth = width,
+                cardHeight = height,
+                fontScale = footerFontScale,
+            )
         }
     }
 }
@@ -1812,6 +1893,9 @@ private fun FoodTypeSeeAllCard(
         height = DiscoverPopularMenuTileSize,
         previewImages = previewImages,
         onClick = onClick,
+        cardShape = FoodTypeSeeAllCardShape,
+        thumbCornerShape = FoodTypeSeeAllThumbShape,
+        footerFontScale = FoodTypeSeeAllLabelFontScale,
     )
 }
 
