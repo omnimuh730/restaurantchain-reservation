@@ -54,6 +54,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.ChevronRight
@@ -203,6 +204,8 @@ private val RestaurantMiniCardTotalHeight = RestaurantMiniImageHeight + Restaura
 
 private val WhereToEatCityTileWidth = 220.dp
 private val WhereToEatCityTileHeight = 150.dp
+private val WhereToEatTilePadding = 12.dp
+
 private enum class ImageRailExploreMoreKind {
     WhereToEatPanorama,
     FoodTypeCollage,
@@ -354,6 +357,7 @@ fun DiscoverHomeScreen(
                             .take(3)
                             .map { it.image },
                         onSeeAll = { onOpenSection("where-to-eat") },
+                        rowVerticalAlignment = Alignment.Top,
                     ) {
                         CityRail(
                             cities = DiscoverData.CITIES.take(ImageRailVisibleCount),
@@ -929,8 +933,10 @@ private fun ImageRailSection(
         item {
             when (exploreMoreKind) {
                 ImageRailExploreMoreKind.WhereToEatPanorama ->
-                    WhereToEatPanoramaExploreCard(
-                        cityImageUrls = seeAllPreviewImages,
+                    StackedSeeAllCard(
+                        width = WhereToEatCityTileWidth,
+                        height = WhereToEatCityTileHeight,
+                        previewImages = seeAllPreviewImages,
                         onClick = onSeeAll,
                     )
                 ImageRailExploreMoreKind.FoodTypeCollage ->
@@ -943,167 +949,13 @@ private fun ImageRailSection(
     }
 }
 
-/** Panorama stack + footer (reference: “01 Panorama Stack”) for Where to Eat. */
-@Composable
-private fun WhereToEatPanoramaExploreCard(
-    cityImageUrls: List<Any>,
-    onClick: () -> Unit,
-) {
-    val palette = LocalRestaurantPalette.current
-    val images = remember(cityImageUrls) {
-        when {
-            cityImageUrls.size >= 3 -> cityImageUrls.take(3)
-            cityImageUrls.size == 2 -> cityImageUrls + cityImageUrls.last()
-            cityImageUrls.size == 1 -> List(3) { cityImageUrls.first() }
-            else -> List(3) {
-                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop"
-            }
-        }
-    }
-    val cityCount = DiscoverData.CITIES.size
-    val cardBg = if (palette.isDark) palette.cardSurface else Color.White
-    val shape = RestaurantRailImageShape
-
-    PressableScale(
-        onClick = onClick,
-        modifier = Modifier
-            .size(WhereToEatCityTileWidth, WhereToEatCityTileHeight)
-            .hubSurfaceShadow(shape = shape)
-            .clip(shape)
-            .background(cardBg),
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                val w = maxWidth
-                val h = maxHeight
-                val backShape = RoundedCornerShape(10.dp)
-                val midShape = RoundedCornerShape(11.dp)
-                val frontShape = RoundedCornerShape(12.dp)
-                AsyncImage(
-                    model = images[0],
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .offset(x = -w * 0.10f, y = h * 0.06f)
-                        .width(w * 0.70f)
-                        .height(h * 0.78f)
-                        .clip(backShape)
-                        .zIndex(0f),
-                )
-                AsyncImage(
-                    model = images[1],
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .offset(x = -w * 0.03f, y = h * 0.02f)
-                        .width(w * 0.78f)
-                        .height(h * 0.86f)
-                        .clip(midShape)
-                        .zIndex(1f),
-                )
-                AsyncImage(
-                    model = images[2],
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .offset(x = w * 0.05f, y = -h * 0.03f)
-                        .width(w * 0.88f)
-                        .height(h * 0.92f)
-                        .clip(frontShape)
-                        .zIndex(2f),
-                )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(6.dp)
-                        .size(26.dp)
-                        .zIndex(3f)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.96f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Navigation,
-                        contentDescription = null,
-                        tint = Color(0xFF111111),
-                        modifier = Modifier.size(14.dp),
-                    )
-                }
-            }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            colorStops = arrayOf(
-                                0f to Color.Transparent,
-                                0.35f to Color.Black.copy(alpha = 0.45f),
-                                1f to Color.Black.copy(alpha = 0.78f),
-                            ),
-                        ),
-                    ),
-            )
-            Row(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Explore more",
-                        color = Color.White,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = (-0.2).sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = "$cityCount+ cities",
-                        color = Color.White.copy(alpha = 0.88f),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(top = 2.dp),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.96f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = Color(0xFF111111),
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-            }
-        }
-    }
-}
-
 @Composable
 private fun CityRail(cities: List<City>, onClick: (String) -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         cities.forEach { city ->
-            ImageRailTile(
+            WhereToEatCityTile(
                 title = city.label,
                 image = city.image,
-                width = WhereToEatCityTileWidth,
-                height = WhereToEatCityTileHeight,
-                centered = true,
                 onClick = { onClick(city.id) },
             )
         }
@@ -1192,52 +1044,72 @@ private fun FoodTypeRailTile(
 }
 
 @Composable
-private fun ImageRailTile(
+private fun WhereToEatCityTile(
     title: String,
     image: String,
-    width: Dp,
-    height: Dp,
-    centered: Boolean,
     onClick: () -> Unit,
 ) {
     PressableScale(
         onClick = onClick,
         modifier = Modifier
-            .size(width = width, height = height)
+            .size(WhereToEatCityTileWidth, WhereToEatCityTileHeight)
             .discoverImageCardSurface(RestaurantRailImageShape),
     ) {
-        Box(modifier = Modifier.matchParentSize()) {
+        Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
                 model = image,
                 contentDescription = title,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .then(
-                        if (centered) {
-                            Modifier.background(Color.Black.copy(alpha = 0.36f))
-                        } else {
-                            Modifier.background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.64f))))
-                        },
+            WhereToEatTileTextOverlay(title = title)
+        }
+    }
+}
+
+@Composable
+private fun WhereToEatTileTextOverlay(
+    title: String,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0f to Color.Transparent,
+                            0.5f to Color.Transparent,
+                            0.78f to Color.Black.copy(alpha = 0.42f),
+                            1f to Color.Black.copy(alpha = 0.75f),
+                        ),
                     ),
-            )
+                ),
+        )
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .padding(WhereToEatTilePadding),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 text = title,
                 color = Color.White,
-                fontSize = if (centered) 13.sp else 12.sp,
-                fontWeight = if (centered) FontWeight.Bold else FontWeight.SemiBold,
-                modifier = if (centered) {
-                    Modifier.align(Alignment.Center)
-                } else {
-                    Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(10.dp)
-                },
+                fontSize = 18.sp,
+                lineHeight = 21.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-0.2).sp,
+                modifier = Modifier.weight(1f),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.95f),
+                modifier = Modifier.size(18.dp),
             )
         }
     }
