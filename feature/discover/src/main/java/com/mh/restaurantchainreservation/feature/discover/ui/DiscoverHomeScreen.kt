@@ -64,7 +64,6 @@ import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -191,6 +190,9 @@ private val DiningNewsCardShape = MoreCardShape
 /** Restaurant cards shown per home rail before the More tile. */
 private const val RestaurantRailVisibleCount = 8
 
+/** City / food image rails show this many cards, then the explore-more tile. */
+private const val ImageRailVisibleCount = 7
+
 private val RestaurantMiniCardWidth = 176.dp
 private val RestaurantMiniImageHeight =
     RestaurantMiniCardWidth / DiscoverRestaurantImageAspectWidthOverHeight
@@ -200,8 +202,6 @@ private val RestaurantMiniCardTotalHeight = RestaurantMiniImageHeight + Restaura
 /** End caps for “Where to Eat?” (panorama) and “Top Picks by Food Type” (collage); width matches [RestaurantMiniCardWidth]. */
 private val RailExploreMoreCardShape = RoundedCornerShape(26.dp)
 private val WhereToEatExploreImageStackHeight = 108.dp
-private val FoodCollageMoreCardSide = RestaurantMiniCardWidth
-
 private enum class ImageRailExploreMoreKind {
     WhereToEatPanorama,
     FoodTypeCollage,
@@ -217,6 +217,10 @@ private val PriceListThumbnailHeight =
     PriceListThumbnailWidth / DiscoverRestaurantImageAspectWidthOverHeight
 private val PriceListAvatarCorner = 16.dp
 private val PriceListAvatarOverlayPadding = 8.dp
+private val PriceTabIndicatorWidth = 38.dp
+private val PriceTabIndicatorHeight = 3.dp
+private val PriceTabIndicatorTopCornerRadius = 3.dp
+private val PriceStickyHeaderBottomShadowHeight = 10.dp
 
 @Composable
 fun DiscoverHomeScreen(
@@ -339,19 +343,32 @@ fun DiscoverHomeScreen(
                     ImageRailSection(
                         title = "Where to Eat?",
                         exploreMoreKind = ImageRailExploreMoreKind.WhereToEatPanorama,
-                        seeAllPreviewImages = DiscoverData.CITIES.take(3).map { it.image },
+                        seeAllPreviewImages = DiscoverData.CITIES
+                            .take(ImageRailVisibleCount)
+                            .take(3)
+                            .map { it.image },
                         onSeeAll = { onOpenSection("where-to-eat") },
                     ) {
-                        CityRail(cities = DiscoverData.CITIES, onClick = onOpenLocation)
+                        CityRail(
+                            cities = DiscoverData.CITIES.take(ImageRailVisibleCount),
+                            onClick = onOpenLocation,
+                        )
                     }
                     RailSpacer(28.dp)
                     ImageRailSection(
                         title = "Top Picks by Food Type",
                         exploreMoreKind = ImageRailExploreMoreKind.FoodTypeCollage,
-                        seeAllPreviewImages = DiscoverData.FOOD_TYPES.take(4).map { it.image },
+                        seeAllPreviewImages = DiscoverData.FOOD_TYPES
+                            .take(ImageRailVisibleCount)
+                            .take(3)
+                            .map { it.image },
                         onSeeAll = { onOpenSection("top-picks-food") },
+                        rowVerticalAlignment = Alignment.Top,
                     ) {
-                        FoodRail(foodTypes = DiscoverData.FOOD_TYPES, onClick = onOpenFood)
+                        FoodRail(
+                            foodTypes = DiscoverData.FOOD_TYPES.take(ImageRailVisibleCount),
+                            onClick = onOpenFood,
+                        )
                     }
                     RailSpacer(28.dp)
                     RestaurantRail(
@@ -390,17 +407,19 @@ fun DiscoverHomeScreen(
                 }
             }
             stickyHeader(key = "restaurants-by-price-header") {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(palette.cardSurface)
-                        .padding(top = headerTopPadding),
-                ) {
-                    RestaurantsByPriceHeaderAndTabs(
-                        selectedPrice = selectedPriceTab,
-                        onSelectPrice = { selectedPriceTab = it },
-                        placesLabel = "${priceTabBasePool.size.coerceAtLeast(6)}+ places",
-                    )
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(palette.cardSurface),
+                    ) {
+                        RestaurantsByPriceHeaderAndTabs(
+                            selectedPrice = selectedPriceTab,
+                            onSelectPrice = { selectedPriceTab = it },
+                            placesLabel = "${priceTabBasePool.size.coerceAtLeast(6)}+ places",
+                        )
+                    }
+                    PriceStickyHeaderBottomShadow(palette)
                 }
             }
             itemsIndexed(
@@ -890,6 +909,7 @@ private fun ImageRailSection(
     exploreMoreKind: ImageRailExploreMoreKind,
     seeAllPreviewImages: List<Any>,
     onSeeAll: () -> Unit,
+    rowVerticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
     content: @Composable () -> Unit,
 ) {
     SectionHeader(title = title)
@@ -897,7 +917,7 @@ private fun ImageRailSection(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = rowVerticalAlignment,
     ) {
         item { content() }
         item {
@@ -908,8 +928,8 @@ private fun ImageRailSection(
                         onClick = onSeeAll,
                     )
                 ImageRailExploreMoreKind.FoodTypeCollage ->
-                    FoodTypeCollageExploreCard(
-                        foodImageUrls = seeAllPreviewImages,
+                    FoodTypeSeeAllCard(
+                        previewImages = seeAllPreviewImages,
                         onClick = onSeeAll,
                     )
             }
@@ -1063,126 +1083,6 @@ private fun WhereToEatPanoramaExploreCard(
     }
 }
 
-/** 2×2 collage + glassy footer (reference: “04 Collage Card”) for Top Picks by Food Type. */
-@Composable
-private fun FoodTypeCollageExploreCard(
-    foodImageUrls: List<Any>,
-    onClick: () -> Unit,
-) {
-    val palette = LocalRestaurantPalette.current
-    val images = remember(foodImageUrls) {
-        when {
-            foodImageUrls.size >= 4 -> foodImageUrls.take(4)
-            foodImageUrls.size == 3 -> foodImageUrls + foodImageUrls.first()
-            foodImageUrls.size == 2 -> foodImageUrls + foodImageUrls
-            foodImageUrls.size == 1 -> List(4) { foodImageUrls.first() }
-            else -> List(4) {
-                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop"
-            }
-        }
-    }
-    val shape = RailExploreMoreCardShape
-    val ambient = if (palette.isDark) Color.Black.copy(alpha = 0.45f) else Color.Black.copy(alpha = 0.18f)
-    val spot = if (palette.isDark) Color.Black.copy(alpha = 0.55f) else Color.Black.copy(alpha = 0.38f)
-    val overlayBg = if (palette.isDark) palette.cardSurface.copy(alpha = 0.92f) else Color.White.copy(alpha = 0.92f)
-
-    PressableScale(
-        onClick = onClick,
-        modifier = Modifier
-            .size(FoodCollageMoreCardSide)
-            .shadow(
-                elevation = 12.dp,
-                shape = shape,
-                clip = false,
-                ambientColor = ambient,
-                spotColor = spot,
-            )
-            .clip(shape),
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Row(modifier = Modifier.weight(1f)) {
-                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                        AsyncImage(
-                            model = images[0],
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                        AsyncImage(
-                            model = images[1],
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                }
-                Row(modifier = Modifier.weight(1f)) {
-                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                        AsyncImage(
-                            model = images[2],
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                        AsyncImage(
-                            model = images[3],
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                }
-            }
-            Row(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(10.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(overlayBg)
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "More picks",
-                        color = palette.foreground,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = (-0.15).sp,
-                    )
-                    Text(
-                        text = "Explore food types",
-                        color = palette.mutedForeground,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(if (palette.isDark) palette.mutedSurface else Color.White.copy(alpha = 0.95f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = Color(0xFF111111),
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-        }
-    }
-}
-
 @Composable
 private fun CityRail(cities: List<City>, onClick: (String) -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1200,14 +1100,80 @@ private fun CityRail(cities: List<City>, onClick: (String) -> Unit) {
 
 @Composable
 private fun FoodRail(foodTypes: List<FoodType>, onClick: (String) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
         foodTypes.forEach { food ->
-            ImageRailTile(
-                title = food.label,
-                image = food.image,
-                width = 112.dp,
-                centered = false,
+            FoodTypeRailTile(
+                food = food,
                 onClick = { onClick(food.id) },
+            )
+        }
+    }
+}
+
+/** Image with bottom gradient + place count; food name below (like [AirbnbMiniCard] title). */
+@Composable
+private fun FoodTypeRailTile(
+    food: FoodType,
+    onClick: () -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val placeCount = remember(food.id) { DiscoverData.byFoodType(food.id).size }
+    val shape = RoundedCornerShape(DiscoverPopularMenuTileCornerRadius)
+    PressableScale(
+        onClick = onClick,
+        modifier = Modifier.width(DiscoverPopularMenuTileSize),
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .size(DiscoverPopularMenuTileSize)
+                    .clip(shape)
+                    .background(palette.mutedSurface),
+            ) {
+                AsyncImage(
+                    model = food.image,
+                    contentDescription = food.label,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colorStops = arrayOf(
+                                    0f to Color.Transparent,
+                                    0.42f to Color.Transparent,
+                                    0.68f to Color.Black.copy(alpha = 0.38f),
+                                    1f to Color.Black.copy(alpha = 0.82f),
+                                ),
+                            ),
+                        ),
+                )
+                Text(
+                    text = "$placeCount places",
+                    color = Color.White.copy(alpha = 0.92f),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(horizontal = 10.dp, vertical = 10.dp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text(
+                text = food.label,
+                color = palette.foreground,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 8.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
@@ -1784,6 +1750,19 @@ private fun RestaurantSeeAllCard(
     )
 }
 
+@Composable
+private fun FoodTypeSeeAllCard(
+    previewImages: List<Any>,
+    onClick: () -> Unit,
+) {
+    StackedSeeAllCard(
+        width = DiscoverPopularMenuTileSize,
+        height = DiscoverPopularMenuTileSize,
+        previewImages = previewImages,
+        onClick = onClick,
+    )
+}
+
 private fun restaurantsForPriceTab(selected: String): List<Restaurant> =
     DiscoverData.ALL.filter { it.price == selected }.ifEmpty {
         DiscoverData.ALL.take(6).mapIndexed { index, restaurant ->
@@ -1882,6 +1861,30 @@ private fun RestaurantByPriceListRowWithLazyEnter(
 }
 
 @Composable
+private fun PriceStickyHeaderBottomShadow(palette: RestaurantPalette) {
+    val shadowAlpha = (
+        if (palette.isDark) {
+            HubSurfaceCardDefaults.ShadowAmbientAlpha * 2.4f
+        } else {
+            HubSurfaceCardDefaults.ShadowAmbientAlpha
+        }
+        ).coerceIn(0f, 0.35f)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(PriceStickyHeaderBottomShadowHeight)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Black.copy(alpha = shadowAlpha),
+                        Color.Transparent,
+                    ),
+                ),
+            ),
+    )
+}
+
+@Composable
 private fun RestaurantsByPriceHeaderAndTabs(
     selectedPrice: String,
     onSelectPrice: (String) -> Unit,
@@ -1889,67 +1892,74 @@ private fun RestaurantsByPriceHeaderAndTabs(
 ) {
     val palette = LocalRestaurantPalette.current
     val tabs = listOf("$", "$$", "$$$", "$$$$")
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                text = "Restaurants by Price",
-                color = palette.foreground,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = placesLabel,
-                color = palette.mutedForeground,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp),
-        ) {
-            tabs.forEach { tab ->
-                val selected = selectedPrice == tab
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            role = Role.Tab,
-                            onClick = { onSelectPrice(tab) },
-                        )
-                        .padding(vertical = 10.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = tab,
-                            color = if (selected) palette.foreground else palette.mutedForeground,
-                            fontSize = 16.sp,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                        )
-                        Spacer(Modifier.height(6.dp))
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(3.dp)
-                                .background(if (selected) palette.foreground else Color.Transparent),
-                        )
+    val indicatorShape = RoundedCornerShape(
+        topStart = PriceTabIndicatorTopCornerRadius,
+        topEnd = PriceTabIndicatorTopCornerRadius,
+    )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "Restaurants by Price",
+                    color = palette.foreground,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = placesLabel,
+                    color = palette.mutedForeground,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+            ) {
+                tabs.forEach { tab ->
+                    val selected = selectedPrice == tab
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                role = Role.Tab,
+                                onClick = { onSelectPrice(tab) },
+                            )
+                            .padding(top = 10.dp),
+                        contentAlignment = Alignment.BottomCenter,
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = tab,
+                                color = if (selected) palette.foreground else palette.mutedForeground,
+                                fontSize = 16.sp,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                modifier = Modifier.padding(bottom = 4.dp),
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .width(PriceTabIndicatorWidth)
+                                    .height(PriceTabIndicatorHeight)
+                                    .clip(indicatorShape)
+                                    .background(
+                                        if (selected) palette.foreground else Color.Transparent,
+                                        indicatorShape,
+                                    ),
+                            )
+                        }
                     }
                 }
             }
         }
-        HorizontalDivider(
-            thickness = 1.dp,
-            color = palette.border,
-        )
     }
 }
 
@@ -2124,12 +2134,12 @@ private fun SectionHeader(title: String, horizontalPadding: Dp = 16.dp) {
     Text(
         text = title,
         color = palette.foreground,
-        fontSize = 20.sp,
+        fontSize = 19.sp,
         fontWeight = FontWeight.Bold,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = horizontalPadding, vertical = 0.dp)
-            .padding(bottom = 12.dp),
+            .padding(bottom = 15.dp),
     )
 }
 
