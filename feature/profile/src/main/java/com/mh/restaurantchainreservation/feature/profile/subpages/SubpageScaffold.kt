@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageScreenHeader
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
+import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavContentBottomPadding
 import com.mh.restaurantchainreservation.core.designsystem.components.collapsingHeaderListScroll
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberCollapsingHeaderScrollState
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
@@ -88,8 +89,8 @@ private fun SubpageCollapsingLayout(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .collapsingHeaderListScroll(headerScroll, listState)
-                .trackBottomNavScroll(),
+                .trackBottomNavScroll()
+                .collapsingHeaderListScroll(headerScroll, listState),
             contentPadding = contentPadding,
         ) {
             item(key = "subpage_top_inset") {
@@ -128,6 +129,7 @@ fun SubpageLazyScaffold(
 ) {
     val backLabel = stringResource(I18nR.string.common_action_back)
     val contentPad = contentHorizontalPadding ?: horizontalPadding
+    val navBottomPadding = LocalNavContentBottomPadding.current
     SubpageCollapsingLayout(
         title = title,
         onBack = onBack,
@@ -141,7 +143,7 @@ fun SubpageLazyScaffold(
             start = contentPad.dp,
             end = contentPad.dp,
             top = 4.dp,
-            bottom = bottomContentPadding,
+            bottom = bottomContentPadding + navBottomPadding,
         ),
         content = content,
     )
@@ -163,6 +165,7 @@ fun SubpageScaffold(
     val palette = LocalRestaurantPalette.current
     val backLabel = stringResource(I18nR.string.common_action_back)
     val contentPad = contentHorizontalPadding ?: horizontalPadding
+    val navBottomPadding = LocalNavContentBottomPadding.current
 
     if (scrollable) {
         SubpageCollapsingLayout(
@@ -177,7 +180,7 @@ fun SubpageScaffold(
                 start = contentPad.dp,
                 end = contentPad.dp,
                 top = 4.dp,
-                bottom = 24.dp,
+                bottom = 24.dp + navBottomPadding,
             ),
         ) {
             item(key = "subpage_body") {
