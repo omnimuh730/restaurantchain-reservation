@@ -89,8 +89,8 @@ private val TabLabelBottomPadding = 12.dp
 private val TabRowTopInset = 10.dp
 private val TabItemMinWidth = 52.dp
 private val TabContentHeight = TabIconSize + LabelTopGap + TabLabelHeight + TabVerticalPadding * 2
-private val TabRowHeight = TabContentHeight + TabRowTopInset + TabLabelBottomPadding
-
+internal val BottomNavTabRowHeight = TabContentHeight + TabRowTopInset + TabLabelBottomPadding
+private val TabRowHeight = BottomNavTabRowHeight
 private val QrOuterDiameter = 68.dp
 private val QrIconSize = 24.dp
 private val QrFabBorderWidth = 4.dp
@@ -112,7 +112,15 @@ private val QrFabElevationSpring = spring<Dp>(
     dampingRatio = Spring.DampingRatioNoBouncy,
     stiffness = Spring.StiffnessMediumLow,
 )
-private val NavTopBorderWidth = 1.dp
+internal val BottomNavTopBorderWidth = 1.dp
+private val NavTopBorderWidth = BottomNavTopBorderWidth
+
+/**
+ * Space above the tab row reserved in the animated clip bounds for the docked QR FAB,
+ * its shadow, and the center cutout (must match [QrAboveNavBarLift] + [QrOuterDiameter] layout).
+ */
+internal val BottomNavClipExtensionAboveTabRow =
+    QrAboveNavBarLift + QrOuterDiameter + QrShadowElevationRest + 16.dp
 
 /** Horizontal center of each nav control as a fraction of screen width. */
 private const val DiscoverCenterFraction = 0.10f

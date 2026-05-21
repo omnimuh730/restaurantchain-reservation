@@ -68,6 +68,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -110,6 +112,7 @@ import dev.chrisbanes.haze.materials.HazeMaterials
 import dev.chrisbanes.haze.rememberHazeState
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
+import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
@@ -341,12 +344,28 @@ fun DiscoverHomeScreen(
             }
     }
 
+    val hazeState = rememberHazeState()
+    DisposableEffect(hazeState) {
+        DiscoverHazeRegistry.register(hazeState)
+        onDispose { DiscoverHazeRegistry.unregister(hazeState) }
+    }
+    // Latch ready once the list has items — visibleItemsInfo can briefly empty during scroll.
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.layoutInfo.totalItemsCount > 0 }
+            .distinctUntilChanged()
+            .collect { hasItems ->
+                if (hasItems) {
+                    DiscoverHazeRegistry.setDiscoverContentReady(true)
+                }
+            }
+    }
+
+    CompositionLocalProvider(LocalDiscoverHazeState provides hazeState) {
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(palette.cardSurface),
     ) {
-        val hazeState = rememberHazeState()
         val density = LocalDensity.current
         val statusBarInsets = WindowInsets.statusBars
         val compactBarTotalHeight = remember(density, statusBarInsets) {
@@ -373,6 +392,7 @@ fun DiscoverHomeScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
+                .trackBottomNavScroll()
                 .hazeSource(state = hazeState),
             contentPadding = PaddingValues(bottom = 16.dp),
         ) {
@@ -517,6 +537,8 @@ fun DiscoverHomeScreen(
                 onOpenMap = onOpenMap,
             )
         }
+
+    }
     }
 }
 
@@ -548,16 +570,14 @@ private fun HeroBanner(
             modifier = Modifier.fillMaxSize(),
         ) { page ->
             val banner = banners[page]
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable { onBannerClick(banner.id) },
-            ) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 AsyncImage(
                     model = banner.image,
                     contentDescription = banner.title,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable { onBannerClick(banner.id) },
                 )
                 Box(
                     modifier = Modifier
@@ -575,7 +595,8 @@ private fun HeroBanner(
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(start = 20.dp, end = 20.dp, bottom = 88.dp),
+                        .padding(start = 20.dp, end = 20.dp, bottom = 88.dp)
+                        .clickable { onBannerClick(banner.id) },
                 ) {
                     Text(
                         text = banner.title,
@@ -1209,8 +1230,8 @@ private fun AirbnbMiniCard(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val collections by WishlistStore.collections.collectAsState()
-    val saved = collections.any { collection -> collection.restaurants.any { it.id == restaurant.id } }
+    val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
+    val saved = restaurant.id in savedIds
     val shared = LocalRestaurantSharedTransitionScope.current
     val animatedContent = LocalAnimatedContentScope.current
     val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
@@ -1238,20 +1259,16 @@ private fun AirbnbMiniCard(
                 )
                 val tag = restaurant.tag
                 if (!tag.isNullOrBlank()) {
-                    Box(
+                    com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
+                        text = tag,
                         modifier = Modifier
                             .align(Alignment.TopStart)
-                            .padding(8.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(Color.White.copy(alpha = 0.94f))
-                            .padding(horizontal = 10.dp, vertical = 5.dp),
-                    ) {
-                        Text(tag, color = Color(0xFF222222), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-                    }
+                            .padding(8.dp),
+                    )
                 }
                 HeartButton(
                     active = saved,
-                    onClick = { WishlistStore.openPicker(restaurant) },
+                    onClick = { WishlistStore.onHeartTap(restaurant) },
                     size = HeartButtonSize.Medium,
                     style = HeartButtonStyle.Overlay,
                     modifier = Modifier
@@ -2070,8 +2087,8 @@ private fun RestaurantByPriceListRow(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val collections by WishlistStore.collections.collectAsState()
-    val saved = collections.any { collection -> collection.restaurants.any { it.id == restaurant.id } }
+    val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
+    val saved = restaurant.id in savedIds
     val goldStar = Color(0xFFEAB308)
     val emptyStar = palette.mutedForeground.copy(alpha = 0.35f)
     val filledStars = (restaurant.rating + 0.25).roundToInt().coerceIn(0, 5)
@@ -2099,31 +2116,20 @@ private fun RestaurantByPriceListRow(
                 )
                 val tag = restaurant.tag
                 if (!tag.isNullOrBlank()) {
-                    Box(
+                    com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
+                        text = tag,
+                        fontSize = 10.sp,
                         modifier = Modifier
                             .align(Alignment.TopStart)
                             .padding(
                                 start = PriceListAvatarOverlayPadding,
                                 top = PriceListAvatarOverlayPadding,
-                            )
-                            .height(24.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(Color.White.copy(alpha = 0.94f))
-                            .padding(horizontal = 8.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            tag,
-                            color = Color(0xFF222222),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                        )
-                    }
+                            ),
+                    )
                 }
                 HeartButton(
                     active = saved,
-                    onClick = { WishlistStore.openPicker(restaurant) },
+                    onClick = { WishlistStore.onHeartTap(restaurant) },
                     size = HeartButtonSize.ExtraSmall,
                     style = HeartButtonStyle.Overlay,
                     overlayContentAlignment = Alignment.TopCenter,

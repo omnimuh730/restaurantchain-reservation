@@ -63,8 +63,8 @@ fun RestaurantListCard(
     timeSlots: List<RestaurantTimeSlot>? = null,
 ) {
     val palette = LocalRestaurantPalette.current
-    val collections by WishlistStore.collections.collectAsState()
-    val saved = collections.any { col -> col.restaurants.any { it.id == restaurant.id } }
+    val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
+    val saved = restaurant.id in savedIds
     val shared = LocalRestaurantSharedTransitionScope.current
     val animatedContent = LocalAnimatedContentScope.current
     val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
@@ -94,7 +94,7 @@ fun RestaurantListCard(
                 )
                 HeartButton(
                     active = saved,
-                    onClick = { WishlistStore.openPicker(restaurant) },
+                    onClick = { WishlistStore.onHeartTap(restaurant) },
                     size = HeartButtonSize.Medium,
                     style = HeartButtonStyle.Overlay,
                     overlayContentAlignment = Alignment.TopCenter,
@@ -105,22 +105,12 @@ fun RestaurantListCard(
                 // Optional tag chip top-left.
                 val tag = restaurant.tag
                 if (!tag.isNullOrBlank()) {
-                    Row(
+                    com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
+                        text = tag,
                         modifier = Modifier
                             .align(Alignment.TopStart)
-                            .padding(10.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(palette.cardSurface.copy(alpha = 0.92f))
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = tag,
-                            color = palette.foreground,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
+                            .padding(10.dp),
+                    )
                 }
             }
             Column(modifier = Modifier.padding(14.dp)) {

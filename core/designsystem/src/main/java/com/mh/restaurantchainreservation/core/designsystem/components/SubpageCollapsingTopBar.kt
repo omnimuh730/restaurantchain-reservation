@@ -23,7 +23,7 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestauran
 
 /**
  * Material [LargeTopAppBar] + [TopAppBarDefaults.exitUntilCollapsedScrollBehavior], matching
- * wishlist collection detail (e.g. Recently searched).
+ * wishlist collection detail (e.g. Recently Viewed).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

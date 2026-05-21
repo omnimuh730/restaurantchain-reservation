@@ -46,6 +46,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingScreenTitleHeader
+import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -143,6 +144,7 @@ fun DiningListScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
+                .trackBottomNavScroll()
                 .zIndex(0f),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 48.dp),
         ) {

@@ -147,7 +147,6 @@ fun DiscoverSearchModal(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, Color(0xFFDDDDDD))
                 .padding(horizontal = 24.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -337,7 +336,6 @@ fun DiscoverSearchModal(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, Color(0xFFDDDDDD))
                 .background(palette.cardSurface)
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,

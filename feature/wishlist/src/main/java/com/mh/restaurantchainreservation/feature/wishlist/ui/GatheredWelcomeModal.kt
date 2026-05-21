@@ -247,7 +247,7 @@ private fun ModalContent(
         }
         Spacer(Modifier.height(20.dp))
         Text(
-            text = "We've gathered your recently searched restaurants",
+            text = "We've gathered your recently viewed restaurants",
             color = palette.foreground,
             fontSize = 22.sp,
             fontWeight = FontWeight.SemiBold,
@@ -261,7 +261,7 @@ private fun ModalContent(
         )
         Spacer(Modifier.height(10.dp))
         Text(
-            text = "Restaurants you liked from recent search and discovery stay here so you can compare them later.",
+            text = "Restaurants you viewed from search and discovery stay here so you can compare them later.",
             color = palette.mutedForeground,
             fontSize = 14.sp,
             textAlign = TextAlign.Center,

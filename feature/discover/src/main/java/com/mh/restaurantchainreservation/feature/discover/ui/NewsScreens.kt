@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
+import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.NewsCategory
 import com.mh.restaurantchainreservation.core.model.NewsData
@@ -106,7 +107,7 @@ fun NewsListScreen(
             refreshing = loading,
         )
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().trackBottomNavScroll(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {

@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
@@ -66,6 +67,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.ListGroupI
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroupVariant
 import com.mh.restaurantchainreservation.core.designsystem.components.Stagger
 import com.mh.restaurantchainreservation.core.designsystem.components.StaggerItem
+import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.LocaleManager
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
@@ -95,7 +97,7 @@ fun ProfileHubScreen(
     onOpenCards: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
     onOpenRefer: () -> Unit = {},
-    onLogOut: () -> Unit = {},
+    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -135,6 +137,7 @@ fun ProfileHubScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scroll)
+                .trackBottomNavScroll()
                 .zIndex(0f),
             staggerMs = 40,
             verticalArrangement = Arrangement.spacedBy(HubSurfaceCardDefaults.SectionSpacing),
@@ -198,7 +201,7 @@ fun ProfileHubScreen(
                     onSettingsClick = onOpenSettings,
                     onHelpClick = onOpenHelp,
                     onContactSupportClick = onOpenContactSupport,
-                    onLogOut = onLogOut,
+                    onLogoutClick = onLogout,
                 )
             }
 
@@ -514,7 +517,7 @@ private fun AccountSettingsBlock(
     onSettingsClick: () -> Unit,
     onHelpClick: () -> Unit,
     onContactSupportClick: () -> Unit,
-    onLogOut: () -> Unit,
+    onLogoutClick: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
     val proLabel = stringResource(I18nR.string.profile_menu_pro)
@@ -597,7 +600,7 @@ private fun AccountSettingsBlock(
                     id = "log-out",
                     label = stringResource(I18nR.string.profile_menu_log_out),
                     icon = { MenuIcon(Icons.AutoMirrored.Outlined.Logout, tint = palette.destructive) },
-                    onClick = onLogOut,
+                    onClick = onLogoutClick,
                 ),
             ),
         )

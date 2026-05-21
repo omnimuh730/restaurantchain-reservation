@@ -314,8 +314,8 @@ private fun SearchRestaurantCard(
     index: Int,
 ) {
     val palette = LocalRestaurantPalette.current
-    val collections by WishlistStore.collections.collectAsState()
-    val saved = collections.any { col -> col.restaurants.any { it.id == restaurant.id } }
+    val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
+    val saved = restaurant.id in savedIds
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -372,7 +372,7 @@ private fun SearchRestaurantCard(
                 }
                 HeartButton(
                     active = saved,
-                    onClick = { WishlistStore.openPicker(restaurant) },
+                    onClick = { WishlistStore.onHeartTap(restaurant) },
                     size = HeartButtonSize.Small,
                     containerColor = palette.mutedSurface,
                     activeContainerColor = palette.brandSoftSurface,

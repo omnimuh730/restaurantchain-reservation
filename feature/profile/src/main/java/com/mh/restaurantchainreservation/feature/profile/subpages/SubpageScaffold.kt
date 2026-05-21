@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.components.PageHeader
 import com.mh.restaurantchainreservation.core.designsystem.components.SubpageCollapsingTopBar
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberSubpageCollapsingTopBarScrollBehavior
+import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 
@@ -40,7 +41,7 @@ private fun SubpageSubtitle(text: String, modifier: Modifier = Modifier) {
 
 /**
  * Shared layout for profile sub-pages and wishlist collection detail: [LargeTopAppBar] that
- * collapses when the list below scrolls (same structure as Recently searched).
+ * collapses when the list below scrolls (same structure as Recently Viewed).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,7 +76,8 @@ private fun SubpageCollapsingLayout(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .nestedScroll(scrollBehavior.nestedScrollConnection),
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .trackBottomNavScroll(),
             contentPadding = contentPadding,
         ) {
             if (subtitle != null) {
