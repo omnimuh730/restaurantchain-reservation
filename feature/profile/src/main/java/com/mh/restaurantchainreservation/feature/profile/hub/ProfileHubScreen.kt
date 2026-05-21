@@ -28,7 +28,6 @@ import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.NorthEast
@@ -198,7 +197,6 @@ fun ProfileHubScreen(
                     onLocationClick = onOpenLocation,
                     onSubscriptionClick = onOpenSubscription,
                     onFriendsClick = onOpenFriends,
-                    onCardsClick = onOpenCards,
                     onSettingsClick = onOpenSettings,
                     onHelpClick = onOpenHelp,
                     onContactSupportClick = onOpenContactSupport,
@@ -509,7 +507,6 @@ private fun AccountSettingsBlock(
     onLocationClick: () -> Unit,
     onSubscriptionClick: () -> Unit,
     onFriendsClick: () -> Unit,
-    onCardsClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onHelpClick: () -> Unit,
     onContactSupportClick: () -> Unit,
@@ -567,12 +564,6 @@ private fun AccountSettingsBlock(
                     label = stringResource(I18nR.string.profile_menu_friends),
                     icon = { MenuIcon(Icons.Outlined.PeopleOutline) },
                     onClick = onFriendsClick,
-                ),
-                ListGroupItem(
-                    id = "cards",
-                    label = "Credit cards",
-                    icon = { MenuIcon(Icons.Outlined.CreditCard) },
-                    onClick = onCardsClick,
                 ),
                 ListGroupItem(
                     id = "settings",
