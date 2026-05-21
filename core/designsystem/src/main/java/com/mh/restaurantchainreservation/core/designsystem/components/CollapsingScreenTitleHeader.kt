@@ -32,7 +32,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -44,6 +46,8 @@ object CollapsingTitleHeaderMetrics {
     val expandedBodyHeight = 124.dp
     val collapsedBodyHeight = 56.dp
     val trailingSlotSize = 44.dp
+    /** Visual height of pill-style trailing actions (e.g. wishlist toolbar buttons). */
+    val collapsedTrailingContentHeight = 32.dp
     val titleGapBelowTrailing = 6.dp
     val titleCollapsedLineApprox = 22.dp
     val trailingTopExpanded = 10.dp
@@ -71,8 +75,8 @@ object CollapsingTitleHeaderMetrics {
             subpageHeaderBottomPadding
     }
 
-    private val subpageBackSizeExpanded = 48.dp
-    private val subpageBackSizeCollapsed = 36.dp
+    private val subpageBackSizeExpanded = 40.dp
+    private val subpageBackSizeCollapsed = 32.dp
     private val subpageTitleLineHeightExpanded = 42.dp
 
     fun subpageBackSize(collapseProgress: Float): androidx.compose.ui.unit.Dp {
@@ -82,7 +86,45 @@ object CollapsingTitleHeaderMetrics {
 
     fun subpageIconSize(collapseProgress: Float): androidx.compose.ui.unit.Dp {
         val t = 1f - collapseProgress
-        return 22.dp + 7.dp * t
+        return 20.dp + 4.dp * t
+    }
+
+    /**
+     * Bottom divider alpha for scroll-linked headers: hidden when expanded, full strength when
+     * the title is stuck in the collapsed top bar.
+     */
+    fun stickyHeaderBorderAlpha(collapseProgress: Float): Float =
+        when {
+            collapseProgress < 0.02f -> 0f
+            collapseProgress >= 0.98f -> 1f
+            else -> ((collapseProgress - 0.02f) / 0.96f).coerceIn(0f, 1f)
+        }
+
+    /** Matches dining hub dividers — light gray at 35% when the title is stuck. */
+    const val stickyHeaderBorderAlphaMultiplier = 0.35f
+
+    /**
+     * Top inset for the first lazy list/grid item so content stays aligned under a
+     * [CollapsingScreenTitleHeader] or [CollapsingSubpageScreenHeader].
+     *
+     * When the list cannot scroll (overscroll collapse), [collapseProgress] shrinks the
+     * inset in sync with the header. When the user has scrolled ([firstVisibleItemScrollOffset]
+     * > 0), the inset stays at full expanded height and list scroll carries the motion.
+     */
+    fun collapsingTopContentInset(
+        collapseProgress: Float,
+        expandedBodyHeight: Dp,
+        statusBarTopDp: Dp,
+        firstVisibleItemIndex: Int,
+        firstVisibleItemScrollOffset: Int,
+        contentGap: Dp = 8.dp,
+    ): Dp {
+        val bodyHeight = if (firstVisibleItemIndex > 0 || firstVisibleItemScrollOffset > 0) {
+            expandedBodyHeight
+        } else {
+            lerp(expandedBodyHeight, collapsedBodyHeight, collapseProgress)
+        }
+        return statusBarTopDp + bodyHeight + contentGap
     }
 }
 
@@ -139,22 +181,18 @@ fun CollapsingScreenTitleHeader(
     val strokePx = with(density) { 1.dp.toPx() }
 
     val m = CollapsingTitleHeaderMetrics
-    val bodyHeight = with(density) {
-        lerp(
-            m.expandedBodyHeight.toPx(),
-            m.collapsedBodyHeight.toPx(),
-            collapseProgress,
-        ).toDp()
-    }
+    val bodyHeight = lerp(m.expandedBodyHeight, m.collapsedBodyHeight, collapseProgress)
     val titleFontSp = lerp(34f, 20f, collapseProgress)
     val titleLineHeightSp = lerp(40f, 24f, collapseProgress)
-    val borderAlpha = collapseProgress * 0.45f
+    val borderAlpha = m.stickyHeaderBorderAlpha(collapseProgress)
+    val titleBlockHeight = with(density) { titleLineHeightSp.sp.toDp() }
+    val trailingContentHeight = m.collapsedTrailingContentHeight
 
-    val trailingTopCollapsed = (bodyHeight - m.trailingSlotSize) / 2f
+    val trailingTopCollapsed = (bodyHeight - trailingContentHeight) / 2f
     val trailingOffsetY = m.trailingTopExpanded + (trailingTopCollapsed - m.trailingTopExpanded) * collapseProgress
 
     val titleTopExpanded = m.trailingTopExpanded + m.trailingSlotSize + m.titleGapBelowTrailing
-    val titleTopCollapsed = (bodyHeight - m.titleCollapsedLineApprox) / 2f
+    val titleTopCollapsed = (bodyHeight - titleBlockHeight) / 2f
     val titleOffsetY = titleTopExpanded + (titleTopCollapsed - titleTopExpanded) * collapseProgress
 
     val headerBackground = if (palette.isDark) {
@@ -178,7 +216,9 @@ fun CollapsingScreenTitleHeader(
                 .drawBehind {
                     if (borderAlpha > 0.004f) {
                         drawLine(
-                            color = palette.border.copy(alpha = borderAlpha),
+                            color = palette.border.copy(
+                                alpha = m.stickyHeaderBorderAlphaMultiplier * borderAlpha,
+                            ),
                             start = Offset(0f, size.height - strokePx * 0.5f),
                             end = Offset(size.width, size.height - strokePx * 0.5f),
                             strokeWidth = strokePx,
@@ -251,37 +291,23 @@ fun CollapsingSubpageScreenHeader(
     val hasSubtitle = subtitle != null
     val hasActions = actions != null
     val expandedBodyDp = m.subpageExpandedBodyHeight(hasSubtitle)
-    val bodyHeight = with(density) {
-        lerp(
-            expandedBodyDp.toPx(),
-            m.collapsedBodyHeight.toPx(),
-            collapseProgress,
-        ).toDp()
-    }
+    val bodyHeight = lerp(expandedBodyDp, m.collapsedBodyHeight, collapseProgress)
     val backSize = m.subpageBackSize(collapseProgress)
     val titleFontSp = lerp(titleFontExpandedSp, titleFontCollapsedSp, collapseProgress)
     val titleLineHeightSp = lerp(titleLineHeightExpandedSp, titleLineHeightCollapsedSp, collapseProgress)
-    val borderAlpha = collapseProgress * 0.45f
+    val borderAlpha = m.stickyHeaderBorderAlpha(collapseProgress)
 
     val titleBlockHeight = with(density) { titleLineHeightSp.sp.toDp() }
     val controlRowHeight = backSize
     val controlsTopExpanded = m.subpageRowTopExpanded
     val controlsTopCollapsed = (bodyHeight - controlRowHeight) / 2f
-    val controlsRowY = with(density) {
-        lerp(controlsTopExpanded.toPx(), controlsTopCollapsed.toPx(), collapseProgress).toDp()
-    }
+    val controlsRowY = lerp(controlsTopExpanded, controlsTopCollapsed, collapseProgress)
     val titleYExpanded = controlsRowY + controlRowHeight + m.subpageTitleGapBelowControls
     val titleYCollapsed = controlsRowY + (controlRowHeight - titleBlockHeight) / 2f
-    val titleOffsetY = with(density) {
-        lerp(titleYExpanded.toPx(), titleYCollapsed.toPx(), collapseProgress).toDp()
-    }
-    val titleStartInset = with(density) {
-        lerp(0f, (backSize + 8.dp).toPx(), collapseProgress).toDp()
-    }
+    val titleOffsetY = lerp(titleYExpanded, titleYCollapsed, collapseProgress)
+    val titleStartInset = lerp(0.dp, backSize + 8.dp, collapseProgress)
     val titleEndPad = if (hasActions) {
-        with(density) {
-            lerp(startPad.toPx(), m.subpageCollapsedTrailingReserve.toPx(), collapseProgress).toDp()
-        }
+        lerp(startPad, m.subpageCollapsedTrailingReserve, collapseProgress)
     } else {
         startPad
     }
@@ -307,7 +333,9 @@ fun CollapsingSubpageScreenHeader(
                 .drawBehind {
                     if (borderAlpha > 0.004f) {
                         drawLine(
-                            color = palette.border.copy(alpha = borderAlpha),
+                            color = palette.border.copy(
+                                alpha = m.stickyHeaderBorderAlphaMultiplier * borderAlpha,
+                            ),
                             start = Offset(0f, size.height - strokePx * 0.5f),
                             end = Offset(size.width, size.height - strokePx * 0.5f),
                             strokeWidth = strokePx,

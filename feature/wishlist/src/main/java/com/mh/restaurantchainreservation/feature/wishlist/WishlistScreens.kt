@@ -1,6 +1,7 @@
 package com.mh.restaurantchainreservation.feature.wishlist
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -8,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,6 +29,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -36,14 +41,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,30 +58,30 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingScreenTitleHeader
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageHeaderIconButton
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageScreenHeader
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
-import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
-import com.mh.restaurantchainreservation.core.designsystem.components.SubpageCollapsingTopBar
-import com.mh.restaurantchainreservation.core.designsystem.components.rememberSubpageCollapsingTopBarScrollBehavior
-import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
-import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
+import com.mh.restaurantchainreservation.core.designsystem.components.collapsingHeaderGridScroll
+import com.mh.restaurantchainreservation.core.designsystem.components.collapsingHeaderListScroll
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberCollapsingHeaderScrollState
+import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.DiscoverData
 import com.mh.restaurantchainreservation.core.model.Restaurant
@@ -87,6 +89,11 @@ import com.mh.restaurantchainreservation.core.model.WishlistCollection
 import com.mh.restaurantchainreservation.core.model.WishlistStore
 import com.mh.restaurantchainreservation.feature.wishlist.ui.GatheredWelcomeModal
 import com.mh.restaurantchainreservation.feature.wishlist.ui.ImageGrid
+import com.mh.restaurantchainreservation.feature.wishlist.ui.RecentlyViewedGridItem
+import com.mh.restaurantchainreservation.feature.wishlist.ui.WishlistRestaurantResultCard
+import com.mh.restaurantchainreservation.feature.wishlist.ui.WishlistSettingsSheet
+import com.mh.restaurantchainreservation.feature.wishlist.ui.WishlistShareFriendsSheet
+import com.mh.restaurantchainreservation.core.model.groupRecentlyViewedByDay
 import kotlinx.coroutines.delay
 
 object WishlistRoutes {
@@ -120,6 +127,9 @@ fun WishlistScreen(
     LaunchedEffect(openCollectionId) {
         if (openCollectionId != null) {
             managingCollections = false
+            if (openCollectionId != WishlistStore.RECENT_COLLECTION_ID) {
+                editing = false
+            }
         }
     }
 
@@ -188,7 +198,6 @@ fun WishlistScreen(
                             WishlistStore.closeOpenCollection()
                             editing = false
                         },
-                        onRemove = { rid -> WishlistStore.removeFromAll(rid) },
                         onOpenRestaurant = onOpenRestaurant,
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -198,13 +207,9 @@ fun WishlistScreen(
     }
 
     if (onHome && showWelcome && !gatheredShown) {
-        val recent = collections.firstOrNull { it.id == "recent" }?.restaurants
-            ?: emptyList()
-        val tileImages = if (recent.isEmpty()) {
-            DiscoverData.MONTHLY_BEST.take(4).map { it.image }
-        } else {
-            recent.take(4).map { it.image }
-        }
+        val recent = collections.firstOrNull { it.id == WishlistStore.RECENT_COLLECTION_ID }
+        val tileImages = recent?.displayRestaurants()?.take(4)?.map { it.image }
+            ?: DiscoverData.MONTHLY_BEST.take(4).map { it.image }
         GatheredWelcomeModal(
             images = tileImages,
             onDismiss = {
@@ -221,9 +226,11 @@ fun WishlistScreen(
             confirmLabel = "Create",
             onDismiss = { createDialogOpen = false },
             onConfirm = {
-                WishlistStore.createCollection(it)
-                createDialogOpen = false
+                if (WishlistStore.createCollection(it)) {
+                    createDialogOpen = false
+                }
             },
+            nameTaken = { WishlistStore.isWishlistNameTaken(it) },
         )
     }
 
@@ -234,9 +241,11 @@ fun WishlistScreen(
             confirmLabel = "Save",
             onDismiss = { renameDialog = null },
             onConfirm = {
-                WishlistStore.renameCollection(collection.id, it)
-                renameDialog = null
+                if (WishlistStore.renameCollection(collection.id, it)) {
+                    renameDialog = null
+                }
             },
+            nameTaken = { WishlistStore.isWishlistNameTaken(it, excludingCollectionId = collection.id) },
         )
     }
 
@@ -272,14 +281,21 @@ private fun WishlistHomeContent(
         }
             .coerceAtLeast(1f)
     }
+    val headerScroll = rememberCollapsingHeaderScrollState(collapseRangePx)
+    headerScroll.BindGridResetOnShortContent(gridState)
     val statusBarTopDp = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     val collapseProgress by remember {
+        derivedStateOf { headerScroll.collapseProgress(gridState) }
+    }
+    val topContentInset by remember {
         derivedStateOf {
-            if (gridState.firstVisibleItemIndex == 0) {
-                (gridState.firstVisibleItemScrollOffset / collapseRangePx).coerceIn(0f, 1f)
-            } else {
-                1f
-            }
+            CollapsingTitleHeaderMetrics.collapsingTopContentInset(
+                collapseProgress = collapseProgress,
+                expandedBodyHeight = CollapsingTitleHeaderMetrics.expandedBodyHeight,
+                statusBarTopDp = statusBarTopDp,
+                firstVisibleItemIndex = gridState.firstVisibleItemIndex,
+                firstVisibleItemScrollOffset = gridState.firstVisibleItemScrollOffset,
+            )
         }
     }
 
@@ -287,17 +303,16 @@ private fun WishlistHomeContent(
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             state = gridState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .collapsingHeaderGridScroll(headerScroll, gridState)
+                .trackBottomNavScroll(),
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 48.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
-                Spacer(
-                    Modifier.height(
-                        CollapsingTitleHeaderMetrics.expandedBodyHeight + statusBarTopDp + 8.dp,
-                    ),
-                )
+                Spacer(Modifier.height(topContentInset))
             }
             items(collections, key = { it.id }) { col ->
                 CollectionCard(
@@ -317,7 +332,9 @@ private fun WishlistHomeContent(
         CollapsingScreenTitleHeader(
             title = "Wishlists",
             collapseProgress = collapseProgress,
-            modifier = Modifier.align(Alignment.TopCenter),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(2f),
             trailing = {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -361,7 +378,7 @@ private fun CollectionCard(
                 .clip(RoundedCornerShape(18.dp))
                 .background(palette.mutedSurface),
         ) {
-            ImageGrid(images = collection.restaurants.map { it.image })
+            ImageGrid(images = collection.displayRestaurants().map { it.image })
             if (managing && !collection.isDefault) {
                 Row(
                     modifier = Modifier
@@ -382,7 +399,11 @@ private fun CollectionCard(
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
         )
-        val subtitle = if (collection.id == "recent") "Today" else "${collection.restaurants.size} saved"
+        val subtitle = if (collection.id == WishlistStore.RECENT_COLLECTION_ID) {
+            recentlyViewedSubtitle(collection)
+        } else {
+            "${collection.itemCount()} saved"
+        }
         Text(
             text = subtitle,
             color = palette.mutedForeground,
@@ -392,34 +413,146 @@ private fun CollectionCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WishlistDetailPage(
     collection: WishlistCollection,
     editing: Boolean,
     onToggleEdit: () -> Unit,
     onBack: () -> Unit,
-    onRemove: (String) -> Unit,
+    onOpenRestaurant: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (collection.isDefault) {
+        RecentlyViewedDetailPage(
+            collection = collection,
+            editing = editing,
+            onToggleEdit = onToggleEdit,
+            onBack = onBack,
+            onOpenRestaurant = onOpenRestaurant,
+            modifier = modifier,
+        )
+    } else {
+        UserWishlistDetailPage(
+            collection = collection,
+            onBack = {
+                WishlistStore.flushUnsavedInCollection(collection.id)
+                onBack()
+            },
+            onOpenRestaurant = onOpenRestaurant,
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+private fun RecentlyViewedDetailPage(
+    collection: WishlistCollection,
+    editing: Boolean,
+    onToggleEdit: () -> Unit,
+    onBack: () -> Unit,
     onOpenRestaurant: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val scrollBehavior = rememberSubpageCollapsingTopBarScrollBehavior()
-    val subtitle = if (collection.id == "recent") {
-        "Today"
-    } else {
-        "${collection.restaurants.size} saved"
+    val gridState = rememberLazyGridState()
+    val density = LocalDensity.current
+    val headerExpandedHeight = CollapsingTitleHeaderMetrics.subpageExpandedBodyHeight(hasSubtitle = false)
+    val collapseRangePx = remember(density, headerExpandedHeight) {
+        with(density) {
+            (headerExpandedHeight - CollapsingTitleHeaderMetrics.collapsedBodyHeight).toPx()
+        }.coerceAtLeast(1f)
     }
-    Column(
+    val headerScroll = rememberCollapsingHeaderScrollState(collapseRangePx)
+    headerScroll.BindGridResetOnShortContent(gridState)
+    val statusBarTopDp = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+    val collapseProgress by remember {
+        derivedStateOf { headerScroll.collapseProgress(gridState) }
+    }
+    val topContentInset by remember {
+        derivedStateOf {
+            CollapsingTitleHeaderMetrics.collapsingTopContentInset(
+                collapseProgress = collapseProgress,
+                expandedBodyHeight = headerExpandedHeight,
+                statusBarTopDp = statusBarTopDp,
+                firstVisibleItemIndex = gridState.firstVisibleItemIndex,
+                firstVisibleItemScrollOffset = gridState.firstVisibleItemScrollOffset,
+            )
+        }
+    }
+    val dayGroups = remember(collection.recentlyViewed) {
+        groupRecentlyViewedByDay(collection.recentlyViewed)
+    }
+    val itemPlacementSpec = spring<IntOffset>(
+        stiffness = Spring.StiffnessMediumLow,
+        dampingRatio = Spring.DampingRatioNoBouncy,
+    )
+    val itemFadeSpec = spring<Float>(stiffness = Spring.StiffnessMediumLow)
+
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(palette.cardSurface),
     ) {
-        SubpageCollapsingTopBar(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            state = gridState,
+            modifier = Modifier
+                .fillMaxSize()
+                .collapsingHeaderGridScroll(headerScroll, gridState)
+                .trackBottomNavScroll(),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 100.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Spacer(Modifier.height(topContentInset))
+            }
+            dayGroups.forEach { group ->
+                item(
+                    span = { GridItemSpan(maxLineSpan) },
+                    key = "header-${group.dayLabel}",
+                ) {
+                    Text(
+                        text = group.dayLabel,
+                        color = palette.foreground,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .padding(top = 8.dp, bottom = 12.dp)
+                            .animateItem(
+                                fadeInSpec = itemFadeSpec,
+                                fadeOutSpec = itemFadeSpec,
+                                placementSpec = itemPlacementSpec,
+                            ),
+                    )
+                }
+                items(group.entries, key = { it.restaurant.id }) { entry ->
+                    RecentlyViewedGridItem(
+                        restaurant = entry.restaurant,
+                        editing = editing,
+                        onOpen = { onOpenRestaurant(entry.restaurant.id) },
+                        onRemoveFromRecentlyViewed = {
+                            WishlistStore.removeFromRecentlyViewed(entry.restaurant.id)
+                        },
+                        onHeartTap = { WishlistStore.onHeartTapInRecentlyViewed(entry.restaurant) },
+                        modifier = Modifier.animateItem(
+                            fadeInSpec = itemFadeSpec,
+                            fadeOutSpec = itemFadeSpec,
+                            placementSpec = itemPlacementSpec,
+                        ),
+                    )
+                }
+            }
+        }
+
+        CollapsingSubpageScreenHeader(
             title = collection.title,
+            collapseProgress = collapseProgress,
             onBack = onBack,
             backContentDescription = "Back",
-            scrollBehavior = scrollBehavior,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(2f),
             actions = {
                 Text(
                     text = if (editing) "Done" else "Edit",
@@ -434,106 +567,235 @@ private fun WishlistDetailPage(
                 )
             },
         )
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+    }
+}
+
+private fun recentlyViewedSubtitle(collection: WishlistCollection): String {
+    val groups = groupRecentlyViewedByDay(collection.recentlyViewed)
+    return when {
+        groups.isEmpty() -> "No history yet"
+        groups.size == 1 -> groups.first().dayLabel
+        else -> "${collection.itemCount()} places"
+    }
+}
+
+@Composable
+private fun UserWishlistDetailPage(
+    collection: WishlistCollection,
+    onBack: () -> Unit,
+    onOpenRestaurant: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    val listState = rememberLazyListState()
+    val density = LocalDensity.current
+    val subtitle = "${collection.itemCount()} saved"
+    val headerExpandedHeight = CollapsingTitleHeaderMetrics.subpageExpandedBodyHeight(hasSubtitle = true)
+    val collapseRangePx = remember(density, headerExpandedHeight) {
+        with(density) {
+            (headerExpandedHeight - CollapsingTitleHeaderMetrics.collapsedBodyHeight).toPx()
+        }.coerceAtLeast(1f)
+    }
+    val headerScroll = rememberCollapsingHeaderScrollState(collapseRangePx)
+    headerScroll.BindListResetOnShortContent(listState)
+    val statusBarTopDp = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+    val collapseProgress by remember {
+        derivedStateOf { headerScroll.collapseProgress(listState) }
+    }
+    val topContentInset by remember {
+        derivedStateOf {
+            CollapsingTitleHeaderMetrics.collapsingTopContentInset(
+                collapseProgress = collapseProgress,
+                expandedBodyHeight = headerExpandedHeight,
+                statusBarTopDp = statusBarTopDp,
+                firstVisibleItemIndex = listState.firstVisibleItemIndex,
+                firstVisibleItemScrollOffset = listState.firstVisibleItemScrollOffset,
+            )
+        }
+    }
+    var showSettings by remember { mutableStateOf(false) }
+    var showShareFriends by remember { mutableStateOf(false) }
+    var renameDialogOpen by remember { mutableStateOf(false) }
+    var deleteCollectionDialog by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(palette.cardSurface),
+    ) {
+        LazyColumn(
+            state = listState,
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .nestedScroll(scrollBehavior.nestedScrollConnection),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 100.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+                .fillMaxSize()
+                .collapsingHeaderListScroll(headerScroll, listState)
+                .trackBottomNavScroll(),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 100.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Text(
-                    text = subtitle,
-                    color = palette.mutedForeground,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(bottom = 12.dp),
-                )
+            item {
+                Spacer(Modifier.height(topContentInset))
             }
             items(collection.restaurants, key = { it.id }) { restaurant ->
-                DetailItem(
+                WishlistRestaurantResultCard(
                     restaurant = restaurant,
-                    showRemove = editing,
-                    onRemove = { onRemove(restaurant.id) },
-                    onClick = {
-                        if (!editing) onOpenRestaurant(restaurant.id)
+                    onClick = { onOpenRestaurant(restaurant.id) },
+                    onHeartTap = {
+                        if (WishlistStore.isSaved(restaurant.id)) {
+                            WishlistStore.unsaveInCollectionKeepingInList(collection.id, restaurant)
+                        } else {
+                            WishlistStore.saveToCollection(collection.id, restaurant)
+                        }
                     },
                 )
             }
+        }
+
+        CollapsingSubpageScreenHeader(
+            title = collection.title,
+            collapseProgress = collapseProgress,
+            onBack = onBack,
+            backContentDescription = "Back",
+            subtitle = subtitle,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(2f),
+            actions = { progress ->
+                CollapsingSubpageHeaderIconButton(
+                    collapseProgress = progress,
+                    onClick = { showSettings = true },
+                    contentDescription = "Wishlist options",
+                    imageVector = Icons.Outlined.MoreVert,
+                )
+            },
+        )
+    }
+
+    if (showSettings) {
+        WishlistSettingsSheet(
+            onDismiss = { showSettings = false },
+            onShare = { showShareFriends = true },
+            onRename = { renameDialogOpen = true },
+            onDelete = { deleteCollectionDialog = true },
+        )
+    }
+
+    if (showShareFriends) {
+        WishlistShareFriendsSheet(
+            collection = collection,
+            onDismiss = { showShareFriends = false },
+        )
+    }
+
+    if (renameDialogOpen) {
+        WishlistNameDialog(
+            title = "Rename wishlist",
+            initialValue = collection.title,
+            confirmLabel = "Save",
+            onDismiss = { renameDialogOpen = false },
+            onConfirm = {
+                if (WishlistStore.renameCollection(collection.id, it)) {
+                    renameDialogOpen = false
+                }
+            },
+            nameTaken = { WishlistStore.isWishlistNameTaken(it, excludingCollectionId = collection.id) },
+        )
+    }
+
+    if (deleteCollectionDialog) {
+        ConfirmDeleteDialog(
+            title = collection.title,
+            onDismiss = { deleteCollectionDialog = false },
+            onConfirm = {
+                WishlistStore.deleteCollection(collection.id)
+                deleteCollectionDialog = false
+                onBack()
+            },
+        )
+    }
+
+    androidx.compose.runtime.DisposableEffect(collection.id) {
+        onDispose {
+            WishlistStore.flushUnsavedInCollection(collection.id)
         }
     }
 }
 
 @Composable
-private fun DetailItem(
-    restaurant: Restaurant,
-    showRemove: Boolean,
-    onRemove: () -> Unit,
-    onClick: () -> Unit,
+private fun ConfirmRemoveFromWishlistDialog(
+    collectionTitle: String,
+    restaurantName: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = !showRemove, onClick = onClick),
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .clip(RoundedCornerShape(16.dp))
-                .background(palette.mutedSurface),
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.35f))
+                .clickable(onClick = onDismiss),
+            contentAlignment = Alignment.Center,
         ) {
-            AsyncImage(
-                model = restaurant.image,
-                contentDescription = restaurant.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
-            if (showRemove) {
-                HeartButton(
-                    active = true,
-                    onClick = onRemove,
-                    size = HeartButtonSize.Medium,
-                    style = HeartButtonStyle.Overlay,
-                    contentDescription = "Remove",
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(10.dp),
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(palette.cardSurface)
+                    .clickable {}
+                    .padding(20.dp),
+            ) {
+                Text(
+                    text = "Remove from wishlist?",
+                    color = palette.foreground,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
                 )
+                Text(
+                    text = "\"$restaurantName\" will be removed from \"$collectionTitle\".",
+                    color = palette.mutedForeground,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    modifier = Modifier.padding(top = 10.dp),
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 20.dp),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    Text(
+                        text = "Cancel",
+                        color = palette.foreground,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable(onClick = onDismiss)
+                            .padding(horizontal = 10.dp, vertical = 10.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(palette.destructive)
+                            .clickable(onClick = onConfirm)
+                            .padding(horizontal = 22.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "Remove",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
             }
-        }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = restaurant.name,
-            color = palette.foreground,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-        )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = restaurant.cuisine,
-                color = palette.mutedForeground,
-                fontSize = 12.sp,
-                maxLines = 1,
-                modifier = Modifier.weight(1f, fill = false),
-            )
-            Spacer(Modifier.size(6.dp))
-            Icon(
-                imageVector = Icons.Filled.Star,
-                contentDescription = null,
-                tint = palette.brand,
-                modifier = Modifier.size(11.dp),
-            )
-            Spacer(Modifier.size(2.dp))
-            Text(
-                text = "%.1f".format(restaurant.rating),
-                color = palette.mutedForeground,
-                fontSize = 12.sp,
-            )
         }
     }
 }
@@ -549,19 +811,19 @@ private fun ToolbarTextButton(
     val pillBackground = if (palette.isDark) palette.mutedSurface else palette.cardSurface
     Row(
         modifier = Modifier
-            .heightIn(min = 38.dp)
+            .heightIn(min = 32.dp)
             .clip(pillShape)
             .background(pillBackground, pillShape)
             .border(1.dp, palette.border, pillShape)
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 9.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         if (icon != null) {
-            Icon(icon, contentDescription = null, tint = palette.foreground, modifier = Modifier.size(16.dp))
+            Icon(icon, contentDescription = null, tint = palette.foreground, modifier = Modifier.size(14.dp))
         }
-        Text(text, color = palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        Text(text, color = palette.foreground, fontSize = 12.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -597,9 +859,12 @@ private fun WishlistNameDialog(
     confirmLabel: String,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit,
+    nameTaken: (String) -> Boolean = { false },
 ) {
     val palette = LocalRestaurantPalette.current
     var name by rememberSaveable(initialValue) { mutableStateOf(initialValue) }
+    val trimmed = name.trim()
+    val duplicate = trimmed.isNotEmpty() && nameTaken(trimmed)
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -644,7 +909,15 @@ private fun WishlistNameDialog(
                     )
                 }
                 Text("${name.length}/50 characters", color = palette.mutedForeground, fontSize = 12.sp, modifier = Modifier.padding(top = 7.dp))
-                val canCreate = name.trim().isNotEmpty()
+                if (duplicate) {
+                    Text(
+                        text = "You already have a wishlist with this name.",
+                        color = palette.destructive,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
+                val canCreate = trimmed.isNotEmpty() && !duplicate
                 val actionShape = RoundedCornerShape(14.dp)
                 val actionHeight = 50.dp
                 Row(
@@ -722,7 +995,7 @@ private fun ConfirmDeleteDialog(
             ) {
                 Text("Delete wishlist?", color = palette.foreground, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Text(
-                    "Restaurants saved in \"$title\" will move back to Recently searched restaurants.",
+                    "Restaurants saved in \"$title\" will move back to Recently Viewed.",
                     color = palette.mutedForeground,
                     fontSize = 14.sp,
                     lineHeight = 20.sp,

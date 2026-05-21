@@ -47,6 +47,7 @@ import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
+import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.City
 import com.mh.restaurantchainreservation.core.model.DiscoverData
@@ -122,7 +123,7 @@ fun WhereToEatAreaListScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().trackBottomNavScroll(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -148,9 +149,9 @@ private fun WhereToEatAreaCard(
         if (restaurants.isEmpty()) 0.0 else restaurants.map { it.rating }.average()
     }
     val totalReviews = remember(restaurants) { restaurants.sumOf { it.reviews } }
-    val collections by WishlistStore.collections.collectAsState()
-    val areaWishlisted = remember(collections, city.id) {
-        restaurants.any { r -> collections.any { col -> col.restaurants.any { it.id == r.id } } }
+    val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
+    val areaWishlisted = remember(savedIds, restaurants) {
+        restaurants.any { it.id in savedIds }
     }
 
     Column(
@@ -193,7 +194,7 @@ private fun WhereToEatAreaCard(
             if (restaurants.isNotEmpty()) {
                 HeartButton(
                     active = areaWishlisted,
-                    onClick = { restaurants.firstOrNull()?.let { WishlistStore.openPicker(it) } },
+                    onClick = { restaurants.firstOrNull()?.let { WishlistStore.onHeartTap(it) } },
                     size = HeartButtonSize.Medium,
                     style = HeartButtonStyle.Overlay,
                     overlayContentAlignment = Alignment.TopCenter,
@@ -361,7 +362,7 @@ fun FoodTypeCuisineListScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().trackBottomNavScroll(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {

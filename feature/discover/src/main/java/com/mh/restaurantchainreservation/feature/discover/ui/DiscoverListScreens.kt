@@ -51,6 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.DiscoverData
 import com.mh.restaurantchainreservation.core.model.Restaurant
@@ -131,6 +132,7 @@ fun SectionListScreen(
         "date-night" -> "Date Night Picks"
         "where-to-eat" -> "Where to Eat?"
         "top-picks-food" -> "Top Picks by Food Type"
+        "1" -> "Banner1"
         else -> "Featured"
     }
     ListScaffold(
@@ -268,7 +270,7 @@ private fun ListScaffold(
             } else {
                 val selectedDayMillis = selectedDay.timeInMillis
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().trackBottomNavScroll(),
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {

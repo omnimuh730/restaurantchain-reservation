@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.model.WishlistToastKind
 import com.mh.restaurantchainreservation.core.model.WishlistToastState
 
 /**
@@ -70,14 +71,17 @@ fun WishlistSavedToast(
                 fadeOut(tween(180)) + scaleOut(targetScale = 0.96f, animationSpec = tween(180)),
         ) {
             if (toast != null) {
-                ToastCard(toast = toast, onChange = onChange)
+                ToastCard(
+                    toast = toast,
+                    onChange = if (toast.kind == WishlistToastKind.Saved) onChange else null,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ToastCard(toast: WishlistToastState, onChange: () -> Unit) {
+private fun ToastCard(toast: WishlistToastState, onChange: (() -> Unit)?) {
     val palette = LocalRestaurantPalette.current
     Row(
         modifier = Modifier
@@ -102,7 +106,7 @@ private fun ToastCard(toast: WishlistToastState, onChange: () -> Unit) {
                     .clip(RoundedCornerShape(10.dp)),
             )
             HeartDrawableIcon(
-                active = true,
+                active = toast.kind == WishlistToastKind.Saved,
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -115,14 +119,24 @@ private fun ToastCard(toast: WishlistToastState, onChange: () -> Unit) {
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            val savedTo = buildAnnotatedString {
-                append("Saved to ")
-                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = palette.foreground)) {
-                    append(toast.collectionTitle)
+            val headline = buildAnnotatedString {
+                when (toast.kind) {
+                    WishlistToastKind.Saved -> {
+                        append("Saved to ")
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = palette.foreground)) {
+                            append(toast.collectionTitle)
+                        }
+                    }
+                    WishlistToastKind.Removed -> {
+                        append("Removed from ")
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = palette.foreground)) {
+                            append(toast.collectionTitle)
+                        }
+                    }
                 }
             }
             Text(
-                text = savedTo,
+                text = headline,
                 color = palette.foreground,
                 fontSize = 14.sp,
                 maxLines = 1,
@@ -134,17 +148,19 @@ private fun ToastCard(toast: WishlistToastState, onChange: () -> Unit) {
                 maxLines = 1,
             )
         }
-        Spacer(Modifier.size(8.dp))
-        Text(
-            text = "Change",
-            color = palette.foreground,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 14.sp,
-            textDecoration = TextDecoration.Underline,
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .clickable { onChange() }
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-        )
+        if (onChange != null) {
+            Spacer(Modifier.size(8.dp))
+            Text(
+                text = "Change",
+                color = palette.foreground,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onChange() }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+            )
+        }
     }
 }

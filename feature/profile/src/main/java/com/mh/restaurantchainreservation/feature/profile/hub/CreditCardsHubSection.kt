@@ -164,7 +164,7 @@ fun CreditCardsHubSection(
                 val target = maxWidth * 0.84f
                 val capped = if (target > 334.dp) 334.dp else target
                 val floored = if (capped < 258.dp) 258.dp else capped
-                if (floored > maxWidth - 10.dp) maxWidth - 10.dp else floored
+                (if (floored > maxWidth - 10.dp) maxWidth - 10.dp else floored).coerceAtLeast(1.dp)
             }
             val sidePad = remember(maxWidth, cardWidth) {
                 ((maxWidth - cardWidth) / 2).coerceAtLeast(0.dp)

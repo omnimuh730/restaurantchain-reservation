@@ -30,6 +30,9 @@ enum class AmenityIconType {
     Birthday,
     DressCode,
     CardPayment,
+    Cash,
+    Cuisine,
+    DataConnection,
     OutdoorHeating,
     FullBar,
     Takeout,
@@ -47,7 +50,17 @@ data class AmenityCategory(
 
 object RestaurantAmenitiesData {
 
-    fun categories(restaurant: Restaurant, ext: RestaurantExtendedData): List<AmenityCategory> {
+    fun placeOfferChipCategories(ext: RestaurantExtendedData): List<PlaceOfferChipCategory> {
+        val offers = ext.placeOffers
+        return listOf(
+            PlaceOfferChipCategory("Cuisine", offers.cuisineChips),
+            PlaceOfferChipCategory("Time", offers.hoursChips),
+            PlaceOfferChipCategory("Payments", offers.paymentChips),
+            PlaceOfferChipCategory("Amenities", offers.amenityChips),
+        ).filter { it.chips.isNotEmpty() }
+    }
+
+    fun extendedCategories(restaurant: Restaurant, ext: RestaurantExtendedData): List<AmenityCategory> {
         val seed = restaurant.id.hashCode().and(0x7FFFFFFF)
         val hasFineDining = ext.tags.any { it.contains("Fine", ignoreCase = true) || it.contains("Omakase", ignoreCase = true) }
         val hasWine = ext.tags.any { it.contains("Wine", ignoreCase = true) || it.contains("Bistro", ignoreCase = true) }
@@ -92,12 +105,10 @@ object RestaurantAmenitiesData {
             if (seed % 3 == 0) add(RestaurantAmenityItem("Live music (select nights)", AmenityIconType.LiveMusic))
             add(RestaurantAmenityItem("Quiet tables on request", AmenityIconType.Quiet))
             add(RestaurantAmenityItem("Romantic lighting", AmenityIconType.Romantic))
-            if (seed % 2 == 0) add(RestaurantAmenityItem("Heated outdoor patio", AmenityIconType.OutdoorHeating))
-            add(RestaurantAmenityItem("Free Wi‑Fi", AmenityIconType.Wifi))
+            if (seed % 2 == 0)             add(RestaurantAmenityItem("Heated outdoor patio", AmenityIconType.OutdoorHeating))
         }
 
         val policies = buildList {
-            add(RestaurantAmenityItem("Credit cards accepted", AmenityIconType.CardPayment))
             add(RestaurantAmenityItem("Phone: ${ext.phone}", AmenityIconType.Phone))
             if (seed % 4 == 0) add(RestaurantAmenityItem("Pet-friendly patio", AmenityIconType.PetFriendly))
             add(RestaurantAmenityItem("Corkage available", AmenityIconType.Corkage))
@@ -114,10 +125,4 @@ object RestaurantAmenitiesData {
             AmenityCategory("Reservations & policies", policies),
         )
     }
-
-    /** First few amenities shown on the restaurant detail preview. */
-    fun previewItems(restaurant: Restaurant, ext: RestaurantExtendedData): List<RestaurantAmenityItem> =
-        categories(restaurant, ext)
-            .flatMap { it.items }
-            .take(5)
 }

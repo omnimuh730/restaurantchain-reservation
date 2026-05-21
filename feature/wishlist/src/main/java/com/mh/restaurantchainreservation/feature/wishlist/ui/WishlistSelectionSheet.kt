@@ -2,9 +2,7 @@ package com.mh.restaurantchainreservation.feature.wishlist.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.keyframes
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -20,17 +18,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -45,8 +39,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -64,14 +61,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
@@ -83,115 +77,63 @@ import kotlinx.coroutines.launch
 private enum class SheetView { Select, Create }
 
 /**
- * The Airbnb-style "Save to wishlist" sheet. Slides up from the bottom, has
- * two switchable views: a 2-col grid of collections (with a save animation
- * overlay on a tapped cover), and a "Create wishlist" form.
+ * Airbnb-style "Save to wishlist" sheet. Uses [ModalBottomSheet] like [PlanPickerSheet] so the
+ * sheet background extends edge-to-edge over the system navigation bar.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WishlistSelectionSheet(
     restaurant: Restaurant,
     onDismiss: () -> Unit,
 ) {
     val collections by WishlistStore.collections.collectAsState()
+    val selectableCollections = remember(collections) {
+        collections.filterNot { it.isDefault }
+    }
     var view by remember { mutableStateOf(SheetView.Select) }
     var savingCollectionId by remember { mutableStateOf<String?>(null) }
 
-    val backdropAlpha = remember { Animatable(0f) }
-    val sheetOffset = remember { Animatable(1f) }
-    val sheetScale = remember { Animatable(0.98f) }
+    val palette = LocalRestaurantPalette.current
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
-    var dismissing by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        scope.launch { backdropAlpha.animateTo(1f, tween(220, easing = LinearOutSlowInEasing)) }
+    val hideSheet: () -> Unit = {
         scope.launch {
-            sheetOffset.animateTo(
-                targetValue = 0f,
-                animationSpec = spring(dampingRatio = 0.85f, stiffness = 270f),
-            )
-        }
-        scope.launch {
-            sheetScale.animateTo(
-                targetValue = 1f,
-                animationSpec = spring(dampingRatio = 0.85f, stiffness = 270f),
-            )
+            sheetState.hide()
         }
     }
 
-    val triggerDismiss: () -> Unit = remember {
-        {
-            if (!dismissing) {
-                dismissing = true
-                scope.launch {
-                    val a = launch { backdropAlpha.animateTo(0f, tween(180)) }
-                    val b = launch { sheetOffset.animateTo(1f, tween(220)) }
-                    a.join(); b.join()
-                    onDismiss()
-                }
-            }
-        }
-    }
-
-    Dialog(
-        onDismissRequest = triggerDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnBackPress = true,
-            dismissOnClickOutside = false,
-        ),
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = palette.cardSurface,
+        contentColor = palette.foreground,
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        dragHandle = null,
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Backdrop.
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = backdropAlpha.value * 0.4f))
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                    ) { triggerDismiss() },
-            )
-
-            // Sheet container, anchored to the bottom.
-            val density = LocalDensity.current
-            // Convert offset (0..1) into pixels approximating sheet height (88vh).
-            val sheetTranslateY = with(density) { (sheetOffset.value * 800.dp.toPx()) }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .widthIn(max = 560.dp)
-                    .heightIn(max = 720.dp)
-                    .graphicsLayer {
-                        translationY = sheetTranslateY
-                        scaleX = sheetScale.value
-                        scaleY = sheetScale.value
-                    },
-            ) {
-                SheetSurface(
-                    view = view,
-                    collections = collections,
-                    restaurant = restaurant,
-                    savingCollectionId = savingCollectionId,
-                    onTapCover = { collectionId ->
-                        if (savingCollectionId != null) return@SheetSurface
-                        savingCollectionId = collectionId
-                        scope.launch {
-                            delay(280)
-                            WishlistStore.saveTo(collectionId, restaurant)
-                            triggerDismiss()
-                        }
-                    },
-                    onCreateNew = { view = SheetView.Create },
-                    onBackToSelect = { view = SheetView.Select },
-                    onClose = triggerDismiss,
-                    onSubmitCreate = { name ->
-                        WishlistStore.createCollectionAndSave(name, restaurant)
-                        triggerDismiss()
-                    },
-                )
-            }
-        }
+        SheetSurface(
+            view = view,
+            collections = selectableCollections,
+            restaurant = restaurant,
+            savingCollectionId = savingCollectionId,
+            onTapCover = { collectionId ->
+                if (savingCollectionId != null) return@SheetSurface
+                savingCollectionId = collectionId
+                scope.launch {
+                    delay(280)
+                    WishlistStore.saveTo(collectionId, restaurant)
+                    sheetState.hide()
+                }
+            },
+            onCreateNew = { view = SheetView.Create },
+            onBackToSelect = { view = SheetView.Select },
+            onClose = hideSheet,
+            onSubmitCreate = { name ->
+                if (WishlistStore.createCollectionAndSave(name, restaurant)) {
+                    scope.launch { sheetState.hide() }
+                }
+            },
+        )
     }
 }
 
@@ -211,11 +153,8 @@ private fun SheetSurface(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
-            .background(palette.cardSurface)
-            .windowInsetsPadding(WindowInsets.navigationBars),
+            .padding(bottom = 28.dp),
     ) {
-        // Drag handle.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -271,7 +210,6 @@ private fun SelectView(
 ) {
     val palette = LocalRestaurantPalette.current
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Header.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -300,7 +238,6 @@ private fun SelectView(
                 )
             }
         }
-        // Grid of covers.
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier
@@ -321,7 +258,6 @@ private fun SelectView(
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
-        // Create new wishlist pill.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -388,8 +324,6 @@ private fun CollectionCoverButton(
                 .clickable(enabled = !isSaving) { onTap() },
         ) {
             ImageGrid(images = collection.restaurants.map { it.image })
-            // Saved-here indicator (small heart top-right) when this collection
-            // currently holds the restaurant — helps the user "move" out.
             if (isCurrentlySavedHere && !isSaving) {
                 HeartDrawableIcon(
                     active = true,
@@ -400,10 +334,6 @@ private fun CollectionCoverButton(
                     iconHeight = 22.dp,
                 )
             }
-            // Saving overlay (animated check + sparkles). The overlay owns
-            // its own enter animation via Animatable, so a plain conditional
-            // mount is enough — avoids overload-resolution ambiguity between
-            // the ColumnScope and top-level AnimatedVisibility variants.
             if (isSaving) {
                 SavingOverlay()
             }
@@ -460,7 +390,6 @@ private fun SavingOverlay() {
             .background(Color.Black.copy(alpha = 0.35f)),
         contentAlignment = Alignment.Center,
     ) {
-        // Sparkles top-right.
         Icon(
             imageVector = Icons.Filled.AutoAwesome,
             contentDescription = null,
@@ -498,11 +427,11 @@ private fun CreateView(
     val palette = LocalRestaurantPalette.current
     var name by remember { mutableStateOf("") }
     val maxLength = 50
+    val trimmed = name.trim()
+    val duplicate = trimmed.isNotEmpty() && WishlistStore.isWishlistNameTaken(trimmed)
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        // Brief delay so the slide-in animation finishes before the keyboard
-        // shoves the layout — keeps the entrance smooth.
         delay(180)
         focusRequester.requestFocus()
     }
@@ -512,7 +441,6 @@ private fun CreateView(
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
     ) {
-        // Header with back arrow + centered title.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -542,7 +470,6 @@ private fun CreateView(
             )
         }
         Spacer(Modifier.height(8.dp))
-        // Input field.
         val borderColor = if (name.isNotEmpty()) palette.foreground else palette.border
         Box(
             modifier = Modifier
@@ -566,7 +493,7 @@ private fun CreateView(
                 ),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = {
-                    if (name.trim().isNotEmpty()) onSubmit(name.trim())
+                    if (trimmed.isNotEmpty() && !duplicate) onSubmit(trimmed)
                 }),
                 cursorBrush = androidx.compose.ui.graphics.SolidColor(palette.foreground),
                 modifier = Modifier
@@ -590,8 +517,15 @@ private fun CreateView(
             color = palette.mutedForeground,
             fontSize = 12.sp,
         )
+        if (duplicate) {
+            Text(
+                text = "You already have a wishlist with this name.",
+                color = palette.destructive,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+        }
         Spacer(Modifier.height(20.dp))
-        // Footer (Cancel + Create).
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -607,7 +541,7 @@ private fun CreateView(
                     .clickable { onBack() }
                     .padding(horizontal = 8.dp, vertical = 8.dp),
             )
-            val enabled = name.trim().isNotEmpty()
+            val enabled = trimmed.isNotEmpty() && !duplicate
             val bg = if (enabled) palette.foreground else palette.mutedSurface
             val fg = if (enabled) palette.cardSurface else palette.mutedForeground
             Box(
@@ -615,7 +549,7 @@ private fun CreateView(
                     .height(44.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(bg)
-                    .clickable(enabled = enabled) { onSubmit(name.trim()) }
+                    .clickable(enabled = enabled) { onSubmit(trimmed) }
                     .padding(horizontal = 22.dp),
                 contentAlignment = Alignment.Center,
             ) {

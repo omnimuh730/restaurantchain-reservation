@@ -3,7 +3,9 @@ package com.mh.restaurantchainreservation.feature.discover.ui
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -25,13 +27,17 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.horizontalScroll
@@ -58,22 +64,31 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -84,6 +99,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -93,6 +109,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.window.DialogProperties
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavContentBottomPadding
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
@@ -107,6 +124,13 @@ import com.mh.restaurantchainreservation.core.model.WishlistStore
 
 private enum class ResultSheetState { Peek, Half, Full }
 
+/** Frozen peek/half/full heights (px) so sheet drag is stable while bottom-nav inset animates. */
+private data class SheetHeightAnchorsPx(
+    val peekPx: Float,
+    val halfPx: Float,
+    val fullPx: Float,
+)
+
 /** Opaque search + plan chrome below the status bar (filter tags sit below this on the map). */
 private val SearchResultsChromeHeight = 130.dp
 
@@ -115,6 +139,9 @@ private val SearchResultsFilterTagsHeight = 52.dp
 
 /** Extra height above peek before the results list is shown (peek = header only). */
 private val ResultsSheetListRevealThreshold = 20.dp
+
+/** Minimum touch target for the sheet split-handle drag zone. */
+private val ResultsSheetDragHandleHeight = 56.dp
 
 /** Map top inset: search/plan chrome only (filter row overlays the map below). */
 private val SearchResultsMapTopInset = SearchResultsChromeHeight
@@ -202,6 +229,18 @@ fun DiscoverSearchResultsScreen(
         }
     }
 
+    val navContentBottomPadding = LocalNavContentBottomPadding.current
+    // Keep sheet/map above the bottom nav when host padding drops (e.g. navigating to detail).
+    var sheetAboveNavPadding by remember { mutableStateOf(navContentBottomPadding) }
+    SideEffect {
+        if (navContentBottomPadding > 0.dp) {
+            sheetAboveNavPadding = navContentBottomPadding
+        }
+    }
+    // Host already reserves space above the bar; re-apply only when that padding is removed mid-transition.
+    val sheetBottomOffset =
+        if (navContentBottomPadding > 0.dp) 0.dp else sheetAboveNavPadding
+
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
@@ -217,13 +256,26 @@ fun DiscoverSearchResultsScreen(
         }
         val fullTopClearance = remember(statusBarTopDp) { fullSheetTopClearance(statusBarTopDp) }
         val peekPx = remember(density, peekHeight) { with(density) { peekHeight.toPx() } }
-        val halfPx = remember(density, maxHeight) { with(density) { (maxHeight * 0.48f).toPx() } }
-        val fullPx = remember(density, maxHeight, fullTopClearance, peekPx) {
-            with(density) {
-                (maxHeight - fullTopClearance).toPx().coerceAtLeast(peekPx)
-            }
+        val fullTopClearancePx = remember(density, fullTopClearance) {
+            with(density) { fullTopClearance.toPx() }
         }
-        val sheetHeightAnim = remember(peekPx, halfPx) { Animatable(halfPx) }
+        val sheetAnchorsState = remember { mutableStateOf<SheetHeightAnchorsPx?>(null) }
+        val layoutHeightPx = with(density) { maxHeight.toPx() }
+        if (sheetAnchorsState.value == null && layoutHeightPx > peekPx) {
+            sheetAnchorsState.value = SheetHeightAnchorsPx(
+                peekPx = peekPx,
+                halfPx = layoutHeightPx * 0.48f,
+                fullPx = (layoutHeightPx - fullTopClearancePx).coerceAtLeast(peekPx),
+            )
+        }
+        val sheetAnchors = sheetAnchorsState.value
+        if (sheetAnchors == null) {
+            return@BoxWithConstraints
+        }
+        val halfPx = sheetAnchors.halfPx
+        val fullPx = sheetAnchors.fullPx
+        val sheetHeightAnim = remember { Animatable(sheetAnchors.halfPx) }
+        var dragSheetHeightPx by remember { mutableFloatStateOf(sheetAnchors.halfPx) }
         var isDraggingSheet by remember { mutableStateOf(false) }
         var mapZoomUserOverride by remember { mutableStateOf(false) }
         var mapZoom by remember { mutableFloatStateOf(mapZoomForSheetProgress(0.5f)) }
@@ -233,11 +285,22 @@ fun DiscoverSearchResultsScreen(
         val listRevealThresholdPx = remember(density) {
             with(density) { ResultsSheetListRevealThreshold.toPx() }
         }
-        val showSheetListContent = remember(sheetHeightAnim.value, peekPx, listRevealThresholdPx) {
-            sheetHeightAnim.value > peekPx + listRevealThresholdPx
+        val displayedSheetHeightPx = if (isDraggingSheet) dragSheetHeightPx else sheetHeightAnim.value
+        val showSheetListContent = remember(displayedSheetHeightPx, sheetAnchors, listRevealThresholdPx) {
+            displayedSheetHeightPx > sheetAnchors.peekPx + listRevealThresholdPx
         }
-        val sheetLinkedZoom = remember(sheetHeightAnim.value, peekPx, halfPx) {
-            mapZoomForSheetHeight(sheetHeightAnim.value, peekPx, halfPx)
+        val mapFabRevealProgress = remember(displayedSheetHeightPx, sheetAnchors) {
+            val peek = sheetAnchors.peekPx
+            val half = sheetAnchors.halfPx
+            when {
+                displayedSheetHeightPx <= peek -> 0f
+                displayedSheetHeightPx >= half -> 1f
+                half <= peek + 1f -> 1f
+                else -> (displayedSheetHeightPx - peek) / (half - peek)
+            }
+        }
+        val sheetLinkedZoom = remember(displayedSheetHeightPx, sheetAnchors) {
+            mapZoomForSheetHeight(displayedSheetHeightPx, sheetAnchors.peekPx, sheetAnchors.halfPx)
         }
 
         SideEffect {
@@ -246,14 +309,19 @@ fun DiscoverSearchResultsScreen(
             }
         }
 
-        val sheetHeightDp = remember(sheetHeightAnim.value, density) {
-            with(density) { sheetHeightAnim.value.toDp() }
+        val sheetHeightDp = remember(displayedSheetHeightPx, density) {
+            with(density) { displayedSheetHeightPx.toDp() }
+        }
+
+        fun applySheetDragDelta(deltaPx: Float) {
+            if (!isDraggingSheet) return
+            dragSheetHeightPx = (dragSheetHeightPx - deltaPx).coerceIn(sheetAnchors.peekPx, sheetAnchors.fullPx)
         }
 
         fun sheetTargetPx(state: ResultSheetState): Float = when (state) {
-            ResultSheetState.Peek -> peekPx
-            ResultSheetState.Half -> halfPx
-            ResultSheetState.Full -> fullPx
+            ResultSheetState.Peek -> sheetAnchors.peekPx
+            ResultSheetState.Half -> sheetAnchors.halfPx
+            ResultSheetState.Full -> sheetAnchors.fullPx
         }
 
         fun animateToSheetState(state: ResultSheetState) {
@@ -266,6 +334,25 @@ fun DiscoverSearchResultsScreen(
                 )
             }
         }
+
+        val openRestaurant: (String) -> Unit = { id ->
+            if (isDraggingSheet) {
+                isDraggingSheet = false
+                scope.launch {
+                    sheetHeightAnim.snapTo(sheetTargetPx(sheetState))
+                }
+            }
+            onOpenRestaurant(id)
+        }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .windowInsetsTopHeight(WindowInsets.statusBars)
+                .background(MaterialTheme.colorScheme.background)
+                .zIndex(29f),
+        )
 
         DiscoverSearchMapSurface(
             restaurants = filtered,
@@ -303,11 +390,12 @@ fun DiscoverSearchResultsScreen(
                 restaurants = filtered,
                 activeIndex = activeMarker.coerceIn(0, filtered.lastIndex),
                 onChangeIndex = { activeMarker = it },
-                peekBottomPadding = peekHeight + 8.dp,
-                onOpenRestaurant = onOpenRestaurant,
+                peekBottomPadding = peekHeight + 8.dp + sheetBottomOffset,
+                onOpenRestaurant = openRestaurant,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
+                    .padding(bottom = sheetBottomOffset)
                     .zIndex(5f),
             )
         }
@@ -359,29 +447,39 @@ fun DiscoverSearchResultsScreen(
             sheetState = sheetState,
             sheetHeight = sheetHeightDp,
             showListContent = showSheetListContent,
-            peekPx = peekPx,
-            halfPx = halfPx,
-            fullPx = fullPx,
+            mapFabRevealProgress = mapFabRevealProgress,
             onSheetDragStart = {
                 isDraggingSheet = true
                 mapZoomUserOverride = false
+                dragSheetHeightPx = sheetHeightAnim.value
             },
-            onSheetDrag = { deltaPx ->
-                scope.launch {
-                    sheetHeightAnim.snapTo(
-                        (sheetHeightAnim.value - deltaPx).coerceIn(peekPx, fullPx),
+            isDraggingSheet = isDraggingSheet,
+            onSheetDrag = { delta -> applySheetDragDelta(delta) },
+            onSheetDragEnd = {
+                if (isDraggingSheet) {
+                    isDraggingSheet = false
+                    val chosen = sheetStateFromHeightPx(
+                        dragSheetHeightPx,
+                        sheetAnchors.peekPx,
+                        sheetAnchors.halfPx,
+                        sheetAnchors.fullPx,
                     )
+                    sheetState = chosen
+                    mapZoomUserOverride = false
+                    scope.launch {
+                        sheetHeightAnim.snapTo(dragSheetHeightPx)
+                        sheetHeightAnim.animateTo(
+                            targetValue = sheetTargetPx(chosen),
+                            animationSpec = spring(dampingRatio = 0.86f, stiffness = 380f),
+                        )
+                    }
                 }
             },
-            onSheetDragEnd = {
-                isDraggingSheet = false
-                val chosen = sheetStateFromHeightPx(sheetHeightAnim.value, peekPx, halfPx, fullPx)
-                animateToSheetState(chosen)
-            },
             onCollapseToMap = { animateToSheetState(ResultSheetState.Peek) },
-            onOpenRestaurant = onOpenRestaurant,
+            onOpenRestaurant = openRestaurant,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .padding(bottom = sheetBottomOffset)
                 .zIndex(25f),
         )
 
@@ -489,7 +587,6 @@ private fun SearchResultsHeader(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(palette.cardSurface.copy(alpha = 0.97f))
-                .border(1.dp, palette.borderSoft)
                 .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -780,15 +877,61 @@ private fun MapSheetDismissScrim(
 }
 
 @Composable
+private fun ResultsSheetDragHeader(
+    resultsLabel: String,
+    onDragStart: () -> Unit,
+    onDrag: (Float) -> Unit,
+    onDragEnd: () -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val dragState = rememberDraggableState { delta -> onDrag(delta) }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = ResultsSheetDragHandleHeight)
+            .draggable(
+                state = dragState,
+                orientation = Orientation.Vertical,
+                onDragStarted = { onDragStart() },
+                onDragStopped = { onDragEnd() },
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp, bottom = 8.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(width = 40.dp, height = 4.dp)
+                    .clip(RoundedCornerShape(percent = 50))
+                    .background(Color(0xFFD1D1D1)),
+            )
+        }
+        Text(
+            text = resultsLabel,
+            color = palette.foreground,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
 private fun ResultsSheet(
     restaurants: List<Restaurant>,
     query: String,
     sheetState: ResultSheetState,
     sheetHeight: Dp,
     showListContent: Boolean,
-    peekPx: Float,
-    halfPx: Float,
-    fullPx: Float,
+    mapFabRevealProgress: Float,
+    isDraggingSheet: Boolean,
     onSheetDragStart: () -> Unit,
     onSheetDrag: (Float) -> Unit,
     onSheetDragEnd: () -> Unit,
@@ -797,7 +940,59 @@ private fun ResultsSheet(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val showMapFab = showListContent && restaurants.isNotEmpty()
+    val mapFabAlpha = mapFabRevealProgress.coerceIn(0f, 1f)
+    val showMapFabForList = mapFabAlpha > 0.35f && showListContent && restaurants.isNotEmpty()
+    val resultsLabel = if (restaurants.isEmpty()) "No restaurants found" else "Over 1,000 results"
+    val listState = rememberLazyListState()
+    val onSheetDragStartUpdated = rememberUpdatedState(onSheetDragStart)
+    val onSheetDragUpdated = rememberUpdatedState(onSheetDrag)
+    val onSheetDragEndUpdated = rememberUpdatedState(onSheetDragEnd)
+    val isDraggingSheetUpdated = rememberUpdatedState(isDraggingSheet)
+    var listForwardingSheetDrag by remember { mutableStateOf(false) }
+    val sheetListNestedScroll = remember(listState) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (source != NestedScrollSource.UserInput) return Offset.Zero
+                val atTop = listState.firstVisibleItemIndex == 0 &&
+                    listState.firstVisibleItemScrollOffset == 0
+                if (atTop && available.y > 0f) {
+                    if (!listForwardingSheetDrag) {
+                        listForwardingSheetDrag = true
+                        onSheetDragStartUpdated.value()
+                    }
+                    onSheetDragUpdated.value(available.y)
+                    return Offset(0f, available.y)
+                }
+                return Offset.Zero
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset {
+                if (source != NestedScrollSource.UserInput) return Offset.Zero
+                if (!isDraggingSheetUpdated.value) return Offset.Zero
+                val atTop = listState.firstVisibleItemIndex == 0 &&
+                    listState.firstVisibleItemScrollOffset == 0
+                if (atTop && available.y < 0f) {
+                    onSheetDragUpdated.value(available.y)
+                    return Offset(0f, available.y)
+                }
+                return Offset.Zero
+            }
+
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                if (isDraggingSheetUpdated.value) {
+                    listForwardingSheetDrag = false
+                    onSheetDragEndUpdated.value()
+                } else {
+                    listForwardingSheetDrag = false
+                }
+                return Velocity.Zero
+            }
+        }
+    }
 
     Box(
         modifier = modifier
@@ -809,57 +1004,33 @@ private fun ResultsSheet(
             .border(1.dp, palette.borderSoft, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
     ) {
         Column(Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .pointerInput(peekPx, halfPx, fullPx) {
-                        detectVerticalDragGestures(
-                            onDragStart = { onSheetDragStart() },
-                            onDragEnd = { onSheetDragEnd() },
-                            onDragCancel = { onSheetDragEnd() },
-                            onVerticalDrag = { _, dragAmount ->
-                                onSheetDrag(dragAmount)
-                            },
-                        )
-                    },
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp, bottom = 4.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(width = 40.dp, height = 4.dp)
-                            .clip(RoundedCornerShape(percent = 50))
-                            .background(Color(0xFFD1D1D1)),
-                    )
-                }
-                Text(
-                    text = if (restaurants.isEmpty()) "No restaurants found" else "Over 1,000 results",
-                    color = palette.foreground,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp),
-                    textAlign = TextAlign.Center,
-                )
-            }
+            ResultsSheetDragHeader(
+                resultsLabel = resultsLabel,
+                onDragStart = {
+                    listForwardingSheetDrag = false
+                    onSheetDragStart()
+                },
+                onDrag = onSheetDrag,
+                onDragEnd = {
+                    listForwardingSheetDrag = false
+                    onSheetDragEnd()
+                },
+            )
             if (showListContent) {
                 if (restaurants.isEmpty()) {
                     EmptyResults(query = query, modifier = Modifier.weight(1f))
                 } else {
                     val listBottom = when {
-                        sheetState == ResultSheetState.Full && showMapFab -> 96.dp
-                        showMapFab -> 80.dp
+                        sheetState == ResultSheetState.Full && showMapFabForList -> 96.dp
+                        showMapFabForList -> 80.dp
                         sheetState == ResultSheetState.Full -> 40.dp
                         else -> 28.dp
                     }
                     LazyColumn(
-                        modifier = Modifier.weight(1f),
+                        state = listState,
+                        modifier = Modifier
+                            .weight(1f)
+                            .nestedScroll(sheetListNestedScroll),
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = listBottom),
                         verticalArrangement = Arrangement.spacedBy(22.dp),
                     ) {
@@ -873,14 +1044,18 @@ private fun ResultsSheet(
                 }
             }
         }
-        if (showMapFab) {
+        if (restaurants.isNotEmpty() && showListContent) {
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 18.dp)
+                    .padding(bottom = 32.dp)
+                    .graphicsLayer { alpha = mapFabAlpha }
                     .clip(RoundedCornerShape(percent = 50))
                     .background(Color(0xFF222222))
-                    .clickable(onClick = onCollapseToMap)
+                    .clickable(
+                        enabled = mapFabAlpha > 0.08f,
+                        onClick = onCollapseToMap,
+                    )
                     .padding(horizontal = 18.dp, vertical = 11.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -893,10 +1068,13 @@ private fun ResultsSheet(
 }
 
 @Composable
-private fun RestaurantResultCard(restaurant: Restaurant, onOpen: () -> Unit) {
+private fun RestaurantResultCard(
+    restaurant: Restaurant,
+    onOpen: () -> Unit,
+) {
     val palette = LocalRestaurantPalette.current
-    val collections by WishlistStore.collections.collectAsState()
-    val saved = collections.any { col -> col.restaurants.any { it.id == restaurant.id } }
+    val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
+    val saved = restaurant.id in savedIds
     val shared = LocalRestaurantSharedTransitionScope.current
     val animatedContent = LocalAnimatedContentScope.current
     val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
@@ -922,21 +1100,16 @@ private fun RestaurantResultCard(restaurant: Restaurant, onOpen: () -> Unit) {
                         .fillMaxSize()
                         .then(heroModifier),
                 )
-                Text(
+                com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
                     text = restaurant.tag ?: "Guest favorite",
-                    color = Color(0xFF222222),
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .padding(12.dp)
-                        .clip(RoundedCornerShape(percent = 50))
-                        .background(Color.White)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .padding(12.dp),
                 )
                 HeartButton(
                     active = saved,
-                    onClick = { WishlistStore.openPicker(restaurant) },
+                    onClick = { WishlistStore.onHeartTap(restaurant) },
                     size = HeartButtonSize.Large,
                     style = HeartButtonStyle.Overlay,
                     modifier = Modifier
@@ -1059,8 +1232,8 @@ private fun MapPreviewCard(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val collections by WishlistStore.collections.collectAsState()
-    val saved = collections.any { col -> col.restaurants.any { it.id == restaurant.id } }
+    val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
+    val saved = restaurant.id in savedIds
     val shared = LocalRestaurantSharedTransitionScope.current
     val animatedContent = LocalAnimatedContentScope.current
     val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
@@ -1087,20 +1260,15 @@ private fun MapPreviewCard(
                     .fillMaxSize()
                     .then(heroModifier),
             )
-            Text(
+            com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
                 text = if (index % 2 == 0) "Trophy pick" else "Guest favorite",
-                color = palette.foreground,
                 fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(8.dp)
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(Color.White)
-                    .padding(horizontal = 9.dp, vertical = 4.dp),
+                textColor = palette.foreground,
+                modifier = Modifier.padding(8.dp),
             )
             HeartButton(
                 active = saved,
-                onClick = { WishlistStore.openPicker(restaurant) },
+                onClick = { WishlistStore.onHeartTap(restaurant) },
                 size = HeartButtonSize.Small,
                 style = HeartButtonStyle.Overlay,
                 modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
@@ -1167,11 +1335,26 @@ private fun SearchFiltersSheet(
     onClose: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
+    val density = LocalDensity.current
+    val scrollState = rememberScrollState()
+    val collapseRangePx = remember(density) {
+        with(density) { 52.dp.toPx() }.coerceAtLeast(1f)
+    }
+    val headerCollapseProgress by remember {
+        derivedStateOf {
+            (scrollState.value / collapseRangePx).coerceIn(0f, 1f)
+        }
+    }
+    val showPinnedTitleBorder = headerCollapseProgress > 0.92f
+
+    val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
     Dialog(
         onDismissRequest = onClose,
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
             dismissOnClickOutside = true,
+            decorFitsSystemWindows = false,
         ),
     ) {
         val scrimInteraction = remember { MutableInteractionSource() }
@@ -1189,31 +1372,64 @@ private fun SearchFiltersSheet(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(720.dp)
+                    .fillMaxHeight(0.92f)
                     .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
                     .background(palette.cardSurface)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = {},
-                    )
-                    .windowInsetsPadding(WindowInsets.navigationBars),
+                    ),
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
-                        .border(1.dp, palette.borderSoft),
-                    contentAlignment = Alignment.Center,
+                        .then(
+                            if (showPinnedTitleBorder) {
+                                Modifier.border(1.dp, palette.borderSoft)
+                            } else {
+                                Modifier
+                            },
+                        ),
+                    contentAlignment = Alignment.CenterStart,
                 ) {
-                    Text("Filters", color = palette.foreground, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
-                    CircleIcon(icon = Icons.Filled.Close, label = "Close", onClick = onClose, modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp))
+                    Text(
+                        text = "Filters",
+                        color = palette.foreground,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier
+                            .padding(start = 22.dp)
+                            .graphicsLayer {
+                                alpha = headerCollapseProgress
+                                translationY = (1f - headerCollapseProgress) * 8.dp.toPx()
+                            },
+                    )
+                    CircleIcon(
+                        icon = Icons.Filled.Close,
+                        label = "Close",
+                        onClick = onClose,
+                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp),
+                    )
                 }
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .verticalScroll(rememberScrollState()),
+                        .verticalScroll(scrollState),
                 ) {
+                    Text(
+                        text = "Filters",
+                        color = palette.foreground,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier
+                            .padding(start = 22.dp, end = 22.dp, top = 4.dp, bottom = 8.dp)
+                            .graphicsLayer {
+                                alpha = 1f - headerCollapseProgress
+                                translationY = -headerCollapseProgress * 12.dp.toPx()
+                            },
+                    )
                     FilterSection(title = "Sort by") {
                         FlowPillsWrap(
                             labels = DiscoverSearchData.filterSortOptions,
@@ -1315,39 +1531,46 @@ private fun SearchFiltersSheet(
                             onToggle = { onChange(filters.copy(occasions = filters.occasions.toggle(it))) },
                         )
                     }
+                    Spacer(Modifier.height(24.dp))
                 }
-                HorizontalDivider(color = palette.borderSoft)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, palette.borderSoft)
-                        .padding(horizontal = 22.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = "Clear all",
-                        color = if (filters.activeCount > 0) palette.foreground else palette.mutedForeground.copy(alpha = 0.55f),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
+                Column(modifier = Modifier.fillMaxWidth().background(palette.cardSurface)) {
+                    HorizontalDivider(color = palette.borderSoft)
+                    Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable(enabled = filters.activeCount > 0, onClick = onClear)
-                            .padding(vertical = 8.dp),
-                    )
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(palette.foreground)
-                            .clickable(onClick = onApply)
-                            .padding(horizontal = 24.dp, vertical = 13.dp),
+                            .fillMaxWidth()
+                            .padding(
+                                start = 22.dp,
+                                end = 22.dp,
+                                top = 14.dp,
+                                bottom = 14.dp + navigationBarBottom,
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Text(
-                            text = "Apply",
-                            color = palette.cardSurface,
+                            text = "Clear all",
+                            color = if (filters.activeCount > 0) palette.foreground else palette.mutedForeground.copy(alpha = 0.55f),
                             fontSize = 15.sp,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable(enabled = filters.activeCount > 0, onClick = onClear)
+                                .padding(vertical = 8.dp),
                         )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(palette.foreground)
+                                .clickable(onClick = onApply)
+                                .padding(horizontal = 24.dp, vertical = 13.dp),
+                        ) {
+                            Text(
+                                text = "Apply",
+                                color = palette.cardSurface,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                            )
+                        }
                     }
                 }
             }

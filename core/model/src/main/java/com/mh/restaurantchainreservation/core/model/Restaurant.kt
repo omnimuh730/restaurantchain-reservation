@@ -91,7 +91,7 @@ data class QuickCategory(
 object DiscoverData {
     val BANNERS: List<Banner> = listOf(
         Banner(
-            id = "1",
+            id = "michelin",
             image = "https://images.unsplash.com/photo-1616671285410-2a676a9a433d?w=800&h=400&fit=crop",
             title = "MICHELIN 2026",
             subtitle = "Finally Revealed",
