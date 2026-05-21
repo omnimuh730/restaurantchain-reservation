@@ -1,12 +1,5 @@
 package com.mh.restaurantchainreservation.core.designsystem.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,41 +16,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
-/** M3-style duration for bottom-nav enter/exit (Material motion: 300ms, standard easing). */
-private const val BottomNavMotionDurationMillis = 300
-
-private val BottomNavEnterFade =
-    fadeIn(tween(durationMillis = BottomNavMotionDurationMillis, easing = FastOutSlowInEasing))
-
-private val BottomNavExitFade =
-    fadeOut(tween(durationMillis = BottomNavMotionDurationMillis, easing = FastOutSlowInEasing))
-
-private val BottomNavEnterSlide = slideInVertically(
-    animationSpec = tween(durationMillis = BottomNavMotionDurationMillis, easing = FastOutSlowInEasing),
-    initialOffsetY = { fullHeight -> fullHeight },
-)
-
-private val BottomNavExitSlide = slideOutVertically(
-    animationSpec = tween(durationMillis = BottomNavMotionDurationMillis, easing = FastOutSlowInEasing),
-    targetOffsetY = { fullHeight -> fullHeight },
-)
-
 /**
- * Clipped host for [BottomNavBar]: background, tabs, docked QR, shadow, and cutout animate
- * together with M3 slide + fade. Nothing should remain visible after exit.
+ * Clipped host for [BottomNavBar]: background, tabs, docked QR, shadow, and cutout slide/fade
+ * with [visibilityProgress] (1 = fully visible, 0 = fully hidden).
  */
 @Composable
 fun BottomNavAnimatedOverlay(
-    visible: Boolean,
+    visibilityProgress: Float,
     modifier: Modifier = Modifier,
     onBarLayoutHeightChanged: (Int) -> Unit = {},
     content: @Composable () -> Unit,
 ) {
+    val progress = visibilityProgress.coerceIn(0f, 1f)
     val density = LocalDensity.current
     var barLayoutHeightPx by remember { mutableIntStateOf(0) }
     val qrClipExtensionPx = remember(density) {
@@ -77,33 +53,29 @@ fun BottomNavAnimatedOverlay(
         modifier
             .fillMaxWidth()
             .height(clipHeightDp)
-            .clip(RectangleShape),
+            .clip(RectangleShape)
+            .graphicsLayer {
+                alpha = progress
+                translationY = (1f - progress) * clipHeightPx
+            },
     ) {
-        AnimatedVisibility(
-            visible = visible,
+        Box(
             modifier = Modifier.fillMaxSize(),
-            enter = BottomNavEnterSlide + BottomNavEnterFade,
-            exit = BottomNavExitSlide + BottomNavExitFade,
+            contentAlignment = Alignment.BottomCenter,
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .onSizeChanged { size ->
+                        if (size.height > 0) {
+                            barLayoutHeightPx = size.height
+                            onBarLayoutHeightChanged(size.height)
+                        }
+                    },
                 contentAlignment = Alignment.BottomCenter,
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .onSizeChanged { size ->
-                            if (size.height > 0) {
-                                barLayoutHeightPx = size.height
-                                onBarLayoutHeightChanged(size.height)
-                            }
-                        },
-                    contentAlignment = Alignment.BottomCenter,
-                ) {
-                    content()
-                }
+                content()
             }
         }
     }

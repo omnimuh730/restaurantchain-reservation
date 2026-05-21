@@ -4,7 +4,7 @@ import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.fadeIn
@@ -63,6 +63,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.icons.Luci
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavAnimatedOverlay
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavBar
 import com.mh.restaurantchainreservation.core.designsystem.components.LocalBottomNavScrollBehavior
+import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavContentBottomPadding
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberBottomNavScrollBehavior
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavTab
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavTabId
@@ -70,6 +71,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNoti
 import com.mh.restaurantchainreservation.core.model.AuthSessionStore
 import com.mh.restaurantchainreservation.core.model.DiscoverData
 import com.mh.restaurantchainreservation.core.model.LocalDataSyncStore
+import com.mh.restaurantchainreservation.core.model.WishlistStore
 import com.mh.restaurantchainreservation.core.model.LocationStore
 import com.mh.restaurantchainreservation.feature.auth.AuthRoutes
 import com.mh.restaurantchainreservation.feature.auth.ForgotPasswordScreen
@@ -81,6 +83,9 @@ import com.mh.restaurantchainreservation.feature.booking.BookTableScreen
 import com.mh.restaurantchainreservation.feature.booking.BookingRoutes
 import com.mh.restaurantchainreservation.feature.booking.RestaurantDetailScreen
 import com.mh.restaurantchainreservation.feature.booking.RestaurantMenuScreen
+import com.mh.restaurantchainreservation.feature.booking.RestaurantPhotoGalleryData
+import com.mh.restaurantchainreservation.feature.booking.RestaurantPhotoGallerySource
+import com.mh.restaurantchainreservation.feature.booking.RestaurantPhotoGridScreen
 import com.mh.restaurantchainreservation.feature.dining.DiningDetailScreen
 import com.mh.restaurantchainreservation.feature.dining.DiningEnjoyScreen
 import com.mh.restaurantchainreservation.feature.dining.DiningHomeScreen
@@ -167,7 +172,13 @@ fun RestaurantNavHost(
         showAppChrome &&
         shouldShowBottomNavBar(destination?.route) &&
         !hideBottomBarForUpdateFlow
-    val showBottomBar = showBottomBarSlot && bottomNavScrollBehavior.isVisible
+    val scrollNavShowProgress by animateFloatAsState(
+        targetValue = if (!showBottomBarSlot || !bottomNavScrollBehavior.isVisible) 0f else 1f,
+        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+        label = "bottomNavScrollShow",
+    )
+    val bottomNavInsetProgress = if (showBottomBarSlot) scrollNavShowProgress else 0f
+    val bottomNavVisibilityProgress = bottomNavInsetProgress
 
     LaunchedEffect(destination?.route) {
         bottomNavScrollBehavior.show()
@@ -197,18 +208,9 @@ fun RestaurantNavHost(
         // Phone bottom nav is drawn as an overlay so hide/show can animate in sync with content inset.
         bottomBar = {},
     ) { paddingValues ->
-        val compactBottomInset by animateDpAsState(
-            targetValue = if (showBottomBar) {
-                with(density) { bottomBarHeightPx.toDp() }
-            } else {
-                0.dp
-            },
-            animationSpec = tween(
-                durationMillis = 300,
-                easing = FastOutSlowInEasing,
-            ),
-            label = "bottomNavContentInset",
-        )
+        val compactBottomInset = with(density) {
+            (bottomBarHeightPx * bottomNavInsetProgress).toDp()
+        }
         val compactContentPadding = PaddingValues(
             top = paddingValues.calculateTopPadding(),
             start = paddingValues.calculateStartPadding(layoutDirection),
@@ -220,6 +222,7 @@ fun RestaurantNavHost(
                 CompositionLocalProvider(
                     LocalBottomNavScrollBehavior provides
                         bottomNavScrollBehavior.takeIf { showBottomBarSlot },
+                    LocalNavContentBottomPadding provides compactBottomInset,
                 ) {
                     AppGraph(
                         navController = navController,
@@ -248,7 +251,7 @@ fun RestaurantNavHost(
                 }
                 if (showBottomBarSlot) {
                     BottomNavAnimatedOverlay(
-                        visible = showBottomBar,
+                        visibilityProgress = bottomNavVisibilityProgress,
                         modifier = Modifier.align(Alignment.BottomCenter),
                         onBarLayoutHeightChanged = { heightPx ->
                             bottomBarHeightPx = heightPx
@@ -433,7 +436,13 @@ private fun resolveActiveTab(hierarchyRoutes: List<String>): BottomNavTabId? {
 
 private fun shouldShowBottomNavBar(route: String?): Boolean {
     if (route == null) return true
-    return !route.startsWith("discover/restaurant/")
+    // Hide only on full-screen restaurant sub-flows; keep the bar on the detail page.
+    return when {
+        route.contains("/photos") -> false
+        route.contains("/menu") -> false
+        route.contains("/book") -> false
+        else -> true
+    }
 }
 
 /** QR Pay (and other full-screen overlays) own the entire viewport. */
@@ -683,8 +692,43 @@ private fun AppGraph(
                             }
                         },
                         onShowMenu = { navController.navigate(BookingRoutes.restaurantMenu(id)) },
+                        onOpenPhotoGrid = { source ->
+                            navController.navigateToPhotoGrid(id, source)
+                        },
                     )
                 }
+            }
+            composable(
+                route = BookingRoutes.PhotoGrid,
+                arguments = listOf(
+                    navArgument("restaurantId") { type = NavType.StringType },
+                    navArgument("source") {
+                        type = NavType.StringType
+                        defaultValue = RestaurantPhotoGallerySource.Gallery.routeValue
+                    },
+                    navArgument("bannerId") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                ),
+            ) { entry ->
+                val id = entry.arguments?.getString("restaurantId").orEmpty()
+                val source = RestaurantPhotoGallerySource.fromRoute(entry.arguments?.getString("source"))
+                val bannerId = entry.arguments?.getString("bannerId").orEmpty()
+                val restaurant = DiscoverData.findById(id)
+                    ?: DiscoverData.MONTHLY_BEST.first()
+                val banner = if (bannerId.isNotBlank()) {
+                    DiscoverData.BANNERS.firstOrNull { it.id == bannerId }
+                } else {
+                    null
+                }
+                RestaurantPhotoGridScreen(
+                    restaurant = restaurant,
+                    source = source,
+                    banner = banner,
+                    onBack = { navController.popBackStack() },
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
             composable(
                 route = BookingRoutes.RestaurantMenu,
@@ -865,7 +909,18 @@ private fun AppGraph(
 }
 
 private fun NavHostController.navigateToRestaurantDetail(restaurantId: String) {
+    DiscoverData.findById(restaurantId)?.let { WishlistStore.recordRecentlyViewed(it) }
     navigate(BookingRoutes.restaurantDetail(restaurantId)) {
+        launchSingleTop = true
+    }
+}
+
+private fun NavHostController.navigateToPhotoGrid(
+    restaurantId: String,
+    source: RestaurantPhotoGallerySource,
+    bannerId: String = "",
+) {
+    navigate(BookingRoutes.photoGrid(restaurantId, source, bannerId)) {
         launchSingleTop = true
     }
 }

@@ -491,16 +491,14 @@ private fun HeroBanner(
             modifier = Modifier.fillMaxSize(),
         ) { page ->
             val banner = banners[page]
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable { onBannerClick(banner.id) },
-            ) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 AsyncImage(
                     model = banner.image,
                     contentDescription = banner.title,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable { onBannerClick(banner.id) },
                 )
                 Box(
                     modifier = Modifier
@@ -518,7 +516,8 @@ private fun HeroBanner(
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(start = 20.dp, end = 20.dp, bottom = 88.dp),
+                        .padding(start = 20.dp, end = 20.dp, bottom = 88.dp)
+                        .clickable { onBannerClick(banner.id) },
                 ) {
                     Text(
                         text = banner.title,
@@ -1326,8 +1325,8 @@ private fun AirbnbMiniCard(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val collections by WishlistStore.collections.collectAsState()
-    val saved = collections.any { collection -> collection.restaurants.any { it.id == restaurant.id } }
+    val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
+    val saved = restaurant.id in savedIds
     val shared = LocalRestaurantSharedTransitionScope.current
     val animatedContent = LocalAnimatedContentScope.current
     val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
@@ -1355,20 +1354,16 @@ private fun AirbnbMiniCard(
                 )
                 val tag = restaurant.tag
                 if (!tag.isNullOrBlank()) {
-                    Box(
+                    com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
+                        text = tag,
                         modifier = Modifier
                             .align(Alignment.TopStart)
-                            .padding(8.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(Color.White.copy(alpha = 0.94f))
-                            .padding(horizontal = 10.dp, vertical = 5.dp),
-                    ) {
-                        Text(tag, color = Color(0xFF222222), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-                    }
+                            .padding(8.dp),
+                    )
                 }
                 HeartButton(
                     active = saved,
-                    onClick = { WishlistStore.openPicker(restaurant) },
+                    onClick = { WishlistStore.onHeartTap(restaurant) },
                     size = HeartButtonSize.Medium,
                     style = HeartButtonStyle.Overlay,
                     modifier = Modifier
@@ -1997,8 +1992,8 @@ private fun RestaurantByPriceListRow(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val collections by WishlistStore.collections.collectAsState()
-    val saved = collections.any { collection -> collection.restaurants.any { it.id == restaurant.id } }
+    val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
+    val saved = restaurant.id in savedIds
     val goldStar = Color(0xFFEAB308)
     val emptyStar = palette.mutedForeground.copy(alpha = 0.35f)
     val filledStars = (restaurant.rating + 0.25).roundToInt().coerceIn(0, 5)
@@ -2026,31 +2021,20 @@ private fun RestaurantByPriceListRow(
                 )
                 val tag = restaurant.tag
                 if (!tag.isNullOrBlank()) {
-                    Box(
+                    com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
+                        text = tag,
+                        fontSize = 10.sp,
                         modifier = Modifier
                             .align(Alignment.TopStart)
                             .padding(
                                 start = PriceListAvatarOverlayPadding,
                                 top = PriceListAvatarOverlayPadding,
-                            )
-                            .height(24.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(Color.White.copy(alpha = 0.94f))
-                            .padding(horizontal = 8.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            tag,
-                            color = Color(0xFF222222),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                        )
-                    }
+                            ),
+                    )
                 }
                 HeartButton(
                     active = saved,
-                    onClick = { WishlistStore.openPicker(restaurant) },
+                    onClick = { WishlistStore.onHeartTap(restaurant) },
                     size = HeartButtonSize.ExtraSmall,
                     style = HeartButtonStyle.Overlay,
                     overlayContentAlignment = Alignment.TopCenter,

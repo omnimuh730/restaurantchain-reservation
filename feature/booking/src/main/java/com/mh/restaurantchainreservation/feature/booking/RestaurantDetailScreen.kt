@@ -170,6 +170,17 @@ private data class DetailLoadedPayload(
     val topReviews: List<ReviewEntry>,
 )
 
+/** Keeps detail content warm when returning from photo grid or other sub-routes. */
+private object RestaurantDetailPayloadCache {
+    private val payloads = mutableMapOf<String, DetailLoadedPayload>()
+
+    fun get(restaurantId: String): DetailLoadedPayload? = payloads[restaurantId]
+
+    fun put(restaurantId: String, payload: DetailLoadedPayload) {
+        payloads[restaurantId] = payload
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RestaurantDetailScreen(
@@ -177,6 +188,7 @@ fun RestaurantDetailScreen(
     onBack: () -> Unit,
     onBookNow: () -> Unit,
     onShowMenu: () -> Unit,
+    onOpenPhotoGrid: (RestaurantPhotoGallerySource) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -190,7 +202,6 @@ fun RestaurantDetailScreen(
     var saved by remember { mutableStateOf(false) }
     var showReviews by remember { mutableStateOf(false) }
     var showAmenities by remember { mutableStateOf(false) }
-    var galleryFullscreenIndex by remember { mutableStateOf<Int?>(null) }
     var headerSolid by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val headerSolidDerived by remember {
@@ -206,7 +217,14 @@ fun RestaurantDetailScreen(
     val density = LocalDensity.current
     val bodySlidePx = remember(density) { with(density) { 28.dp.toPx() } }
 
-    LaunchedEffect(restaurantId, restaurant) {
+    LaunchedEffect(restaurantId) {
+        val cached = RestaurantDetailPayloadCache.get(restaurantId)
+        if (cached != null) {
+            loadedPayload = cached
+            loadPhase = DetailLoadPhase.Ready
+            bodyReveal.snapTo(1f)
+            return@LaunchedEffect
+        }
         loadPhase = DetailLoadPhase.Shell
         loadedPayload = null
         bodyReveal.snapTo(0f)
@@ -224,11 +242,13 @@ fun RestaurantDetailScreen(
             fetch.await()
         }
         loadedPayload = payload
+        RestaurantDetailPayloadCache.put(restaurantId, payload)
         loadPhase = DetailLoadPhase.Ready
     }
 
     LaunchedEffect(loadPhase) {
         if (loadPhase == DetailLoadPhase.Ready) {
+            if (bodyReveal.value >= 0.99f) return@LaunchedEffect
             bodyReveal.snapTo(0f)
             bodyReveal.animateTo(
                 targetValue = 1f,
@@ -256,8 +276,10 @@ fun RestaurantDetailScreen(
                         galleryImages = heroImages,
                         restaurantName = restaurant.name,
                         showPageIndicator = contentReady && heroImages.size > 1,
-                        onOpenFullscreen = { index ->
-                            if (contentReady) galleryFullscreenIndex = index
+                        onOpenFullscreen = {
+                            if (contentReady) {
+                                onOpenPhotoGrid(RestaurantPhotoGallerySource.Gallery)
+                            }
                         },
                     )
                     Column(
@@ -299,7 +321,10 @@ fun RestaurantDetailScreen(
                                     )
                                 }
                                 CancellationPolicySection()
-                                PopularMenuSection(onShowMenu = onShowMenu)
+                                PopularMenuSection(
+                                    onShowMenu = onShowMenu,
+                                    onOpenPhotoGrid = onOpenPhotoGrid,
+                                )
                             }
                         } else {
                             Spacer(Modifier.height(DetailListBottomPadding))
@@ -340,15 +365,6 @@ fun RestaurantDetailScreen(
             )
         }
 
-        if (contentReady) {
-            galleryFullscreenIndex?.let { startIndex ->
-                MenuImageFullscreenViewer(
-                    images = payload?.gallery.orEmpty(),
-                    initialIndex = startIndex,
-                    onDismiss = { galleryFullscreenIndex = null },
-                )
-            }
-        }
     }
 }
 
@@ -1087,10 +1103,12 @@ private fun CancellationPolicySection() {
 private const val PopularMenuPreviewCount = 6
 
 @Composable
-private fun PopularMenuSection(onShowMenu: () -> Unit) {
+private fun PopularMenuSection(
+    onShowMenu: () -> Unit,
+    onOpenPhotoGrid: (RestaurantPhotoGallerySource) -> Unit,
+) {
     val palette = LocalRestaurantPalette.current
     val allImages = remember { RestaurantDetailData.popularMenuImages() }
-    var fullscreenIndex by remember { mutableStateOf<Int?>(null) }
     val previewImages = remember(allImages) { allImages.take(PopularMenuPreviewCount) }
 
     Column(modifier = Modifier.padding(vertical = 24.dp)) {
@@ -1118,7 +1136,7 @@ private fun PopularMenuSection(onShowMenu: () -> Unit) {
                         .size(112.dp)
                         .clip(RoundedCornerShape(16.dp))
                         .border(1.dp, palette.border, RoundedCornerShape(16.dp))
-                        .clickable { fullscreenIndex = index },
+                        .clickable { onOpenPhotoGrid(RestaurantPhotoGallerySource.PopularMenu) },
                 )
             }
             if (allImages.isNotEmpty()) {
@@ -1129,7 +1147,9 @@ private fun PopularMenuSection(onShowMenu: () -> Unit) {
                             .clip(RoundedCornerShape(16.dp))
                             .border(1.dp, palette.border, RoundedCornerShape(16.dp))
                             .background(palette.mutedSurface)
-                            .clickable(onClick = onShowMenu),
+                            .clickable {
+                                onOpenPhotoGrid(RestaurantPhotoGallerySource.PopularMenu)
+                            },
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
@@ -1143,13 +1163,6 @@ private fun PopularMenuSection(onShowMenu: () -> Unit) {
                 }
             }
         }
-        fullscreenIndex?.let { startIndex ->
-            MenuImageFullscreenViewer(
-                images = allImages,
-                initialIndex = startIndex,
-                onDismiss = { fullscreenIndex = null },
-            )
-        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1161,7 +1174,12 @@ private fun PopularMenuSection(onShowMenu: () -> Unit) {
                 .clickable(onClick = onShowMenu),
             contentAlignment = Alignment.Center,
         ) {
-            Text("Show more", color = palette.foreground, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                text = "Show Full Menu",
+                color = palette.foreground,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
         }
     }
 }

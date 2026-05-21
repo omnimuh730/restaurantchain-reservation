@@ -41,7 +41,7 @@ private fun SubpageSubtitle(text: String, modifier: Modifier = Modifier) {
 
 /**
  * Shared layout for profile sub-pages and wishlist collection detail: [LargeTopAppBar] that
- * collapses when the list below scrolls (same structure as Recently searched).
+ * collapses when the list below scrolls (same structure as Recently Viewed).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

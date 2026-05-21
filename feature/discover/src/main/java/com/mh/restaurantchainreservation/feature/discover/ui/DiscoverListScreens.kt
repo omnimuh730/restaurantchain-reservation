@@ -132,6 +132,7 @@ fun SectionListScreen(
         "date-night" -> "Date Night Picks"
         "where-to-eat" -> "Where to Eat?"
         "top-picks-food" -> "Top Picks by Food Type"
+        "1" -> "Banner1"
         else -> "Featured"
     }
     ListScaffold(

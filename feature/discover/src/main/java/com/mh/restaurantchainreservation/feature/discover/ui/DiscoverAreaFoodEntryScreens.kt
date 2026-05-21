@@ -149,9 +149,9 @@ private fun WhereToEatAreaCard(
         if (restaurants.isEmpty()) 0.0 else restaurants.map { it.rating }.average()
     }
     val totalReviews = remember(restaurants) { restaurants.sumOf { it.reviews } }
-    val collections by WishlistStore.collections.collectAsState()
-    val areaWishlisted = remember(collections, city.id) {
-        restaurants.any { r -> collections.any { col -> col.restaurants.any { it.id == r.id } } }
+    val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
+    val areaWishlisted = remember(savedIds, restaurants) {
+        restaurants.any { it.id in savedIds }
     }
 
     Column(
@@ -194,7 +194,7 @@ private fun WhereToEatAreaCard(
             if (restaurants.isNotEmpty()) {
                 HeartButton(
                     active = areaWishlisted,
-                    onClick = { restaurants.firstOrNull()?.let { WishlistStore.openPicker(it) } },
+                    onClick = { restaurants.firstOrNull()?.let { WishlistStore.onHeartTap(it) } },
                     size = HeartButtonSize.Medium,
                     style = HeartButtonStyle.Overlay,
                     overlayContentAlignment = Alignment.TopCenter,
