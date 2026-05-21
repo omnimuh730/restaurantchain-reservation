@@ -424,7 +424,14 @@ private fun AppGraph(
                             }
                         },
                         onOpenFood = { id -> navController.navigate(DiscoverRoutes.food(id)) },
-                        onOpenLocation = { id -> navController.navigate(DiscoverRoutes.location(id)) },
+                        onOpenLocation = { id ->
+                            val areaLabel = DiscoverData.CITIES.firstOrNull { it.id == id }?.label ?: id
+                            navController.navigateDiscoverSearchResults(
+                                q = "Best of $areaLabel",
+                                summary = "Tonight, 7:00 PM, 2 people",
+                                locationId = id,
+                            )
+                        },
                         onOpenNewsList = { navController.navigate(DiscoverRoutes.NewsList) },
                         onOpenNewsArticle = { id -> navController.navigate(DiscoverRoutes.newsDetail(id)) },
                         onOpenSection = { id ->

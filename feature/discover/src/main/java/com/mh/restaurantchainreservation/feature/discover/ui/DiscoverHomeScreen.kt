@@ -53,7 +53,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.AccessTime
@@ -84,6 +83,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -94,6 +94,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
@@ -204,7 +205,9 @@ private val RestaurantMiniCardTotalHeight = RestaurantMiniImageHeight + Restaura
 
 private val WhereToEatCityTileWidth = 220.dp
 private val WhereToEatCityTileHeight = 150.dp
-private val WhereToEatTilePadding = 12.dp
+private val WhereToEatTileTitlePaddingStart = 10.dp
+private val WhereToEatTileTitlePaddingEnd = 10.dp
+private val WhereToEatTileTitlePaddingBottom = 15.dp
 
 private enum class ImageRailExploreMoreKind {
     WhereToEatPanorama,
@@ -1091,17 +1094,23 @@ private fun WhereToEatTileTextOverlay(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .fillMaxWidth()
-                .padding(WhereToEatTilePadding),
+                .padding(
+                    start = WhereToEatTileTitlePaddingStart,
+                    end = WhereToEatTileTitlePaddingEnd,
+                    bottom = WhereToEatTileTitlePaddingBottom,
+                ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = title,
-                color = Color.White,
-                fontSize = 18.sp,
+                color = Color.White.copy(alpha = 0.90f),
+                fontSize = 19.sp,
                 lineHeight = 21.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = (-0.2).sp,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 5.dp),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1415,13 +1424,14 @@ private fun ThumbnailLayer.lerpedFrom(start: ThumbnailLayer, p: Float): Thumbnai
     )
 }
 
-/** End rotations: back CCW, middle CW, front CCW (matches design ref). */
-private val SeeAllStackLayerRotations = floatArrayOf(-5.5f, 6.5f, -4.5f)
+/** End rotations: back CCW, middle CW, front CCW (front tilted further left vs back). */
+private val SeeAllStackLayerRotations = floatArrayOf(-5.5f, 7.5f, -12f)
 
 @Composable
 private fun SeeAllSlideThumbnailStack(
     images: List<Any>,
     thumbCornerShape: RoundedCornerShape,
+    thumbBorderWidth: Dp,
     modifier: Modifier = Modifier,
 ) {
     var started by remember { mutableStateOf(false) }
@@ -1455,6 +1465,7 @@ private fun SeeAllSlideThumbnailStack(
             width = wBack,
             height = wBack,
             cornerShape = thumbCornerShape,
+            borderWidth = thumbBorderWidth,
             slideProgress = pBack,
             endRotationDegrees = SeeAllStackLayerRotations[0],
         )
@@ -1467,6 +1478,7 @@ private fun SeeAllSlideThumbnailStack(
             width = wMid,
             height = wMid,
             cornerShape = thumbCornerShape,
+            borderWidth = thumbBorderWidth,
             slideProgress = pMid,
             endRotationDegrees = SeeAllStackLayerRotations[1],
         )
@@ -1479,6 +1491,7 @@ private fun SeeAllSlideThumbnailStack(
             width = wFront,
             height = wFront,
             cornerShape = thumbCornerShape,
+            borderWidth = thumbBorderWidth,
             slideProgress = pFront,
             endRotationDegrees = SeeAllStackLayerRotations[2],
         )
@@ -1492,6 +1505,7 @@ private fun AnimatedSeeAllThumbnail(
     width: Dp,
     height: Dp,
     cornerShape: RoundedCornerShape,
+    borderWidth: Dp,
     slideProgress: Float,
     endRotationDegrees: Float,
 ) {
@@ -1501,6 +1515,7 @@ private fun AnimatedSeeAllThumbnail(
             .width(width)
             .height(height)
             .graphicsLayer {
+                transformOrigin = TransformOrigin.Center
                 rotationZ = lerp(0f, endRotationDegrees, p)
                 scaleX = lerp(0.82f, 1f, p)
                 scaleY = lerp(0.82f, 1f, p)
@@ -1514,7 +1529,7 @@ private fun AnimatedSeeAllThumbnail(
                 spotColor = Color.Black.copy(alpha = 0.26f),
             )
             .clip(cornerShape)
-            .border(3.dp, Color.White, cornerShape)
+            .border(borderWidth, Color.White, cornerShape)
             .background(Color(0xFFE8EAED)),
     ) {
         AsyncImage(
@@ -1556,27 +1571,62 @@ private fun NewsSeeAllCard(
             SeeAllSlideThumbnailStack(
                 images = images,
                 thumbCornerShape = SeeAllThumbShape,
+                thumbBorderWidth = seeAllThumbBorderWidth(
+                    DiningNewsCardWidth,
+                    DiningNewsCardTotalHeight,
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .padding(top = 2.dp),
             )
-            MoreCardFooterLabel()
+            MoreCardFooterLabel(
+                cardWidth = DiningNewsCardWidth,
+                cardHeight = DiningNewsCardTotalHeight,
+            )
         }
     }
 }
 
+private data class MoreCardFooterMetrics(
+    val fontSize: TextUnit,
+    val offsetY: Dp,
+    val bottomPadding: Dp,
+)
+
+/** Scales see-all thumbnail white border with card size (restaurant rail ≈ 3dp). */
+private fun seeAllThumbBorderWidth(cardWidth: Dp, cardHeight: Dp): Dp {
+    val reference = RestaurantMiniImageHeight.value.coerceAtLeast(1f)
+    val scale = (minOf(cardWidth.value, cardHeight.value) / reference).coerceIn(0.55f, 1f)
+    return (3f * scale).dp
+}
+
+/** Scales “See all” label with [StackedSeeAllCard] size (restaurant rail as reference). */
+private fun moreCardFooterMetrics(cardWidth: Dp, cardHeight: Dp): MoreCardFooterMetrics {
+    val reference = RestaurantMiniImageHeight.value.coerceAtLeast(1f)
+    val scale = (minOf(cardWidth.value, cardHeight.value) / reference).coerceIn(0.72f, 1.12f)
+    return MoreCardFooterMetrics(
+        fontSize = (13f * scale).sp,
+        offsetY = (-10f * scale).dp,
+        bottomPadding = (6f * scale).dp,
+    )
+}
+
 @Composable
-private fun MoreCardFooterLabel() {
+private fun MoreCardFooterLabel(
+    cardWidth: Dp,
+    cardHeight: Dp,
+) {
     val palette = LocalRestaurantPalette.current
+    val metrics = moreCardFooterMetrics(cardWidth, cardHeight)
     Text(
-        text = "More",
+        text = "See all",
         color = palette.foreground,
-        fontSize = 13.sp,
+        fontSize = metrics.fontSize,
         fontWeight = FontWeight.Bold,
         modifier = Modifier
-            .offset(y = (-10).dp)
-            .padding(bottom = 6.dp),
+            .offset(y = metrics.offsetY)
+            .padding(bottom = metrics.bottomPadding),
     )
 }
 
@@ -1612,12 +1662,13 @@ private fun StackedSeeAllCard(
             SeeAllSlideThumbnailStack(
                 images = images,
                 thumbCornerShape = SeeAllThumbShape,
+                thumbBorderWidth = seeAllThumbBorderWidth(width, height),
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .padding(top = 2.dp),
             )
-            MoreCardFooterLabel()
+            MoreCardFooterLabel(cardWidth = width, cardHeight = height)
         }
     }
 }
