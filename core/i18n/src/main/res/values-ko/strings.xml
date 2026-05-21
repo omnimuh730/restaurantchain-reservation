@@ -344,6 +344,47 @@
     <string name="add_code_error_not_found">예약 코드를 찾을 수 없어요. 글자와 숫자를 확인하세요.</string>
     <string name="add_code_error_not_active">활성화된 확정 예약만 코드로 참여할 수 있어요.</string>
 
+    <!-- Update local data modal (post-login) -->
+    <string name="update_data_title">로컬 데이터를 업데이트할까요?</string>
+    <string name="update_data_subtitle">탐색을 시작하기 전에 최신 레스토랑 카탈로그, 예약, 리워드를 이 기기에 동기화합니다.</string>
+    <string name="update_data_duration_tag">약 8초</string>
+    <string name="update_data_offline_tag">오프라인 준비</string>
+    <string name="update_data_whats_new">%1$s 업데이트</string>
+    <string name="update_data_release_tag">릴리스</string>
+    <string name="update_data_release_version">2026.04.27</string>
+    <string name="update_data_feature_search_title">더 빠른 레스토랑 검색</string>
+    <string name="update_data_feature_search_body">주변 다이닝을 위한 최신 카탈로그 인덱스.</string>
+    <string name="update_data_feature_booking_title">예약 정확도 향상</string>
+    <string name="update_data_feature_booking_body">가용성과 예약 상태가 최신으로 유지됩니다.</string>
+    <string name="update_data_feature_rewards_title">리워드 항상 준비</string>
+    <string name="update_data_feature_rewards_body">지갑과 보너스 데이터가 로컬에 저장됩니다.</string>
+    <string name="update_data_feature_map_title">지도 핀 더 빠르게 갱신</string>
+    <string name="update_data_feature_map_body">주변 매장이 더 정확한 위치 클러스터로 불러와집니다.</string>
+    <string name="update_data_feature_offline_title">오프라인 캐시 개선</string>
+    <string name="update_data_feature_offline_body">저장된 메뉴와 영업 시간을 신호 없이도 볼 수 있어요.</string>
+    <string name="update_data_feature_notifications_title">예약 알림 조정</string>
+    <string name="update_data_feature_notifications_body">리마인더가 현지 시간대와 매장 규칙에 맞춰집니다.</string>
+    <string name="update_data_feature_payments_title">지갑 동기화 개선</string>
+    <string name="update_data_feature_payments_body">카드와 Tonight Cash 잔액이 한 번에 업데이트됩니다.</string>
+    <string name="update_data_feature_profile_title">프로필 설정 저장</string>
+    <string name="update_data_feature_profile_body">식단 메모와 좌석 선호가 기기 간에 유지됩니다.</string>
+    <string name="update_data_feature_menu_title">메뉴 사진 최적화</string>
+    <string name="update_data_feature_menu_body">하이라이트가 더 작은 배치로 빠르게 내려받아집니다.</string>
+    <string name="update_data_feature_reviews_title">리뷰 하이라이트 갱신</string>
+    <string name="update_data_feature_reviews_body">추천과 최근 평점이 카탈로그에서 새로고침됩니다.</string>
+    <string name="update_data_later">나중에</string>
+    <string name="update_data_action">지금 업데이트</string>
+    <string name="update_data_syncing_title">Tonight 데이터 동기화 중</string>
+    <string name="update_data_syncing_subtitle">최신 로컬 경험을 준비하는 동안 앱을 열어 두세요.</string>
+    <string name="update_data_step_connect">Tonight에 연결 중</string>
+    <string name="update_data_step_catalog">레스토랑 카탈로그 업데이트 중</string>
+    <string name="update_data_step_reservations">예약 및 지갑 동기화 중</string>
+    <string name="update_data_step_recommendations">추천 새로고침 중</string>
+    <string name="update_data_step_cache">로컬 캐시 마무리 중</string>
+    <string name="update_data_complete_version">버전 %1$s</string>
+    <string name="update_data_complete_title">오늘 밤 준비 완료</string>
+    <string name="update_data_complete_subtitle">카탈로그, 예약, 지갑, 리워드를 이 기기에서 이용할 수 있어요.</string>
+
     <!-- Menu modal -->
     <string name="menu_modal_title_order">오늘의 추천</string>
     <string name="menu_modal_title_preview">미리 계획하기</string>

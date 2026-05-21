@@ -53,7 +53,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.ChevronRight
@@ -85,6 +85,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -95,6 +97,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
@@ -111,6 +114,9 @@ import com.mh.restaurantchainreservation.core.designsystem.components.HeartButto
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
+import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
@@ -184,8 +190,19 @@ private val SeeAllThumbnailSlideStart = ThumbnailLayer(
     zIndex = 0f,
 )
 
-private val SeeAllThumbShape = RoundedCornerShape(9.dp)
-private val NewsSeeAllCardShape = RoundedCornerShape(20.dp)
+private val SeeAllThumbShape = RoundedCornerShape(12.dp)
+private val FoodTypeSeeAllThumbShape = RoundedCornerShape(8.dp)
+private const val FoodTypeSeeAllLabelFontScale = 1.18f
+/** Profile hub card shell for Dining News + restaurant “More” tiles. */
+private val MoreCardShape = HubSurfaceCardDefaults.QuickActionShape
+private val FoodTypeSeeAllCardShape = RoundedCornerShape(DiscoverPopularMenuTileCornerRadius)
+private val DiningNewsCardShape = MoreCardShape
+
+/** Restaurant cards shown per home rail before the More tile. */
+private const val RestaurantRailVisibleCount = 8
+
+/** City / food image rails show this many cards, then the explore-more tile. */
+private const val ImageRailVisibleCount = 7
 
 private val RestaurantMiniCardWidth = 176.dp
 private val RestaurantMiniImageHeight =
@@ -193,12 +210,55 @@ private val RestaurantMiniImageHeight =
 private val RestaurantMiniMetaBlockHeight = 46.dp
 private val RestaurantMiniCardTotalHeight = RestaurantMiniImageHeight + RestaurantMiniMetaBlockHeight
 
-private val RestaurantSeeAllCardShape = RoundedCornerShape(18.dp)
-
-/** End caps for “Where to Eat?” (panorama) and “Top Picks by Food Type” (collage); width matches [RestaurantMiniCardWidth]. */
-private val RailExploreMoreCardShape = RoundedCornerShape(26.dp)
-private val WhereToEatExploreImageStackHeight = 108.dp
-private val FoodCollageMoreCardSide = RestaurantMiniCardWidth
+private val WhereToEatCityTileWidth = 220.dp
+private val WhereToEatCityTileHeight = 150.dp
+/** Portrait see-all thumbs in Where to Eat card (height > width). */
+private const val WhereToEatSeeAllThumbAspectHeightOverWidth = 1.36f
+private const val WhereToEatSeeAllThumbSizeScale = 1.08f
+/** Wider tiles without changing height (height follows base width × aspect). */
+private const val WhereToEatSeeAllThumbWidthStretch = 1.14f
+private const val WhereToEatSeeAllLabelFontScale = 1.14f
+private val WhereToEatSeeAllThumbClusterWidth = 172.dp
+/** Fan stack: left on top, center middle, right back; wings overlap center from below. */
+private val WhereToEatFanThumbLeft = ThumbnailLayer(
+    layerName = "Where to eat fan left",
+    topPercent = 20f,
+    leftPercent = 14f,
+    widthPercent = 31f,
+    heightPercent = 34f,
+    zIndex = 3f,
+)
+private val WhereToEatFanThumbCenter = ThumbnailLayer(
+    layerName = "Where to eat fan center",
+    topPercent = 12f,
+    leftPercent = 34f,
+    widthPercent = 33f,
+    heightPercent = 38f,
+    zIndex = 2f,
+)
+private val WhereToEatFanThumbRight = ThumbnailLayer(
+    layerName = "Where to eat fan right",
+    topPercent = 20f,
+    leftPercent = 50f,
+    widthPercent = 31f,
+    heightPercent = 34f,
+    zIndex = 1f,
+)
+private val WhereToEatFanThumbSlideStart = ThumbnailLayer(
+    layerName = "Where to eat fan slide start",
+    topPercent = 26f,
+    leftPercent = 36f,
+    widthPercent = 27f,
+    heightPercent = 27f,
+    zIndex = 0f,
+)
+private val WhereToEatFanThumbRotations = floatArrayOf(-11f, 0f, 11f)
+private val WhereToEatFanThumbPivotLeft = TransformOrigin(0.88f, 0.94f)
+private val WhereToEatFanThumbPivotCenter = TransformOrigin(0.5f, 0.94f)
+private val WhereToEatFanThumbPivotRight = TransformOrigin(0.12f, 0.94f)
+private val WhereToEatTileTitlePaddingStart = 10.dp
+private val WhereToEatTileTitlePaddingEnd = 10.dp
+private val WhereToEatTileTitlePaddingBottom = 15.dp
 
 private enum class ImageRailExploreMoreKind {
     WhereToEatPanorama,
@@ -215,6 +275,11 @@ private val PriceListThumbnailHeight =
     PriceListThumbnailWidth / DiscoverRestaurantImageAspectWidthOverHeight
 private val PriceListAvatarCorner = 16.dp
 private val PriceListAvatarOverlayPadding = 8.dp
+private val RestaurantRailImageShape = RoundedCornerShape(18.dp)
+
+/** Default hub card shadow + clip for Discover image tiles. */
+private fun Modifier.discoverImageCardSurface(shape: Shape): Modifier =
+    hubSurfaceShadow(shape = shape).clip(shape)
 
 @Composable
 fun DiscoverHomeScreen(
@@ -284,16 +349,6 @@ fun DiscoverHomeScreen(
         DiscoverHazeRegistry.register(hazeState)
         onDispose { DiscoverHazeRegistry.unregister(hazeState) }
     }
-    // Latch ready once the list has items — visibleItemsInfo can briefly empty during scroll.
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.layoutInfo.totalItemsCount > 0 }
-            .distinctUntilChanged()
-            .collect { hasItems ->
-                if (hasItems) {
-                    DiscoverHazeRegistry.setDiscoverContentReady(true)
-                }
-            }
-    }
 
     CompositionLocalProvider(LocalDiscoverHazeState provides hazeState) {
     Box(
@@ -354,19 +409,33 @@ fun DiscoverHomeScreen(
                     ImageRailSection(
                         title = "Where to Eat?",
                         exploreMoreKind = ImageRailExploreMoreKind.WhereToEatPanorama,
-                        seeAllPreviewImages = DiscoverData.CITIES.take(3).map { it.image },
+                        seeAllPreviewImages = DiscoverData.CITIES
+                            .take(ImageRailVisibleCount)
+                            .take(3)
+                            .map { it.image },
                         onSeeAll = { onOpenSection("where-to-eat") },
+                        rowVerticalAlignment = Alignment.Top,
                     ) {
-                        CityRail(cities = DiscoverData.CITIES, onClick = onOpenLocation)
+                        CityRail(
+                            cities = DiscoverData.CITIES.take(ImageRailVisibleCount),
+                            onClick = onOpenLocation,
+                        )
                     }
                     RailSpacer(28.dp)
                     ImageRailSection(
                         title = "Top Picks by Food Type",
                         exploreMoreKind = ImageRailExploreMoreKind.FoodTypeCollage,
-                        seeAllPreviewImages = DiscoverData.FOOD_TYPES.take(4).map { it.image },
+                        seeAllPreviewImages = DiscoverData.FOOD_TYPES
+                            .take(ImageRailVisibleCount)
+                            .take(3)
+                            .map { it.image },
                         onSeeAll = { onOpenSection("top-picks-food") },
+                        rowVerticalAlignment = Alignment.Top,
                     ) {
-                        FoodRail(foodTypes = DiscoverData.FOOD_TYPES, onClick = onOpenFood)
+                        FoodRail(
+                            foodTypes = DiscoverData.FOOD_TYPES.take(ImageRailVisibleCount),
+                            onClick = onOpenFood,
+                        )
                     }
                     RailSpacer(28.dp)
                     RestaurantRail(
@@ -906,6 +975,7 @@ private fun ImageRailSection(
     exploreMoreKind: ImageRailExploreMoreKind,
     seeAllPreviewImages: List<Any>,
     onSeeAll: () -> Unit,
+    rowVerticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
     content: @Composable () -> Unit,
 ) {
     SectionHeader(title = title)
@@ -913,287 +983,21 @@ private fun ImageRailSection(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = rowVerticalAlignment,
     ) {
         item { content() }
         item {
             when (exploreMoreKind) {
                 ImageRailExploreMoreKind.WhereToEatPanorama ->
-                    WhereToEatPanoramaExploreCard(
-                        cityImageUrls = seeAllPreviewImages,
+                    WhereToEatSeeAllCard(
+                        previewImages = seeAllPreviewImages,
                         onClick = onSeeAll,
                     )
                 ImageRailExploreMoreKind.FoodTypeCollage ->
-                    FoodTypeCollageExploreCard(
-                        foodImageUrls = seeAllPreviewImages,
+                    FoodTypeSeeAllCard(
+                        previewImages = seeAllPreviewImages,
                         onClick = onSeeAll,
                     )
-            }
-        }
-    }
-}
-
-/** Panorama stack + footer (reference: “01 Panorama Stack”) for Where to Eat. */
-@Composable
-private fun WhereToEatPanoramaExploreCard(
-    cityImageUrls: List<Any>,
-    onClick: () -> Unit,
-) {
-    val palette = LocalRestaurantPalette.current
-    val images = remember(cityImageUrls) {
-        when {
-            cityImageUrls.size >= 3 -> cityImageUrls.take(3)
-            cityImageUrls.size == 2 -> cityImageUrls + cityImageUrls.last()
-            cityImageUrls.size == 1 -> List(3) { cityImageUrls.first() }
-            else -> List(3) {
-                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop"
-            }
-        }
-    }
-    val cityCount = DiscoverData.CITIES.size
-    val cardBg = if (palette.isDark) palette.cardSurface else Color.White
-    val shape = RailExploreMoreCardShape
-    val ambient = if (palette.isDark) Color.Black.copy(alpha = 0.45f) else Color.Black.copy(alpha = 0.18f)
-    val spot = if (palette.isDark) Color.Black.copy(alpha = 0.55f) else Color.Black.copy(alpha = 0.38f)
-
-    PressableScale(
-        onClick = onClick,
-        modifier = Modifier
-            .width(RestaurantMiniCardWidth)
-            .shadow(
-                elevation = 12.dp,
-                shape = shape,
-                clip = false,
-                ambientColor = ambient,
-                spotColor = spot,
-            )
-            .clip(shape)
-            .background(cardBg),
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(WhereToEatExploreImageStackHeight)
-                    .clip(RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)),
-            ) {
-                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                    val w = maxWidth
-                    val h = maxHeight
-                    val backShape = RoundedCornerShape(14.dp)
-                    val midShape = RoundedCornerShape(16.dp)
-                    val frontShape = RoundedCornerShape(18.dp)
-                    AsyncImage(
-                        model = images[0],
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .offset(x = -w * 0.10f, y = h * 0.06f)
-                            .width(w * 0.70f)
-                            .height(h * 0.78f)
-                            .clip(backShape)
-                            .zIndex(0f),
-                    )
-                    AsyncImage(
-                        model = images[1],
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .offset(x = -w * 0.03f, y = h * 0.02f)
-                            .width(w * 0.78f)
-                            .height(h * 0.86f)
-                            .clip(midShape)
-                            .zIndex(1f),
-                    )
-                    AsyncImage(
-                        model = images[2],
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .offset(x = w * 0.05f, y = -h * 0.03f)
-                            .width(w * 0.88f)
-                            .height(h * 0.92f)
-                            .clip(frontShape)
-                            .zIndex(2f),
-                    )
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(10.dp)
-                            .size(34.dp)
-                            .zIndex(3f)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.96f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Navigation,
-                            contentDescription = null,
-                            tint = Color(0xFF111111),
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                }
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Explore more",
-                        color = palette.foreground,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = (-0.2).sp,
-                    )
-                    Text(
-                        text = "$cityCount+ cities",
-                        color = palette.mutedForeground,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(top = 3.dp),
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(if (palette.isDark) palette.mutedSurface else Color(0xFFF2F2F2)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = Color(0xFF111111),
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
-        }
-    }
-}
-
-/** 2×2 collage + glassy footer (reference: “04 Collage Card”) for Top Picks by Food Type. */
-@Composable
-private fun FoodTypeCollageExploreCard(
-    foodImageUrls: List<Any>,
-    onClick: () -> Unit,
-) {
-    val palette = LocalRestaurantPalette.current
-    val images = remember(foodImageUrls) {
-        when {
-            foodImageUrls.size >= 4 -> foodImageUrls.take(4)
-            foodImageUrls.size == 3 -> foodImageUrls + foodImageUrls.first()
-            foodImageUrls.size == 2 -> foodImageUrls + foodImageUrls
-            foodImageUrls.size == 1 -> List(4) { foodImageUrls.first() }
-            else -> List(4) {
-                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop"
-            }
-        }
-    }
-    val shape = RailExploreMoreCardShape
-    val ambient = if (palette.isDark) Color.Black.copy(alpha = 0.45f) else Color.Black.copy(alpha = 0.18f)
-    val spot = if (palette.isDark) Color.Black.copy(alpha = 0.55f) else Color.Black.copy(alpha = 0.38f)
-    val overlayBg = if (palette.isDark) palette.cardSurface.copy(alpha = 0.92f) else Color.White.copy(alpha = 0.92f)
-
-    PressableScale(
-        onClick = onClick,
-        modifier = Modifier
-            .size(FoodCollageMoreCardSide)
-            .shadow(
-                elevation = 12.dp,
-                shape = shape,
-                clip = false,
-                ambientColor = ambient,
-                spotColor = spot,
-            )
-            .clip(shape),
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Row(modifier = Modifier.weight(1f)) {
-                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                        AsyncImage(
-                            model = images[0],
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                        AsyncImage(
-                            model = images[1],
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                }
-                Row(modifier = Modifier.weight(1f)) {
-                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                        AsyncImage(
-                            model = images[2],
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                        AsyncImage(
-                            model = images[3],
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                }
-            }
-            Row(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(10.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(overlayBg)
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "More picks",
-                        color = palette.foreground,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = (-0.15).sp,
-                    )
-                    Text(
-                        text = "Explore food types",
-                        color = palette.mutedForeground,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(if (palette.isDark) palette.mutedSurface else Color.White.copy(alpha = 0.95f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = Color(0xFF111111),
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
             }
         }
     }
@@ -1203,11 +1007,9 @@ private fun FoodTypeCollageExploreCard(
 private fun CityRail(cities: List<City>, onClick: (String) -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         cities.forEach { city ->
-            ImageRailTile(
+            WhereToEatCityTile(
                 title = city.label,
                 image = city.image,
-                width = 128.dp,
-                centered = true,
                 onClick = { onClick(city.id) },
             )
         }
@@ -1216,65 +1018,158 @@ private fun CityRail(cities: List<City>, onClick: (String) -> Unit) {
 
 @Composable
 private fun FoodRail(foodTypes: List<FoodType>, onClick: (String) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
         foodTypes.forEach { food ->
-            ImageRailTile(
-                title = food.label,
-                image = food.image,
-                width = 112.dp,
-                centered = false,
+            FoodTypeRailTile(
+                food = food,
                 onClick = { onClick(food.id) },
             )
         }
     }
 }
 
+/** Image with bottom gradient + place count; food name below (like [AirbnbMiniCard] title). */
 @Composable
-private fun ImageRailTile(
+private fun FoodTypeRailTile(
+    food: FoodType,
+    onClick: () -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val placeCount = remember(food.id) { DiscoverData.byFoodType(food.id).size }
+    val shape = RoundedCornerShape(DiscoverPopularMenuTileCornerRadius)
+    PressableScale(
+        onClick = onClick,
+        modifier = Modifier.width(DiscoverPopularMenuTileSize),
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .size(DiscoverPopularMenuTileSize)
+                    .discoverImageCardSurface(shape)
+                    .background(palette.mutedSurface),
+            ) {
+                AsyncImage(
+                    model = food.image,
+                    contentDescription = food.label,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colorStops = arrayOf(
+                                    0f to Color.Transparent,
+                                    0.42f to Color.Transparent,
+                                    0.68f to Color.Black.copy(alpha = 0.38f),
+                                    1f to Color.Black.copy(alpha = 0.82f),
+                                ),
+                            ),
+                        ),
+                )
+                Text(
+                    text = "$placeCount places",
+                    color = Color.White.copy(alpha = 0.92f),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(horizontal = 10.dp, vertical = 10.dp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text(
+                text = food.label,
+                color = palette.foreground,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 8.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WhereToEatCityTile(
     title: String,
     image: String,
-    width: Dp,
-    centered: Boolean,
     onClick: () -> Unit,
 ) {
     PressableScale(
         onClick = onClick,
         modifier = Modifier
-            .size(width = width, height = 80.dp)
-            .clip(RoundedCornerShape(13.dp)),
+            .size(WhereToEatCityTileWidth, WhereToEatCityTileHeight)
+            .discoverImageCardSurface(RestaurantRailImageShape),
     ) {
-        Box(modifier = Modifier.matchParentSize()) {
+        Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
                 model = image,
                 contentDescription = title,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .then(
-                        if (centered) {
-                            Modifier.background(Color.Black.copy(alpha = 0.36f))
-                        } else {
-                            Modifier.background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.64f))))
-                        },
+            WhereToEatTileTextOverlay(title = title)
+        }
+    }
+}
+
+@Composable
+private fun WhereToEatTileTextOverlay(
+    title: String,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0f to Color.Transparent,
+                            0.5f to Color.Transparent,
+                            0.78f to Color.Black.copy(alpha = 0.42f),
+                            1f to Color.Black.copy(alpha = 0.75f),
+                        ),
                     ),
-            )
+                ),
+        )
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .padding(
+                    start = WhereToEatTileTitlePaddingStart,
+                    end = WhereToEatTileTitlePaddingEnd,
+                    bottom = WhereToEatTileTitlePaddingBottom,
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 text = title,
-                color = Color.White,
-                fontSize = if (centered) 13.sp else 12.sp,
-                fontWeight = if (centered) FontWeight.Bold else FontWeight.SemiBold,
-                modifier = if (centered) {
-                    Modifier.align(Alignment.Center)
-                } else {
-                    Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(10.dp)
-                },
+                color = Color.White.copy(alpha = 0.90f),
+                fontSize = 19.sp,
+                lineHeight = 21.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-0.2).sp,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 5.dp),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.95f),
+                modifier = Modifier.size(18.dp),
             )
         }
     }
@@ -1294,7 +1189,7 @@ private fun RestaurantRail(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.Top,
     ) {
-        restaurants.forEach { restaurant ->
+        restaurants.take(RestaurantRailVisibleCount).forEach { restaurant ->
             item(key = restaurant.id) {
                 AirbnbMiniCard(
                     restaurant = restaurant,
@@ -1341,7 +1236,7 @@ private fun AirbnbMiniCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
-                    .clip(RoundedCornerShape(18.dp))
+                    .discoverImageCardSurface(RestaurantRailImageShape)
                     .background(palette.mutedSurface),
             ) {
                 AsyncImage(
@@ -1428,9 +1323,7 @@ private fun NewsRail(
                     modifier = Modifier
                         .width(cardWidth)
                         .height(DiningNewsCardTotalHeight)
-                        .clip(RoundedCornerShape(20.dp))
-                        .border(1.dp, palette.border, RoundedCornerShape(20.dp))
-                        .background(palette.cardSurface),
+                        .hubSurfaceCard(palette = palette, shape = DiningNewsCardShape),
                 ) {
                     Column(modifier = Modifier.fillMaxSize()) {
                         Box(
@@ -1578,13 +1471,14 @@ private fun ThumbnailLayer.lerpedFrom(start: ThumbnailLayer, p: Float): Thumbnai
     )
 }
 
-/** End rotations: back CCW, middle CW, front CCW (matches design ref). */
-private val SeeAllStackLayerRotations = floatArrayOf(-5.5f, 6.5f, -4.5f)
+/** End rotations: back CCW, middle CW, front CCW (front tilted further left vs back). */
+private val SeeAllStackLayerRotations = floatArrayOf(-5.5f, 7.5f, -12f)
 
 @Composable
 private fun SeeAllSlideThumbnailStack(
     images: List<Any>,
     thumbCornerShape: RoundedCornerShape,
+    thumbBorderWidth: Dp,
     modifier: Modifier = Modifier,
 ) {
     var started by remember { mutableStateOf(false) }
@@ -1618,6 +1512,7 @@ private fun SeeAllSlideThumbnailStack(
             width = wBack,
             height = wBack,
             cornerShape = thumbCornerShape,
+            borderWidth = thumbBorderWidth,
             slideProgress = pBack,
             endRotationDegrees = SeeAllStackLayerRotations[0],
         )
@@ -1630,6 +1525,7 @@ private fun SeeAllSlideThumbnailStack(
             width = wMid,
             height = wMid,
             cornerShape = thumbCornerShape,
+            borderWidth = thumbBorderWidth,
             slideProgress = pMid,
             endRotationDegrees = SeeAllStackLayerRotations[1],
         )
@@ -1642,9 +1538,149 @@ private fun SeeAllSlideThumbnailStack(
             width = wFront,
             height = wFront,
             cornerShape = thumbCornerShape,
+            borderWidth = thumbBorderWidth,
             slideProgress = pFront,
             endRotationDegrees = SeeAllStackLayerRotations[2],
         )
+    }
+}
+
+/** Three-thumbnail fan for Where to Eat see-all (left top, center middle, right back). */
+@Composable
+private fun WhereToEatFanThumbnailStack(
+    images: List<Any>,
+    thumbCornerShape: RoundedCornerShape,
+    thumbBorderWidth: Dp,
+    modifier: Modifier = Modifier,
+    thumbAspectHeightOverWidth: Float = WhereToEatSeeAllThumbAspectHeightOverWidth,
+    thumbSizeScale: Float = WhereToEatSeeAllThumbSizeScale,
+    thumbWidthStretch: Float = WhereToEatSeeAllThumbWidthStretch,
+) {
+    var started by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { started = true }
+    val t by animateFloatAsState(
+        targetValue = if (started) 1f else 0f,
+        animationSpec = tween(880, easing = FastOutSlowInEasing),
+        label = "where-to-eat-fan-slide",
+    )
+    val pLeft = staggerProgress(t, 0f, 0.36f)
+    val pCenter = staggerProgress(t, 0.18f, 0.62f)
+    val pRight = staggerProgress(t, 0.38f, 1f)
+
+    BoxWithConstraints(modifier = modifier) {
+        val w = maxWidth
+        val h = maxHeight
+        val gLeft = WhereToEatFanThumbLeft.lerpedFrom(WhereToEatFanThumbSlideStart, pLeft)
+        val gCenter = WhereToEatFanThumbCenter.lerpedFrom(WhereToEatFanThumbSlideStart, pCenter)
+        val gRight = WhereToEatFanThumbRight.lerpedFrom(WhereToEatFanThumbSlideStart, pRight)
+        val baseLeft = w * (gLeft.widthPercent / 100f) * thumbSizeScale
+        val baseCenter = w * (gCenter.widthPercent / 100f) * thumbSizeScale
+        val baseRight = w * (gRight.widthPercent / 100f) * thumbSizeScale
+        val hLeft = baseLeft * thumbAspectHeightOverWidth
+        val hCenter = baseCenter * thumbAspectHeightOverWidth
+        val hRight = baseRight * thumbAspectHeightOverWidth
+        val wLeft = baseLeft * thumbWidthStretch
+        val wCenter = baseCenter * thumbWidthStretch
+        val wRight = baseRight * thumbWidthStretch
+
+        AnimatedSeeAllThumbnail(
+            imageModel = images[2],
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(w * (gRight.leftPercent / 100f), h * (gRight.topPercent / 100f))
+                .zIndex(gRight.zIndex),
+            width = wRight,
+            height = hRight,
+            cornerShape = thumbCornerShape,
+            borderWidth = thumbBorderWidth,
+            slideProgress = pRight,
+            endRotationDegrees = WhereToEatFanThumbRotations[2],
+            transformOrigin = WhereToEatFanThumbPivotRight,
+        )
+        AnimatedSeeAllThumbnail(
+            imageModel = images[1],
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(w * (gCenter.leftPercent / 100f), h * (gCenter.topPercent / 100f))
+                .zIndex(gCenter.zIndex),
+            width = wCenter,
+            height = hCenter,
+            cornerShape = thumbCornerShape,
+            borderWidth = thumbBorderWidth,
+            slideProgress = pCenter,
+            endRotationDegrees = WhereToEatFanThumbRotations[1],
+            transformOrigin = WhereToEatFanThumbPivotCenter,
+        )
+        AnimatedSeeAllThumbnail(
+            imageModel = images[0],
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(w * (gLeft.leftPercent / 100f), h * (gLeft.topPercent / 100f))
+                .zIndex(gLeft.zIndex),
+            width = wLeft,
+            height = hLeft,
+            cornerShape = thumbCornerShape,
+            borderWidth = thumbBorderWidth,
+            slideProgress = pLeft,
+            endRotationDegrees = WhereToEatFanThumbRotations[0],
+            transformOrigin = WhereToEatFanThumbPivotLeft,
+        )
+    }
+}
+
+@Composable
+private fun WhereToEatSeeAllCard(
+    previewImages: List<Any>,
+    onClick: () -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val images = remember(previewImages) {
+        when {
+            previewImages.size >= 3 -> previewImages.take(3)
+            previewImages.size == 2 -> previewImages + previewImages.last()
+            previewImages.size == 1 -> List(3) { previewImages.first() }
+            else -> List(3) {
+                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200&h=200&fit=crop"
+            }
+        }
+    }
+    val thumbBorder = seeAllThumbBorderWidth(WhereToEatCityTileWidth, WhereToEatCityTileHeight)
+
+    PressableScale(
+        onClick = onClick,
+        modifier = Modifier
+            .size(WhereToEatCityTileWidth, WhereToEatCityTileHeight)
+            .hubSurfaceCard(palette = palette, shape = MoreCardShape),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(WhereToEatSeeAllThumbClusterWidth)
+                        .fillMaxHeight(),
+                ) {
+                    WhereToEatFanThumbnailStack(
+                        images = images,
+                        thumbCornerShape = SeeAllThumbShape,
+                        thumbBorderWidth = thumbBorder,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
+            MoreCardFooterLabel(
+                cardWidth = WhereToEatCityTileWidth,
+                cardHeight = WhereToEatCityTileHeight,
+                fontScale = WhereToEatSeeAllLabelFontScale,
+            )
+        }
     }
 }
 
@@ -1655,8 +1691,10 @@ private fun AnimatedSeeAllThumbnail(
     width: Dp,
     height: Dp,
     cornerShape: RoundedCornerShape,
+    borderWidth: Dp,
     slideProgress: Float,
     endRotationDegrees: Float,
+    transformOrigin: TransformOrigin = TransformOrigin.Center,
 ) {
     val p = slideProgress.coerceIn(0f, 1f)
     Box(
@@ -1664,6 +1702,7 @@ private fun AnimatedSeeAllThumbnail(
             .width(width)
             .height(height)
             .graphicsLayer {
+                this.transformOrigin = transformOrigin
                 rotationZ = lerp(0f, endRotationDegrees, p)
                 scaleX = lerp(0.82f, 1f, p)
                 scaleY = lerp(0.82f, 1f, p)
@@ -1677,7 +1716,7 @@ private fun AnimatedSeeAllThumbnail(
                 spotColor = Color.Black.copy(alpha = 0.26f),
             )
             .clip(cornerShape)
-            .border(3.dp, Color.White, cornerShape)
+            .border(borderWidth, Color.White, cornerShape)
             .background(Color(0xFFE8EAED)),
     ) {
         AsyncImage(
@@ -1704,21 +1743,13 @@ private fun NewsSeeAllCard(
             }
         }
     }
-    val cardShape = NewsSeeAllCardShape
+    val palette = LocalRestaurantPalette.current
     PressableScale(
         onClick = onClick,
         modifier = Modifier
             .width(DiningNewsCardWidth)
             .height(DiningNewsCardTotalHeight)
-            .shadow(
-                elevation = 18.dp,
-                shape = cardShape,
-                clip = false,
-                ambientColor = Color.Black.copy(alpha = 0.18f),
-                spotColor = Color.Black.copy(alpha = 0.30f),
-            )
-            .clip(cardShape)
-            .background(Color.White),
+            .hubSurfaceCard(palette = palette, shape = MoreCardShape),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -1727,31 +1758,81 @@ private fun NewsSeeAllCard(
             SeeAllSlideThumbnailStack(
                 images = images,
                 thumbCornerShape = SeeAllThumbShape,
+                thumbBorderWidth = seeAllThumbBorderWidth(
+                    DiningNewsCardWidth,
+                    DiningNewsCardTotalHeight,
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .padding(top = 2.dp),
             )
-            Text(
-                text = "More",
-                color = Color(0xFF111111),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .offset(y = (-10).dp)
-                    .padding(bottom = 6.dp),
+            MoreCardFooterLabel(
+                cardWidth = DiningNewsCardWidth,
+                cardHeight = DiningNewsCardTotalHeight,
             )
         }
     }
 }
 
+private data class MoreCardFooterMetrics(
+    val fontSize: TextUnit,
+    val offsetY: Dp,
+    val bottomPadding: Dp,
+)
+
+/** Scales see-all thumbnail white border with card size (restaurant rail ≈ 3dp). */
+private fun seeAllThumbBorderWidth(cardWidth: Dp, cardHeight: Dp): Dp {
+    val reference = RestaurantMiniImageHeight.value.coerceAtLeast(1f)
+    val scale = (minOf(cardWidth.value, cardHeight.value) / reference).coerceIn(0.55f, 1f)
+    return (3f * scale).dp
+}
+
+/** Scales “See all” label with [StackedSeeAllCard] size (restaurant rail as reference). */
+private fun moreCardFooterMetrics(
+    cardWidth: Dp,
+    cardHeight: Dp,
+    fontScale: Float = 1f,
+): MoreCardFooterMetrics {
+    val reference = RestaurantMiniImageHeight.value.coerceAtLeast(1f)
+    val scale = (minOf(cardWidth.value, cardHeight.value) / reference).coerceIn(0.72f, 1.12f)
+    return MoreCardFooterMetrics(
+        fontSize = (13f * scale * fontScale).sp,
+        offsetY = (-10f * scale).dp,
+        bottomPadding = (6f * scale).dp,
+    )
+}
+
+@Composable
+private fun MoreCardFooterLabel(
+    cardWidth: Dp,
+    cardHeight: Dp,
+    fontScale: Float = 1f,
+) {
+    val palette = LocalRestaurantPalette.current
+    val metrics = moreCardFooterMetrics(cardWidth, cardHeight, fontScale = fontScale)
+    Text(
+        text = "See all",
+        color = palette.foreground,
+        fontSize = metrics.fontSize,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier
+            .offset(y = metrics.offsetY)
+            .padding(bottom = metrics.bottomPadding),
+    )
+}
+
 @Composable
 private fun StackedSeeAllCard(
     width: Dp,
-    imageAreaHeight: Dp,
+    height: Dp,
     previewImages: List<Any>,
     onClick: () -> Unit,
+    cardShape: Shape = MoreCardShape,
+    thumbCornerShape: RoundedCornerShape = SeeAllThumbShape,
+    footerFontScale: Float = 1f,
 ) {
+    val palette = LocalRestaurantPalette.current
     val images = remember(previewImages) {
         when {
             previewImages.size >= 3 -> previewImages.take(3)
@@ -1762,21 +1843,12 @@ private fun StackedSeeAllCard(
             }
         }
     }
-    val cardShape = RestaurantSeeAllCardShape
     PressableScale(
         onClick = onClick,
         modifier = Modifier
             .width(width)
-            .height(imageAreaHeight)
-            .shadow(
-                elevation = 18.dp,
-                shape = cardShape,
-                clip = false,
-                ambientColor = Color.Black.copy(alpha = 0.18f),
-                spotColor = Color.Black.copy(alpha = 0.30f),
-            )
-            .clip(cardShape)
-            .background(Color.White),
+            .height(height)
+            .hubSurfaceCard(palette = palette, shape = cardShape),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -1784,20 +1856,17 @@ private fun StackedSeeAllCard(
         ) {
             SeeAllSlideThumbnailStack(
                 images = images,
-                thumbCornerShape = SeeAllThumbShape,
+                thumbCornerShape = thumbCornerShape,
+                thumbBorderWidth = seeAllThumbBorderWidth(width, height),
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .padding(top = 2.dp),
             )
-            Text(
-                text = "More",
-                color = Color(0xFF111111),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .offset(y = (-10).dp)
-                    .padding(bottom = 6.dp),
+            MoreCardFooterLabel(
+                cardWidth = width,
+                cardHeight = height,
+                fontScale = footerFontScale,
             )
         }
     }
@@ -1810,9 +1879,25 @@ private fun RestaurantSeeAllCard(
 ) {
     StackedSeeAllCard(
         width = RestaurantMiniCardWidth,
-        imageAreaHeight = RestaurantMiniImageHeight,
+        height = RestaurantMiniImageHeight,
         previewImages = previewImages,
         onClick = onClick,
+    )
+}
+
+@Composable
+private fun FoodTypeSeeAllCard(
+    previewImages: List<Any>,
+    onClick: () -> Unit,
+) {
+    StackedSeeAllCard(
+        width = DiscoverPopularMenuTileSize,
+        height = DiscoverPopularMenuTileSize,
+        previewImages = previewImages,
+        onClick = onClick,
+        cardShape = FoodTypeSeeAllCardShape,
+        thumbCornerShape = FoodTypeSeeAllThumbShape,
+        footerFontScale = FoodTypeSeeAllLabelFontScale,
     )
 }
 
@@ -2145,12 +2230,12 @@ private fun SectionHeader(title: String, horizontalPadding: Dp = 16.dp) {
     Text(
         text = title,
         color = palette.foreground,
-        fontSize = 20.sp,
+        fontSize = 19.sp,
         fontWeight = FontWeight.Bold,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = horizontalPadding, vertical = 0.dp)
-            .padding(bottom = 12.dp),
+            .padding(bottom = 15.dp),
     )
 }
 
@@ -2190,20 +2275,51 @@ private fun RailSpacer(height: Dp) {
 
 @Composable
 private fun rememberNewThisWeek(): List<Restaurant> = remember {
-    listOf(
-        (DiscoverData.findById("m4") ?: DiscoverData.MONTHLY_BEST[3]).copy(area = "Just opened", tag = "New"),
-        (DiscoverData.findById("l3") ?: DiscoverData.LOVED_BY_LOCALS.last()).copy(area = "Fresh tables", tag = "New"),
-        (DiscoverData.findById("d1") ?: DiscoverData.DATE_NIGHT.first()).copy(area = "Soft launch", tag = "New"),
+    homeRailRestaurants(
+        seed = 101,
+        tag = "New",
+        areaFor = { index ->
+            when (index % 4) {
+                0 -> "Just opened"
+                1 -> "Fresh tables"
+                2 -> "Soft launch"
+                else -> "New this week"
+            }
+        },
     )
 }
 
 @Composable
 private fun rememberLateNight(): List<Restaurant> = remember {
-    listOf(
-        (DiscoverData.findById("l3") ?: DiscoverData.LOVED_BY_LOCALS.last()).copy(area = "Open until 1 AM", tag = "Late night"),
-        (DiscoverData.findById("v3") ?: DiscoverData.VIRAL.last()).copy(area = "Open until 2 AM", tag = "Late night"),
-        (DiscoverData.findById("v1") ?: DiscoverData.VIRAL.first()).copy(area = "Last call tables", tag = "Late night"),
+    homeRailRestaurants(
+        seed = 102,
+        tag = "Late night",
+        areaFor = { index ->
+            when (index % 4) {
+                0 -> "Open until 1 AM"
+                1 -> "Open until 2 AM"
+                2 -> "Last call tables"
+                else -> "Open late"
+            }
+        },
     )
+}
+
+private fun homeRailRestaurants(
+    seed: Int,
+    tag: String,
+    areaFor: (index: Int) -> String,
+): List<Restaurant> {
+    val areas = listOf("Just opened", "Fresh tables", "Soft launch", "New this week")
+    return DiscoverData.ALL
+        .shuffled(kotlin.random.Random(seed))
+        .take(RestaurantRailVisibleCount)
+        .mapIndexed { index, restaurant ->
+            restaurant.copy(
+                area = areaFor(index).ifBlank { areas[index % areas.size] },
+                tag = tag,
+            )
+        }
 }
 
 /** Same WebP assets as `restaurantchain-reservation-ui-demo` / `public/icons/discover`. */

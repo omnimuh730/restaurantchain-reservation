@@ -29,9 +29,10 @@ object HubSurfaceCardDefaults {
     /** Horizontal gap between cards in a row (quick actions, stats). */
     val RowCardSpacing = 12.dp
 
-    /** Matches profile hub container cards (credit cards, quick actions, etc.). */
-    val ShadowElevation = 8.dp
-    const val ShadowAmbientAlpha = 0.12f
+    /** Matches Discover “Explore more” rail card (ambient + spot). */
+    val ShadowElevation = 12.dp
+    const val ShadowAmbientAlpha = 0.18f
+    const val ShadowSpotAlpha = 0.38f
 
     /** Primary inner padding for hero / summary cards (Next Up, stats). */
     val ContentPadding = 20.dp
@@ -46,14 +47,16 @@ fun Modifier.hubSurfaceCard(
     shape: Shape = HubSurfaceCardDefaults.Shape,
     shadowElevation: Dp = HubSurfaceCardDefaults.ShadowElevation,
     shadowAmbientAlpha: Float = HubSurfaceCardDefaults.ShadowAmbientAlpha,
+    shadowSpotAlpha: Float = HubSurfaceCardDefaults.ShadowSpotAlpha,
     showBorder: Boolean = false,
     onClick: (() -> Unit)? = null,
 ): Modifier {
     var modifier = this
-        .shadow(
-            elevation = shadowElevation,
+        .hubSurfaceShadow(
             shape = shape,
-            ambientColor = Color.Black.copy(alpha = shadowAmbientAlpha),
+            elevation = shadowElevation,
+            ambientAlpha = shadowAmbientAlpha,
+            spotAlpha = shadowSpotAlpha,
         )
         .clip(shape)
     if (showBorder) {
@@ -65,3 +68,17 @@ fun Modifier.hubSurfaceCard(
     }
     return modifier
 }
+
+/** Profile hub / Discover rail card drop shadow (ambient + spot, matches Explore more). */
+fun Modifier.hubSurfaceShadow(
+    shape: Shape,
+    elevation: Dp = HubSurfaceCardDefaults.ShadowElevation,
+    ambientAlpha: Float = HubSurfaceCardDefaults.ShadowAmbientAlpha,
+    spotAlpha: Float = HubSurfaceCardDefaults.ShadowSpotAlpha,
+): Modifier = shadow(
+    elevation = elevation,
+    shape = shape,
+    clip = false,
+    ambientColor = Color.Black.copy(alpha = ambientAlpha),
+    spotColor = Color.Black.copy(alpha = spotAlpha),
+)

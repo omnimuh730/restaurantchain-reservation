@@ -1,3 +1,5 @@
+@file:OptIn(dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi::class)
+
 package com.mh.restaurantchainreservation.core.navigation
 
 import androidx.compose.animation.AnimatedContentScope
@@ -69,6 +71,8 @@ import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavT
 import com.mh.restaurantchainreservation.core.designsystem.components.BottomNavTabId
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationHost
 import com.mh.restaurantchainreservation.core.model.AuthSessionStore
+import com.mh.restaurantchainreservation.core.model.UpdateDataModalStore
+import com.mh.restaurantchainreservation.feature.auth.UpdateDataModalHost
 import com.mh.restaurantchainreservation.core.model.DiscoverData
 import com.mh.restaurantchainreservation.core.model.LocalDataSyncStore
 import com.mh.restaurantchainreservation.core.model.WishlistStore
@@ -93,9 +97,7 @@ import com.mh.restaurantchainreservation.feature.dining.DiningRoutes
 import com.mh.restaurantchainreservation.feature.discover.DiscoverRoutes
 import com.mh.restaurantchainreservation.feature.discover.ui.AllPromotionsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.CategoryResultsScreen
-import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverHazeRegistry
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverHomeScreen
-import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverUpdateModalHost
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverSearchModal
 import com.mh.restaurantchainreservation.feature.discover.ui.DiscoverSearchResultsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.FoodTypeCuisineListScreen
@@ -126,6 +128,8 @@ import com.mh.restaurantchainreservation.feature.wishlist.WishlistRoutes
 import com.mh.restaurantchainreservation.feature.wishlist.WishlistScreen
 import com.mh.restaurantchainreservation.feature.wishlist.ui.WishlistOverlayHost
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 
 @Composable
 fun RestaurantNavHost(
@@ -148,6 +152,9 @@ fun RestaurantNavHost(
     val destination = navBackStackEntry?.destination
     val activeTabId = destination?.let { resolveActiveTab(it.hierarchy.mapNotNull { d -> d.route }.toList()) }
         ?: BottomNavTabId.Discover
+    val suppressBottomNav by UpdateDataModalStore.suppressBottomNav.collectAsState()
+    val pendingUpdateModal by UpdateDataModalStore.pendingAfterLogin.collectAsState()
+    val updateDataHazeState = rememberHazeState()
     var signInRequiredReason by remember { mutableStateOf<SignInRequiredReason?>(null) }
 
     fun promptSignIn(reason: SignInRequiredReason) {
@@ -165,13 +172,23 @@ fun RestaurantNavHost(
     val showAppChrome = shouldShowAppChrome(destination?.route)
     val onDiscoverHome = destination?.route == DiscoverRoutes.Home
     val shouldShowUpdatePrompt by LocalDataSyncStore.shouldShowUpdatePrompt.collectAsState()
-    // Keep bottom nav hidden until the post-login update flow finishes so Discover paints first.
-    val hideBottomBarForUpdateFlow = authenticated && onDiscoverHome && shouldShowUpdatePrompt
+
+    LaunchedEffect(authenticated, onDiscoverHome, shouldShowUpdatePrompt, pendingUpdateModal) {
+        if (
+            authenticated &&
+            onDiscoverHome &&
+            shouldShowUpdatePrompt &&
+            !pendingUpdateModal
+        ) {
+            UpdateDataModalStore.requestAfterLogin()
+        }
+    }
+
     val bottomNavScrollBehavior = rememberBottomNavScrollBehavior()
     val showBottomBarSlot = isCompact &&
         showAppChrome &&
         shouldShowBottomNavBar(destination?.route) &&
-        !hideBottomBarForUpdateFlow
+        !suppressBottomNav
     val scrollNavShowProgress by animateFloatAsState(
         targetValue = if (!showBottomBarSlot || !bottomNavScrollBehavior.isVisible) 0f else 1f,
         animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
@@ -198,6 +215,11 @@ fun RestaurantNavHost(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeSource(state = updateDataHazeState),
+        ) {
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
     var bottomBarHeightPx by remember { mutableIntStateOf(0) }
@@ -347,9 +369,11 @@ fun RestaurantNavHost(
         }
     }
 
-        if (isCompact && onDiscoverHome) {
-            DiscoverUpdateModalHost(onDiscoverHome = onDiscoverHome)
         }
+        UpdateDataModalHost(
+            authenticated = authenticated,
+            hazeState = updateDataHazeState,
+        )
     }
 }
 
@@ -863,6 +887,7 @@ private fun AppGraph(
                     onNavigateRegister = { navController.navigate(AuthRoutes.Register) },
                     onNavigateForgot = { navController.navigate(AuthRoutes.Forgot) },
                     onAuthenticated = {
+                        UpdateDataModalStore.requestAfterLogin()
                         onAuthenticated()
                         navController.navigate(DiscoverRoutes.Home) {
                             popUpTo(AuthRoutes.Login) { inclusive = true }
@@ -877,6 +902,7 @@ private fun AppGraph(
                 RegisterScreen(
                     onGoLogin = { navController.popBackStack(AuthRoutes.Login, inclusive = false) },
                     onComplete = {
+                        UpdateDataModalStore.requestAfterLogin()
                         onAuthenticated()
                         navController.navigate(DiscoverRoutes.Home) {
                             popUpTo(AuthRoutes.Login) { inclusive = true }

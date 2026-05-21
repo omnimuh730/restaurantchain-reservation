@@ -602,6 +602,47 @@
     <string name="add_code_error_not_found">We couldn\'t find that booking code. Check the letters and numbers.</string>
     <string name="add_code_error_not_active">Only active confirmed reservations can be joined by code.</string>
 
+    <!-- Update local data modal (post-login) -->
+    <string name="update_data_title">Update local data?</string>
+    <string name="update_data_subtitle">Sync the latest restaurant catalog, reservations, and rewards to this device before you start browsing.</string>
+    <string name="update_data_duration_tag">About 8 seconds</string>
+    <string name="update_data_offline_tag">Offline ready</string>
+    <string name="update_data_whats_new">What\'s new in %1$s</string>
+    <string name="update_data_release_tag">Release</string>
+    <string name="update_data_release_version">2026.04.27</string>
+    <string name="update_data_feature_search_title">Faster restaurant search</string>
+    <string name="update_data_feature_search_body">Fresh catalog indexes for nearby dining.</string>
+    <string name="update_data_feature_booking_title">Better booking accuracy</string>
+    <string name="update_data_feature_booking_body">Availability and reservation states stay current.</string>
+    <string name="update_data_feature_rewards_title">Rewards stay ready</string>
+    <string name="update_data_feature_rewards_body">Wallet and bonus data are saved locally.</string>
+    <string name="update_data_feature_map_title">Map pins refresh faster</string>
+    <string name="update_data_feature_map_body">Nearby venues load with sharper location clustering.</string>
+    <string name="update_data_feature_offline_title">Smarter offline cache</string>
+    <string name="update_data_feature_offline_body">Saved menus and hours stay usable without signal.</string>
+    <string name="update_data_feature_notifications_title">Booking alerts tuned</string>
+    <string name="update_data_feature_notifications_body">Reminders align with your local timezone and venue rules.</string>
+    <string name="update_data_feature_payments_title">Wallet sync improvements</string>
+    <string name="update_data_feature_payments_body">Cards and Tonight Cash balances update in one pass.</string>
+    <string name="update_data_feature_profile_title">Profile preferences saved</string>
+    <string name="update_data_feature_profile_body">Dietary notes and seating choices carry across devices.</string>
+    <string name="update_data_feature_menu_title">Menu photos optimized</string>
+    <string name="update_data_feature_menu_body">Highlights download in smaller batches for quicker browsing.</string>
+    <string name="update_data_feature_reviews_title">Review highlights updated</string>
+    <string name="update_data_feature_reviews_body">Top picks and recent ratings refresh from the catalog.</string>
+    <string name="update_data_later">Later</string>
+    <string name="update_data_action">Update now</string>
+    <string name="update_data_syncing_title">Syncing your Tonight data</string>
+    <string name="update_data_syncing_subtitle">Keep the app open while we prepare the freshest local experience.</string>
+    <string name="update_data_step_connect">Connecting to Tonight</string>
+    <string name="update_data_step_catalog">Updating restaurant catalog</string>
+    <string name="update_data_step_reservations">Syncing reservations and wallet</string>
+    <string name="update_data_step_recommendations">Refreshing recommendations</string>
+    <string name="update_data_step_cache">Finalizing local cache</string>
+    <string name="update_data_complete_version">Version %1$s</string>
+    <string name="update_data_complete_title">Ready for tonight</string>
+    <string name="update_data_complete_subtitle">Catalog, reservations, wallet, and rewards are now available on this device.</string>
+
     <!-- Menu modal -->
     <string name="menu_modal_title_order">Tonight picks</string>
     <string name="menu_modal_title_preview">Plan ahead</string>

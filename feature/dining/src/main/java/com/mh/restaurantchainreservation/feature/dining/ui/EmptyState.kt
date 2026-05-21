@@ -33,7 +33,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -45,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 
@@ -61,11 +61,7 @@ fun DiningNoItemsCard(
         Column(
             modifier = modifier
                 .fillMaxWidth()
-                .shadow(
-                    elevation = HubSurfaceCardDefaults.ShadowElevation,
-                    shape = cardShape,
-                    ambientColor = palette.foreground.copy(alpha = HubSurfaceCardDefaults.ShadowAmbientAlpha),
-                )
+                .hubSurfaceShadow(shape = cardShape)
                 .clip(cardShape)
                 .background(palette.cardSurface)
                 .border(1.dp, palette.brand.copy(alpha = 0.22f), cardShape)
