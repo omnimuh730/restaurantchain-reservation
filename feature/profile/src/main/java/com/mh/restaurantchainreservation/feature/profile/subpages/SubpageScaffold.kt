@@ -1,96 +1,118 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.mh.restaurantchainreservation.core.designsystem.components.PageHeader
-import com.mh.restaurantchainreservation.core.designsystem.components.SubpageCollapsingTopBar
-import com.mh.restaurantchainreservation.core.designsystem.components.rememberSubpageCollapsingTopBarScrollBehavior
+import androidx.compose.ui.zIndex
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageScreenHeader
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
+import com.mh.restaurantchainreservation.core.designsystem.components.collapsingHeaderListScroll
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberCollapsingHeaderScrollState
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 
-@Composable
-private fun SubpageSubtitle(text: String, modifier: Modifier = Modifier) {
-    val palette = LocalRestaurantPalette.current
-    Text(
-        text = text,
-        color = palette.mutedForeground,
-        fontSize = 14.sp,
-        modifier = modifier.padding(bottom = 12.dp),
-    )
-}
-
 /**
- * Shared layout for profile sub-pages and wishlist collection detail: [LargeTopAppBar] that
- * collapses when the list below scrolls (same structure as Recently Viewed).
+ * Shared layout for profile sub-pages: scroll-linked [CollapsingSubpageScreenHeader]
+ * (same back control, title transition, and trailing row as Recently Viewed).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SubpageCollapsingLayout(
     title: String,
     onBack: () -> Unit,
     backLabel: String,
     modifier: Modifier = Modifier,
+    horizontalPadding: Int = 20,
     subtitle: String? = null,
-    headerActions: (@Composable () -> Unit)? = null,
+    headerActions: (@Composable (collapseProgress: Float) -> Unit)? = null,
     listState: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(),
     content: LazyListScope.() -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val scrollBehavior = rememberSubpageCollapsingTopBarScrollBehavior()
+    val density = LocalDensity.current
+    val hasSubtitle = subtitle != null
+    val headerExpandedHeight = CollapsingTitleHeaderMetrics.subpageExpandedBodyHeight(hasSubtitle)
+    val collapseRangePx = remember(density, headerExpandedHeight) {
+        with(density) {
+            (headerExpandedHeight - CollapsingTitleHeaderMetrics.collapsedBodyHeight).toPx()
+        }.coerceAtLeast(1f)
+    }
+    val headerScroll = rememberCollapsingHeaderScrollState(collapseRangePx)
+    headerScroll.BindListResetOnShortContent(listState)
+    val statusBarTopDp = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+    val collapseProgress by remember {
+        derivedStateOf { headerScroll.collapseProgress(listState) }
+    }
+    val topContentInset by remember {
+        derivedStateOf {
+            CollapsingTitleHeaderMetrics.collapsingTopContentInset(
+                collapseProgress = collapseProgress,
+                expandedBodyHeight = headerExpandedHeight,
+                statusBarTopDp = statusBarTopDp,
+                firstVisibleItemIndex = listState.firstVisibleItemIndex,
+                firstVisibleItemScrollOffset = listState.firstVisibleItemScrollOffset,
+            )
+        }
+    }
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(palette.cardSurface),
     ) {
-        SubpageCollapsingTopBar(
-            title = title,
-            onBack = onBack,
-            backContentDescription = backLabel,
-            scrollBehavior = scrollBehavior,
-            actions = { headerActions?.invoke() },
-        )
         LazyColumn(
             state = listState,
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .fillMaxSize()
+                .collapsingHeaderListScroll(headerScroll, listState)
                 .trackBottomNavScroll(),
             contentPadding = contentPadding,
         ) {
-            if (subtitle != null) {
-                item(key = "subpage_subtitle") {
-                    SubpageSubtitle(subtitle, Modifier.padding(top = 4.dp))
-                }
+            item(key = "subpage_top_inset") {
+                Spacer(Modifier.height(topContentInset))
             }
             content()
         }
+
+        CollapsingSubpageScreenHeader(
+            title = title,
+            collapseProgress = collapseProgress,
+            onBack = onBack,
+            backContentDescription = backLabel,
+            subtitle = subtitle,
+            horizontalPaddingDp = horizontalPadding,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(2f),
+            actions = headerActions,
+        )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubpageLazyScaffold(
     title: String,
@@ -99,7 +121,7 @@ fun SubpageLazyScaffold(
     horizontalPadding: Int = 20,
     contentHorizontalPadding: Int? = null,
     subtitle: String? = null,
-    headerActions: (@Composable () -> Unit)? = null,
+    headerActions: (@Composable (collapseProgress: Float) -> Unit)? = null,
     listState: LazyListState = rememberLazyListState(),
     bottomContentPadding: Dp = 24.dp,
     content: LazyListScope.() -> Unit,
@@ -111,6 +133,7 @@ fun SubpageLazyScaffold(
         onBack = onBack,
         backLabel = backLabel,
         modifier = modifier,
+        horizontalPadding = horizontalPadding,
         subtitle = subtitle,
         headerActions = headerActions,
         listState = listState,
@@ -124,7 +147,6 @@ fun SubpageLazyScaffold(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubpageScaffold(
     title: String,
@@ -135,7 +157,7 @@ fun SubpageScaffold(
     contentHorizontalPadding: Int? = null,
     scrollable: Boolean = true,
     subtitle: String? = null,
-    headerActions: (@Composable () -> Unit)? = null,
+    headerActions: (@Composable (collapseProgress: Float) -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -148,6 +170,7 @@ fun SubpageScaffold(
             onBack = onBack,
             backLabel = backLabel,
             modifier = modifier,
+            horizontalPadding = horizontalPadding,
             subtitle = subtitle,
             headerActions = headerActions,
             contentPadding = PaddingValues(
@@ -164,26 +187,36 @@ fun SubpageScaffold(
             }
         }
     } else {
-        Column(
+        val density = LocalDensity.current
+        val hasSubtitle = subtitle != null
+        val headerExpandedHeight = CollapsingTitleHeaderMetrics.subpageExpandedBodyHeight(hasSubtitle)
+        val statusBarTopDp = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+        val topInset = statusBarTopDp + headerExpandedHeight + 8.dp
+
+        Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(palette.cardSurface)
-                .statusBarsPadding()
-                .padding(top = 16.dp),
+                .background(palette.cardSurface),
         ) {
-            PageHeader(
-                title = title,
-                onBack = onBack,
-                backContentDescription = backLabel,
-                subtitle = subtitle,
-                actions = headerActions,
-                modifier = Modifier.padding(horizontal = horizontalPadding.dp),
-            )
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = contentPad.dp),
-                content = content,
+            ) {
+                Spacer(Modifier.height(topInset))
+                content()
+            }
+            CollapsingSubpageScreenHeader(
+                title = title,
+                collapseProgress = 0f,
+                onBack = onBack,
+                backContentDescription = backLabel,
+                subtitle = subtitle,
+                horizontalPaddingDp = horizontalPadding,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .zIndex(2f),
+                actions = headerActions,
             )
         }
     }
