@@ -201,9 +201,8 @@ private val RestaurantMiniImageHeight =
 private val RestaurantMiniMetaBlockHeight = 46.dp
 private val RestaurantMiniCardTotalHeight = RestaurantMiniImageHeight + RestaurantMiniMetaBlockHeight
 
-/** End caps for “Where to Eat?” (panorama) and “Top Picks by Food Type” (collage); width matches [RestaurantMiniCardWidth]. */
-private val RailExploreMoreCardShape = RoundedCornerShape(26.dp)
-private val WhereToEatExploreImageStackHeight = 108.dp
+private val WhereToEatCityTileWidth = 220.dp
+private val WhereToEatCityTileHeight = 150.dp
 private enum class ImageRailExploreMoreKind {
     WhereToEatPanorama,
     FoodTypeCollage,
@@ -223,7 +222,6 @@ private val PriceTabIndicatorWidth = 38.dp
 private val PriceTabIndicatorHeight = 3.dp
 private val PriceTabIndicatorTopCornerRadius = 3.dp
 private val PriceStickyHeaderBottomShadowHeight = 10.dp
-private val WhereToEatCityTileShape = RoundedCornerShape(13.dp)
 private val RestaurantRailImageShape = RoundedCornerShape(18.dp)
 
 /** Default hub card shadow + clip for Discover image tiles. */
@@ -964,118 +962,131 @@ private fun WhereToEatPanoramaExploreCard(
     }
     val cityCount = DiscoverData.CITIES.size
     val cardBg = if (palette.isDark) palette.cardSurface else Color.White
-    val shape = RailExploreMoreCardShape
+    val shape = RestaurantRailImageShape
 
     PressableScale(
         onClick = onClick,
         modifier = Modifier
-            .width(RestaurantMiniCardWidth)
+            .size(WhereToEatCityTileWidth, WhereToEatCityTileHeight)
             .hubSurfaceShadow(shape = shape)
             .clip(shape)
             .background(cardBg),
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(WhereToEatExploreImageStackHeight)
-                    .clip(RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)),
-            ) {
-                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                    val w = maxWidth
-                    val h = maxHeight
-                    val backShape = RoundedCornerShape(14.dp)
-                    val midShape = RoundedCornerShape(16.dp)
-                    val frontShape = RoundedCornerShape(18.dp)
-                    AsyncImage(
-                        model = images[0],
+        Box(modifier = Modifier.fillMaxSize()) {
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val w = maxWidth
+                val h = maxHeight
+                val backShape = RoundedCornerShape(10.dp)
+                val midShape = RoundedCornerShape(11.dp)
+                val frontShape = RoundedCornerShape(12.dp)
+                AsyncImage(
+                    model = images[0],
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .offset(x = -w * 0.10f, y = h * 0.06f)
+                        .width(w * 0.70f)
+                        .height(h * 0.78f)
+                        .clip(backShape)
+                        .zIndex(0f),
+                )
+                AsyncImage(
+                    model = images[1],
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .offset(x = -w * 0.03f, y = h * 0.02f)
+                        .width(w * 0.78f)
+                        .height(h * 0.86f)
+                        .clip(midShape)
+                        .zIndex(1f),
+                )
+                AsyncImage(
+                    model = images[2],
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .offset(x = w * 0.05f, y = -h * 0.03f)
+                        .width(w * 0.88f)
+                        .height(h * 0.92f)
+                        .clip(frontShape)
+                        .zIndex(2f),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(6.dp)
+                        .size(26.dp)
+                        .zIndex(3f)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.96f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Navigation,
                         contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .offset(x = -w * 0.10f, y = h * 0.06f)
-                            .width(w * 0.70f)
-                            .height(h * 0.78f)
-                            .clip(backShape)
-                            .zIndex(0f),
+                        tint = Color(0xFF111111),
+                        modifier = Modifier.size(14.dp),
                     )
-                    AsyncImage(
-                        model = images[1],
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .offset(x = -w * 0.03f, y = h * 0.02f)
-                            .width(w * 0.78f)
-                            .height(h * 0.86f)
-                            .clip(midShape)
-                            .zIndex(1f),
-                    )
-                    AsyncImage(
-                        model = images[2],
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .offset(x = w * 0.05f, y = -h * 0.03f)
-                            .width(w * 0.88f)
-                            .height(h * 0.92f)
-                            .clip(frontShape)
-                            .zIndex(2f),
-                    )
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(10.dp)
-                            .size(34.dp)
-                            .zIndex(3f)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.96f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Navigation,
-                            contentDescription = null,
-                            tint = Color(0xFF111111),
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
                 }
             }
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            colorStops = arrayOf(
+                                0f to Color.Transparent,
+                                0.35f to Color.Black.copy(alpha = 0.45f),
+                                1f to Color.Black.copy(alpha = 0.78f),
+                            ),
+                        ),
+                    ),
+            )
             Row(
                 modifier = Modifier
+                    .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Explore more",
-                        color = palette.foreground,
-                        fontSize = 15.sp,
+                        color = Color.White,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = (-0.2).sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                     Text(
                         text = "$cityCount+ cities",
-                        color = palette.mutedForeground,
-                        fontSize = 12.sp,
+                        color = Color.White.copy(alpha = 0.88f),
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(top = 3.dp),
+                        modifier = Modifier.padding(top = 2.dp),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(28.dp)
                         .clip(CircleShape)
-                        .background(if (palette.isDark) palette.mutedSurface else Color(0xFFF2F2F2)),
+                        .background(Color.White.copy(alpha = 0.96f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
                         tint = Color(0xFF111111),
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(16.dp),
                     )
                 }
             }
@@ -1090,7 +1101,8 @@ private fun CityRail(cities: List<City>, onClick: (String) -> Unit) {
             ImageRailTile(
                 title = city.label,
                 image = city.image,
-                width = 128.dp,
+                width = WhereToEatCityTileWidth,
+                height = WhereToEatCityTileHeight,
                 centered = true,
                 onClick = { onClick(city.id) },
             )
@@ -1184,14 +1196,15 @@ private fun ImageRailTile(
     title: String,
     image: String,
     width: Dp,
+    height: Dp,
     centered: Boolean,
     onClick: () -> Unit,
 ) {
     PressableScale(
         onClick = onClick,
         modifier = Modifier
-            .size(width = width, height = 80.dp)
-            .discoverImageCardSurface(WhereToEatCityTileShape),
+            .size(width = width, height = height)
+            .discoverImageCardSurface(RestaurantRailImageShape),
     ) {
         Box(modifier = Modifier.matchParentSize()) {
             AsyncImage(
