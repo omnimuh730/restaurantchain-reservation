@@ -98,7 +98,7 @@ private const val UpdateModalMaxHeightFraction = 0.88f
 private const val UpdateModalMaxVisibleFeatures = 4
 private val WhatsNewTitleCollapseRange = 36.dp
 private val WhatsNewTitleToDividerGap = 6.dp
-private val WhatsNewDividerToListGap = 4.dp
+private val WhatsNewFeatureListEdgePadding = 10.dp
 private const val WhatsNewTitleFontExpandedSp = 17f
 private const val WhatsNewTitleFontCollapsedSp = 14f
 private const val WhatsNewTitleLineExpandedSp = 22f
@@ -696,17 +696,21 @@ private fun WhatsNewCard(
             title = titleText,
             collapseProgress = collapseProgress,
         )
-        Spacer(Modifier.height(WhatsNewDividerToListGap))
         Column(
-            modifier = Modifier.then(
-                if (shouldScrollFeatures) {
-                    Modifier
-                        .heightIn(max = featureListMaxHeight)
-                        .verticalScroll(featureListScroll)
-                } else {
-                    Modifier
-                },
-            ),
+            modifier = Modifier
+                .then(
+                    if (shouldScrollFeatures) {
+                        Modifier
+                            .heightIn(max = featureListMaxHeight)
+                            .verticalScroll(featureListScroll)
+                    } else {
+                        Modifier
+                    },
+                )
+                .padding(
+                    top = WhatsNewFeatureListEdgePadding,
+                    bottom = WhatsNewFeatureListEdgePadding,
+                ),
             verticalArrangement = Arrangement.spacedBy(featureGap),
         ) {
             features.forEach { item ->
@@ -725,7 +729,7 @@ private fun WhatsNewCollapsingTitle(
     collapseProgress: Float,
 ) {
     val palette = LocalRestaurantPalette.current
-    val borderAlpha = collapseProgress * 0.45f
+    val borderAlpha = (collapseProgress * 0.45f).coerceAtLeast(0.35f)
     val titleFontSp = lerp(WhatsNewTitleFontExpandedSp, WhatsNewTitleFontCollapsedSp, collapseProgress)
     val titleLineHeightSp = lerp(WhatsNewTitleLineExpandedSp, WhatsNewTitleLineCollapsedSp, collapseProgress)
     val iconSize = lerp(20.dp, 18.dp, collapseProgress)
@@ -751,12 +755,10 @@ private fun WhatsNewCollapsingTitle(
                 maxLines = 1,
             )
         }
-        if (borderAlpha > 0.004f) {
-            HorizontalDivider(
-                modifier = Modifier.padding(top = WhatsNewTitleToDividerGap),
-                color = palette.border.copy(alpha = borderAlpha),
-            )
-        }
+        HorizontalDivider(
+            modifier = Modifier.padding(top = WhatsNewTitleToDividerGap),
+            color = palette.border.copy(alpha = borderAlpha),
+        )
     }
 }
 
