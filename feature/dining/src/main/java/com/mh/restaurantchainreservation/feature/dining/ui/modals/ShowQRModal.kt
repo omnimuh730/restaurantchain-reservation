@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui.modals
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -129,10 +130,10 @@ fun ShowQRModal(
                         elevation = 24.dp,
                         shape = qrCardShape,
                         ambientColor = PremiumPinkSheetColors.ShadowPink,
-                        spotColor = Color.Black.copy(alpha = 0.08f),
+                        spotColor = RestaurantColors.Overlay.borderSubtle,
                     )
                     .clip(qrCardShape)
-                    .background(Color.White)
+                    .background(RestaurantColors.Base.white)
                     .padding(16.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -229,13 +230,13 @@ private fun ShowQrHeroBadge(accent: Color) {
                 elevation = 10.dp,
                 shape = CircleShape,
                 ambientColor = PremiumPinkSheetColors.ShadowPink,
-                spotColor = Color.Black.copy(alpha = 0.06f),
+                spotColor = RestaurantColors.Base.black.copy(alpha = 0.06f),
             )
             .clip(CircleShape)
             .background(
                 Brush.radialGradient(
                     colors = listOf(
-                        Color.White,
+                        RestaurantColors.Base.white,
                         PremiumPinkSheetColors.LightPink,
                         PremiumPinkSheetColors.SoftPink,
                     ),
@@ -260,7 +261,7 @@ private fun ShowQrModalAction(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val content = if (primary) Color.White else palette.foreground
+    val content = if (primary) RestaurantColors.Base.white else palette.foreground
     Row(
         modifier = modifier
             .fillMaxHeight()
@@ -271,7 +272,7 @@ private fun ShowQrModalAction(
                 } else {
                     Modifier
                         .border(1.dp, PremiumPinkSheetColors.Border, ModalActionButtonShape)
-                        .background(Color.White.copy(alpha = 0.88f))
+                        .background(RestaurantColors.Base.white.copy(alpha = 0.88f))
                 },
             )
             .clickable(

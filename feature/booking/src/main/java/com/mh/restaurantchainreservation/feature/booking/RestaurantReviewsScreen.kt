@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
@@ -82,8 +83,7 @@ import com.mh.restaurantchainreservation.core.designsystem.badge.guestFavoriteDe
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
 
-private val ReviewsCreamBackground = Color(0xFFF5F2E8)
-private val StarAccent = Color(0xFFF5A623)
+private val StarAccent = RestaurantColors.Semantic.starAmber
 private val HeaderExpandedHeight = 536.dp
 private val HeaderCompactHeight = 72.dp
 private val SearchModeHeaderHeight = HeaderCompactHeight + 60.dp
@@ -369,7 +369,7 @@ private fun ReviewsStickyHeader(
         modifier = Modifier
             .fillMaxWidth()
             .height(headerHeight),
-        color = ReviewsCreamBackground,
+        color = palette.pageBackground,
         shadowElevation = if (compactHeader || searchOpen) 2.dp else 0.dp,
     ) {
         if (searchOpen) {
@@ -1069,7 +1069,7 @@ private fun HowReviewsWorkModal(onClose: () -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.35f))
+                .background(RestaurantColors.Overlay.scrimMedium)
                 .clickable(onClick = onClose),
             contentAlignment = Alignment.BottomCenter,
         ) {

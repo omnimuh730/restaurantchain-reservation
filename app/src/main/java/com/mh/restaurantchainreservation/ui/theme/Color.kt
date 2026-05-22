@@ -1,11 +1,43 @@
 package com.mh.restaurantchainreservation.ui.theme
 
-import androidx.compose.ui.graphics.Color
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+/**
+ * Legacy Material template colors — unused by the app shell ([com.mh.restaurantchainreservation.core.designsystem.theme.RestaurantTheme]).
+ * All UI colors are defined in [RestaurantColors.Primitives] and exposed via [RestaurantColors] / [RestaurantPalette].
+ */
+@Deprecated(
+    message = "Use RestaurantColors and LocalRestaurantPalette instead",
+    replaceWith = ReplaceWith("RestaurantColors.Brand.primary", "com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors"),
+)
+val Purple80 = RestaurantColors.Accent.violet.second
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+@Deprecated(
+    message = "Use RestaurantColors and LocalRestaurantPalette instead",
+    replaceWith = ReplaceWith("RestaurantColors.Accent.slate.first", "com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors"),
+)
+val PurpleGrey80 = RestaurantColors.Accent.slate.first
+
+@Deprecated(
+    message = "Use RestaurantColors and LocalRestaurantPalette instead",
+    replaceWith = ReplaceWith("RestaurantColors.Brand.softTint", "com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors"),
+)
+val Pink80 = RestaurantColors.Brand.softTint
+
+@Deprecated(
+    message = "Use RestaurantColors and LocalRestaurantPalette instead",
+    replaceWith = ReplaceWith("RestaurantColors.Accent.violet.second", "com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors"),
+)
+val Purple40 = RestaurantColors.Accent.violet.second
+
+@Deprecated(
+    message = "Use RestaurantColors and LocalRestaurantPalette instead",
+    replaceWith = ReplaceWith("RestaurantColors.Accent.slate.second", "com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors"),
+)
+val PurpleGrey40 = RestaurantColors.Accent.slate.second
+
+@Deprecated(
+    message = "Use RestaurantColors and LocalRestaurantPalette instead",
+    replaceWith = ReplaceWith("RestaurantColors.Brand.strong", "com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors"),
+)
+val Pink40 = RestaurantColors.Brand.strong

@@ -485,9 +485,9 @@ private fun QrFloatingButton(
     val fabGradient = remember(primary) {
         Brush.verticalGradient(
             colors = listOf(
-                lerp(primary, Color.White, 0.14f),
+                lerp(primary, RestaurantColors.Base.white, 0.14f),
                 primary,
-                lerp(primary, Color.Black, 0.07f),
+                lerp(primary, RestaurantColors.Base.black, 0.07f),
             ),
         )
     }
@@ -553,7 +553,7 @@ private fun QrFloatingButton(
                 )
                 .clip(CircleShape)
                 .background(fabGradient)
-                .border(QrFabBorderWidth, Color.White, CircleShape)
+                .border(QrFabBorderWidth, RestaurantColors.Base.white, CircleShape)
                 .hoverable(interactionSource = interactionSource)
                 .clickable(
                     interactionSource = interactionSource,

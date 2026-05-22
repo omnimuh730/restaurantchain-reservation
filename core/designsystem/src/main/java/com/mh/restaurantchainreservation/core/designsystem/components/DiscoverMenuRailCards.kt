@@ -47,6 +47,7 @@ import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 /** Top Picks by Food Type / Popular menu rail tiles (Discover home + restaurant detail). */
 object DiscoverMenuRailDefaults {
     val TileSize = 112.dp
@@ -69,6 +70,8 @@ fun DiscoverMenuTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     contentDescription: String? = title,
+    showTitle: Boolean = true,
+    showImageCaption: Boolean = true,
 ) {
     val palette = LocalRestaurantPalette.current
     val shape = RoundedCornerShape(DiscoverMenuRailDefaults.TileCornerRadius)
@@ -76,14 +79,14 @@ fun DiscoverMenuTile(
         onClick = onClick,
         modifier = modifier.width(DiscoverMenuRailDefaults.TileSize),
     ) {
-        Column {
+        val imageTile = @Composable {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .size(DiscoverMenuRailDefaults.TileSize)
                     .hubSurfaceShadow(shape = shape)
                     .clip(shape)
-                    .background(palette.mutedSurface),
+                    .background(palette.cardSurface),
             ) {
                 AsyncImage(
                     model = imageUrl,
@@ -91,41 +94,50 @@ fun DiscoverMenuTile(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
                 )
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colorStops = arrayOf(
-                                    0f to Color.Transparent,
-                                    0.42f to Color.Transparent,
-                                    0.68f to Color.Black.copy(alpha = 0.38f),
-                                    1f to Color.Black.copy(alpha = 0.82f),
+                if (showImageCaption) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colorStops = arrayOf(
+                                        0f to Color.Transparent,
+                                        0.42f to Color.Transparent,
+                                        0.68f to RestaurantColors.Overlay.imageGradientMid,
+                                        1f to RestaurantColors.Overlay.imageGradientEnd,
+                                    ),
                                 ),
                             ),
-                        ),
-                )
+                    )
+                    Text(
+                        text = imageCaption,
+                        color = RestaurantColors.Overlay.imageCaption,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(horizontal = 10.dp, vertical = 10.dp),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+        if (showTitle) {
+            Column {
+                imageTile()
                 Text(
-                    text = imageCaption,
-                    color = Color.White.copy(alpha = 0.92f),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal,
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(horizontal = 10.dp, vertical = 10.dp),
+                    text = title,
+                    color = palette.foreground,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 8.dp),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Text(
-                text = title,
-                color = palette.foreground,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+        } else {
+            imageTile()
         }
     }
 }
@@ -382,12 +394,12 @@ private fun AnimatedSeeAllThumbnail(
                 elevation = 6.dp,
                 shape = cornerShape,
                 clip = false,
-                ambientColor = Color.Black.copy(alpha = 0.20f),
-                spotColor = Color.Black.copy(alpha = 0.26f),
+                ambientColor = RestaurantColors.Shadow.cardAmbient,
+                spotColor = RestaurantColors.Shadow.cardSpot,
             )
             .clip(cornerShape)
-            .border(borderWidth, Color.White, cornerShape)
-            .background(Color(0xFFE8EAED)),
+            .border(borderWidth, RestaurantColors.Base.white, cornerShape)
+            .background(RestaurantColors.Neutral.imagePlaceholder),
     ) {
         AsyncImage(
             model = imageModel,

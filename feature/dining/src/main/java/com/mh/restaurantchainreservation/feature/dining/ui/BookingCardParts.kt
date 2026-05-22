@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -120,10 +121,10 @@ fun StatusBadge(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
         ) {
-            PulsingDot(color = Color.White)
+            PulsingDot(color = RestaurantColors.Base.white)
             Text(
                 text = stringResource(I18nR.string.booking_status_now),
-                color = Color.White,
+                color = RestaurantColors.Base.white,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.ExtraBold,
             )
@@ -319,7 +320,7 @@ fun ChipButton(
     when (variant) {
         ChipVariant.Primary -> {
             container = palette.brand
-            content = Color.White
+            content = RestaurantColors.Base.white
             borderColor = null
         }
         ChipVariant.Outline -> {
@@ -406,7 +407,7 @@ fun IconChipButton(
             ) {
                 Text(
                     text = badgeCount.coerceAtMost(9).toString(),
-                    color = Color.White,
+                    color = RestaurantColors.Base.white,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.ExtraBold,
                 )

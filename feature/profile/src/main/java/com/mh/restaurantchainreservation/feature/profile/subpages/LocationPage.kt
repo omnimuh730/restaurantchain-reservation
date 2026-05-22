@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -314,8 +315,8 @@ private fun MapPicker(
                     drawCircle(
                         color = when {
                             isPicked -> palette.brand.copy(alpha = 0.24f)
-                            isCurrent -> Color(0xFF2563EB).copy(alpha = 0.20f)
-                            else -> Color.Black.copy(alpha = 0.08f)
+                            isCurrent -> RestaurantColors.Accent.blue.second.copy(alpha = 0.20f)
+                            else -> RestaurantColors.Overlay.borderSubtle
                         },
                         radius = if (isPicked) 18f else 13f,
                         center = point,
@@ -323,7 +324,7 @@ private fun MapPicker(
                     drawCircle(
                         color = when {
                             isPicked -> palette.brand
-                            isCurrent -> Color(0xFF2563EB)
+                            isCurrent -> RestaurantColors.Accent.blue.second
                             else -> palette.foreground
                         },
                         radius = if (isPicked) 7f else 5f,
@@ -368,7 +369,7 @@ private fun BrandConfirmButton(enabled: Boolean, label: String, onClick: () -> U
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, color = if (enabled) Color.White else palette.mutedForeground, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+        Text(label, color = if (enabled) RestaurantColors.Base.white else palette.mutedForeground, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
 
@@ -410,8 +411,8 @@ private fun project(location: UserLocation, size: Size): Offset {
 }
 
 private fun DrawScope.drawMapSurface(palette: com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette) {
-    drawRect(Brush.verticalGradient(listOf(Color(0xFFF6F7F8), Color(0xFFEFF3F7))))
-    val road = Color.White.copy(alpha = 0.95f)
+    drawRect(Brush.verticalGradient(listOf(RestaurantColors.Map.gradientTop, RestaurantColors.Map.gradientBottom)))
+    val road = RestaurantColors.Overlay.veilFrosted
     val arterial = palette.brand.copy(alpha = 0.20f)
     val dash = PathEffect.dashPathEffect(floatArrayOf(20f, 12f), 0f)
     repeat(7) { i ->

@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -190,9 +191,9 @@ fun EnjoyMealScreen(
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
-                                    Color.Black.copy(alpha = 0.05f),
-                                    Color.Black.copy(alpha = 0.25f),
-                                    Color.Black.copy(alpha = 0.82f),
+                                    RestaurantColors.Overlay.borderSubtle,
+                                    RestaurantColors.Base.black.copy(alpha = 0.25f),
+                                    RestaurantColors.Base.black.copy(alpha = 0.82f),
                                 ),
                             ),
                         ),
@@ -211,7 +212,7 @@ fun EnjoyMealScreen(
                         StatusPill(
                             text = timeLabel,
                             icon = Icons.Outlined.AccessTime,
-                            background = Color.White.copy(alpha = 0.16f),
+                            background = RestaurantColors.Base.white.copy(alpha = 0.16f),
                             translucent = true,
                         )
                     }
@@ -219,17 +220,17 @@ fun EnjoyMealScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = booking.restaurant,
-                            color = Color.White,
+                            color = RestaurantColors.Base.white,
                             fontSize = 26.sp,
                             fontWeight = FontWeight.ExtraBold,
                             maxLines = 2,
                             modifier = Modifier.weight(1f, fill = false),
                         )
-                        Icon(Icons.Filled.ChevronRight, null, tint = Color.White.copy(alpha = 0.75f), modifier = Modifier.size(20.dp))
+                        Icon(Icons.Filled.ChevronRight, null, tint = RestaurantColors.Base.white.copy(alpha = 0.75f), modifier = Modifier.size(20.dp))
                     }
                     Text(
                         text = booking.cuisine,
-                        color = Color.White.copy(alpha = 0.78f),
+                        color = RestaurantColors.Base.white.copy(alpha = 0.78f),
                         fontSize = 14.sp,
                         maxLines = 1,
                     )
@@ -361,11 +362,11 @@ fun EnjoyMealScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                 ) {
-                    Icon(Icons.Outlined.Receipt, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Outlined.Receipt, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.size(8.dp))
                     Text(
                         text = stringResource(I18nR.string.enjoy_action_pay),
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.ExtraBold,
                     )
@@ -400,8 +401,8 @@ private fun StatusPill(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Icon(icon, null, tint = Color.White, modifier = Modifier.size(14.dp))
-        Text(text = text, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
+        Icon(icon, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(14.dp))
+        Text(text = text, color = RestaurantColors.Base.white, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
     }
     @Suppress("UNUSED_EXPRESSION") translucent
 }
@@ -441,7 +442,7 @@ private fun StaggeredActionCard(action: EnjoyAction, indexInGroup: Int) {
     val container = if (action.primary) palette.brand.copy(alpha = 0.08f) else palette.cardSurface
     val borderColor = if (action.primary) palette.brand.copy(alpha = 0.24f) else palette.border
     val iconBg = if (action.primary) palette.brand else palette.mutedSurface
-    val iconFg = if (action.primary) Color.White else palette.foreground
+    val iconFg = if (action.primary) RestaurantColors.Base.white else palette.foreground
 
     Row(
         modifier = Modifier

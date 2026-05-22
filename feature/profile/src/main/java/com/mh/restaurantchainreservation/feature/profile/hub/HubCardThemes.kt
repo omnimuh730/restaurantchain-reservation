@@ -13,8 +13,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.ui.graphics.Path
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -63,35 +63,15 @@ private fun mixSrgb(c1: Color, c2: Color, ratioFirst: Float): Color {
     )
 }
 
-private val InkGradient = listOf(
-    Color(0xFF1F1F24),
-    Color(0xFF111114),
-    Color(0xFF050507),
-)
+private val InkGradient = RestaurantColors.HubCard.midnight
 
-private val AmethystGradient = listOf(
-    Color(0xFF6E45FF),
-    Color(0xFF3A1F9C),
-    Color(0xFF160E47),
-)
+private val AmethystGradient = RestaurantColors.HubCard.amethyst
 
-private val OceanGradient = listOf(
-    Color(0xFF1FB2FF),
-    Color(0xFF1259D1),
-    Color(0xFF061B5E),
-)
+private val OceanGradient = RestaurantColors.HubCard.ocean
 
-private val SunsetGradient = listOf(
-    Color(0xFFFF8650),
-    Color(0xFFE03A3A),
-    Color(0xFF6B0F1E),
-)
+private val SunsetGradient = RestaurantColors.HubCard.sunset
 
-private val ForestGradient = listOf(
-    Color(0xFF1FB07A),
-    Color(0xFF0E624C),
-    Color(0xFF07241D),
-)
+private val ForestGradient = RestaurantColors.HubCard.forest
 
 /**
  * Credit card themes aligned with web `CARD_THEMES` (135° gradients, glow / highlight / shadow rgba, default pattern per id).
@@ -105,14 +85,14 @@ internal fun hubCardThemeSpec(
     HubCardThemeId.Ink -> HubCardThemeSpec(
         id = id,
         gradient = InkGradient,
-        glow = Color.White.copy(alpha = 0.08f),
-        highlight = Color.White.copy(alpha = 0.10f),
-        shadow = Color.Black.copy(alpha = 0.45f),
+        glow = RestaurantColors.Base.white.copy(alpha = 0.08f),
+        highlight = RestaurantColors.Base.white.copy(alpha = 0.10f),
+        shadow = RestaurantColors.Overlay.scrimHeavy.copy(alpha = 0.9f),
         pattern = HubCardPattern.Stars,
     )
     HubCardThemeId.Rose -> {
         val primary = brandColor ?: RestaurantColors.Brand.primary
-        val black = Color.Black
+        val black = RestaurantColors.Base.black
         HubCardThemeSpec(
             id = id,
             gradient = listOf(
@@ -121,41 +101,41 @@ internal fun hubCardThemeSpec(
                 mixSrgb(primary, black, 0.22f),
             ),
             glow = primary.copy(alpha = 0.38f),
-            highlight = Color.White.copy(alpha = 0.18f),
-            shadow = Color.Black.copy(alpha = 0.30f),
+            highlight = RestaurantColors.Base.whiteAlpha(0.18f),
+            shadow = RestaurantColors.Overlay.scrimLight,
             pattern = HubCardPattern.Blob,
         )
     }
     HubCardThemeId.Amethyst -> HubCardThemeSpec(
         id = id,
         gradient = AmethystGradient,
-        glow = Color(0xFF7657FF).copy(alpha = 0.40f),
-        highlight = Color.White.copy(alpha = 0.22f),
-        shadow = Color.Black.copy(alpha = 0.30f),
+        glow = RestaurantColors.HubCard.glowAmethyst.copy(alpha = 0.40f),
+        highlight = RestaurantColors.Base.white.copy(alpha = 0.22f),
+        shadow = RestaurantColors.Overlay.scrimLight,
         pattern = HubCardPattern.Wave,
     )
     HubCardThemeId.Ocean -> HubCardThemeSpec(
         id = id,
         gradient = OceanGradient,
-        glow = Color(0xFF1FB2FF).copy(alpha = 0.35f),
-        highlight = Color.White.copy(alpha = 0.22f),
-        shadow = Color.Black.copy(alpha = 0.32f),
+        glow = RestaurantColors.HubCard.glowOcean.copy(alpha = 0.35f),
+        highlight = RestaurantColors.Base.white.copy(alpha = 0.22f),
+        shadow = RestaurantColors.Base.black.copy(alpha = 0.32f),
         pattern = HubCardPattern.Rays,
     )
     HubCardThemeId.Sunset -> HubCardThemeSpec(
         id = id,
         gradient = SunsetGradient,
-        glow = Color(0xFFFF8650).copy(alpha = 0.40f),
-        highlight = Color.White.copy(alpha = 0.22f),
-        shadow = Color.Black.copy(alpha = 0.32f),
+        glow = RestaurantColors.HubCard.glowSunset.copy(alpha = 0.40f),
+        highlight = RestaurantColors.Base.white.copy(alpha = 0.22f),
+        shadow = RestaurantColors.Base.black.copy(alpha = 0.32f),
         pattern = HubCardPattern.Blob,
     )
     HubCardThemeId.Forest -> HubCardThemeSpec(
         id = id,
         gradient = ForestGradient,
-        glow = Color(0xFF1FB07A).copy(alpha = 0.35f),
-        highlight = Color.White.copy(alpha = 0.20f),
-        shadow = Color.Black.copy(alpha = 0.32f),
+        glow = RestaurantColors.HubCard.glowForest.copy(alpha = 0.35f),
+        highlight = RestaurantColors.Base.white.copy(alpha = 0.20f),
+        shadow = RestaurantColors.Base.black.copy(alpha = 0.32f),
         pattern = HubCardPattern.Grid,
     )
 }
@@ -175,11 +155,11 @@ internal fun hubCardThemeBackgroundBrush(
 )
 
 internal fun hubCardLabelMuted(themeId: HubCardThemeId): Color = when (themeId) {
-    HubCardThemeId.Ocean -> Color(0xFFE0EEFF).copy(alpha = 0.92f)
-    HubCardThemeId.Forest -> Color(0xFFD1FAE5).copy(alpha = 0.90f)
-    HubCardThemeId.Amethyst -> Color(0xFFF3E8FF).copy(alpha = 0.90f)
-    HubCardThemeId.Rose, HubCardThemeId.Sunset -> Color(0xFFFFE4E6).copy(alpha = 0.90f)
-    else -> Color.White.copy(alpha = 0.88f)
+    HubCardThemeId.Ocean -> RestaurantColors.HubCard.chipOcean.copy(alpha = 0.92f)
+    HubCardThemeId.Forest -> RestaurantColors.HubCard.chipForest.copy(alpha = 0.90f)
+    HubCardThemeId.Amethyst -> RestaurantColors.HubCard.chipAmethyst.copy(alpha = 0.90f)
+    HubCardThemeId.Rose, HubCardThemeId.Sunset -> RestaurantColors.Currency.krwContainer.copy(alpha = 0.90f)
+    else -> RestaurantColors.Base.white.copy(alpha = 0.88f)
 }
 
 /** Web card gold numerals: `linear-gradient(160deg, rgb(255,233,168) 0%, …)`. */
@@ -188,12 +168,13 @@ internal fun hubWebCardGoldBrush(): Brush {
     val ux = sin(rad)
     val uy = -cos(rad)
     val len = 720f
+    val stops = RestaurantColors.HubCard.goldGradient
     return Brush.linearGradient(
-        0f to Color(0xFFFFE9A8),
-        0.22f to Color(0xFFFFD56A),
-        0.5f to Color(0xFFC9933E),
-        0.72f to Color(0xFFFFE9A8),
-        1f to Color(0xFFC7892F),
+        0f to stops[0],
+        0.22f to stops[1],
+        0.5f to stops[2],
+        0.72f to stops[3],
+        1f to stops[4],
         start = Offset.Zero,
         end = Offset(ux * len, uy * len),
     )
@@ -201,42 +182,20 @@ internal fun hubWebCardGoldBrush(): Brush {
 
 /** Premium anodized gold for balances, PAN, emboss accents. */
 internal fun hubMetalGoldBrush(): Brush = Brush.linearGradient(
-    colors = listOf(
-        Color(0xFFFFFFFF),
-        Color(0xFFFFF8E8),
-        Color(0xFFFFE08A),
-        Color(0xFFFFB020),
-        Color(0xFFE8A040),
-        Color(0xFFFFE9B0),
-        Color(0xFFC9933E),
-        Color(0xFF6B4420),
-    ),
+    colors = RestaurantColors.HubCard.goldMetallic,
     start = Offset(0f, 0f),
     end = Offset(280f, 460f),
 )
 
 /** Diagonal brushed gold for EMV chip hardware. */
 internal fun hubChipAnodizedBrush(): Brush = Brush.linearGradient(
-    colors = listOf(
-        Color(0xFF4A3208),
-        Color(0xFF8A5612),
-        Color(0xFFFFD88A),
-        Color(0xFFFFF2D8),
-        Color(0xFFC7892F),
-        Color(0xFF5C3D0A),
-    ),
+    colors = RestaurantColors.HubCard.goldDark,
     start = Offset(0f, 36f),
     end = Offset(100f, -4f),
 )
 
 internal fun hubMetalSilverBrush(): Brush = Brush.linearGradient(
-    colors = listOf(
-        Color(0xFFF4F4F8),
-        Color(0xFFC9C9D5),
-        Color(0xFF8B8B98),
-        Color(0xFFF0F0F5),
-        Color(0xFFB0B0BD),
-    ),
+    colors = RestaurantColors.HubCard.silverMetallic,
     start = Offset(0f, 0f),
     end = Offset(200f, 400f),
 )
@@ -309,8 +268,8 @@ private fun DrawScope.drawVelvetDepthLayer(w: Float, h: Float) {
         brush = Brush.linearGradient(
             colors = listOf(
                 Color.Transparent,
-                Color.Black.copy(alpha = 0.18f),
-                Color.Black.copy(alpha = 0.42f),
+                RestaurantColors.Shadow.hubAmbient,
+                RestaurantColors.Base.black.copy(alpha = 0.42f),
             ),
             start = Offset(0f, h * 0.35f),
             end = Offset(0f, h * 1.02f),
@@ -322,7 +281,7 @@ private fun DrawScope.drawVelvetDepthLayer(w: Float, h: Float) {
 private fun DrawScope.drawCinematicVignette(w: Float, h: Float) {
     drawRect(
         brush = Brush.radialGradient(
-            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.52f)),
+            colors = listOf(Color.Transparent, RestaurantColors.Base.black.copy(alpha = 0.52f)),
             center = Offset(w * 0.5f, h * 0.48f),
             radius = kotlin.math.max(w, h) * 0.88f,
         ),
@@ -336,17 +295,17 @@ private fun DrawScope.drawBoldGeometricMasses(themeId: HubCardThemeId, w: Float,
     val oy = (drift - 0.5f) * h * 0.06f
     val (massA, massB) = when (themeId) {
         HubCardThemeId.Ink ->
-            Color(0xFFDC143C).copy(alpha = 0.48f) to Color(0xFF2563EB).copy(alpha = 0.42f)
+            RestaurantColors.HubCard.auraRoseStart.copy(alpha = 0.48f) to RestaurantColors.HubCard.auraRoseEnd.copy(alpha = 0.42f)
         HubCardThemeId.Rose ->
-            Color(0xFFFF0033).copy(alpha = 0.52f) to Color(0xFF1A0006).copy(alpha = 0.58f)
+            RestaurantColors.HubCard.auraCrimsonStart.copy(alpha = 0.52f) to RestaurantColors.HubCard.auraCrimsonEnd.copy(alpha = 0.58f)
         HubCardThemeId.Amethyst ->
-            Color(0xFFC084FC).copy(alpha = 0.52f) to Color(0xFF6D28D9).copy(alpha = 0.55f)
+            RestaurantColors.HubCard.auraAmethystStart.copy(alpha = 0.52f) to RestaurantColors.HubCard.auraAmethystEnd.copy(alpha = 0.55f)
         HubCardThemeId.Ocean ->
-            Color(0xFF3B82F6).copy(alpha = 0.55f) to Color(0xFF1E3A8A).copy(alpha = 0.52f)
+            RestaurantColors.HubCard.auraOceanStart.copy(alpha = 0.55f) to RestaurantColors.HubCard.auraOceanEnd.copy(alpha = 0.52f)
         HubCardThemeId.Sunset ->
-            Color(0xFFFF6B35).copy(alpha = 0.5f) to Color(0xFFB91C1C).copy(alpha = 0.54f)
+            RestaurantColors.HubCard.auraSunsetStart.copy(alpha = 0.5f) to RestaurantColors.HubCard.auraSunsetEnd.copy(alpha = 0.54f)
         HubCardThemeId.Forest ->
-            Color(0xFF059669).copy(alpha = 0.48f) to Color(0xFF022C22).copy(alpha = 0.56f)
+            RestaurantColors.HubCard.auraForestStart.copy(alpha = 0.48f) to RestaurantColors.HubCard.auraForestEnd.copy(alpha = 0.56f)
     }
     drawCircle(
         brush = Brush.radialGradient(
@@ -373,7 +332,7 @@ private fun DrawScope.drawBoldGeometricMasses(themeId: HubCardThemeId, w: Float,
     drawPath(
         path = slab,
         brush = Brush.linearGradient(
-            colors = listOf(Color.White.copy(alpha = 0.16f), Color.Transparent),
+            colors = listOf(RestaurantColors.Base.white.copy(alpha = 0.16f), Color.Transparent),
             start = Offset(w * 0.35f, h * 0.52f),
             end = Offset(w * 1.02f, h * 1.02f),
         ),
@@ -402,17 +361,17 @@ private fun DrawScope.drawBoldMidgroundArc(w: Float, h: Float, drift: Float, str
 
 private fun holoAuroraPair(themeId: HubCardThemeId): Pair<Color, Color> = when (themeId) {
     HubCardThemeId.Ink ->
-        Color(0xFF6366F1).copy(alpha = 0.22f) to Color(0xFFF43F5E).copy(alpha = 0.18f)
+        RestaurantColors.HubCard.shimmerRoseStart.copy(alpha = 0.22f) to RestaurantColors.HubCard.shimmerRoseEnd.copy(alpha = 0.18f)
     HubCardThemeId.Rose ->
-        Color(0xFFFFB4C8).copy(alpha = 0.22f) to Color(0xFFFF1744).copy(alpha = 0.2f)
+        RestaurantColors.HubCard.shimmerCrimsonStart.copy(alpha = 0.22f) to RestaurantColors.HubCard.shimmerCrimsonEnd.copy(alpha = 0.2f)
     HubCardThemeId.Amethyst ->
-        Color(0xFFE9D5FF).copy(alpha = 0.24f) to Color(0xFFA78BFA).copy(alpha = 0.2f)
+        RestaurantColors.HubCard.shimmerAmethystStart.copy(alpha = 0.24f) to RestaurantColors.HubCard.shimmerAmethystEnd.copy(alpha = 0.2f)
     HubCardThemeId.Ocean ->
-        Color(0xFF93C5FD).copy(alpha = 0.24f) to Color(0xFF60A5FA).copy(alpha = 0.2f)
+        RestaurantColors.HubCard.shimmerOceanStart.copy(alpha = 0.24f) to RestaurantColors.HubCard.shimmerOceanEnd.copy(alpha = 0.2f)
     HubCardThemeId.Sunset ->
-        Color(0xFFFFC9A8).copy(alpha = 0.22f) to Color(0xFFFF6B6B).copy(alpha = 0.2f)
+        RestaurantColors.HubCard.shimmerSunsetStart.copy(alpha = 0.22f) to RestaurantColors.HubCard.shimmerSunsetEnd.copy(alpha = 0.2f)
     HubCardThemeId.Forest ->
-        Color(0xFF6EE7B7).copy(alpha = 0.2f) to Color(0xFF34D399).copy(alpha = 0.18f)
+        RestaurantColors.HubCard.shimmerForestStart.copy(alpha = 0.2f) to RestaurantColors.HubCard.shimmerForestEnd.copy(alpha = 0.18f)
 }
 
 private fun DrawScope.drawAuroraHolographicFilm(themeId: HubCardThemeId, w: Float, h: Float, drift: Float) {
@@ -435,7 +394,7 @@ private fun DrawScope.drawFilmGrainSubtle(w: Float, h: Float, seed: Int) {
         val gy = rng.nextFloat() * h
         val a = 0.006f + rng.nextFloat() * 0.012f
         drawCircle(
-            color = Color.White.copy(alpha = a),
+            color = RestaurantColors.Base.white.copy(alpha = a),
             radius = 0.65f * density,
             center = Offset(gx, gy),
         )
@@ -448,8 +407,8 @@ private fun DrawScope.drawSpecularSweep(w: Float, h: Float, streak: Float) {
         brush = Brush.linearGradient(
             colors = listOf(
                 Color.Transparent,
-                Color.White.copy(alpha = 0.26f),
-                Color.White.copy(alpha = 0.14f),
+                RestaurantColors.Base.white.copy(alpha = 0.26f),
+                RestaurantColors.Base.white.copy(alpha = 0.14f),
                 Color.Transparent,
             ),
             start = Offset(cx - w * 0.26f, -h * 0.02f),
@@ -463,8 +422,8 @@ private fun DrawScope.drawFrostedGlassSheen(w: Float, h: Float) {
     drawRect(
         brush = Brush.linearGradient(
             colors = listOf(
-                Color.White.copy(alpha = 0.26f),
-                Color.White.copy(alpha = 0.08f),
+                RestaurantColors.Base.white.copy(alpha = 0.26f),
+                RestaurantColors.Base.white.copy(alpha = 0.08f),
                 Color.Transparent,
             ),
             start = Offset(0f, 0f),
@@ -474,7 +433,7 @@ private fun DrawScope.drawFrostedGlassSheen(w: Float, h: Float) {
     )
     drawRect(
         brush = Brush.linearGradient(
-            colors = listOf(Color.White.copy(alpha = 0.18f), Color.Transparent),
+            colors = listOf(RestaurantColors.Base.whiteAlpha(0.18f), Color.Transparent),
             start = Offset(0f, 0f),
             end = Offset(w * 0.72f, h * 0.36f),
         ),
@@ -500,8 +459,8 @@ private fun DrawScope.drawDirectionalLightSlab(w: Float, h: Float) {
     drawRect(
         brush = Brush.linearGradient(
             colors = listOf(
-                Color.White.copy(alpha = 0.22f),
-                Color.White.copy(alpha = 0.06f),
+                RestaurantColors.Base.white.copy(alpha = 0.22f),
+                RestaurantColors.Base.white.copy(alpha = 0.06f),
                 Color.Transparent,
             ),
             start = Offset(-w * 0.02f, -h * 0.02f),
@@ -527,7 +486,7 @@ private fun DrawScope.drawHubCardOverlaySheen(w: Float, h: Float) {
     val brush = Brush.linearGradient(
         0f to Color.Transparent,
         0.38f to Color.Transparent,
-        0.5f to Color.White.copy(alpha = 0.18f),
+        0.5f to RestaurantColors.Base.whiteAlpha(0.18f),
         0.62f to Color.Transparent,
         1f to Color.Transparent,
         start = start,
@@ -553,7 +512,7 @@ private fun DrawScope.drawHubCardCornerRadialWash(w: Float, h: Float) {
     val lo = Offset(0f, h)
     drawCircle(
         brush = Brush.radialGradient(
-            0f to Color.White.copy(alpha = 0.22f),
+            0f to RestaurantColors.Base.white.copy(alpha = 0.22f),
             0.55f to Color.Transparent,
             center = hi,
             radius = rHighlight,
@@ -563,7 +522,7 @@ private fun DrawScope.drawHubCardCornerRadialWash(w: Float, h: Float) {
     )
     drawCircle(
         brush = Brush.radialGradient(
-            0f to Color.Black.copy(alpha = 0.3f),
+            0f to RestaurantColors.Base.black.copy(alpha = 0.3f),
             0.65f to Color.Transparent,
             center = lo,
             radius = rShadow,
@@ -585,9 +544,9 @@ private fun DrawScope.drawEdgeRimlight(w: Float, h: Float) {
         path = path,
         brush = Brush.linearGradient(
             colors = listOf(
-                Color.White.copy(alpha = 0.62f),
-                Color.White.copy(alpha = 0.22f),
-                Color.White.copy(alpha = 0.08f),
+                RestaurantColors.Base.white.copy(alpha = 0.62f),
+                RestaurantColors.Base.white.copy(alpha = 0.22f),
+                RestaurantColors.Base.white.copy(alpha = 0.08f),
                 Color.Transparent,
             ),
             start = Offset(0f, 0f),
@@ -646,8 +605,8 @@ private fun DrawScope.drawHubCardPattern(
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = 0.55f),
-                            Color.White.copy(alpha = 0f),
+                            RestaurantColors.Base.white.copy(alpha = 0.55f),
+                            RestaurantColors.Base.white.copy(alpha = 0f),
                         ),
                         center = Offset(cx, cy),
                         radius = rPx * 2.05f,
@@ -660,7 +619,7 @@ private fun DrawScope.drawHubCardPattern(
         HubCardPattern.Grid -> {
             // CSS: 22px grid, line rgba(255,255,255,0.85), layer opacity 0.07 → effective ~0.06
             val lineAlpha = 0.85f * 0.07f
-            val line = Color.White.copy(alpha = lineAlpha)
+            val line = RestaurantColors.Base.white.copy(alpha = lineAlpha)
             val step = 22f * density
             var x = 0f
             while (x <= w) {
@@ -702,7 +661,7 @@ private fun DrawScope.drawHubCardPattern(
             drawPath(path2, color = highlight.copy(alpha = 0.25f))
         }
         HubCardPattern.Rays -> {
-            val stroke = Color.White.copy(alpha = 0.10f)
+            val stroke = RestaurantColors.Base.white.copy(alpha = 0.10f)
             val scale = w / 320f
             for (i in 0 until 18) {
                 drawLine(
@@ -740,7 +699,7 @@ private fun DrawScope.drawHubCardPattern(
 @Composable
 internal fun HubContactlessIcon(
     modifier: Modifier = Modifier,
-    tint: Color = Color.White.copy(alpha = 0.88f),
+    tint: Color = RestaurantColors.Base.white.copy(alpha = 0.88f),
 ) {
     Canvas(modifier.size(24.dp)) {
         val stroke = Stroke(width = 1.65f * density, cap = StrokeCap.Round)

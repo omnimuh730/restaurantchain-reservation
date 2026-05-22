@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -200,7 +201,7 @@ private fun GuestStepperButton(icon: ImageVector, filled: Boolean, onClick: () -
         Icon(
             imageVector = icon,
             contentDescription = if (filled) "Increase" else "Decrease",
-            tint = if (filled) Color.White else palette.foreground,
+            tint = if (filled) RestaurantColors.Base.white else palette.foreground,
             modifier = Modifier.size(18.dp),
         )
     }
@@ -219,7 +220,7 @@ private fun DateChip(
     onClick: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val contentColor = if (selected) Color.White else palette.foreground
+    val contentColor = if (selected) RestaurantColors.Base.white else palette.foreground
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween,
@@ -270,7 +271,7 @@ private fun TimeChip(time: String, selected: Boolean, onClick: () -> Unit) {
     val palette = LocalRestaurantPalette.current
     Text(
         text = time,
-        color = if (selected) Color.White else palette.foreground,
+        color = if (selected) RestaurantColors.Base.white else palette.foreground,
         fontSize = 13.sp,
         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
         textAlign = TextAlign.Center,
@@ -443,9 +444,9 @@ private fun OccasionChip(
             .clickable(onClick = onClick)
             .padding(vertical = 12.dp, horizontal = 6.dp),
     ) {
-        Icon(icon, contentDescription = null, tint = if (selected) Color.White else palette.foreground, modifier = Modifier.size(20.dp))
+        Icon(icon, contentDescription = null, tint = if (selected) RestaurantColors.Base.white else palette.foreground, modifier = Modifier.size(20.dp))
         Spacer(Modifier.height(6.dp))
-        Text(label, color = if (selected) Color.White else palette.foreground, fontSize = 12.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center)
+        Text(label, color = if (selected) RestaurantColors.Base.white else palette.foreground, fontSize = 12.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center)
     }
 }
 
@@ -511,7 +512,7 @@ private fun PreferenceSectionBlock(
             if (selected.isNotEmpty()) {
                 Text(
                     selected.size.toString(),
-                    color = Color.White,
+                    color = RestaurantColors.Base.white,
                     fontSize = 11.sp,
                     modifier = Modifier
                         .clip(CircleShape)
@@ -572,30 +573,30 @@ internal fun BookingConfirmStep(
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            listOf(Color.Transparent, Color.Black.copy(0.75f)),
+                            listOf(Color.Transparent, RestaurantColors.Base.black.copy(0.75f)),
                             startY = 80f,
                         ),
                     ),
             )
             Column(modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)) {
-                Text(restaurant.name, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                Text(restaurant.name, color = RestaurantColors.Base.white, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
                 Text(
                     "${restaurant.cuisine} · ${restaurant.distance}",
-                    color = Color.White.copy(0.78f),
+                    color = RestaurantColors.Base.white.copy(0.78f),
                     fontSize = 13.sp,
                 )
                 Row(
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .clip(RoundedCornerShape(999.dp))
-                        .background(Color.White.copy(0.18f))
+                        .background(RestaurantColors.Base.white.copy(0.18f))
                         .padding(horizontal = 10.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.Filled.Star, contentDescription = null, tint = palette.gold, modifier = Modifier.size(14.dp))
                     Text(
                         restaurant.rating.toString(),
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                         fontSize = 12.sp,
                         modifier = Modifier.padding(start = 4.dp),
                     )
@@ -874,11 +875,11 @@ internal fun BookingSuccessStep(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(0.75f)))),
+                        .background(Brush.verticalGradient(listOf(Color.Transparent, RestaurantColors.Base.black.copy(0.75f)))),
                 )
                 Column(modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)) {
-                    Text(restaurant.name, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                    Text("$dateStr · ${selectedTime.orEmpty()}", color = Color.White.copy(0.78f), fontSize = 13.sp)
+                    Text(restaurant.name, color = RestaurantColors.Base.white, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                    Text("$dateStr · ${selectedTime.orEmpty()}", color = RestaurantColors.Base.white.copy(0.78f), fontSize = 13.sp)
                 }
             }
             Column(modifier = Modifier.padding(20.dp)) {

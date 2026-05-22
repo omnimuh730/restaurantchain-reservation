@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -77,7 +78,7 @@ fun ProfileEditPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         .clickable { /* avatar picker hookup later */ },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.Outlined.PhotoCamera, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Outlined.PhotoCamera, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(16.dp))
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -112,7 +113,7 @@ fun ProfileEditPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
         ) {
             Text(
                 text = stringResource(I18nR.string.profile_edit_save_changes),
-                color = Color.White,
+                color = RestaurantColors.Base.white,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
             )

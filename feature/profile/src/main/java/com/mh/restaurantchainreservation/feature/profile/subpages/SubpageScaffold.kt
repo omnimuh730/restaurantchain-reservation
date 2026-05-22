@@ -34,6 +34,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.collapsing
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberCollapsingHeaderScrollState
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.tokens.pageCanvasBackground
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 
 /**
@@ -89,6 +90,7 @@ private fun SubpageCollapsingLayout(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
+                .pageCanvasBackground()
                 .trackBottomNavScroll()
                 .collapsingHeaderListScroll(headerScroll, listState),
             contentPadding = contentPadding,

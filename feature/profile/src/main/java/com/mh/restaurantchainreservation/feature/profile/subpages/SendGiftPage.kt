@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -93,15 +94,15 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 .padding(horizontal = 20.dp)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xFFF3F4F6))
+                .background(RestaurantColors.Neutral.inputSurface)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Icon(Icons.Outlined.PersonOutline, null, tint = Color(0xFF9CA3AF), modifier = Modifier.size(18.dp))
+            Icon(Icons.Outlined.PersonOutline, null, tint = RestaurantColors.Neutral.placeholder, modifier = Modifier.size(18.dp))
             Box(modifier = Modifier.weight(1f)) {
                 if (recipient.isEmpty()) {
-                    Text("Who is this for? (Username)", color = Color(0xFF9CA3AF), fontSize = 14.sp)
+                    Text("Who is this for? (Username)", color = RestaurantColors.Neutral.placeholder, fontSize = 14.sp)
                 }
                 BasicTextField(
                     value = recipient,
@@ -178,7 +179,7 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
         ) {
             Text(
                 text = if (canSend) "Send ${if (currency == Currency.KRW) "₩" else "$"}${formatAmountString(amountStr, currency)}" else "Send Gift",
-                color = Color.White,
+                color = RestaurantColors.Base.white,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.ExtraBold,
             )
@@ -190,12 +191,12 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
 private fun GiftCard(currency: Currency, amountStr: String, modifier: Modifier = Modifier) {
     val gradient = if (currency == Currency.KRW) {
         Brush.linearGradient(
-            listOf(Color(0xFF2563EB), Color(0xFF0EA5E9)),
+            listOf(RestaurantColors.Accent.blue.second, RestaurantColors.Decoration.giftBlueEnd),
             start = androidx.compose.ui.geometry.Offset.Zero,
             end = androidx.compose.ui.geometry.Offset.Infinite,
         )
     } else {
-        Brush.linearGradient(listOf(Color(0xFFFF5A5F), Color(0xFFE91E63)))
+        Brush.linearGradient(listOf(RestaurantColors.Semantic.heart, RestaurantColors.Brand.deepPink))
     }
     Box(
         modifier = modifier
@@ -207,7 +208,7 @@ private fun GiftCard(currency: Currency, amountStr: String, modifier: Modifier =
         Column {
             Text(
                 text = "Gift Card Balance",
-                color = Color.White.copy(alpha = 0.85f),
+                color = RestaurantColors.Overlay.textOnImageMuted,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 1.sp,
@@ -216,18 +217,18 @@ private fun GiftCard(currency: Currency, amountStr: String, modifier: Modifier =
             AnimatedAmountDisplay(
                 amount = formatAmountString(amountStr, currency),
                 symbol = if (currency == Currency.KRW) "₩" else "$",
-                symbolColor = Color.White.copy(alpha = 0.85f),
-                valueColor = Color.White,
+                symbolColor = RestaurantColors.Overlay.textOnImageMuted,
+                valueColor = RestaurantColors.Base.white,
                 fontSize = 36,
             )
             Spacer(Modifier.height(12.dp))
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color.White.copy(alpha = 0.18f))
+                    .background(RestaurantColors.Base.whiteAlpha(0.18f))
                     .padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
-                Text("TONIGHT", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
+                Text("TONIGHT", color = RestaurantColors.Base.white, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
             }
         }
     }
@@ -235,8 +236,8 @@ private fun GiftCard(currency: Currency, amountStr: String, modifier: Modifier =
 
 @Composable
 private fun CurrencySwitchSquare(currency: Currency, onToggle: () -> Unit) {
-    val container = if (currency == Currency.KRW) Color(0xFFFFE4E6) else Color(0xFFE0F2FE)
-    val content = if (currency == Currency.KRW) Color(0xFFE91E63) else Color(0xFF1976D2)
+    val container = if (currency == Currency.KRW) RestaurantColors.Currency.krwContainer else RestaurantColors.Currency.usdContainer
+    val content = if (currency == Currency.KRW) RestaurantColors.Brand.deepPink else RestaurantColors.Payment.google
     Column(
         modifier = Modifier
             .size(width = 48.dp, height = 64.dp)
@@ -276,7 +277,7 @@ private fun GiftPresetChip(label: String, selected: Boolean, onClick: () -> Unit
     ) {
         Text(
             text = label,
-            color = if (selected) Color.White else palette.foreground,
+            color = if (selected) RestaurantColors.Base.white else palette.foreground,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
         )

@@ -13,7 +13,7 @@ object RestaurantColorTokens {
     val LightMutedForeground = RestaurantColors.Text.secondary
     val LightTertiaryForeground = RestaurantColors.Text.tertiary
     val LightSurface = RestaurantColors.Surface.card
-    val LightSurfaceVariant = RestaurantColors.Surface.page
+    val LightSurfaceVariant = RestaurantColors.Surface.muted
     val LightBorder = RestaurantColors.Border.default
     val LightDestructive = RestaurantColors.Semantic.destructive
 

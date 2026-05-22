@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import android.content.ClipData
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -136,7 +137,7 @@ fun BookingCard(
                             .align(Alignment.BottomCenter)
                             .background(
                                 Brush.verticalGradient(
-                                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.55f)),
+                                    colors = listOf(Color.Transparent, RestaurantColors.Overlay.scrimStrong),
                                 ),
                             )
                             .padding(horizontal = 8.dp, vertical = 6.dp),
@@ -144,7 +145,7 @@ fun BookingCard(
                     ) {
                         Text(
                             text = booking.cuisine.split("·").first().trim(),
-                            color = Color.White.copy(alpha = 0.92f),
+                            color = RestaurantColors.Overlay.imageCaption,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.ExtraBold,
                             maxLines = 1,

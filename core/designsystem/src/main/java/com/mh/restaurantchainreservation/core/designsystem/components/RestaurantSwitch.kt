@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.core.designsystem.components
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -107,7 +108,7 @@ fun RestaurantSwitch(
                 .offset(x = thumbOffset)
                 .size(ThumbSize)
                 .clip(CircleShape)
-                .background(if (enabled) Color.White else Color.White.copy(alpha = 0.6f)),
+                .background(if (enabled) RestaurantColors.Base.white else RestaurantColors.Base.white.copy(alpha = 0.6f)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

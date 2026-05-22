@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.wishlist.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -86,7 +87,7 @@ fun RecentlyViewedGridItem(
                         .padding(10.dp)
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.95f))
+                        .background(RestaurantColors.Overlay.veilFrosted)
                         .clickable(onClick = onRemoveFromRecentlyViewed),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -230,7 +231,7 @@ fun WishlistRestaurantResultCard(
                     Icon(
                         imageVector = Icons.Filled.Star,
                         contentDescription = null,
-                        tint = Color(0xFFFFB400),
+                        tint = RestaurantColors.Semantic.starGold,
                         modifier = Modifier.size(15.dp),
                     )
                     Spacer(Modifier.size(3.dp))

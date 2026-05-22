@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.qrpay
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
@@ -239,7 +240,7 @@ private fun ScannerView(onScanned: (String) -> Unit) {
             ) {
                 Text(
                     text = "Scan QR Code",
-                    color = Color.White,
+                    color = RestaurantColors.Base.white,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -648,7 +649,7 @@ private fun SuccessView(
         ) {
             Text(
                 text = "Done",
-                color = Color.White,
+                color = RestaurantColors.Base.white,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
             )

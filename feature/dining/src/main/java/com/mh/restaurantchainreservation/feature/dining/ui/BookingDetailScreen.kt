@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import android.content.ClipData
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -643,12 +644,12 @@ private fun BookingHeroCarousel(
                 .align(Alignment.BottomEnd)
                 .padding(end = 20.dp, bottom = 48.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(Color.Black.copy(alpha = 0.6f))
+                .background(RestaurantColors.Base.black.copy(alpha = 0.6f))
                 .padding(horizontal = 12.dp, vertical = 6.dp),
         ) {
             Text(
                 text = "${pagerState.currentPage + 1} / ${galleryImages.size}",
-                color = Color.White,
+                color = RestaurantColors.Base.white,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -712,7 +713,7 @@ private fun BookingDetailTopBar(
     onToggleSave: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val buttonBg = Color.White
+    val buttonBg = RestaurantColors.Base.white
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -859,7 +860,7 @@ private fun BookingMapPreview(address: String) {
                     .background(palette.brand),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Outlined.LocationOn, null, tint = Color.White, modifier = Modifier.size(22.dp))
+                Icon(Icons.Outlined.LocationOn, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(22.dp))
             }
         }
         Row(
@@ -996,7 +997,7 @@ private fun DetailActionButton(
     }
     val content = when {
         destructive && !primary -> palette.destructive
-        primary -> Color.White
+        primary -> RestaurantColors.Base.white
         else -> palette.foreground
     }
     val shape = RoundedCornerShape(percent = 50)

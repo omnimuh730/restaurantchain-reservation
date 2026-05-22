@@ -7,12 +7,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 
 @Composable
 fun DeterministicQrCode(
     code: String,
     modifier: Modifier = Modifier,
-    color: Color = Color(0xFF222222),
+    color: Color = RestaurantColors.Text.primary,
     cells: Int = 25,
 ) {
     val pattern = remember(code, cells) {

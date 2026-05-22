@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -72,12 +73,12 @@ private const val DesignLeftColumn = 585f
 private const val DesignRightColumn = 332f
 private const val DesignColumnGap = 36f
 
-private val Pink = Color(0xFFEF3F67)
-private val PinkSoft = Color(0xFFFDEAF0)
-private val PinkLine = Color(0xFFF6A0B5)
-private val TextDark = Color(0xFF242424)
-private val TextGray = Color(0xFF686868)
-private val DashColor = Color(0xFFD8D8D8)
+private val Pink = RestaurantColors.Dining.pink
+private val PinkSoft = RestaurantColors.Dining.pinkSoft
+private val PinkLine = RestaurantColors.Dining.pinkLine
+private val TextDark = RestaurantColors.Dining.textDark
+private val TextGray = RestaurantColors.Dining.textGray
+private val DashColor = RestaurantColors.Dining.dash
 
 /** Matches [BookingCard] restaurant title. */
 private val BookingCardRestaurantTitleSize = 17.sp
@@ -301,7 +302,7 @@ private fun RestaurantImageWithStrip(
     Box(
         modifier = modifier
             .clip(imageShape)
-            .background(Color(0xFFE8E8E8)),
+            .background(RestaurantColors.Neutral.chip),
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -344,7 +345,7 @@ private fun PinkAccentStrip(
                     modifier = Modifier
                         .size(dotSize)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.28f)),
+                        .background(RestaurantColors.Base.white.copy(alpha = 0.28f)),
                 )
             }
         }
@@ -557,7 +558,7 @@ private fun NextUpHeaderRow(spec: ReservationScaledSpec) {
             Icon(
                 imageVector = Icons.Outlined.CalendarToday,
                 contentDescription = null,
-                tint = Color.White,
+                tint = RestaurantColors.Base.white,
                 modifier = Modifier.size(spec.headerIconSize * 0.48f),
             )
         }

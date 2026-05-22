@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.wishlist.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import androidx.compose.animation.core.Animatable
@@ -143,9 +144,9 @@ fun GatheredWelcomeModal(
                 .fillMaxSize()
                 .background(
                     if (supportsBackdropBlur) {
-                        Color.White.copy(alpha = backdropAlpha.value * 0.38f)
+                        RestaurantColors.Base.white.copy(alpha = backdropAlpha.value * 0.38f)
                     } else {
-                        Color.White.copy(alpha = backdropAlpha.value * 0.82f)
+                        RestaurantColors.Base.white.copy(alpha = backdropAlpha.value * 0.82f)
                     },
                 )
                 .clickable(

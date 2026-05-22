@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -242,7 +243,7 @@ fun HelpCenterPage(
                         Icon(
                             imageVector = Icons.Filled.ArrowUpward,
                             contentDescription = "Back to top",
-                            tint = Color.White,
+                            tint = RestaurantColors.Base.white,
                             modifier = Modifier.size(20.dp),
                         )
                     }
@@ -342,9 +343,9 @@ private fun HelpHeroCard(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.Black.copy(alpha = 0.05f),
-                                Color.Black.copy(alpha = 0.20f),
-                                Color.Black.copy(alpha = 0.70f),
+                                RestaurantColors.Overlay.borderSubtle,
+                                RestaurantColors.Shadow.cardAmbient,
+                                RestaurantColors.Base.blackAlpha(0.70f),
                             ),
                         ),
                     ),
@@ -363,7 +364,7 @@ private fun HelpHeroCard(
                 ) {
                     Text(
                         text = "Help center",
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                     )
@@ -371,7 +372,7 @@ private fun HelpHeroCard(
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = "What do you need tonight?",
-                    color = Color.White,
+                    color = RestaurantColors.Base.white,
                     fontSize = 26.sp,
                     lineHeight = 30.sp,
                     fontWeight = FontWeight.ExtraBold,
@@ -379,7 +380,7 @@ private fun HelpHeroCard(
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = "Fast answers for bookings, QR Pay, saved places, and account settings.",
-                    color = Color.White.copy(alpha = 0.85f),
+                    color = RestaurantColors.Overlay.textOnImageMuted,
                     fontSize = 13.sp,
                     lineHeight = 17.sp,
                 )
@@ -766,7 +767,7 @@ private fun StillNeedAHandFooter(onContactSupport: () -> Unit) {
                     .background(palette.brand),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Outlined.ChatBubbleOutline, null, tint = Color.White, modifier = Modifier.size(20.dp))
+                Icon(Icons.Outlined.ChatBubbleOutline, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(20.dp))
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text("Still need a hand?", color = palette.foreground, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
@@ -795,8 +796,8 @@ private fun StillNeedAHandFooter(onContactSupport: () -> Unit) {
                 contentAlignment = Alignment.Center,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(Icons.Outlined.ChatBubbleOutline, null, tint = Color.White, modifier = Modifier.size(15.dp))
-                    Text("Chat", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+                    Icon(Icons.Outlined.ChatBubbleOutline, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(15.dp))
+                    Text("Chat", color = RestaurantColors.Base.white, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
                 }
             }
             Box(
@@ -858,7 +859,7 @@ private fun HelpTopicView(
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Black.copy(alpha = 0.15f), Color.Black.copy(alpha = 0.65f)),
+                            colors = listOf(RestaurantColors.Base.blackAlpha(0.15f), RestaurantColors.Base.blackAlpha(0.65f)),
                         ),
                     ),
             )
@@ -872,7 +873,7 @@ private fun HelpTopicView(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(percent = 50))
-                            .background(Color.White.copy(alpha = 0.92f))
+                            .background(RestaurantColors.Overlay.imageCaption)
                             .padding(horizontal = 8.dp, vertical = 3.dp),
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -890,24 +891,24 @@ private fun HelpTopicView(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(percent = 50))
-                            .background(Color.Black.copy(alpha = 0.5f))
+                            .background(RestaurantColors.Overlay.scrimHeavy)
                             .padding(horizontal = 8.dp, vertical = 3.dp),
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Icon(Icons.Outlined.Schedule, null, tint = Color.White, modifier = Modifier.size(11.dp))
-                            Text("${section.readMins} min read", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            Icon(Icons.Outlined.Schedule, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(11.dp))
+                            Text("${section.readMins} min read", color = RestaurantColors.Base.white, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
                     section.video?.let { v ->
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(percent = 50))
-                                .background(Color.Black.copy(alpha = 0.5f))
+                                .background(RestaurantColors.Overlay.scrimHeavy)
                                 .padding(horizontal = 8.dp, vertical = 3.dp),
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Icon(Icons.Outlined.PlayArrow, null, tint = Color.White, modifier = Modifier.size(11.dp))
-                                Text("Video \u00B7 ${v.length}", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                Icon(Icons.Outlined.PlayArrow, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(11.dp))
+                                Text("Video \u00B7 ${v.length}", color = RestaurantColors.Base.white, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }
@@ -915,14 +916,14 @@ private fun HelpTopicView(
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = section.title,
-                    color = Color.White,
+                    color = RestaurantColors.Base.white,
                     fontSize = 22.sp,
                     lineHeight = 26.sp,
                     fontWeight = FontWeight.ExtraBold,
                 )
                 Text(
                     text = section.summary,
-                    color = Color.White.copy(alpha = 0.85f),
+                    color = RestaurantColors.Overlay.textOnImageMuted,
                     fontSize = 13.sp,
                     lineHeight = 18.sp,
                     modifier = Modifier.padding(top = 2.dp),
@@ -934,10 +935,10 @@ private fun HelpTopicView(
                     .padding(12.dp)
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.4f)),
+                    .background(RestaurantColors.Base.blackAlpha(0.4f)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Outlined.VolumeUp, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                Icon(Icons.Outlined.VolumeUp, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(18.dp))
             }
         }
 
@@ -1063,8 +1064,8 @@ private fun HelpTopicView(
                 contentAlignment = Alignment.Center,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(Icons.Outlined.ChatBubbleOutline, null, tint = Color.White, modifier = Modifier.size(14.dp))
-                    Text("Contact support", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+                    Icon(Icons.Outlined.ChatBubbleOutline, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(14.dp))
+                    Text("Contact support", color = RestaurantColors.Base.white, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
                 }
             }
         }

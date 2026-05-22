@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.hub
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -196,7 +197,7 @@ private fun TierChip(
     ) {
         Text(
             text = (if (isPro) tierProLabel else tierFreeLabel).uppercase(),
-            color = Color.White,
+            color = RestaurantColors.Base.white,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.6.sp,

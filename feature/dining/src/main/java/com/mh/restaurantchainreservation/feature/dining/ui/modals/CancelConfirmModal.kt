@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui.modals
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -186,7 +187,7 @@ private fun ConfirmActionButton(
         else -> palette.cardSurface
     }
     val content = when {
-        destructive || primary -> Color.White
+        destructive || primary -> RestaurantColors.Base.white
         else -> palette.foreground
     }
     val shape = RoundedCornerShape(percent = 50)

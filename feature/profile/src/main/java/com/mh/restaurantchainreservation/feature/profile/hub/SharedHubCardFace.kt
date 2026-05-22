@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.hub
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -56,7 +57,7 @@ private fun HubWebGoldText(
             maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
             style = style.copy(
-                brush = SolidColor(Color.Black.copy(alpha = 0.25f)),
+                brush = SolidColor(RestaurantColors.Base.black.copy(alpha = 0.25f)),
             ),
         )
         Text(
@@ -65,7 +66,7 @@ private fun HubWebGoldText(
             maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
             style = style.copy(
-                brush = SolidColor(Color.Black.copy(alpha = 0.45f)),
+                brush = SolidColor(RestaurantColors.Overlay.scrimHeavy.copy(alpha = 0.9f)),
             ),
         )
         Text(
@@ -120,10 +121,10 @@ internal fun HubLuxuryEmvChip(modifier: Modifier = Modifier) {
             .size(width = 40.dp, height = 28.dp)
             .clip(chipShape)
             .background(hubChipAnodizedBrush())
-            .border(1.dp, Color.White.copy(alpha = 0.26f), chipShape),
+            .border(1.dp, RestaurantColors.Base.white.copy(alpha = 0.26f), chipShape),
     ) {
         Canvas(Modifier.fillMaxSize()) {
-            val grid = Color.Black.copy(alpha = 0.24f)
+            val grid = RestaurantColors.Base.black.copy(alpha = 0.24f)
             val stepX = size.width / 4f
             var x = stepX
             repeat(3) {
@@ -137,7 +138,7 @@ internal fun HubLuxuryEmvChip(modifier: Modifier = Modifier) {
                 y += stepY
             }
             drawLine(
-                color = Color.White.copy(alpha = 0.38f),
+                color = RestaurantColors.Overlay.veilLight,
                 start = Offset(0f, 1.2f * density),
                 end = Offset(size.width * 0.85f, 2.8f * density),
                 strokeWidth = 1.1f * density,
@@ -148,7 +149,7 @@ internal fun HubLuxuryEmvChip(modifier: Modifier = Modifier) {
                 .fillMaxSize()
                 .padding(3.dp)
                 .clip(RoundedCornerShape(3.dp))
-                .border(1.dp, Color.Black.copy(alpha = 0.18f), RoundedCornerShape(3.dp)),
+                .border(1.dp, RestaurantColors.Shadow.hubAmbient, RoundedCornerShape(3.dp)),
         )
     }
 }
@@ -188,7 +189,7 @@ internal fun SharedHubCardFace(
     val balancePrimaryText = remember(model.krwBalance, model.usdBalance) {
         hubPrimaryBalanceText(model.krwBalance, model.usdBalance)
     }
-    val labelWeb = Color.White.copy(alpha = 0.7f)
+    val labelWeb = RestaurantColors.Base.white.copy(alpha = 0.7f)
     val goldBalanceWebStyle = remember {
         TextStyle(
             fontFamily = RestaurantFontFamily,
@@ -248,12 +249,12 @@ internal fun SharedHubCardFace(
                 ) {
                     TonightLogoMark(
                         modifier = Modifier.size(18.dp),
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                         contentDescription = null,
                     )
                     Text(
                         text = model.productLabel,
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                         fontFamily = RestaurantFontFamily,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -265,12 +266,12 @@ internal fun SharedHubCardFace(
                 if (model.frozen) {
                     Text(
                         text = "FROZEN",
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Black,
                         modifier = Modifier
                             .clip(RoundedCornerShape(999.dp))
-                            .background(Color.White.copy(alpha = 0.22f))
+                            .background(RestaurantColors.Base.white.copy(alpha = 0.22f))
                             .padding(horizontal = 10.dp, vertical = 5.dp),
                     )
                 }
@@ -325,11 +326,11 @@ internal fun SharedHubCardFace(
                         Icon(
                             imageVector = Icons.Outlined.AutoAwesome,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = RestaurantColors.Base.white,
                             modifier = Modifier.size(20.dp),
                         )
                     }
-                    HubContactlessIcon(tint = Color.White)
+                    HubContactlessIcon(tint = RestaurantColors.Base.white)
                 }
                 Spacer(Modifier.height(18.dp))
             }
@@ -361,7 +362,7 @@ internal fun SharedHubCardFace(
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = model.holder,
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                         fontFamily = RestaurantFontFamily,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,

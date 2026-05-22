@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui.modals
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -352,7 +353,7 @@ private fun SmallChipButton(
     val palette = LocalRestaurantPalette.current
     val shape = RoundedCornerShape(percent = 50)
     val container = if (primary) palette.brand else palette.cardSurface
-    val content = if (primary) Color.White else palette.foreground
+    val content = if (primary) RestaurantColors.Base.white else palette.foreground
     Row(
         modifier = modifier
             .height(48.dp)

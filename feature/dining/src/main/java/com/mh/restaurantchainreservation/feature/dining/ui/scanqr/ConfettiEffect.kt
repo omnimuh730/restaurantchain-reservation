@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui.scanqr
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -41,7 +42,7 @@ fun ConfettiEffect() {
     val colors = remember(palette) {
         listOf(
             palette.brand, palette.success, palette.warning, palette.info,
-            Color(0xFFF472B6), Color(0xFFA78BFA), Color(0xFFFBBF24), Color(0xFF34D399),
+            RestaurantColors.Decoration.confettiPink, RestaurantColors.Decoration.confettiViolet, RestaurantColors.Decoration.confettiYellow, RestaurantColors.Decoration.confettiGreen,
         )
     }
     val particles = remember {

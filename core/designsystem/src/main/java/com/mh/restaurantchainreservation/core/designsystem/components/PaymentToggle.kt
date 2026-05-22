@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.core.designsystem.components
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -85,9 +86,9 @@ fun PaymentToggle(
             modifier = Modifier
                 .offset(x = thumbOffset)
                 .size(thumbSize)
-                .shadow(2.dp, CircleShape, ambientColor = Color.Black.copy(0.12f))
+                .shadow(2.dp, CircleShape, ambientColor = RestaurantColors.Base.black.copy(0.12f))
                 .clip(CircleShape)
-                .background(Color.White),
+                .background(RestaurantColors.Base.white),
         )
     }
 }

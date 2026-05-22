@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -365,7 +366,7 @@ private fun SwipeableSessionRow(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFEF4444).copy(alpha = progress))
+                .background(RestaurantColors.Semantic.errorBright.copy(alpha = progress))
                 .padding(end = 0.dp),
         ) {
             Box(
@@ -380,7 +381,7 @@ private fun SwipeableSessionRow(
                 Icon(
                     imageVector = Icons.Outlined.DeleteOutline,
                     contentDescription = "Delete conversation",
-                    tint = Color.White,
+                    tint = RestaurantColors.Base.white,
                     modifier = Modifier
                         .size((24 * scale).dp),
                 )
@@ -506,7 +507,7 @@ private fun SwipeableSessionRow(
 private fun StatusChip(status: SessionStatus) {
     val palette = LocalRestaurantPalette.current
     val (bg, fg, label) = when (status) {
-        SessionStatus.Open -> Triple(Color(0xFFE5F6ED), Color(0xFF008A44), "OPEN")
+        SessionStatus.Open -> Triple(RestaurantColors.Semantic.successOpenBg, RestaurantColors.Semantic.successDark, "OPEN")
         SessionStatus.Resolved -> Triple(palette.mutedSurface, palette.mutedForeground, "RESOLVED")
     }
     Box(
@@ -534,7 +535,7 @@ private fun DeleteConversationDialog(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.4f))
+            .background(RestaurantColors.Base.blackAlpha(0.4f))
             .clickable(onClick = onCancel),
         contentAlignment = Alignment.Center,
     ) {
@@ -556,13 +557,13 @@ private fun DeleteConversationDialog(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFFEE2E2)),
+                        .background(RestaurantColors.Semantic.errorSurface),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.DeleteOutline,
                         contentDescription = null,
-                        tint = Color(0xFFEF4444),
+                        tint = RestaurantColors.Semantic.errorBright,
                         modifier = Modifier.size(22.dp),
                     )
                 }
@@ -619,13 +620,13 @@ private fun DeleteConversationDialog(
                         .weight(1f)
                         .height(50.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Color(0xFFEF4444))
+                        .background(RestaurantColors.Semantic.errorBright)
                         .clickable(onClick = onConfirm),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         stringResource(I18nR.string.common_delete),
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                     )

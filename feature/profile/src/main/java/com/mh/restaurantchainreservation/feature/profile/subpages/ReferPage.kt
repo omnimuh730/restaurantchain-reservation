@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -288,13 +289,13 @@ private fun ShareInviteButton(onClick: () -> Unit) {
         Icon(
             imageVector = Icons.Outlined.Share,
             contentDescription = null,
-            tint = Color.White,
+            tint = RestaurantColors.Base.white,
             modifier = Modifier.size(18.dp),
         )
         Spacer(Modifier.size(10.dp))
         Text(
             text = stringResource(I18nR.string.refer_share_invite),
-            color = Color.White,
+            color = RestaurantColors.Base.white,
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
         )
@@ -337,7 +338,7 @@ private fun ReferQrCard(code: String) {
             modifier = Modifier
                 .size(200.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color.White)
+                .background(RestaurantColors.Base.white)
                 .border(1.dp, palette.border, RoundedCornerShape(16.dp))
                 .padding(14.dp),
             contentAlignment = Alignment.Center,

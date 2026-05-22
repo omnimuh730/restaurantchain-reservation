@@ -11,9 +11,12 @@ data class AccentPair(val container: Color, val onContainer: Color)
 /**
  * Semantic colors exposed to Compose UI. Built from [RestaurantColors] — light mode only.
  *
- * Text hierarchy (Airbnb): [foreground] main → [bodyForeground] paragraphs →
- * [mutedForeground] sub/metadata → [tertiaryForeground] disabled.
- * Pair with [RestaurantTextRole] / [RestaurantTextColor] via [RestaurantTextStyles].
+ * Airbnb core mapping:
+ * - [pageBackground] / [cardSurface] — White `#FFFFFF`
+ * - [mutedSurface] — Foggy `#F7F7F7`
+ * - [border] — Borders `#EBEBEB`
+ * - [foreground] / [bodyForeground] — Charcoal `#222222`
+ * - [mutedForeground] / [tertiaryForeground] / [placeholder] — Muted `#717171`
  */
 @Immutable
 data class RestaurantPalette(
@@ -37,6 +40,17 @@ data class RestaurantPalette(
     val goldSoft: Color,
     val rose: Color,
     val roseSoft: Color,
+    val onBrand: Color,
+    val inverse: Color,
+    val scrim: Color,
+    val scrimHeavy: Color,
+    val placeholder: Color,
+    val mapCanvas: Color,
+    val imagePlaceholder: Color,
+    val dividerAlt: Color,
+    val star: Color,
+    val heart: Color,
+    val onImage: Color,
     val blueAccent: AccentPair,
     val emeraldAccent: AccentPair,
     val orangeAccent: AccentPair,
@@ -72,6 +86,17 @@ val DefaultRestaurantPalette: RestaurantPalette = RestaurantPalette(
     goldSoft = RestaurantColors.Semantic.goldSoft,
     rose = RestaurantColors.Semantic.rose,
     roseSoft = RestaurantColors.Semantic.roseSoft,
+    onBrand = RestaurantColors.Base.white,
+    inverse = RestaurantColors.Base.black,
+    scrim = RestaurantColors.Overlay.scrimModal,
+    scrimHeavy = RestaurantColors.Overlay.scrimHeavy,
+    placeholder = RestaurantColors.Neutral.placeholder,
+    mapCanvas = RestaurantColors.Map.canvas,
+    imagePlaceholder = RestaurantColors.Neutral.imagePlaceholder,
+    dividerAlt = RestaurantColors.Neutral.dividerAlt,
+    star = RestaurantColors.Semantic.starGold,
+    heart = RestaurantColors.Semantic.heart,
+    onImage = RestaurantColors.Base.white,
     blueAccent = RestaurantColors.Accent.blue.toAccentPair(),
     emeraldAccent = RestaurantColors.Accent.emerald.toAccentPair(),
     orangeAccent = RestaurantColors.Accent.orange.toAccentPair(),

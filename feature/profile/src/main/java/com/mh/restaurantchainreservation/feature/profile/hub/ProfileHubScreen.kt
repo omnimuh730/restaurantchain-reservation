@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.hub
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -74,6 +75,7 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantText
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantTextRole
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.tokens.pageCanvasBackground
 import com.mh.restaurantchainreservation.core.i18n.LocaleManager
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.core.model.DailyBonusStore
@@ -146,6 +148,7 @@ fun ProfileHubScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
+                .pageCanvasBackground()
                 .trackBottomNavScroll()
                 .zIndex(0f),
             contentPadding = PaddingValues(bottom = 24.dp + navBottomPadding),
@@ -406,7 +409,7 @@ private fun DailyRewardCard(onClick: () -> Unit) {
             Icon(
                 imageVector = Icons.Outlined.CardGiftcard,
                 contentDescription = null,
-                tint = Color.White,
+                tint = RestaurantColors.Base.white,
                 modifier = Modifier.size(32.dp),
             )
         }

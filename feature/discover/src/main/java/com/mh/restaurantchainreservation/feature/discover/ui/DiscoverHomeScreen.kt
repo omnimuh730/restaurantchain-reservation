@@ -2,6 +2,7 @@
 
 package com.mh.restaurantchainreservation.feature.discover.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -120,6 +121,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMe
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.tokens.pageCanvasBackground
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
@@ -396,6 +398,7 @@ fun DiscoverHomeScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
+                .pageCanvasBackground()
                 .trackBottomNavScroll()
                 .hazeSource(state = hazeState),
             contentPadding = PaddingValues(bottom = 16.dp),
@@ -592,9 +595,9 @@ private fun HeroBanner(
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
-                                    Color.Black.copy(alpha = 0.05f),
-                                    Color.Black.copy(alpha = 0.16f),
-                                    Color.Black.copy(alpha = 0.72f),
+                                    RestaurantColors.Overlay.borderSubtle,
+                                    RestaurantColors.Base.black.copy(alpha = 0.16f),
+                                    RestaurantColors.Base.black.copy(alpha = 0.72f),
                                 ),
                             ),
                         ),
@@ -611,7 +614,7 @@ private fun HeroBanner(
                 ) {
                     Text(
                         text = banner.title,
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                         fontSize = 25.sp,
                         lineHeight = 28.sp,
                         fontWeight = FontWeight.ExtraBold,
@@ -619,7 +622,7 @@ private fun HeroBanner(
                     )
                     Text(
                         text = banner.subtitle,
-                        color = Color.White.copy(alpha = 0.92f),
+                        color = RestaurantColors.Overlay.imageCaption,
                         fontSize = 16.sp,
                         lineHeight = 20.sp,
                         fontWeight = FontWeight.Medium,
@@ -629,7 +632,7 @@ private fun HeroBanner(
                     if (banner.cta.isNotBlank()) {
                         Text(
                             text = banner.cta.uppercase(),
-                            color = Color.White.copy(alpha = 0.68f),
+                            color = RestaurantColors.Base.white.copy(alpha = 0.68f),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 9.dp),
@@ -673,10 +676,10 @@ private fun HeroBanner(
                 .zIndex(2f)
                 .padding(end = 12.dp, bottom = 48.dp)
                 .clip(RoundedCornerShape(999.dp))
-                .background(Color.White.copy(alpha = 0.92f))
+                .background(RestaurantColors.Overlay.imageCaption)
                 .padding(horizontal = 10.dp, vertical = 6.dp),
         ) {
-            Text("View All", color = Color(0xFF222222), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            Text("View All", color = RestaurantColors.Text.primary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
 
         HeroBannerPagerIndicators(
@@ -712,7 +715,7 @@ private fun HeroBannerPagerIndicators(
                     .height(5.dp)
                     .width(width)
                     .clip(RoundedCornerShape(50))
-                    .background(Color.White.copy(alpha = dotAlpha)),
+                    .background(RestaurantColors.Base.white.copy(alpha = dotAlpha)),
             )
         }
     }
@@ -755,7 +758,7 @@ private fun CompactDiscoverBar(
 }
 
 private fun discoverGlassBarEdgeColor(@Suppress("UNUSED_PARAMETER") palette: RestaurantPalette): Color =
-    Color.White.copy(alpha = 0.42f)
+    RestaurantColors.Base.white.copy(alpha = 0.42f)
 
 private data class GlassPillLayers(
     val baseFill: Color,
@@ -791,9 +794,9 @@ private fun discoverGlassPillLayers(
         else -> 0.38f
     }
     return GlassPillLayers(
-        baseFill = Color.White.copy(alpha = baseAlpha),
+        baseFill = RestaurantColors.Base.white.copy(alpha = baseAlpha),
         borderAlpha = borderAlpha,
-        iconPlateFill = Color.White.copy(alpha = iconAlpha),
+        iconPlateFill = RestaurantColors.Base.white.copy(alpha = iconAlpha),
         gradientTopAlpha = gradTop,
     )
 }
@@ -801,7 +804,7 @@ private fun discoverGlassPillLayers(
 private fun discoverGlassPillBorderColor(
     @Suppress("UNUSED_PARAMETER") palette: RestaurantPalette,
     borderAlpha: Float,
-): Color = Color.White.copy(alpha = borderAlpha.coerceIn(0f, 1f))
+): Color = RestaurantColors.Base.white.copy(alpha = borderAlpha.coerceIn(0f, 1f))
 
 @Composable
 private fun GlassSearchButton(
@@ -832,8 +835,8 @@ private fun GlassSearchButton(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = layers.gradientTopAlpha),
-                                Color.White.copy(alpha = layers.gradientTopAlpha * 0.4f),
+                                RestaurantColors.Base.white.copy(alpha = layers.gradientTopAlpha),
+                                RestaurantColors.Base.white.copy(alpha = layers.gradientTopAlpha * 0.4f),
                                 Color.Transparent,
                             ),
                         ),
@@ -902,8 +905,8 @@ private fun GlassMapButton(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = layers.gradientTopAlpha),
-                            Color.White.copy(alpha = layers.gradientTopAlpha * 0.4f),
+                            RestaurantColors.Base.white.copy(alpha = layers.gradientTopAlpha),
+                            RestaurantColors.Base.white.copy(alpha = layers.gradientTopAlpha * 0.4f),
                             Color.Transparent,
                         ),
                     ),
@@ -1094,8 +1097,8 @@ private fun WhereToEatTileTextOverlay(
                         colorStops = arrayOf(
                             0f to Color.Transparent,
                             0.5f to Color.Transparent,
-                            0.78f to Color.Black.copy(alpha = 0.42f),
-                            1f to Color.Black.copy(alpha = 0.75f),
+                            0.78f to RestaurantColors.Base.black.copy(alpha = 0.42f),
+                            1f to RestaurantColors.Base.black.copy(alpha = 0.75f),
                         ),
                     ),
                 ),
@@ -1113,7 +1116,7 @@ private fun WhereToEatTileTextOverlay(
         ) {
             Text(
                 text = title,
-                color = Color.White.copy(alpha = 0.90f),
+                color = RestaurantColors.Base.white.copy(alpha = 0.90f),
                 fontSize = 19.sp,
                 lineHeight = 21.sp,
                 fontWeight = FontWeight.Bold,
@@ -1127,7 +1130,7 @@ private fun WhereToEatTileTextOverlay(
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
                 contentDescription = null,
-                tint = Color.White.copy(alpha = 0.95f),
+                tint = RestaurantColors.Overlay.veilFrosted,
                 modifier = Modifier.size(18.dp),
             )
         }
@@ -1196,7 +1199,7 @@ private fun AirbnbMiniCard(
                     .fillMaxWidth()
                     .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
                     .discoverImageCardSurface(RestaurantRailImageShape)
-                    .background(palette.mutedSurface),
+                    .background(palette.cardSurface),
             ) {
                 AsyncImage(
                     model = restaurant.image,
@@ -1299,7 +1302,7 @@ private fun NewsRail(
                             Box(
                                 modifier = Modifier
                                     .matchParentSize()
-                                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.62f)))),
+                                    .background(Brush.verticalGradient(listOf(Color.Transparent, RestaurantColors.Base.black.copy(alpha = 0.62f)))),
                             )
                             Box(
                                 modifier = Modifier
@@ -1311,7 +1314,7 @@ private fun NewsRail(
                             ) {
                                 Text(
                                     newsItem.category.displayLabel(),
-                                    color = Color.White,
+                                    color = RestaurantColors.Base.white,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                 )
@@ -1326,19 +1329,19 @@ private fun NewsRail(
                                 Icon(
                                     imageVector = Icons.Outlined.AccessTime,
                                     contentDescription = null,
-                                    tint = Color.White,
+                                    tint = RestaurantColors.Base.white,
                                     modifier = Modifier.size(12.dp),
                                 )
                                 Text(
                                     text = formatNewsTimeAgo(newsItem.publishedAtEpochMs),
-                                    color = Color.White,
+                                    color = RestaurantColors.Base.white,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold,
                                 )
-                                Text("·", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
+                                Text("·", color = RestaurantColors.Base.white.copy(alpha = 0.6f), fontSize = 11.sp)
                                 Text(
                                     text = "${newsItem.readMinutes} mins read",
-                                    color = Color.White,
+                                    color = RestaurantColors.Base.white,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold,
                                 )
@@ -1655,12 +1658,12 @@ private fun AnimatedSeeAllThumbnail(
                 elevation = 6.dp,
                 shape = cornerShape,
                 clip = false,
-                ambientColor = Color.Black.copy(alpha = 0.20f),
-                spotColor = Color.Black.copy(alpha = 0.26f),
+                ambientColor = RestaurantColors.Shadow.cardAmbient,
+                spotColor = RestaurantColors.Shadow.cardSpot,
             )
             .clip(cornerShape)
-            .border(borderWidth, Color.White, cornerShape)
-            .background(Color(0xFFE8EAED)),
+            .border(borderWidth, RestaurantColors.Base.white, cornerShape)
+            .background(RestaurantColors.Neutral.imagePlaceholder),
     ) {
         AsyncImage(
             model = imageModel,
@@ -2018,7 +2021,7 @@ private fun RestaurantByPriceListRow(
     val palette = LocalRestaurantPalette.current
     val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
     val saved = restaurant.id in savedIds
-    val goldStar = Color(0xFFEAB308)
+    val goldStar = RestaurantColors.Semantic.starYellow
     val emptyStar = palette.mutedForeground.copy(alpha = 0.35f)
     val filledStars = (restaurant.rating + 0.25).roundToInt().coerceIn(0, 5)
 
@@ -2035,7 +2038,7 @@ private fun RestaurantByPriceListRow(
                 modifier = Modifier
                     .size(PriceListThumbnailWidth, PriceListThumbnailHeight)
                     .clip(RoundedCornerShape(PriceListAvatarCorner))
-                    .background(palette.mutedSurface),
+                    .background(palette.cardSurface),
             ) {
                 AsyncImage(
                     model = restaurant.image,

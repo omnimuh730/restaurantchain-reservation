@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -370,11 +371,11 @@ private fun MusicVolumeControls(
                                 .shadow(
                                     elevation = thumbShadowElevation,
                                     shape = CircleShape,
-                                    ambientColor = Color.Black.copy(alpha = 0.14f),
-                                    spotColor = Color.Black.copy(alpha = 0.30f),
+                                    ambientColor = RestaurantColors.Shadow.toggleAmbient,
+                                    spotColor = RestaurantColors.Overlay.scrimLight,
                                 )
-                                .background(color = Color(0xFFFFFFFF), shape = CircleShape)
-                                .border(0.5.dp, Color.Black.copy(alpha = 0.08f), CircleShape)
+                                .background(color = RestaurantColors.Base.white, shape = CircleShape)
+                                .border(0.5.dp, RestaurantColors.Overlay.borderSubtle, CircleShape)
                                 .hoverable(interactionSource = thumbInteraction),
                         )
                     }
@@ -568,11 +569,11 @@ private fun BlackDeleteAccountButton(text: String, onClick: () -> Unit) {
             .fillMaxWidth()
             .height(52.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.Black)
+            .background(RestaurantColors.Base.black)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+        Text(text, color = RestaurantColors.Base.white, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -588,7 +589,7 @@ private fun BrandFilledButton(text: String, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+        Text(text, color = RestaurantColors.Base.white, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 

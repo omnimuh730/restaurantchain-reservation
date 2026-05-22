@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.hub
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -144,7 +145,7 @@ fun AvatarPickerModal(
                 FooterButton(
                     text = stringResource(I18nR.string.profile_avatar_picker_save),
                     background = palette.brand,
-                    foreground = Color.White,
+                    foreground = RestaurantColors.Base.white,
                     onClick = onSave,
                     modifier = Modifier.weight(2f),
                 )
@@ -184,20 +185,20 @@ private fun AvatarTile(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.20f)),
+                    .background(RestaurantColors.Shadow.cardAmbient),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
                     modifier = Modifier
                         .size(28.dp)
                         .clip(CircleShape)
-                        .background(Color.Black),
+                        .background(RestaurantColors.Base.black),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Check,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = RestaurantColors.Base.white,
                         modifier = Modifier.size(16.dp),
                     )
                 }

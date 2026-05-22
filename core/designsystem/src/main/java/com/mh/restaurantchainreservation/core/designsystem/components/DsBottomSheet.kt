@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.core.designsystem.components
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -31,7 +32,7 @@ fun DsBottomSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     title: String? = null,
-    containerColor: Color = Color.White,
+    containerColor: Color = RestaurantColors.Base.white,
     wrapContentHeight: Boolean = false,
     footer: @Composable (ColumnScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,

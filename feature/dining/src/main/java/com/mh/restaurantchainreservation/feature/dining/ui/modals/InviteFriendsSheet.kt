@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui.modals
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -386,7 +387,7 @@ private fun TabPill(
         ) {
             Text(
                 text = count.toString(),
-                color = if (active) Color.White else palette.mutedForeground,
+                color = if (active) RestaurantColors.Base.white else palette.mutedForeground,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.ExtraBold,
             )
@@ -454,7 +455,7 @@ private fun FriendRow(
                 Icon(
                     imageVector = Icons.Filled.Check,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = RestaurantColors.Base.white,
                     modifier = Modifier
                         .size(16.dp)
                         .scale(checkScale),
@@ -489,7 +490,7 @@ private fun AvatarBubble(name: String, initials: String) {
     ) {
         Text(
             text = initials,
-            color = Color.White,
+            color = RestaurantColors.Base.white,
             fontSize = 12.sp,
             fontWeight = FontWeight.ExtraBold,
         )
@@ -597,13 +598,13 @@ private fun PrimaryActionButton(label: String, enabled: Boolean, onClick: () -> 
         Icon(
             imageVector = Icons.Filled.Send,
             contentDescription = null,
-            tint = if (enabled) Color.White else palette.mutedForeground,
+            tint = if (enabled) RestaurantColors.Base.white else palette.mutedForeground,
             modifier = Modifier.size(16.dp),
         )
         Spacer(Modifier.size(8.dp))
         Text(
             text = label,
-            color = if (enabled) Color.White else palette.mutedForeground,
+            color = if (enabled) RestaurantColors.Base.white else palette.mutedForeground,
             fontSize = 15.sp,
             fontWeight = FontWeight.ExtraBold,
         )

@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -270,7 +271,7 @@ fun RestaurantPhotoFullscreenViewer(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black),
+            .background(RestaurantColors.Base.black),
     ) {
         Box(
             modifier = Modifier
@@ -290,7 +291,7 @@ fun RestaurantPhotoFullscreenViewer(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black)
+                        .background(RestaurantColors.Base.black)
                         .graphicsLayer { clip = true },
                 ) {
                     FullscreenPhotoPage(

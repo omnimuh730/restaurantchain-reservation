@@ -33,7 +33,7 @@ private val PreviewTabsKo = listOf(
     BottomNavTab(BottomNavTabId.Profile, "프로필"),
 )
 
-@Preview(name = "Bottom Nav", showBackground = true, backgroundColor = 0xFFF7F7F7)
+@Preview(name = "Bottom Nav", showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 private fun BottomNavBarLightPreview() {
     RestaurantTheme {
@@ -41,7 +41,7 @@ private fun BottomNavBarLightPreview() {
     }
 }
 
-@Preview(name = "Bottom Nav · Korean", showBackground = true, backgroundColor = 0xFFF7F7F7)
+@Preview(name = "Bottom Nav · Korean", showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 private fun BottomNavBarKoreanPreview() {
     RestaurantTheme {
@@ -49,7 +49,7 @@ private fun BottomNavBarKoreanPreview() {
     }
 }
 
-@Preview(name = "Bottom Nav · Badged Profile", showBackground = true, backgroundColor = 0xFFF7F7F7)
+@Preview(name = "Bottom Nav · Badged Profile", showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 private fun BottomNavBarBadgePreview() {
     RestaurantTheme {
@@ -62,7 +62,7 @@ private fun BottomNavBarBadgePreview() {
     }
 }
 
-@Preview(name = "Bottom Nav · Alert Dot", showBackground = true, backgroundColor = 0xFFF7F7F7)
+@Preview(name = "Bottom Nav · Alert Dot", showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 private fun BottomNavBarDotPreview() {
     RestaurantTheme {

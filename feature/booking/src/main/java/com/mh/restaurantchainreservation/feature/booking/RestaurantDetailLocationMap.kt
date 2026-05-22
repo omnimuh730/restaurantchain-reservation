@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -47,7 +48,7 @@ internal fun RestaurantDetailLocationMap(
     BoxWithConstraints(
         modifier = modifier
             .clip(RoundedCornerShape(24.dp))
-            .background(Color(0xFFE8E8E8)),
+            .background(RestaurantColors.Neutral.chip),
     ) {
         val density = LocalDensity.current
         val widthPx = with(density) { maxWidth.toPx() }
@@ -95,16 +96,16 @@ internal fun RestaurantDetailLocationMap(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .size(52.dp)
-                    .shadow(8.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.18f))
+                    .shadow(8.dp, CircleShape, ambientColor = RestaurantColors.Shadow.hubAmbient)
                     .clip(CircleShape)
-                    .background(Color(0xFF222222))
-                    .border(3.dp, Color.White, CircleShape),
+                    .background(RestaurantColors.Text.primary)
+                    .border(3.dp, RestaurantColors.Base.white, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Home,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = RestaurantColors.Base.white,
                     modifier = Modifier.size(24.dp),
                 )
             }

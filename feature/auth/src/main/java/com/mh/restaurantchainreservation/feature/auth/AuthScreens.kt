@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.auth
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -929,7 +930,7 @@ private fun LogoBadge() {
             .background(palette.brand),
         contentAlignment = Alignment.Center,
     ) {
-        TonightLogoMark(modifier = Modifier.size(36.dp), color = Color.White)
+        TonightLogoMark(modifier = Modifier.size(36.dp), color = RestaurantColors.Base.white)
     }
 }
 
@@ -1052,17 +1053,17 @@ private fun PrimaryButton(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (loading) {
-            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
+            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = RestaurantColors.Base.white)
         } else {
             Text(
                 text = text,
-                color = if (enabled) Color.White else palette.mutedForeground,
+                color = if (enabled) RestaurantColors.Base.white else palette.mutedForeground,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
             )
             if (trailingIcon != null) {
                 Spacer(Modifier.width(8.dp))
-                Icon(trailingIcon, contentDescription = null, tint = Color.White, modifier = Modifier.size(17.dp))
+                Icon(trailingIcon, contentDescription = null, tint = RestaurantColors.Base.white, modifier = Modifier.size(17.dp))
             }
         }
     }

@@ -85,8 +85,8 @@ fun Modifier.hubSurfaceShadow(
     elevation = elevation,
     shape = shape,
     clip = false,
-    ambientColor = Color.Black.copy(alpha = ambientAlpha),
-    spotColor = Color.Black.copy(alpha = spotAlpha),
+    ambientColor = RestaurantColors.Base.black.copy(alpha = ambientAlpha),
+    spotColor = RestaurantColors.Base.black.copy(alpha = spotAlpha),
 )
 
 /** 1px line along the top edge (e.g. bottom nav separator). */
@@ -118,8 +118,8 @@ fun Modifier.surfaceTopEdgeShadow(
     val shadowPx = height.toPx()
     if (shadowPx <= 0f) return@drawBehind
     val blend = Brush.verticalGradient(
-        0f to Color.Black.copy(alpha = spotAlpha.coerceIn(0f, 1f)),
-        0.45f to Color.Black.copy(alpha = ambientAlpha.coerceIn(0f, 1f)),
+        0f to RestaurantColors.Base.black.copy(alpha = spotAlpha.coerceIn(0f, 1f)),
+        0.45f to RestaurantColors.Base.black.copy(alpha = ambientAlpha.coerceIn(0f, 1f)),
         1f to Color.Transparent,
     )
     drawRect(

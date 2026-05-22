@@ -9,23 +9,33 @@ import androidx.compose.ui.graphics.Color
 import com.mh.restaurantchainreservation.core.designsystem.tokens.DefaultRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColorTokens
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantShapes
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantTypography
 
-private fun appColorScheme(): ColorScheme = lightColorScheme(
-    primary = RestaurantColorTokens.BrandPrimary,
-    onPrimary = Color.White,
-    background = RestaurantColorTokens.LightBackground,
-    onBackground = RestaurantColorTokens.LightForeground,
-    surface = RestaurantColorTokens.LightSurface,
-    onSurface = RestaurantColorTokens.LightForeground,
-    surfaceVariant = RestaurantColorTokens.LightSurfaceVariant,
-    onSurfaceVariant = RestaurantColorTokens.LightMutedForeground,
-    outline = RestaurantColorTokens.LightBorder,
-    outlineVariant = RestaurantColorTokens.LightBorder,
-    error = RestaurantColorTokens.LightDestructive,
-    onError = Color.White,
-)
+private fun appColorScheme(): ColorScheme {
+    val canvas = RestaurantColors.Surface.canvas
+    val foggy = RestaurantColors.Surface.foggy
+    return lightColorScheme(
+        primary = RestaurantColorTokens.BrandPrimary,
+        onPrimary = RestaurantColors.Base.white,
+        background = canvas,
+        onBackground = RestaurantColorTokens.LightForeground,
+        surface = canvas,
+        onSurface = RestaurantColorTokens.LightForeground,
+        surfaceVariant = foggy,
+        onSurfaceVariant = RestaurantColorTokens.LightMutedForeground,
+        surfaceContainerLowest = canvas,
+        surfaceContainerLow = canvas,
+        surfaceContainer = canvas,
+        surfaceContainerHigh = canvas,
+        surfaceContainerHighest = canvas,
+        outline = RestaurantColorTokens.LightBorder,
+        outlineVariant = RestaurantColorTokens.LightBorder,
+        error = RestaurantColorTokens.LightDestructive,
+        onError = RestaurantColors.Base.white,
+    )
+}
 
 /** App theme — light mode only. Edit colors in [RestaurantColors][com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors]. */
 @Composable

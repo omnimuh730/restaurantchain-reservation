@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 
 /**
  * Bottom-anchored modal sheet: scrim fades in, sheet slides up + scales from 0.97 with a spring.
@@ -75,7 +76,7 @@ fun BottomModalSheet(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.40f * scrimAlpha))
+                .background(RestaurantColors.Overlay.scrimModal.copy(alpha = scrimAlpha))
                 .let {
                     if (dismissOnClickOutside) {
                         it.clickable(
@@ -100,7 +101,7 @@ fun BottomModalSheet(
                         transformOrigin = TransformOrigin(0.5f, 1f)
                         alpha = scrimAlpha
                     }
-                    .shadow(elevation = 18.dp, shape = sheetShape, ambientColor = Color.Black.copy(alpha = 0.18f))
+                    .shadow(elevation = 18.dp, shape = sheetShape, ambientColor = RestaurantColors.Shadow.hubAmbient)
                     .clip(sheetShape)
                     .background(palette.cardSurface)
                     .clickable(
@@ -155,7 +156,7 @@ fun CenterModalSheet(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.45f * alpha))
+                .background(RestaurantColors.Overlay.scrimHeavy.copy(alpha = 0.9f * alpha))
                 .let {
                     if (dismissOnClickOutside) {
                         it.clickable(
@@ -186,7 +187,7 @@ fun CenterModalSheet(
                         .shadow(
                             elevation = 18.dp,
                             shape = shape,
-                            ambientColor = Color.Black.copy(alpha = 0.18f),
+                            ambientColor = RestaurantColors.Shadow.hubAmbient,
                         )
                         .clip(shape)
                         .then(

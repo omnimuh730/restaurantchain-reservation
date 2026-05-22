@@ -22,6 +22,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import kotlin.math.roundToInt
 
 enum class ModalGlassScrimStrength {
@@ -168,16 +169,16 @@ fun ModalGlassScrim(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = darkAlpha)),
+                .background(RestaurantColors.Base.blackAlpha(darkAlpha)),
         )
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     if (supportsBackdropBlur) {
-                        Color.White.copy(alpha = lightAlpha)
+                        RestaurantColors.Base.whiteAlpha(lightAlpha)
                     } else {
-                        Color.White.copy(alpha = legacyVeilAlpha)
+                        RestaurantColors.Base.whiteAlpha(legacyVeilAlpha)
                     },
                 ),
         )

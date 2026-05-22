@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.wishlist.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.keyframes
@@ -387,13 +388,13 @@ private fun SavingOverlay() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.35f)),
+            .background(RestaurantColors.Overlay.scrimMedium),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = Icons.Filled.AutoAwesome,
             contentDescription = null,
-            tint = Color.White,
+            tint = RestaurantColors.Base.white,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(12.dp)
@@ -406,7 +407,7 @@ private fun SavingOverlay() {
                 .graphicsLayer { rotationZ = rotation.value }
                 .shadow(6.dp, CircleShape)
                 .clip(CircleShape)
-                .background(Color.White),
+                .background(RestaurantColors.Base.white),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

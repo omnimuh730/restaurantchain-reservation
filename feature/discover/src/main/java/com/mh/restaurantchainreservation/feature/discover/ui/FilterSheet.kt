@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.discover.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -83,7 +84,7 @@ fun FilterSheet(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.4f))
+                    .background(RestaurantColors.Base.blackAlpha(0.4f))
                     .clickable(onClick = onDismiss),
             )
         }
@@ -131,7 +132,7 @@ fun FilterSheet(
                         ) {
                             Text(
                                 text = option,
-                                color = if (active) Color.White else palette.foreground,
+                                color = if (active) RestaurantColors.Base.white else palette.foreground,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                             )
@@ -250,7 +251,7 @@ fun FilterSheet(
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text("Apply", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Text("Apply", color = RestaurantColors.Base.white, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                 }
                 }

@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.discover.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -207,9 +208,9 @@ fun NewsDetailScreen(
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
-                                    Color.Black.copy(alpha = 0.12f),
+                                    RestaurantColors.Base.black.copy(alpha = 0.12f),
                                     Color.Transparent,
-                                    Color.Black.copy(alpha = 0.42f),
+                                    RestaurantColors.Base.black.copy(alpha = 0.42f),
                                 ),
                             ),
                         ),
@@ -221,7 +222,7 @@ fun NewsDetailScreen(
                         .padding(start = 16.dp, top = 12.dp)
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.88f))
+                        .background(RestaurantColors.Base.white.copy(alpha = 0.88f))
                         .clickable(role = Role.Button, onClick = onBack),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -446,7 +447,7 @@ private fun NewsListCard(
                     .matchParentSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.62f)),
+                            colors = listOf(Color.Transparent, RestaurantColors.Base.black.copy(alpha = 0.62f)),
                         ),
                     ),
             )
@@ -466,19 +467,19 @@ private fun NewsListCard(
                 Icon(
                     imageVector = Icons.Outlined.AccessTime,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = RestaurantColors.Base.white,
                     modifier = Modifier.size(12.dp),
                 )
                 Text(
                     text = formatNewsTimeAgo(article.publishedAtEpochMs),
-                    color = Color.White,
+                    color = RestaurantColors.Base.white,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
-                Text("·", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
+                Text("·", color = RestaurantColors.Base.white.copy(alpha = 0.6f), fontSize = 11.sp)
                 Text(
                     text = "${article.readMinutes} mins read",
-                    color = Color.White,
+                    color = RestaurantColors.Base.white,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -596,7 +597,7 @@ private fun NewsCategoryBadge(
     val bg = category.badgeColor(palette)
     Text(
         text = category.displayLabel(),
-        color = Color.White,
+        color = RestaurantColors.Base.white,
         fontSize = 11.sp,
         fontWeight = FontWeight.Bold,
         modifier = modifier

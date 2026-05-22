@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
@@ -56,7 +57,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.PaymentTog
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import kotlin.math.roundToInt
 
-private val SheetWhite = Color.White
+private val SheetWhite = RestaurantColors.Base.white
 private val MerchantCardRadius = 26.dp
 private val TotalCardRadius = 28.dp
 private val PocketCardRadius = 22.dp
@@ -139,10 +140,10 @@ private fun PaymentConfirmedFooter() {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+            Icon(Icons.Filled.Check, contentDescription = null, tint = RestaurantColors.Base.white, modifier = Modifier.size(20.dp))
             Text(
                 text = "Payment confirmed",
-                color = Color.White,
+                color = RestaurantColors.Base.white,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
             )
@@ -193,7 +194,7 @@ private fun PaymentMerchantCard(payTo: String, payToSub: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(10.dp, RoundedCornerShape(MerchantCardRadius), ambientColor = Color.Black.copy(0.055f))
+            .shadow(10.dp, RoundedCornerShape(MerchantCardRadius), ambientColor = RestaurantColors.Base.black.copy(0.055f))
             .clip(RoundedCornerShape(MerchantCardRadius))
             .background(SheetWhite)
             .border(1.dp, palette.border, RoundedCornerShape(MerchantCardRadius))
@@ -269,7 +270,7 @@ private fun PaymentTotalCard(totalAmount: Double) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(TotalCardRadius), ambientColor = Color.Black.copy(0.045f))
+            .shadow(8.dp, RoundedCornerShape(TotalCardRadius), ambientColor = RestaurantColors.Base.black.copy(0.045f))
             .clip(RoundedCornerShape(TotalCardRadius))
             .background(SheetWhite)
             .border(1.dp, palette.border, RoundedCornerShape(TotalCardRadius))
@@ -545,7 +546,7 @@ private fun SwipeToPayButton(
     ) {
         Text(
             text = "Swipe to Pay $amountLabel",
-            color = Color.White.copy(alpha = 0.9f),
+            color = RestaurantColors.Base.white.copy(alpha = 0.9f),
             fontSize = 15.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.align(Alignment.Center),
@@ -556,7 +557,7 @@ private fun SwipeToPayButton(
                 .padding(4.dp)
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(Color.White)
+                .background(RestaurantColors.Base.white)
                 .pointerInput(completed) {
                     if (completed) return@pointerInput
                     detectHorizontalDragGestures(

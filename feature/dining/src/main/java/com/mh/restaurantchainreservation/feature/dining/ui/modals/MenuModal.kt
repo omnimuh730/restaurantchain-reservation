@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui.modals
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -82,8 +83,8 @@ fun MenuModal(
                             Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    Color.Black.copy(alpha = 0.25f),
-                                    Color.Black.copy(alpha = 0.78f),
+                                    RestaurantColors.Base.black.copy(alpha = 0.25f),
+                                    RestaurantColors.Base.black.copy(alpha = 0.78f),
                                 ),
                             ),
                         ),
@@ -96,7 +97,7 @@ fun MenuModal(
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(percent = 50))
-                            .background(Color.White.copy(alpha = 0.18f))
+                            .background(RestaurantColors.Base.whiteAlpha(0.18f))
                             .padding(horizontal = 10.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -104,12 +105,12 @@ fun MenuModal(
                         Icon(
                             imageVector = Icons.Outlined.MenuBook,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = RestaurantColors.Base.white,
                             modifier = Modifier.size(14.dp),
                         )
                         Text(
                             text = stringResource(if (isPreview) I18nR.string.menu_modal_chip_preview else I18nR.string.menu_modal_chip_order),
-                            color = Color.White,
+                            color = RestaurantColors.Base.white,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.ExtraBold,
                         )
@@ -117,14 +118,14 @@ fun MenuModal(
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text = booking.restaurant,
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.ExtraBold,
                         maxLines = 1,
                     )
                     Text(
                         text = stringResource(I18nR.string.menu_modal_subtitle),
-                        color = Color.White.copy(alpha = 0.78f),
+                        color = RestaurantColors.Base.white.copy(alpha = 0.78f),
                         fontSize = 13.sp,
                         maxLines = 1,
                     )
@@ -290,7 +291,7 @@ private fun MenuDoneButton(text: String, onClick: () -> Unit, modifier: Modifier
     ) {
         Text(
             text = text,
-            color = Color.White,
+            color = RestaurantColors.Base.white,
             fontSize = 14.sp,
             fontWeight = FontWeight.ExtraBold,
         )

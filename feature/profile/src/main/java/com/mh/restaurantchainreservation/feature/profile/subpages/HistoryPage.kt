@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -751,7 +752,7 @@ private fun PeriodPicker(value: DateRangeMs, onChange: (DateRangeMs) -> Unit) {
                     ) {
                         Text(
                             text = "Save",
-                            color = if (canSave) Color.White else palette.mutedForeground,
+                            color = if (canSave) RestaurantColors.Base.white else palette.mutedForeground,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.ExtraBold,
                         )
@@ -777,7 +778,7 @@ private fun PresetChip(label: String, active: Boolean, onClick: () -> Unit) {
     ) {
         Text(
             label,
-            color = if (active) Color.White else palette.foreground,
+            color = if (active) RestaurantColors.Base.white else palette.foreground,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
         )
@@ -943,7 +944,7 @@ private fun DayCell(
             Text(
                 text = day.day.toString(),
                 color = when {
-                    isEndpoint -> Color.White
+                    isEndpoint -> RestaurantColors.Base.white
                     outside -> palette.mutedForeground.copy(alpha = 0.3f)
                     isToday -> palette.brand
                     else -> palette.foreground
@@ -1002,7 +1003,7 @@ private fun TxnRow(txn: Txn, onClick: () -> Unit) {
         }
         Text(
             text = formatSignedUsd(txn.amountValue, positive = positive),
-            color = if (positive) Color(0xFF059669) else palette.foreground,
+            color = if (positive) RestaurantColors.Accent.emerald.second else palette.foreground,
             fontSize = 15.sp,
             fontWeight = FontWeight.ExtraBold,
         )
@@ -1055,7 +1056,7 @@ private fun InvoiceDialog(txn: Txn, onDismiss: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.5f))
+            .background(RestaurantColors.Overlay.scrimHeavy)
             .clickable(onClick = onDismiss),
         contentAlignment = Alignment.BottomCenter,
     ) {
@@ -1095,7 +1096,7 @@ private fun InvoiceDialog(txn: Txn, onDismiss: () -> Unit) {
                     .size(56.dp)
                     .shadow(6.dp, CircleShape, clip = false)
                     .clip(CircleShape)
-                    .background(if (!txn.isDebit && txn.category == TxnCategory.Reward) Color(0xFFFF5A5F) else Color.Black)
+                    .background(if (!txn.isDebit && txn.category == TxnCategory.Reward) RestaurantColors.Semantic.heart else RestaurantColors.Base.black)
                     .padding(8.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -1106,7 +1107,7 @@ private fun InvoiceDialog(txn: Txn, onDismiss: () -> Unit) {
                         else -> Icons.Outlined.Add
                     },
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = RestaurantColors.Base.white,
                     modifier = Modifier.size(28.dp),
                 )
             }
@@ -1114,7 +1115,7 @@ private fun InvoiceDialog(txn: Txn, onDismiss: () -> Unit) {
             Text(
                 text = formatSignedUsd(txn.amountValue, positive = !txn.isDebit),
                 color = when {
-                    !txn.isDebit && txn.category == TxnCategory.Reward -> Color(0xFFFF5A5F)
+                    !txn.isDebit && txn.category == TxnCategory.Reward -> RestaurantColors.Semantic.heart
                     else -> palette.foreground
                 },
                 fontSize = 28.sp,
@@ -1210,11 +1211,11 @@ private fun InvoiceDialog(txn: Txn, onDismiss: () -> Unit) {
                     .height(48.dp)
                     .shadow(4.dp, RoundedCornerShape(16.dp), clip = false)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color.Black)
+                    .background(RestaurantColors.Base.black)
                     .clickable(onClick = onDismiss),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("Done", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Done", color = RestaurantColors.Base.white, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
             }
         }
     }

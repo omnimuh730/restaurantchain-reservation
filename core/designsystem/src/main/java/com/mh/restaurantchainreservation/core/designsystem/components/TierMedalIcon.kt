@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 
 enum class TierType { Silver, Gold, Platinum, Diamond }
 
@@ -22,28 +23,28 @@ private data class TierColors(
 
 private fun tierColors(tier: TierType): TierColors = when (tier) {
     TierType.Silver -> TierColors(
-        bg = Color(0xFF94A3B8),
-        ring = Color(0xFF64748B),
-        symbolMain = Color(0xFFE2E8F0),
-        symbolAccent = Color(0xFFE2E8F0),
+        bg = RestaurantColors.Tier.Silver.bg,
+        ring = RestaurantColors.Tier.Silver.ring,
+        symbolMain = RestaurantColors.Tier.Silver.symbol,
+        symbolAccent = RestaurantColors.Tier.Silver.symbol,
     )
     TierType.Gold -> TierColors(
-        bg = Color(0xFFF59E0B),
-        ring = Color(0xFFD97706),
-        symbolMain = Color(0xFFFEF3C7),
-        symbolAccent = Color(0xFFFEF3C7),
+        bg = RestaurantColors.Tier.Gold.bg,
+        ring = RestaurantColors.Tier.Gold.ring,
+        symbolMain = RestaurantColors.Tier.Gold.symbol,
+        symbolAccent = RestaurantColors.Tier.Gold.symbol,
     )
     TierType.Platinum -> TierColors(
-        bg = Color(0xFF8B5CF6),
-        ring = Color(0xFF7C3AED),
-        symbolMain = Color(0xFFE0E7FF),
-        symbolAccent = Color(0xFFC4B5FD),
+        bg = RestaurantColors.Tier.Platinum.bg,
+        ring = RestaurantColors.Tier.Platinum.ring,
+        symbolMain = RestaurantColors.Tier.Platinum.symbolMain,
+        symbolAccent = RestaurantColors.Tier.Platinum.symbolAccent,
     )
     TierType.Diamond -> TierColors(
-        bg = Color(0xFFEC4899),
-        ring = Color(0xFFDB2777),
-        symbolMain = Color(0xFFFCE7F3),
-        symbolAccent = Color(0xFFFBCFE8),
+        bg = RestaurantColors.Tier.Diamond.bg,
+        ring = RestaurantColors.Tier.Diamond.ring,
+        symbolMain = RestaurantColors.Tier.Diamond.symbolMain,
+        symbolAccent = RestaurantColors.Tier.Diamond.symbolAccent,
     )
 }
 
@@ -62,7 +63,7 @@ fun TierMedalIcon(
         drawCircle(color = colors.bg, radius = radius, center = center)
 
         val shineBrush = Brush.radialGradient(
-            colors = listOf(Color.White.copy(alpha = 0.55f), Color.White.copy(alpha = 0f)),
+            colors = listOf(RestaurantColors.Base.whiteAlpha(0.55f), RestaurantColors.Base.whiteAlpha(0f)),
             center = center.copy(
                 x = center.x - radius * 0.25f,
                 y = center.y - radius * 0.25f,
@@ -133,7 +134,7 @@ private fun DrawScope.drawDiamondSymbol(unit: Float, top: Color, base: Color) {
         close()
     }
     drawPath(path = gem, color = base)
-    val sparkle = Color(0xFFFDE68A)
+    val sparkle = RestaurantColors.Tier.Diamond.sparkle
     drawCircle(color = sparkle, radius = 1f * unit, center = Offset(12f * unit, 5f * unit))
     drawCircle(color = sparkle, radius = 0.7f * unit, center = Offset(9f * unit, 5.5f * unit))
     drawCircle(color = sparkle, radius = 0.7f * unit, center = Offset(15f * unit, 5.5f * unit))

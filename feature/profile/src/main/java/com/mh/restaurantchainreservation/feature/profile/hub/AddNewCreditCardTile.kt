@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.hub
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,7 +44,7 @@ private val TileCorner = 32.dp
 fun AddNewCreditCardTile(modifier: Modifier = Modifier) {
     val palette = LocalRestaurantPalette.current
     val brand = palette.brand
-    val topWash = Color.White.copy(alpha = 0.92f)
+    val topWash = RestaurantColors.Overlay.imageCaption
     val bottomWash = brand.copy(alpha = 0.12f)
     val borderColor = brand.copy(alpha = 0.58f)
 
@@ -86,7 +87,7 @@ fun AddNewCreditCardTile(modifier: Modifier = Modifier) {
                         Brush.verticalGradient(
                             colors = listOf(
                                 brand.copy(alpha = 0.95f),
-                                Color(0xFFE11D48).copy(alpha = 0.92f),
+                                RestaurantColors.Avatar.rose.copy(alpha = 0.92f),
                             ),
                         ),
                     ),
@@ -95,7 +96,7 @@ fun AddNewCreditCardTile(modifier: Modifier = Modifier) {
                 Icon(
                     imageVector = Icons.Outlined.Add,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = RestaurantColors.Base.white,
                     modifier = Modifier.size(28.dp),
                 )
             }

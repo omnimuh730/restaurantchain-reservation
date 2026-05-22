@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.hub
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
@@ -420,7 +421,7 @@ private fun ClaimButton(onClick: () -> Unit) {
     ) {
         Text(
             text = stringResource(I18nR.string.profile_daily_claim),
-            color = Color.White,
+            color = RestaurantColors.Base.white,
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
         )

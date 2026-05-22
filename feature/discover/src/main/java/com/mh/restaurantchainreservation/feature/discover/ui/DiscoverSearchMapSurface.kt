@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.discover.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -133,7 +134,7 @@ internal fun DiscoverSearchMapSurface(
         modifier = modifier
             .padding(top = topInset, bottom = bottomInset)
             .clip(RectangleShape)
-            .background(Color(0xFFF4F0E8))
+            .background(RestaurantColors.Map.canvas)
             .pointerInput(onZoomChange) {
                 detectTransformGestures { _, pan, zoomChange, _ ->
                     if (zoomChange != 1f) {
@@ -209,12 +210,12 @@ internal fun DiscoverSearchMapSurface(
                 )
                 Canvas(Modifier.fillMaxSize()) {
                     drawCircle(
-                        color = Color(0xFF3B82F6).copy(alpha = 0.14f),
+                        color = RestaurantColors.Map.markerBlue.copy(alpha = 0.14f),
                         radius = radiusPx,
                         center = userScreen,
                     )
                     drawCircle(
-                        color = Color(0xFF3B82F6).copy(alpha = 0.35f),
+                        color = RestaurantColors.Map.markerBlue.copy(alpha = 0.35f),
                         radius = radiusPx,
                         center = userScreen,
                         style = Stroke(width = 2.dp.toPx()),
@@ -351,20 +352,20 @@ private fun UserLocationMarker(modifier: Modifier = Modifier) {
                     alpha = pulseAlpha
                 }
                 .clip(CircleShape)
-                .background(Color(0xFF3B82F6).copy(alpha = 0.35f)),
+                .background(RestaurantColors.Map.markerBlue.copy(alpha = 0.35f)),
         )
         Box(
             modifier = Modifier
                 .size(20.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF3B82F6).copy(alpha = 0.12f)),
+                .background(RestaurantColors.Map.markerBlue.copy(alpha = 0.12f)),
         )
         Box(
             modifier = Modifier
                 .size(16.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF3B82F6))
-                .border(2.dp, Color.White, CircleShape),
+                .background(RestaurantColors.Map.markerBlue)
+                .border(2.dp, RestaurantColors.Base.white, CircleShape),
         )
     }
 }
@@ -379,14 +380,14 @@ private fun MapRatingMarker(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(percent = 50))
-            .background(if (active) Color(0xFF222222) else Color.White)
+            .background(if (active) RestaurantColors.Text.primary else RestaurantColors.Base.white)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
-            color = if (active) Color.White else Color(0xFF222222),
+            color = if (active) RestaurantColors.Base.white else RestaurantColors.Text.primary,
             fontSize = 13.sp,
             fontWeight = FontWeight.ExtraBold,
         )
@@ -463,16 +464,16 @@ private fun SearchMapZoomButton(
     Box(
         modifier = modifier
             .size(44.dp)
-            .shadow(6.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.12f))
+            .shadow(6.dp, CircleShape, ambientColor = RestaurantColors.Base.black.copy(alpha = 0.12f))
             .clip(CircleShape)
-            .background(Color.White)
+            .background(RestaurantColors.Base.white)
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            tint = Color(0xFF222222).copy(alpha = if (enabled) 1f else 0.35f),
+            tint = RestaurantColors.Text.primary.copy(alpha = if (enabled) 1f else 0.35f),
             modifier = Modifier.size(22.dp),
         )
     }
@@ -486,16 +487,16 @@ internal fun SearchMapCurrentLocationButton(
     Box(
         modifier = modifier
             .size(44.dp)
-            .shadow(6.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.12f))
+            .shadow(6.dp, CircleShape, ambientColor = RestaurantColors.Base.black.copy(alpha = 0.12f))
             .clip(CircleShape)
-            .background(Color.White)
+            .background(RestaurantColors.Base.white)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = Icons.Filled.Navigation,
             contentDescription = "Show current location",
-            tint = Color(0xFF222222),
+            tint = RestaurantColors.Text.primary,
             modifier = Modifier
                 .size(22.dp)
                 .graphicsLayer { rotationZ = 45f },

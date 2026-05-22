@@ -369,7 +369,7 @@ private fun InboxDigest(unreadCount: Int, readCount: Int) {
                 ) {
                     Text(
                         text = unreadCount.toString(),
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                     )
@@ -517,13 +517,13 @@ private fun SwipeableNotificationRow(notification: AppNotification) {
                     Icon(
                         imageVector = Icons.Outlined.Check,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = RestaurantColors.Base.white,
                         modifier = Modifier.size(20.dp),
                     )
                     if (absX > thresholdPx * 0.8f) {
                         Text(
                             text = stringResource(I18nR.string.notifications_action_mark_read_aria),
-                            color = Color.White,
+                            color = RestaurantColors.Base.white,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                         )
@@ -549,7 +549,7 @@ private fun SwipeableNotificationRow(notification: AppNotification) {
                     if (absX > thresholdPx * 0.8f) {
                         Text(
                             text = stringResource(I18nR.string.notifications_action_delete_aria),
-                            color = Color.White,
+                            color = RestaurantColors.Base.white,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                         )
@@ -557,7 +557,7 @@ private fun SwipeableNotificationRow(notification: AppNotification) {
                     Icon(
                         imageVector = Icons.Outlined.DeleteOutline,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = RestaurantColors.Base.white,
                         modifier = Modifier.size(20.dp),
                     )
                 }

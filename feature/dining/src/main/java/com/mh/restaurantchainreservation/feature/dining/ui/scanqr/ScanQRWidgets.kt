@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui.scanqr
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -164,7 +165,7 @@ fun QRCodeVisual(active: Boolean = true) {
         modifier = Modifier
             .size(220.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(Color.White)
+            .background(RestaurantColors.Base.white)
             .padding(16.dp),
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -173,7 +174,7 @@ fun QRCodeVisual(active: Boolean = true) {
                 for (c in 0 until cells) {
                     if (pattern[r][c]) {
                         drawRect(
-                            color = Color(0xFF222222).copy(alpha = 0.8f),
+                            color = RestaurantColors.Text.primary.copy(alpha = 0.8f),
                             topLeft = Offset(c * cellSize, r * cellSize),
                             size = Size(cellSize - 1f, cellSize - 1f),
                         )

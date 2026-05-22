@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.hub
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -68,7 +69,7 @@ fun WalletCardStack(
                 .align(Alignment.BottomStart)
                 .size(WalletDecorCircleSize)
                 .offset(x = WalletDecorCircleOffsetX, y = WalletDecorCircleOffsetY)
-                .background(Color.White.copy(alpha = 0.48f), CircleShape),
+                .background(RestaurantColors.Base.white.copy(alpha = 0.48f), CircleShape),
         )
         Box(
             modifier = Modifier
@@ -105,11 +106,11 @@ fun WalletCardStack(
                 ) {
                     TonightLogoMark(
                         modifier = Modifier.size(20.dp),
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                     )
                     Text(
                         text = stringResource(I18nR.string.profile_wallet_title),
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = (-0.2).sp,
@@ -127,7 +128,7 @@ fun WalletCardStack(
                         } else {
                             stringResource(I18nR.string.profile_wallet_show)
                         },
-                        color = Color.White.copy(alpha = 0.85f),
+                        color = RestaurantColors.Overlay.textOnImageMuted,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                     )
@@ -173,7 +174,7 @@ fun WalletCardStack(
                     } else {
                         masked
                     },
-                    color = Color.White.copy(alpha = 0.95f),
+                    color = RestaurantColors.Overlay.veilFrosted,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     letterSpacing = 1.6.sp,
@@ -197,13 +198,13 @@ private fun BalanceCell(
     Column(
         modifier = modifier
             .clip(cellShape)
-            .background(Color.White.copy(alpha = 0.15f))
-            .border(1.dp, Color.White.copy(alpha = 0.20f), cellShape)
+            .background(RestaurantColors.Base.white.copy(alpha = 0.15f))
+            .border(1.dp, RestaurantColors.Base.white.copy(alpha = 0.20f), cellShape)
             .padding(12.dp),
     ) {
         Text(
             text = title.uppercase(),
-            color = Color.White.copy(alpha = 0.80f),
+            color = RestaurantColors.Base.white.copy(alpha = 0.80f),
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 0.9.sp,
@@ -211,7 +212,7 @@ private fun BalanceCell(
         Spacer(Modifier.height(6.dp))
         Text(
             text = valueText,
-            color = Color.White,
+            color = RestaurantColors.Base.white,
             fontSize = 20.sp,
             lineHeight = 20.sp,
             fontWeight = FontWeight.Bold,
@@ -222,12 +223,12 @@ private fun BalanceCell(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(999.dp))
-                    .background(Color.White.copy(alpha = 0.25f))
+                    .background(RestaurantColors.Base.white.copy(alpha = 0.25f))
                     .padding(horizontal = 6.dp, vertical = 2.dp),
             ) {
                 Text(
                     text = badge,
-                    color = Color.White,
+                    color = RestaurantColors.Base.white,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -235,7 +236,7 @@ private fun BalanceCell(
         } else if (footnote != null) {
             Text(
                 text = footnote,
-                color = Color.White.copy(alpha = 0.80f),
+                color = RestaurantColors.Base.white.copy(alpha = 0.80f),
                 fontSize = 11.sp,
             )
         } else {
@@ -253,7 +254,7 @@ private fun topRightHighlightBrush(): Brush {
                 center = Offset(size.width, 0f),
                 radius = maxRadius,
                 colors = listOf(
-                    Color.White.copy(alpha = 0.22f),
+                    RestaurantColors.Base.white.copy(alpha = 0.22f),
                     Color.Transparent,
                 ),
                 colorStops = listOf(0f, 0.55f),

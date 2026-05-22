@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.core.designsystem.components
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -30,6 +31,6 @@ fun TonightLogoBadge(
             .background(palette.brand),
         contentAlignment = Alignment.Center,
     ) {
-        TonightLogoMark(modifier = Modifier.size(logoSize), color = Color.White)
+        TonightLogoMark(modifier = Modifier.size(logoSize), color = RestaurantColors.Base.white)
     }
 }

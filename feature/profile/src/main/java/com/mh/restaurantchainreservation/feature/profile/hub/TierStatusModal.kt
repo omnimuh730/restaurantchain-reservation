@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.hub
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -167,14 +168,14 @@ private fun CurrentTierHeroCard() {
             Icon(
                 imageVector = Icons.Outlined.WorkspacePremium,
                 contentDescription = null,
-                tint = Color.White.copy(alpha = 0.15f),
+                tint = RestaurantColors.Base.white.copy(alpha = 0.15f),
                 modifier = Modifier.size(120.dp),
             )
         }
         Column {
             Text(
                 text = stringResource(I18nR.string.profile_tier_modal_current).uppercase(),
-                color = Color.White.copy(alpha = 0.80f),
+                color = RestaurantColors.Base.white.copy(alpha = 0.80f),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.6.sp,
@@ -182,7 +183,7 @@ private fun CurrentTierHeroCard() {
             Spacer(Modifier.height(4.dp))
             Text(
                 text = stringResource(I18nR.string.profile_tier_modal_gold_level),
-                color = Color.White,
+                color = RestaurantColors.Base.white,
                 fontSize = 22.sp,
                 lineHeight = 26.sp,
                 fontWeight = FontWeight.Bold,
@@ -197,19 +198,19 @@ private fun CurrentTierHeroCard() {
                         .weight(1f)
                         .height(6.dp)
                         .clip(RoundedCornerShape(999.dp))
-                        .background(Color.White.copy(alpha = 0.30f)),
+                        .background(RestaurantColors.Base.white.copy(alpha = 0.30f)),
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth(0.67f)
                             .height(6.dp)
                             .clip(RoundedCornerShape(999.dp))
-                            .background(Color.White),
+                            .background(RestaurantColors.Base.white),
                     )
                 }
                 Text(
                     text = stringResource(I18nR.string.profile_tier_modal_to_platinum),
-                    color = Color.White,
+                    color = RestaurantColors.Base.white,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                 )

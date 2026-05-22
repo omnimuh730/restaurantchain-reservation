@@ -17,6 +17,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.QrCodeIcon
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 
 /**
  * QR with brand-colored finder centers and a center logo badge (arrival / profile QR modals).
@@ -25,7 +26,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.icons.QrCo
 fun BrandedQrCode(
     code: String,
     modifier: Modifier = Modifier,
-    foregroundColor: Color = Color(0xFF1A1A1A),
+    foregroundColor: Color = RestaurantColors.Neutral.qrForeground,
     brandColor: Color,
     cells: Int = 25,
 ) {
@@ -95,7 +96,7 @@ fun BrandedQrCode(
             contentAlignment = Alignment.Center,
         ) {
             QrCodeIcon(
-                color = Color.White,
+                color = RestaurantColors.Base.white,
                 modifier = Modifier.size(28.dp),
             )
         }

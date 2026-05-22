@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.discover.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -359,8 +360,8 @@ fun DiscoverSearchModal(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Icon(Icons.Outlined.Search, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                Text("Search", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Icon(Icons.Outlined.Search, contentDescription = null, tint = RestaurantColors.Base.white, modifier = Modifier.size(18.dp))
+                Text("Search", color = RestaurantColors.Base.white, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -412,7 +413,7 @@ private fun SearchInputRow(
             decorationBox = { inner ->
                 Box {
                     if (value.isEmpty()) {
-                        Text(placeholder, color = Color(0xFF9CA3AF), fontSize = 15.sp)
+                        Text(placeholder, color = RestaurantColors.Neutral.placeholder, fontSize = 15.sp)
                     }
                     inner()
                 }

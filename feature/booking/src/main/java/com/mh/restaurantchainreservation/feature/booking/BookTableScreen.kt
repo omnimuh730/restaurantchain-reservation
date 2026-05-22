@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -154,7 +155,7 @@ fun BookTableScreen(
     }
 
     val screenBackground = when (step) {
-        BookingFlowStep.Success, BookingFlowStep.Awaiting -> Color.White
+        BookingFlowStep.Success, BookingFlowStep.Awaiting -> RestaurantColors.Base.white
         else -> palette.cardSurface
     }
     Column(
@@ -332,10 +333,10 @@ private fun ConfirmPayButton(
         contentAlignment = Alignment.Center,
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+            Icon(Icons.Filled.Check, contentDescription = null, tint = RestaurantColors.Base.white, modifier = Modifier.size(18.dp))
             Text(
                 "Confirm and pay $${fmtMoney(totalAmount)}",
-                color = Color.White,
+                color = RestaurantColors.Base.white,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
             )
@@ -359,7 +360,7 @@ private fun BookingContinueWithBadge(
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Continue", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            Text("Continue", color = RestaurantColors.Base.white, fontSize = 15.sp, fontWeight = FontWeight.Medium)
             if (totalPrefs > 0) {
                 Text(
                     totalPrefs.toString(),
@@ -368,7 +369,7 @@ private fun BookingContinueWithBadge(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .clip(RoundedCornerShape(999.dp))
-                        .background(Color.White)
+                        .background(RestaurantColors.Base.white)
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                 )
             }

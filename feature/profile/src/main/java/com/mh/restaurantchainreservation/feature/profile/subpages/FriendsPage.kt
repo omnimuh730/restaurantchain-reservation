@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
@@ -99,14 +100,14 @@ private data class BlockedContact(
 )
 
 private val PaletteColors = listOf(
-    Color(0xFFE11D48),
-    Color(0xFF2563EB),
-    Color(0xFF059669),
-    Color(0xFFD97706),
-    Color(0xFF7C3AED),
-    Color(0xFF0891B2),
-    Color(0xFFDC2626),
-    Color(0xFF0D9488),
+    RestaurantColors.Avatar.rose,
+    RestaurantColors.Accent.blue.second,
+    RestaurantColors.Accent.emerald.second,
+    RestaurantColors.Accent.amber.second,
+    RestaurantColors.Accent.violet.second,
+    RestaurantColors.Avatar.cyan,
+    RestaurantColors.Avatar.red,
+    RestaurantColors.Avatar.teal,
 )
 
 @Composable
@@ -119,7 +120,7 @@ fun FriendsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     name = "Mina Park",
                     username = "minapark",
                     initials = "MP",
-                    color = Color(0xFFDB2777),
+                    color = RestaurantColors.Avatar.pink,
                 ),
                 requestedAt = "2h ago",
                 note = "Wants to plan dinners and split reservations with you.",
@@ -130,7 +131,7 @@ fun FriendsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     name = "Noah Williams",
                     username = "noahw",
                     initials = "NW",
-                    color = Color(0xFF0891B2),
+                    color = RestaurantColors.Avatar.cyan,
                 ),
                 requestedAt = "Yesterday",
                 note = "Sent a friend request from your recent dining circle.",
@@ -142,11 +143,11 @@ fun FriendsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
         mutableStateListOf<Contact>().apply {
             addAll(
                 listOf(
-                    Contact(id = "1", name = "Sarah Kim", username = "sarahkim", initials = "SK", color = Color(0xFFE11D48)),
-                    Contact(id = "2", name = "Marcus Johnson", username = "marcusj", initials = "MJ", color = Color(0xFF2563EB)),
-                    Contact(id = "3", name = "Emma Chen", username = "emmachen", initials = "EC", color = Color(0xFF059669)),
-                    Contact(id = "4", name = "David Park", phone = "+1 (555) 567-8901", initials = "DP", color = Color(0xFFD97706)),
-                    Contact(id = "5", name = "Olivia Tran", username = "oliviat", initials = "OT", color = Color(0xFF7C3AED)),
+                    Contact(id = "1", name = "Sarah Kim", username = "sarahkim", initials = "SK", color = RestaurantColors.Avatar.rose),
+                    Contact(id = "2", name = "Marcus Johnson", username = "marcusj", initials = "MJ", color = RestaurantColors.Accent.blue.second),
+                    Contact(id = "3", name = "Emma Chen", username = "emmachen", initials = "EC", color = RestaurantColors.Accent.emerald.second),
+                    Contact(id = "4", name = "David Park", phone = "+1 (555) 567-8901", initials = "DP", color = RestaurantColors.Accent.amber.second),
+                    Contact(id = "5", name = "Olivia Tran", username = "oliviat", initials = "OT", color = RestaurantColors.Accent.violet.second),
                 ) + generatedContacts(120),
             )
         }
@@ -624,7 +625,7 @@ private fun FriendRequestRow(
                 Icon(
                     imageVector = Icons.Outlined.Check,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = RestaurantColors.Base.white,
                     modifier = Modifier
                         .size(16.dp)
                         .scale(approveScale.value),
@@ -632,7 +633,7 @@ private fun FriendRequestRow(
                 Spacer(Modifier.width(6.dp))
                 Text(
                     text = if (stage == RequestStage.Approving) "Added" else "Accept",
-                    color = Color.White,
+                    color = RestaurantColors.Base.white,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -812,7 +813,7 @@ private fun AddFriendForm(
                 .clickable(enabled = name.isNotBlank(), onClick = onAdd),
             contentAlignment = Alignment.Center,
         ) {
-            Text("Add to Contacts", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text("Add to Contacts", color = RestaurantColors.Base.white, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -1196,7 +1197,7 @@ private fun ColoredAvatar(initials: String, color: Color, size: Int) {
     ) {
         Text(
             text = initials,
-            color = Color.White,
+            color = RestaurantColors.Base.white,
             fontSize = (size * 0.32f).sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 1.sp,
@@ -1223,7 +1224,7 @@ private fun FriendPreviewDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.50f))
+                .background(RestaurantColors.Overlay.scrimHeavy)
                 .clickable(onClick = onDismiss),
             contentAlignment = Alignment.Center,
         ) {
@@ -1292,8 +1293,8 @@ private fun FriendPreviewDialog(
                     contentAlignment = Alignment.Center,
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(Icons.Outlined.PersonAdd, contentDescription = null, tint = Color.White, modifier = Modifier.size(17.dp))
-                        Text("Invite to reservation", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Icon(Icons.Outlined.PersonAdd, contentDescription = null, tint = RestaurantColors.Base.white, modifier = Modifier.size(17.dp))
+                        Text("Invite to reservation", color = RestaurantColors.Base.white, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                 }
                 Spacer(Modifier.height(10.dp))
@@ -1365,7 +1366,7 @@ private fun RemoveContactDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = backdropAlpha.value))
+                .background(RestaurantColors.Base.black.copy(alpha = backdropAlpha.value))
                 .clickable(
                     indication = null,
                     interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
@@ -1433,7 +1434,7 @@ private fun RemoveContactDialog(
                     ) {
                         Text(
                             "Remove",
-                            color = Color.White,
+                            color = RestaurantColors.Base.white,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                         )

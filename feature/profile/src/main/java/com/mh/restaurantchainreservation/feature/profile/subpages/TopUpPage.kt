@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
@@ -95,10 +96,10 @@ private data class PaymentProvider(
 )
 
 private val Providers = listOf(
-    PaymentProvider("apple", "Apple Pay", "Instant", Icons.Outlined.PhoneAndroid, Color(0xFF111111), Color(0xFFEFEFEF)),
-    PaymentProvider("google", "Google Pay", "Instant", Icons.Outlined.Public, Color(0xFF1976D2), Color(0xFFE3F2FD)),
-    PaymentProvider("paypal", "PayPal", "1-2 min", Icons.Outlined.Bolt, Color(0xFFE39A1A), Color(0xFFFFF4E0)),
-    PaymentProvider("bank", "Bank Transfer", "1-3 days", Icons.Outlined.AccountBalance, Color(0xFF0D9D63), Color(0xFFE6F5EE)),
+    PaymentProvider("apple", "Apple Pay", "Instant", Icons.Outlined.PhoneAndroid, RestaurantColors.Payment.apple, RestaurantColors.Payment.appleSurface),
+    PaymentProvider("google", "Google Pay", "Instant", Icons.Outlined.Public, RestaurantColors.Payment.google, RestaurantColors.Payment.googleSurface),
+    PaymentProvider("paypal", "PayPal", "1-2 min", Icons.Outlined.Bolt, RestaurantColors.Payment.paypal, RestaurantColors.Payment.paypalSurface),
+    PaymentProvider("bank", "Bank Transfer", "1-3 days", Icons.Outlined.AccountBalance, RestaurantColors.Payment.bank, RestaurantColors.Payment.bankSurface),
 )
 
 private val PresetsKRW = listOf(10_000L, 30_000L, 50_000L, 100_000L, 200_000L, 500_000L)
@@ -284,8 +285,8 @@ private fun SelectView(
             AnimatedAmountDisplay(
                 amount = formatAmountString(amountStr, currency),
                 symbol = if (currency == Currency.KRW) "₩" else "$",
-                symbolColor = if (currency == Currency.KRW) Color(0xFF1976D2) else palette.brand,
-                valueColor = if (currency == Currency.KRW) Color(0xFF1565C0) else Color(0xFFE91E63),
+                symbolColor = if (currency == Currency.KRW) RestaurantColors.Payment.google else palette.brand,
+                valueColor = if (currency == Currency.KRW) RestaurantColors.Currency.usdContentDark else RestaurantColors.Brand.deepPink,
                 fontSize = 48,
                 modifier = Modifier.weight(1f),
             )
@@ -380,7 +381,7 @@ private fun ConfirmView(
             Column {
                 Text(
                     text = if (currency == Currency.KRW) "TOP UP · DOMESTIC" else "TOP UP · FOREIGN",
-                    color = Color.White.copy(alpha = 0.7f),
+                    color = RestaurantColors.Base.white.copy(alpha = 0.7f),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 1.sp,
@@ -388,7 +389,7 @@ private fun ConfirmView(
                 Spacer(Modifier.height(6.dp))
                 Text(
                     text = formatMoney(activeAmount, currency),
-                    color = Color.White,
+                    color = RestaurantColors.Base.white,
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -667,10 +668,10 @@ private fun ProcessingView(
                 .padding(20.dp),
         ) {
             Column {
-                Text("PROCESSING TOP UP", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
+                Text("PROCESSING TOP UP", color = RestaurantColors.Base.white.copy(alpha = 0.7f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
                 Spacer(Modifier.height(4.dp))
-                Text(formatMoney(activeAmount, currency), color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                provider?.let { Text("via ${it.name}", color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp) }
+                Text(formatMoney(activeAmount, currency), color = RestaurantColors.Base.white, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                provider?.let { Text("via ${it.name}", color = RestaurantColors.Overlay.textOnImageMuted, fontSize = 12.sp) }
             }
         }
 
@@ -750,13 +751,13 @@ private fun StageRow(index: Int, label: String, state: String) {
                     Icon(
                         imageVector = Icons.Outlined.Fingerprint,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = RestaurantColors.Base.white,
                         modifier = Modifier
                             .size(16.dp)
                             .graphicsLayer { rotationZ = rotation },
                     )
                 }
-                "done" -> Icon(Icons.Filled.Check, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                "done" -> Icon(Icons.Filled.Check, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(16.dp))
                 else -> Text(index.toString(), color = palette.mutedForeground, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
@@ -915,7 +916,7 @@ private fun ProviderSheet(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.5f))
+            .background(RestaurantColors.Overlay.scrimHeavy)
             .clickable(onClick = onDismiss),
         contentAlignment = Alignment.BottomCenter,
     ) {
@@ -998,8 +999,8 @@ private fun TopBar(title: String, onBack: () -> Unit) {
 private fun CurrencySwitchPill(currency: Currency, onToggle: () -> Unit) {
     val palette = LocalRestaurantPalette.current
     val shape = RoundedCornerShape(percent = 50)
-    val container = if (currency == Currency.KRW) Color(0xFFFFE4E6) else Color(0xFFE0F2FE)
-    val content = if (currency == Currency.KRW) Color(0xFFE91E63) else Color(0xFF1976D2)
+    val container = if (currency == Currency.KRW) RestaurantColors.Currency.krwContainer else RestaurantColors.Currency.usdContainer
+    val content = if (currency == Currency.KRW) RestaurantColors.Brand.deepPink else RestaurantColors.Payment.google
     Row(
         modifier = Modifier
             .clip(shape)
@@ -1039,7 +1040,7 @@ private fun PresetChip(label: String, selected: Boolean, onClick: () -> Unit, mo
     ) {
         Text(
             text = label,
-            color = if (selected) Color.White else palette.foreground,
+            color = if (selected) RestaurantColors.Base.white else palette.foreground,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
         )
@@ -1099,7 +1100,7 @@ private fun BrandPillButton(label: String, enabled: Boolean, onClick: () -> Unit
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+        Text(label, color = RestaurantColors.Base.white, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
     }
 }
 

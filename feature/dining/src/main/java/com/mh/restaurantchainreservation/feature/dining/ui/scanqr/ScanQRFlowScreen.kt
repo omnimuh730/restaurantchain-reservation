@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui.scanqr
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -836,7 +837,7 @@ private fun PrimaryFlowButton(
 ) {
     val palette = LocalRestaurantPalette.current
     val container = if (enabled) palette.brand else palette.mutedSurface
-    val content = if (enabled) Color.White else palette.mutedForeground
+    val content = if (enabled) RestaurantColors.Base.white else palette.mutedForeground
     val shape = RoundedCornerShape(percent = 50)
     Row(
         modifier = Modifier

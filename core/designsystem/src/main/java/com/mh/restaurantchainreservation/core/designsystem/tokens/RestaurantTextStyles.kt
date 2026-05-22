@@ -12,10 +12,10 @@ import androidx.compose.ui.unit.sp
  * Airbnb-inspired text hierarchy (Cereal → Inter).
  *
  * **Color roles** ([RestaurantTextColor]):
- * - [RestaurantTextColor.Main] — Carbon `#222222` titles, menu labels, icons
- * - [RestaurantTextColor.Body] — paragraphs (`#484848`)
- * - [RestaurantTextColor.Sub] — Slate `#6A6A6A` metadata, subtitles, trailing values
- * - [RestaurantTextColor.Tertiary] — Silver `#C1C1C1` disabled / placeholders
+ * - [RestaurantTextColor.Main] — Charcoal `#222222` titles, menu labels, icons
+ * - [RestaurantTextColor.Body] — Charcoal `#222222` bold body copy
+ * - [RestaurantTextColor.Sub] — Muted `#717171` metadata, subtitles, trailing values
+ * - [RestaurantTextColor.Tertiary] — Muted `#717171` placeholders, inactive tabs
  *
  * **Type roles** ([RestaurantTextRole]): regular (400) by default; medium/semibold only for
  * section titles and price emphasis — matching Airbnb menu/settings lists.

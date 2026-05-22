@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import android.content.Context
 import android.content.Intent
 import androidx.compose.animation.core.Animatable
@@ -148,7 +149,7 @@ fun RestaurantPhotoShareSheet(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = backdropAlpha.value * 0.4f))
+                    .background(RestaurantColors.Base.black.copy(alpha = backdropAlpha.value * 0.4f))
                     .clickable(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() },

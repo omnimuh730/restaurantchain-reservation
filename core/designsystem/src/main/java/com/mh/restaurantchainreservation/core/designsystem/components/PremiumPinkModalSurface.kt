@@ -20,7 +20,7 @@ object PremiumPinkSheetColors {
     val LightPink: Color get() = RestaurantColors.Brand.lightTint
     val Border: Color get() = RestaurantColors.Border.divider
     val ShadowPink: Color get() = RestaurantColors.Brand.shadow
-    val ShadowNeutral: Color get() = Color(0xFF000000).copy(alpha = 0.05f)
+    val ShadowNeutral: Color get() = RestaurantColors.Overlay.shadowNeutral
     val RadialHighlight: Color get() = RestaurantColors.Brand.radialHighlight
 }
 
@@ -54,7 +54,7 @@ fun Modifier.premiumPinkModalSurface(
     .border(width = 1.dp, color = PremiumPinkSheetColors.Border, shape = shape)
     .drawBehind {
         val linear = Brush.linearGradient(
-            0f to Color.White,
+            0f to RestaurantColors.Base.white,
             0.45f to PremiumPinkSheetColors.LightPink,
             1f to PremiumPinkSheetColors.SoftPink,
             start = Offset.Zero,

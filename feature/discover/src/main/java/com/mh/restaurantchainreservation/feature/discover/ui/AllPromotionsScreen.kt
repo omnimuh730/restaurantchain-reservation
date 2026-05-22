@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.discover.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,8 +43,8 @@ import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.core.model.Banner
 import com.mh.restaurantchainreservation.core.model.DiscoverData
 
-private val ScreenBackground = Color(0xFF000000)
-private val CloseScrim = Color(0xFF3A3A3C)
+private val ScreenBackground = RestaurantColors.Base.black
+private val CloseScrim = RestaurantColors.Immersive.closeScrim
 
 @Composable
 fun AllPromotionsScreen(
@@ -67,7 +68,7 @@ fun AllPromotionsScreen(
         ) {
             Text(
                 text = stringResource(I18nR.string.title_all_promotions),
-                color = Color.White,
+                color = RestaurantColors.Base.white,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f),
@@ -88,7 +89,7 @@ fun AllPromotionsScreen(
                 Icon(
                     imageVector = Icons.Filled.Close,
                     contentDescription = stringResource(I18nR.string.desc_close_all_promotions),
-                    tint = Color.White,
+                    tint = RestaurantColors.Base.white,
                     modifier = Modifier.size(22.dp),
                 )
             }
@@ -123,7 +124,7 @@ private fun PromotionBannerCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(18.dp))
             .clickable(onClick = onClick, role = Role.Button)
-            .background(Color(0xFF1C1C1C)),
+            .background(RestaurantColors.Immersive.panel),
     ) {
         AsyncImage(
             model = banner.image,
@@ -139,9 +140,9 @@ private fun PromotionBannerCard(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color.Black.copy(alpha = 0.02f),
-                            Color.Black.copy(alpha = 0.35f),
-                            Color.Black.copy(alpha = 0.78f),
+                            RestaurantColors.Base.black.copy(alpha = 0.02f),
+                            RestaurantColors.Overlay.scrimMedium,
+                            RestaurantColors.Base.black.copy(alpha = 0.78f),
                         ),
                     ),
                 ),
@@ -153,7 +154,7 @@ private fun PromotionBannerCard(
         ) {
             Text(
                 text = banner.title.uppercase(),
-                color = Color.White,
+                color = RestaurantColors.Base.white,
                 fontSize = 20.sp,
                 lineHeight = 24.sp,
                 fontWeight = FontWeight.ExtraBold,
@@ -162,7 +163,7 @@ private fun PromotionBannerCard(
             )
             Text(
                 text = banner.subtitle,
-                color = Color.White.copy(alpha = 0.92f),
+                color = RestaurantColors.Overlay.imageCaption,
                 fontSize = 15.sp,
                 lineHeight = 20.sp,
                 fontWeight = FontWeight.Medium,
@@ -173,7 +174,7 @@ private fun PromotionBannerCard(
             if (banner.cta.isNotBlank()) {
                 Text(
                     text = banner.cta.uppercase(),
-                    color = Color.White.copy(alpha = 0.72f),
+                    color = RestaurantColors.Base.white.copy(alpha = 0.72f),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 10.dp),

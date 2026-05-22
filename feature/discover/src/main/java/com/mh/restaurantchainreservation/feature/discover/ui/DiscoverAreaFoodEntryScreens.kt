@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.discover.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -176,7 +177,7 @@ private fun WhereToEatAreaCard(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.22f)),
+                    .background(RestaurantColors.Base.black.copy(alpha = 0.22f)),
             )
             Text(
                 text = city.label.uppercase(),
@@ -188,7 +189,7 @@ private fun WhereToEatAreaCard(
                     .align(Alignment.TopStart)
                     .padding(12.dp)
                     .clip(RoundedCornerShape(999.dp))
-                    .background(Color.White.copy(alpha = 0.94f))
+                    .background(RestaurantColors.Base.white.copy(alpha = 0.94f))
                     .padding(horizontal = 12.dp, vertical = 6.dp),
             )
             if (restaurants.isNotEmpty()) {
@@ -266,7 +267,7 @@ private fun areaSubtitleLine(city: City, restaurantCount: Int): String =
 @Composable
 private fun AreaCardStarRating(avgRating: Double) {
     val palette = LocalRestaurantPalette.current
-    val goldStar = Color(0xFFEAB308)
+    val goldStar = RestaurantColors.Semantic.starYellow
     val emptyStar = palette.mutedForeground.copy(alpha = 0.35f)
     val filledStars = (avgRating + 0.25).roundToInt().coerceIn(0, 5)
     Row(

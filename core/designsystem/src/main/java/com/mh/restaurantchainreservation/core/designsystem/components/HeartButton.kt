@@ -38,13 +38,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mh.restaurantchainreservation.core.designsystem.R
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 /** Premium warm red (Airbnb-adjacent); active asset uses the same hex. */
-private val PremiumHeartRed = Color(0xFFFF5A5F)
+private val PremiumHeartRed = RestaurantColors.Semantic.heart
 
 /** Original assets are 31×28; keep proportion when scaling. */
 private const val HEART_ASPECT_RATIO = 31f / 28f
@@ -96,9 +97,9 @@ fun HeartButton(
     /** When [style] is [HeartButtonStyle.Overlay], aligns the icon inside the tap target (e.g. top-align with a badge). */
     overlayContentAlignment: Alignment = Alignment.Center,
     contentDescription: String = if (active) "Remove from saved" else "Save",
-    containerColor: Color = Color.Black.copy(alpha = 0.38f),
-    activeContainerColor: Color = Color.Black.copy(alpha = 0.38f),
-    inactiveTint: Color = Color.White,
+    containerColor: Color = RestaurantColors.Overlay.scrimHeart,
+    activeContainerColor: Color = RestaurantColors.Overlay.scrimHeart,
+    inactiveTint: Color = RestaurantColors.Base.white,
     activeTint: Color? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }

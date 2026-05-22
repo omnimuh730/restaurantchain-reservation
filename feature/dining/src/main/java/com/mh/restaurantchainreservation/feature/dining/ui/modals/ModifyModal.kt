@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui.modals
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -103,8 +104,8 @@ fun ModifyModal(
                             Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    Color.Black.copy(alpha = 0.20f),
-                                    Color.Black.copy(alpha = 0.75f),
+                                    RestaurantColors.Shadow.cardAmbient,
+                                    RestaurantColors.Base.black.copy(alpha = 0.75f),
                                 ),
                             ),
                         ),
@@ -117,7 +118,7 @@ fun ModifyModal(
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(percent = 50))
-                            .background(Color.White.copy(alpha = 0.18f))
+                            .background(RestaurantColors.Base.whiteAlpha(0.18f))
                             .padding(horizontal = 10.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -125,12 +126,12 @@ fun ModifyModal(
                         Icon(
                             imageVector = Icons.Outlined.Edit,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = RestaurantColors.Base.white,
                             modifier = Modifier.size(14.dp),
                         )
                         Text(
                             text = stringResource(I18nR.string.modify_title_chip),
-                            color = Color.White,
+                            color = RestaurantColors.Base.white,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.ExtraBold,
                         )
@@ -138,14 +139,14 @@ fun ModifyModal(
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text = booking.restaurant,
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.ExtraBold,
                         maxLines = 1,
                     )
                     Text(
                         text = "${booking.date} · ${booking.time}",
-                        color = Color.White.copy(alpha = 0.78f),
+                        color = RestaurantColors.Base.white.copy(alpha = 0.78f),
                         fontSize = 13.sp,
                         maxLines = 1,
                     )
@@ -332,7 +333,7 @@ private fun PillToggle(
     val palette = LocalRestaurantPalette.current
     val shape = RoundedCornerShape(percent = 50)
     val container = if (selected) palette.brand else palette.mutedSurface
-    val content = if (selected) Color.White else palette.foreground
+    val content = if (selected) RestaurantColors.Base.white else palette.foreground
     Box(
         modifier = modifier
             .height(40.dp)
@@ -374,7 +375,7 @@ private fun ModifyButton(
     val palette = LocalRestaurantPalette.current
     val shape = RoundedCornerShape(percent = 50)
     val container = if (primary) palette.brand else palette.cardSurface
-    val content = if (primary) Color.White else palette.foreground
+    val content = if (primary) RestaurantColors.Base.white else palette.foreground
     Row(
         modifier = modifier
             .height(48.dp)

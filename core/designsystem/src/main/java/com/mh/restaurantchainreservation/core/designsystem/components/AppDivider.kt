@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 
-/** Standard 1px horizontal rule using [RestaurantColors.Border.divider] (#EBEBEB). */
+/** Standard 1px horizontal rule using [RestaurantColors.Border.divider] (Airbnb Borders `#EBEBEB`). */
 @Composable
 fun AppHorizontalDivider(
     modifier: Modifier = Modifier,

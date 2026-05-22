@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -161,7 +162,7 @@ private val PickerSwatchShape = RoundedCornerShape(
 private val PickerSelectedInnerShape = RoundedCornerShape(11.dp)
 
 /** KRW lane accent (blue); USD uses [LocalRestaurantPalette.brand] (red). */
-private val OpeningKrwAccentBlue = Color(0xFF1259D1)
+private val OpeningKrwAccentBlue = RestaurantColors.HubCard.ocean[1]
 
 /** Horizontal inset for title, card preview, section headers, footer, and strip row ends. */
 private val ChooseCardSheetContentPadding = 20.dp
@@ -518,7 +519,7 @@ internal fun ChooseCardThemeBottomSheet(
                 ) {
                     Text(
                         text = if (isLast) "Open card" else "Continue",
-                        color = Color.White,
+                        color = RestaurantColors.Base.white,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.ExtraBold,
                     )
@@ -1074,7 +1075,7 @@ private fun PickerStripItemFrame(
                     if (rw > 0f && rh > 0f) {
                         val rPx = minOf(14.dp.toPx(), rw / 2f, rh / 2f)
                         drawRoundRect(
-                            color = Color.Black,
+                            color = RestaurantColors.Base.black,
                             topLeft = Offset(halfStroke, halfStroke),
                             size = Size(rw, rh),
                             cornerRadius = CornerRadius(rPx, rPx),
@@ -1097,7 +1098,7 @@ private fun PickerStripItemFrame(
                 .padding(PickerStripContentPadding)
                 .then(
                     if (selected) {
-                        Modifier.background(Color.White, PickerSelectedInnerShape)
+                        Modifier.background(RestaurantColors.Base.white, PickerSelectedInnerShape)
                     } else {
                         Modifier
                     },
@@ -1113,7 +1114,7 @@ private fun PickerStripItemFrame(
             ) {
                 Text(
                     text = label,
-                    color = Color.Black,
+                    color = RestaurantColors.Base.black,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
@@ -1131,13 +1132,13 @@ private fun PickerStripCheckmark() {
             .padding(5.dp)
             .size(18.dp)
             .clip(CircleShape)
-            .background(Color.Black),
+            .background(RestaurantColors.Base.black),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = Icons.Outlined.Check,
             contentDescription = null,
-            tint = Color.White,
+            tint = RestaurantColors.Base.white,
             modifier = Modifier.size(11.dp),
         )
     }

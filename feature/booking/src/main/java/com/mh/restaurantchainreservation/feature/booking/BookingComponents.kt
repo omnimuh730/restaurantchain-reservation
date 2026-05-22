@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -211,7 +212,7 @@ internal fun BookingCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(6.dp, RoundedCornerShape(24.dp), ambientColor = Color.Black.copy(0.05f))
+            .shadow(6.dp, RoundedCornerShape(24.dp), ambientColor = RestaurantColors.Base.black.copy(0.05f))
             .clip(RoundedCornerShape(24.dp))
             .background(palette.cardSurface)
             .border(1.dp, palette.border, RoundedCornerShape(24.dp))
@@ -270,7 +271,7 @@ internal fun BookingPrimaryButton(
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        Text(text, color = RestaurantColors.Base.white, fontSize = 15.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -303,7 +304,7 @@ internal fun PreferenceChip(
     val palette = LocalRestaurantPalette.current
     Text(
         text = label,
-        color = if (selected) Color.White else palette.foreground,
+        color = if (selected) RestaurantColors.Base.white else palette.foreground,
         fontSize = 13.sp,
         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
         modifier = Modifier

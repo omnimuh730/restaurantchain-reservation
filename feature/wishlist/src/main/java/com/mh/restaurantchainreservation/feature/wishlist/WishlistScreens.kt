@@ -1,5 +1,7 @@
 package com.mh.restaurantchainreservation.feature.wishlist
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
+import com.mh.restaurantchainreservation.core.designsystem.tokens.pageCanvasBackground
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -305,6 +307,7 @@ private fun WishlistHomeContent(
             state = gridState,
             modifier = Modifier
                 .fillMaxSize()
+                .pageCanvasBackground()
                 .collapsingHeaderGridScroll(headerScroll, gridState)
                 .trackBottomNavScroll(),
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 48.dp),
@@ -498,6 +501,7 @@ private fun RecentlyViewedDetailPage(
             state = gridState,
             modifier = Modifier
                 .fillMaxSize()
+                .pageCanvasBackground()
                 .collapsingHeaderGridScroll(headerScroll, gridState)
                 .trackBottomNavScroll(),
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 100.dp),
@@ -627,6 +631,7 @@ private fun UserWishlistDetailPage(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
+                .pageCanvasBackground()
                 .collapsingHeaderListScroll(headerScroll, listState)
                 .trackBottomNavScroll(),
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 100.dp),
@@ -735,7 +740,7 @@ private fun ConfirmRemoveFromWishlistDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.35f))
+                .background(RestaurantColors.Overlay.scrimMedium)
                 .clickable(onClick = onDismiss),
             contentAlignment = Alignment.Center,
         ) {
@@ -789,7 +794,7 @@ private fun ConfirmRemoveFromWishlistDialog(
                     ) {
                         Text(
                             text = "Remove",
-                            color = Color.White,
+                            color = RestaurantColors.Base.white,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                         )
@@ -839,7 +844,7 @@ private fun MiniCircleAction(
         modifier = Modifier
             .size(32.dp)
             .clip(CircleShape)
-            .background(Color.White.copy(alpha = 0.95f))
+            .background(RestaurantColors.Overlay.veilFrosted)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -872,7 +877,7 @@ private fun WishlistNameDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.35f))
+                .background(RestaurantColors.Overlay.scrimMedium)
                 .clickable(onClick = onDismiss),
             contentAlignment = Alignment.Center,
         ) {
@@ -980,7 +985,7 @@ private fun ConfirmDeleteDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.35f))
+                .background(RestaurantColors.Overlay.scrimMedium)
                 .clickable(onClick = onDismiss),
             contentAlignment = Alignment.Center,
         ) {
@@ -1027,7 +1032,7 @@ private fun ConfirmDeleteDialog(
                             .padding(horizontal = 22.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text("Delete", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text("Delete", color = RestaurantColors.Base.white, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

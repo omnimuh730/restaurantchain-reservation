@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -135,7 +136,7 @@ fun RestaurantMenuScreen(
                             text = "Menu",
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            color = Color.White,
+                            color = RestaurantColors.Base.white,
                             fontWeight = FontWeight.Bold,
                             fontSize = 28.sp,
                         )
@@ -143,7 +144,7 @@ fun RestaurantMenuScreen(
                             text = restaurantName,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            color = Color.White.copy(alpha = 0.88f),
+                            color = RestaurantColors.Base.white.copy(alpha = 0.88f),
                             fontSize = 14.sp,
                             modifier = Modifier.padding(top = 2.dp),
                         )
@@ -154,15 +155,15 @@ fun RestaurantMenuScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color.White,
+                            tint = RestaurantColors.Base.white,
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
                     scrolledContainerColor = Color.Transparent,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White,
+                    titleContentColor = RestaurantColors.Base.white,
+                    navigationIconContentColor = RestaurantColors.Base.white,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -330,7 +331,7 @@ private fun MenuCategoryTabRow(
             ) {
                 Text(
                     text = category,
-                    color = if (selected) Color.White else palette.foreground,
+                    color = if (selected) RestaurantColors.Base.white else palette.foreground,
                     fontSize = 14.sp,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                 )

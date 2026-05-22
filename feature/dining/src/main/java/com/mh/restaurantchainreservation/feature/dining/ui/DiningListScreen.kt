@@ -50,6 +50,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.trackBotto
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.tokens.pageCanvasBackground
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
 import com.mh.restaurantchainreservation.feature.dining.data.BookingStatus
@@ -144,6 +145,7 @@ fun DiningListScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
+                .pageCanvasBackground()
                 .trackBottomNavScroll()
                 .zIndex(0f),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 48.dp),

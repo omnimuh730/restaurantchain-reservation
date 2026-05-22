@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.search
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -263,7 +264,7 @@ private fun SearchHeroMap(count: Int) {
                     .background(palette.brand)
                     .padding(horizontal = 10.dp, vertical = 6.dp),
             ) {
-                Text(marker.first, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(marker.first, color = RestaurantColors.Base.white, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
         Row(
@@ -341,10 +342,10 @@ private fun SearchRestaurantCard(
                     .align(Alignment.BottomStart)
                     .padding(8.dp)
                     .clip(RoundedCornerShape(999.dp))
-                    .background(Color.Black.copy(alpha = 0.55f))
+                    .background(RestaurantColors.Overlay.scrimStrong)
                     .padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
-                Text("#${index + 1}", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("#${index + 1}", color = RestaurantColors.Base.white, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
         }
         Column(
@@ -439,7 +440,7 @@ fun SearchFilterSheet(
                     .clickable(onClick = onDismiss),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("Show restaurants", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text("Show restaurants", color = RestaurantColors.Base.white, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

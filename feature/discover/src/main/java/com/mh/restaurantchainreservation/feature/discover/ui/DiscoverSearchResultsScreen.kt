@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.discover.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -187,6 +188,7 @@ fun DiscoverSearchResultsScreen(
     onOpenRestaurant: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val palette = LocalRestaurantPalette.current
     var sheetState by remember { mutableStateOf(ResultSheetState.Half) }
     var activeMarker by remember { mutableIntStateOf(0) }
     var filtersOpen by remember { mutableStateOf(false) }
@@ -245,7 +247,7 @@ fun DiscoverSearchResultsScreen(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F1EA)),
+            .background(palette.pageBackground),
     ) {
         val appliedChips = remember(filters) { buildAppliedFilterChips(filters) }
         val headerHeight = SearchResultsMapTopInset
@@ -681,15 +683,15 @@ private fun FilterChipButton(
         modifier = Modifier
             .height(36.dp)
             .clip(RoundedCornerShape(percent = 50))
-            .background(Color.White)
+            .background(RestaurantColors.Base.white)
             .border(1.dp, palette.border, RoundedCornerShape(percent = 50))
             .clickable(role = Role.Button, onClickLabel = "Filters", onClick = onClick)
             .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Icon(Icons.Outlined.Tune, contentDescription = "Filters", tint = Color(0xFF222222), modifier = Modifier.size(15.dp))
-        Text("Filters", color = Color(0xFF222222), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        Icon(Icons.Outlined.Tune, contentDescription = "Filters", tint = RestaurantColors.Text.primary, modifier = Modifier.size(15.dp))
+        Text("Filters", color = RestaurantColors.Text.primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         if (activeFilterCount > 0) {
             val badgeLabel = if (activeFilterCount > 9) "9+" else activeFilterCount.toString()
             Box(
@@ -701,7 +703,7 @@ private fun FilterChipButton(
             ) {
                 Text(
                     text = badgeLabel,
-                    color = Color.White,
+                    color = RestaurantColors.Base.white,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     lineHeight = 10.sp,
@@ -721,22 +723,22 @@ private fun AppliedFilterTag(
         modifier = Modifier
             .height(36.dp)
             .clip(RoundedCornerShape(percent = 50))
-            .background(Color.White)
+            .background(RestaurantColors.Base.white)
             .border(1.dp, palette.border, RoundedCornerShape(percent = 50))
             .clickable(role = Role.Button, onClickLabel = "Remove $label", onClick = onClick)
             .padding(start = 14.dp, end = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text(label, color = Color(0xFF222222), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(label, color = RestaurantColors.Text.primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         Box(
             modifier = Modifier
                 .size(16.dp)
                 .clip(CircleShape)
-                .background(Color(0xFFF0F0F0)),
+                .background(RestaurantColors.Neutral.chipLight),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Filled.Close, contentDescription = null, tint = Color(0xFF717171), modifier = Modifier.size(10.dp))
+            Icon(Icons.Filled.Close, contentDescription = null, tint = RestaurantColors.Neutral.iconMuted, modifier = Modifier.size(10.dp))
         }
     }
 }
@@ -817,7 +819,7 @@ private fun RemoveFilterDialog(
                         .clickable(onClick = onConfirm),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("Remove", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text("Remove", color = RestaurantColors.Base.white, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -910,7 +912,7 @@ private fun ResultsSheetDragHeader(
                 modifier = Modifier
                     .size(width = 40.dp, height = 4.dp)
                     .clip(RoundedCornerShape(percent = 50))
-                    .background(Color(0xFFD1D1D1)),
+                    .background(RestaurantColors.Neutral.skeleton),
             )
         }
         Text(
@@ -1054,7 +1056,7 @@ private fun ResultsSheet(
                     .padding(bottom = 32.dp)
                     .graphicsLayer { alpha = mapFabAlpha }
                     .clip(RoundedCornerShape(percent = 50))
-                    .background(Color(0xFF222222))
+                    .background(RestaurantColors.Text.primary)
                     .clickable(
                         enabled = mapFabAlpha > 0.08f,
                         onClick = onCollapseToMap,
@@ -1063,8 +1065,8 @@ private fun ResultsSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text("Map", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                Icon(Icons.Outlined.Map, contentDescription = "Show map", tint = Color.White, modifier = Modifier.size(17.dp))
+                Text("Map", color = RestaurantColors.Base.white, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Icon(Icons.Outlined.Map, contentDescription = "Show map", tint = RestaurantColors.Base.white, modifier = Modifier.size(17.dp))
             }
         }
     }
@@ -1147,7 +1149,7 @@ private fun RestaurantResultCard(
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.Star, contentDescription = null, tint = Color(0xFFFFB400), modifier = Modifier.size(15.dp))
+                    Icon(Icons.Filled.Star, contentDescription = null, tint = RestaurantColors.Semantic.starGold, modifier = Modifier.size(15.dp))
                     Spacer(Modifier.width(3.dp))
                     Text("%.1f".format(restaurant.rating), color = palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
@@ -1212,7 +1214,7 @@ private fun MapPreviewCarousel(
                     .clip(RoundedCornerShape(22.dp))
                     .border(
                         width = if (selected) 2.dp else 1.dp,
-                        color = if (selected) Color(0xFF222222) else palette.border,
+                        color = if (selected) RestaurantColors.Text.primary else palette.border,
                         shape = RoundedCornerShape(22.dp),
                     ),
             ) {
@@ -1364,7 +1366,7 @@ private fun SearchFiltersSheet(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.30f))
+                .background(RestaurantColors.Overlay.scrimLight)
                 .clickable(
                     interactionSource = scrimInteraction,
                     indication = null,
@@ -1621,7 +1623,7 @@ private fun RecommendedFilterCard(
                 .fillMaxWidth()
                 .aspectRatio(1f)
                 .clip(RoundedCornerShape(14.dp))
-                .background(Color.White)
+                .background(RestaurantColors.Base.white)
                 .border(
                     width = if (active) 2.dp else 1.dp,
                     color = if (active) palette.foreground else palette.border,

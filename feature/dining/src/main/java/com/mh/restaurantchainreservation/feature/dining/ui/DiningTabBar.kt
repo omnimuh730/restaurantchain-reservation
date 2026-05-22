@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -131,17 +132,17 @@ private fun DiningTabSegment(
         label = "tab_container",
     )
     val content by animateColorAsState(
-        targetValue = if (active) Color.White else palette.mutedForeground,
+        targetValue = if (active) RestaurantColors.Base.white else palette.mutedForeground,
         animationSpec = spring(stiffness = 520f, dampingRatio = 0.85f),
         label = "tab_content",
     )
     val badgeContainer by animateColorAsState(
-        targetValue = if (active) Color.White.copy(alpha = 0.28f) else palette.cardSurface,
+        targetValue = if (active) RestaurantColors.Base.white.copy(alpha = 0.28f) else palette.cardSurface,
         animationSpec = spring(stiffness = 520f, dampingRatio = 0.85f),
         label = "tab_badge_container",
     )
     val badgeContent by animateColorAsState(
-        targetValue = if (active) Color.White else palette.mutedForeground,
+        targetValue = if (active) RestaurantColors.Base.white else palette.mutedForeground,
         animationSpec = spring(stiffness = 520f, dampingRatio = 0.85f),
         label = "tab_badge_content",
     )

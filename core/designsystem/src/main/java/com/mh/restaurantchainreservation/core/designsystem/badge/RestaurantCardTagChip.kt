@@ -15,13 +15,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 
 /** Radial white-to-soft-grey fill used on listing card tag pills (Airbnb-style). */
 fun restaurantCardTagChipBrush(): Brush = Brush.radialGradient(
     colors = listOf(
-        Color.White,
-        Color(0xFFF5F5F5),
-        Color(0xFFE8E8E8),
+        RestaurantColors.Base.white,
+        RestaurantColors.Neutral.tagChipLight,
+        RestaurantColors.Neutral.tagChipMid,
     ),
     center = Offset(0.5f, 0.45f),
     radius = 1.15f,
@@ -31,7 +32,7 @@ fun restaurantCardTagChipBrush(): Brush = Brush.radialGradient(
 fun RestaurantCardTagChip(
     text: String,
     modifier: Modifier = Modifier,
-    textColor: Color = Color(0xFF222222),
+    textColor: Color = RestaurantColors.Text.primary,
     fontSize: androidx.compose.ui.unit.TextUnit = 11.sp,
 ) {
     val shape = RoundedCornerShape(999.dp)

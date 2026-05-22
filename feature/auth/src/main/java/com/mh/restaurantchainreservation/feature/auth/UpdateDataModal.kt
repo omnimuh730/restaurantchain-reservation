@@ -2,6 +2,7 @@
 
 package com.mh.restaurantchainreservation.feature.auth
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -337,7 +338,7 @@ fun UpdateDataModal(
 
 /** Soft slate veil on top of [HazeMaterials.thin], matching Discover glass overlays. */
 private fun updateDataOverlayVeil(@Suppress("UNUSED_PARAMETER") palette: RestaurantPalette): Color =
-    Color(0xFF3D4F63).copy(alpha = 0.32f)
+    RestaurantColors.Overlay.authScrim
 
 @Composable
 private fun PromptContent(
@@ -425,7 +426,7 @@ private fun PromptContent(
         ) {
             Text(
                 text = stringResource(I18nR.string.update_data_action),
-                color = Color.White,
+                color = RestaurantColors.Base.white,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -539,8 +540,8 @@ private fun RotatingSyncIcon(
 private fun CompleteContent() {
     val palette = LocalRestaurantPalette.current
     val releaseVersion = stringResource(I18nR.string.update_data_release_version)
-    val successGreen = Color(0xFF008A05)
-    val successBg = Color(0xFFE8F5E9)
+    val successGreen = RestaurantColors.Semantic.success
+    val successBg = RestaurantColors.Semantic.successSurface
 
     UpdateDataHeroIcon(badge = UpdateHeroBadge.ShieldCheck)
     Spacer(Modifier.height(12.dp))
@@ -600,7 +601,7 @@ private fun CompleteContent() {
 @Composable
 private fun UpdateDataHeroIcon(badge: UpdateHeroBadge = UpdateHeroBadge.Sync) {
     val palette = LocalRestaurantPalette.current
-    val successGreen = Color(0xFF008A05)
+    val successGreen = RestaurantColors.Semantic.success
     Box {
         Box(
             modifier = Modifier
@@ -609,7 +610,7 @@ private fun UpdateDataHeroIcon(badge: UpdateHeroBadge = UpdateHeroBadge.Sync) {
                 .background(palette.brand),
             contentAlignment = Alignment.Center,
         ) {
-            TonightLogoMark(modifier = Modifier.size(34.dp), color = Color.White)
+            TonightLogoMark(modifier = Modifier.size(34.dp), color = RestaurantColors.Base.white)
         }
         Box(
             modifier = Modifier
@@ -639,7 +640,7 @@ private fun UpdateDataHeroIcon(badge: UpdateHeroBadge = UpdateHeroBadge.Sync) {
                     ) {
                         LucideIcon(
                             paths = LucidePaths.ShieldCheck,
-                            strokeColor = Color.White,
+                            strokeColor = RestaurantColors.Base.white,
                             modifier = Modifier.size(11.dp),
                         )
                     }
@@ -790,8 +791,8 @@ private fun FeatureRow(
 @Composable
 private fun SyncStepRow(label: String, state: SyncStepState) {
     val palette = LocalRestaurantPalette.current
-    val successGreen = Color(0xFF008A05)
-    val successBg = Color(0xFFE8F5E9)
+    val successGreen = RestaurantColors.Semantic.success
+    val successBg = RestaurantColors.Semantic.successSurface
     val activeBg = palette.brandSoftSurface
 
     val bg: Color
@@ -802,13 +803,13 @@ private fun SyncStepRow(label: String, state: SyncStepState) {
         SyncStepState.Done -> {
             bg = successBg
             iconBg = successGreen
-            iconTint = Color.White
+            iconTint = RestaurantColors.Base.white
             textColor = successGreen
         }
         SyncStepState.Active -> {
             bg = activeBg
             iconBg = palette.brand
-            iconTint = Color.White
+            iconTint = RestaurantColors.Base.white
             textColor = palette.brand
         }
         SyncStepState.Pending -> {

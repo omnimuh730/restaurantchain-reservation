@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.wishlist.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.spring
@@ -105,7 +106,7 @@ fun WishlistSettingsSheet(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = backdropAlpha.value * 0.4f))
+                    .background(RestaurantColors.Overlay.scrimModal.copy(alpha = backdropAlpha.value))
                     .clickable(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() },

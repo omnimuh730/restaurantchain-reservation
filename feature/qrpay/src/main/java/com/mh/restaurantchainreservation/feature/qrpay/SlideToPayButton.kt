@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.qrpay
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
@@ -159,13 +160,13 @@ fun SlideToPayButton(
                         Icon(
                             imageVector = Icons.Filled.Check,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = RestaurantColors.Base.white,
                             modifier = Modifier.size(20.dp),
                         )
                         Spacer(Modifier.size(8.dp))
                         Text(
                             text = "Payment complete",
-                            color = Color.White,
+                            color = RestaurantColors.Base.white,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.ExtraBold,
                         )
@@ -234,7 +235,7 @@ fun SlideToPayButton(
                     Icon(
                         imageVector = Icons.Filled.ChevronRight,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = RestaurantColors.Base.white,
                         modifier = Modifier.size(22.dp),
                     )
                 }

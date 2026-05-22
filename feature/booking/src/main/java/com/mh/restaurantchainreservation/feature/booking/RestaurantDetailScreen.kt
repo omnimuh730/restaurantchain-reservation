@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -383,7 +384,7 @@ private fun DetailTopBar(
     onToggleSave: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val buttonBg = Color.White
+    val buttonBg = RestaurantColors.Base.white
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -494,12 +495,12 @@ private fun HeroCarousel(
                     .align(Alignment.BottomEnd)
                     .padding(end = 20.dp, bottom = 48.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color.Black.copy(alpha = 0.6f))
+                    .background(RestaurantColors.Base.black.copy(alpha = 0.6f))
                     .padding(horizontal = 12.dp, vertical = 6.dp),
             ) {
                 Text(
                     text = "${pagerState.currentPage + 1} / ${galleryImages.size}",
-                    color = Color.White,
+                    color = RestaurantColors.Base.white,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -1119,7 +1120,6 @@ private fun PopularMenuSection(
             .filter { it.imageUrl != null }
     }
     val allImages = remember { RestaurantDetailData.popularMenuImages() }
-    val priceFormat = remember { NumberFormat.getCurrencyInstance(Locale.US) }
 
     Column(modifier = Modifier.padding(vertical = 24.dp)) {
         Text(
@@ -1141,8 +1141,11 @@ private fun PopularMenuSection(
                 DiscoverMenuTile(
                     imageUrl = item.imageUrl!!,
                     title = item.name,
-                    imageCaption = priceFormat.format(item.price).replace(".00", ""),
+                    imageCaption = "",
                     onClick = { onOpenPhotoGrid(RestaurantPhotoGallerySource.PopularMenu) },
+                    contentDescription = item.name,
+                    showTitle = false,
+                    showImageCaption = false,
                 )
             }
             if (allImages.isNotEmpty()) {
@@ -1213,14 +1216,14 @@ private fun BookingBar(
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(percent = 50))
-                .background(Color(0xFFE31C5F))
+                .background(RestaurantColors.Brand.reservePink)
                 .clickable(onClick = onBookNow)
                 .padding(horizontal = 28.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Icon(Icons.Outlined.CalendarMonth, null, tint = Color.White, modifier = Modifier.size(18.dp))
-            Text("Reserve", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Icon(Icons.Outlined.CalendarMonth, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(18.dp))
+            Text("Reserve", color = RestaurantColors.Base.white, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

@@ -11,6 +11,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -127,6 +128,7 @@ import com.mh.restaurantchainreservation.feature.qrpay.QrPayScreen
 import com.mh.restaurantchainreservation.feature.wishlist.WishlistRoutes
 import com.mh.restaurantchainreservation.feature.wishlist.WishlistScreen
 import com.mh.restaurantchainreservation.feature.wishlist.ui.WishlistOverlayHost
+import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
@@ -136,6 +138,7 @@ fun RestaurantNavHost(
     windowSizeClass: WindowSizeClass,
     modifier: Modifier = Modifier,
 ) {
+    val palette = LocalRestaurantPalette.current
     val navController = rememberNavController()
     val context = LocalContext.current
     val isCompact = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
@@ -215,10 +218,15 @@ fun RestaurantNavHost(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(palette.pageBackground),
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(palette.pageBackground)
                 .hazeSource(state = updateDataHazeState),
         ) {
     val density = LocalDensity.current
@@ -227,6 +235,7 @@ fun RestaurantNavHost(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        containerColor = palette.pageBackground,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         // Phone bottom nav is drawn as an overlay so hide/show can animate in sync with content inset.
         bottomBar = {},

@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.discover.ui
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
@@ -79,7 +80,7 @@ internal enum class PlanPickerColumn { Date, Time, Guests }
 private val PlanPickerRowHeight = 48.dp
 private val PlanPickerVisibleRows = 3
 private val PlanPickerSliderHeight = PlanPickerRowHeight * PlanPickerVisibleRows
-private val PlanPickerDividerColor = Color(0xFFE5E5E5)
+private val PlanPickerDividerColor = RestaurantColors.Neutral.dividerAlt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -176,7 +177,7 @@ internal fun PlanPickerSheet(
             Spacer(Modifier.height(16.dp))
             Text(
                 text = "APPLY",
-                color = Color.White,
+                color = RestaurantColors.Base.white,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier

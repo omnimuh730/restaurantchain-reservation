@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
@@ -606,7 +607,7 @@ private fun CarouselDashedAddButton(onClick: () -> Unit) {
             .drawBehind {
                 val c = Offset(size.width / 2f, size.height / 2f)
                 val fillR = size.minDimension / 2f - 1.dp.toPx()
-                drawCircle(color = Color.White, radius = fillR, center = c)
+                drawCircle(color = RestaurantColors.Base.white, radius = fillR, center = c)
                 val strokeW = 2.dp.toPx()
                 val r = (fillR - strokeW / 2f).coerceAtLeast(4f)
                 drawCircle(
@@ -721,7 +722,7 @@ private fun CardActionTabCell(
     val labelColor = when {
         muted -> palette.mutedForeground.copy(alpha = 0.42f)
         selected -> palette.brand
-        else -> Color.Black
+        else -> RestaurantColors.Base.black
     }
     val labelWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
     val labelToIndicatorGap = lerp(6f, 3f, collapse).dp
@@ -893,7 +894,7 @@ private fun CardListRow(card: ProfileCreditCard, selected: Boolean, onClick: () 
                 },
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Outlined.CreditCard, null, tint = Color.White, modifier = Modifier.size(22.dp))
+            Icon(Icons.Outlined.CreditCard, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(22.dp))
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(card.nickname, color = palette.foreground, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
@@ -954,7 +955,7 @@ private fun CardAmountAction(
                 .clickable(enabled = canConfirm) { onApply(numeric, currency) },
             contentAlignment = Alignment.Center,
         ) {
-            Text("Confirm", color = if (canConfirm) Color.White else palette.mutedForeground, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Confirm", color = if (canConfirm) RestaurantColors.Base.white else palette.mutedForeground, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
         }
     }
 }
@@ -994,7 +995,7 @@ private fun SmallCardHeader(card: ProfileCreditCard) {
                 },
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Outlined.CreditCard, null, tint = Color.White, modifier = Modifier.size(23.dp))
+            Icon(Icons.Outlined.CreditCard, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(23.dp))
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(card.nickname, color = palette.foreground, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
