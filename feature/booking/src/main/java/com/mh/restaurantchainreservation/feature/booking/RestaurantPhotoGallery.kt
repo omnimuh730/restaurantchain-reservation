@@ -79,7 +79,9 @@ import com.mh.restaurantchainreservation.core.designsystem.components.Collapsing
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
+import com.mh.restaurantchainreservation.core.designsystem.components.ShareWithContactsSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.model.SharedContentStore
 import com.mh.restaurantchainreservation.core.model.Banner
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.WishlistStore
@@ -177,9 +179,17 @@ fun RestaurantPhotoGridScreen(
         }
 
         if (showShareSheet) {
-            RestaurantPhotoShareSheet(
-                restaurant = restaurant,
+            val cuisineLine = if (restaurant.cuisine.isNotBlank()) {
+                "${restaurant.cuisine} · ★ ${"%.1f".format(restaurant.rating)}"
+            } else {
+                "★ ${"%.1f".format(restaurant.rating)}"
+            }
+            ShareWithContactsSheet(
+                subtitle = "${restaurant.name} · $cuisineLine",
                 onDismiss = { showShareSheet = false },
+                onShare = { contactIds ->
+                    SharedContentStore.shareRestaurant(restaurant, contactIds)
+                },
             )
         }
     }

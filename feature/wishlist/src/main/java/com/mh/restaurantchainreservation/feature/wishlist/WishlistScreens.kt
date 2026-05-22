@@ -26,6 +26,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -46,7 +48,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.IosShare
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -87,6 +92,10 @@ import com.mh.restaurantchainreservation.core.designsystem.components.trackBotto
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.DiscoverData
 import com.mh.restaurantchainreservation.core.model.Restaurant
+import com.mh.restaurantchainreservation.core.model.SharedContentStore
+import com.mh.restaurantchainreservation.core.model.SharedFolder
+import com.mh.restaurantchainreservation.core.model.SharedInboxEntry
+import com.mh.restaurantchainreservation.core.model.SharedItemKind
 import com.mh.restaurantchainreservation.core.model.WishlistCollection
 import com.mh.restaurantchainreservation.core.model.WishlistStore
 import com.mh.restaurantchainreservation.feature.wishlist.ui.GatheredWelcomeModal
@@ -109,8 +118,10 @@ fun WishlistScreen(
 ) {
     val palette = LocalRestaurantPalette.current
     val collections by WishlistStore.collections.collectAsState()
+    val sharedFolders by SharedContentStore.sharedFolders.collectAsState()
     val gatheredShown by WishlistStore.gatheredShown.collectAsState()
     val openCollectionId by WishlistStore.openCollectionId.collectAsState()
+    var openSharedFolder by remember { mutableStateOf<SharedFolder?>(null) }
 
     var editing by rememberSaveable { mutableStateOf(false) }
     var managingCollections by remember { mutableStateOf(false) }
@@ -179,6 +190,7 @@ fun WishlistScreen(
             if (collectionId == null) {
                 WishlistHomeContent(
                     collections = collections,
+                    sharedFolders = sharedFolders,
                     managingCollections = managingCollections,
                     onNewList = { createDialogOpen = true },
                     onToggleManage = { managingCollections = !managingCollections },
@@ -186,6 +198,7 @@ fun WishlistScreen(
                         WishlistStore.openCollection(col.id)
                         editing = false
                     },
+                    onOpenSharedFolder = { openSharedFolder = it },
                     onRename = { renameDialog = it },
                     onDelete = { deleteDialog = it },
                 )
@@ -204,6 +217,19 @@ fun WishlistScreen(
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
+            }
+        }
+
+        if (onHome) {
+            openSharedFolder?.let { folder ->
+                SharedFolderDetailPage(
+                    folder = folder,
+                    onBack = { openSharedFolder = null },
+                    onOpenRestaurant = onOpenRestaurant,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(3f),
+                )
             }
         }
     }
@@ -266,10 +292,12 @@ fun WishlistScreen(
 @Composable
 private fun WishlistHomeContent(
     collections: List<WishlistCollection>,
+    sharedFolders: List<SharedFolder>,
     managingCollections: Boolean,
     onNewList: () -> Unit,
     onToggleManage: () -> Unit,
     onOpenCollection: (WishlistCollection) -> Unit,
+    onOpenSharedFolder: (SharedFolder) -> Unit,
     onRename: (WishlistCollection) -> Unit,
     onDelete: (WishlistCollection) -> Unit,
     modifier: Modifier = Modifier,
@@ -316,6 +344,24 @@ private fun WishlistHomeContent(
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Spacer(Modifier.height(topContentInset))
+            }
+            if (sharedFolders.isNotEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    SharedWithYouSectionHeader()
+                }
+                items(
+                    sharedFolders,
+                    key = { it.sharerId },
+                    span = { GridItemSpan(maxLineSpan) },
+                ) { folder ->
+                    SharedFolderCard(
+                        folder = folder,
+                        onClick = { onOpenSharedFolder(folder) },
+                    )
+                }
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    MyWishlistsSectionHeader()
+                }
             }
             items(collections, key = { it.id }) { col ->
                 CollectionCard(
@@ -665,6 +711,12 @@ private fun UserWishlistDetailPage(
                 .align(Alignment.TopCenter)
                 .zIndex(2f),
             actions = { progress ->
+                CollapsingSubpageHeaderIconButton(
+                    collapseProgress = progress,
+                    onClick = { showShareFriends = true },
+                    contentDescription = "Share wishlist",
+                    imageVector = Icons.Outlined.IosShare,
+                )
                 CollapsingSubpageHeaderIconButton(
                     collapseProgress = progress,
                     onClick = { showSettings = true },
@@ -1036,6 +1088,285 @@ private fun ConfirmDeleteDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SharedWithYouSectionHeader() {
+    val palette = LocalRestaurantPalette.current
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Shared with you",
+            color = palette.foreground,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.ExtraBold,
+        )
+        Text(
+            text = "Restaurants and wishlists from your contacts",
+            color = palette.mutedForeground,
+            fontSize = 13.sp,
+            modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
+        )
+    }
+}
+
+@Composable
+private fun MyWishlistsSectionHeader() {
+    val palette = LocalRestaurantPalette.current
+    Text(
+        text = "My wishlists",
+        color = palette.foreground,
+        fontSize = 18.sp,
+        fontWeight = FontWeight.ExtraBold,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+    )
+}
+
+@Composable
+private fun SharedFolderCard(
+    folder: SharedFolder,
+    onClick: () -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .shadow(2.dp, RoundedCornerShape(18.dp))
+                .clip(RoundedCornerShape(18.dp))
+                .background(palette.mutedSurface),
+        ) {
+            val images = folder.entries.flatMap { it.previewImages() }.take(4)
+            if (images.isEmpty()) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Outlined.IosShare,
+                        contentDescription = null,
+                        tint = palette.mutedForeground,
+                        modifier = Modifier.size(32.dp),
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    images.forEach { url ->
+                        AsyncImage(
+                            model = url,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxSize(),
+                        )
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = folder.folderTitle,
+            color = palette.foreground,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = folder.summary,
+            color = palette.mutedForeground,
+            fontSize = 13.sp,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun SharedFolderDetailPage(
+    folder: SharedFolder,
+    onBack: () -> Unit,
+    onOpenRestaurant: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    val listState = rememberLazyListState()
+    val density = LocalDensity.current
+    val subtitle = folder.summary
+    val headerExpandedHeight = CollapsingTitleHeaderMetrics.subpageExpandedBodyHeight(hasSubtitle = true)
+    val collapseRangePx = remember(density, headerExpandedHeight) {
+        with(density) {
+            (headerExpandedHeight - CollapsingTitleHeaderMetrics.collapsedBodyHeight).toPx()
+        }.coerceAtLeast(1f)
+    }
+    val headerScroll = rememberCollapsingHeaderScrollState(collapseRangePx)
+    headerScroll.BindListResetOnShortContent(listState)
+    val statusBarTopDp = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+    val collapseProgress by remember {
+        derivedStateOf { headerScroll.collapseProgress(listState) }
+    }
+    val topContentInset by remember {
+        derivedStateOf {
+            CollapsingTitleHeaderMetrics.collapsingTopContentInset(
+                collapseProgress = collapseProgress,
+                expandedBodyHeight = headerExpandedHeight,
+                statusBarTopDp = statusBarTopDp,
+                firstVisibleItemIndex = listState.firstVisibleItemIndex,
+                firstVisibleItemScrollOffset = listState.firstVisibleItemScrollOffset,
+            )
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(palette.pageBackground),
+    ) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .pageCanvasBackground()
+                .collapsingHeaderListScroll(headerScroll, listState)
+                .trackBottomNavScroll(),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 100.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                Spacer(Modifier.height(topContentInset))
+            }
+            items(folder.entries, key = { it.id }) { entry ->
+                when (entry.kind) {
+                    SharedItemKind.Restaurant -> {
+                        val restaurant = entry.restaurant
+                        if (restaurant != null) {
+                            WishlistRestaurantResultCard(
+                                restaurant = restaurant,
+                                onClick = { onOpenRestaurant(restaurant.id) },
+                                onHeartTap = { WishlistStore.onHeartTap(restaurant) },
+                            )
+                        }
+                    }
+                    SharedItemKind.Wishlist -> {
+                        SharedWishlistEntryCard(
+                            entry = entry,
+                            onOpenRestaurant = onOpenRestaurant,
+                        )
+                    }
+                }
+            }
+        }
+
+        CollapsingSubpageScreenHeader(
+            title = folder.folderTitle,
+            collapseProgress = collapseProgress,
+            onBack = onBack,
+            backContentDescription = "Back",
+            subtitle = subtitle,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(2f),
+        )
+    }
+}
+
+@Composable
+private fun SharedWishlistEntryCard(
+    entry: SharedInboxEntry,
+    onOpenRestaurant: (String) -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+    val wishlist = entry.wishlist ?: return
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(palette.cardSurface)
+            .border(1.dp, palette.border, RoundedCornerShape(18.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(palette.mutedSurface),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.IosShare,
+                    contentDescription = null,
+                    tint = palette.brand,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = wishlist.title,
+                    color = palette.foreground,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+                Text(
+                    text = entry.displaySubtitle,
+                    color = palette.mutedForeground,
+                    fontSize = 13.sp,
+                )
+            }
+        }
+        wishlist.restaurants.take(3).forEach { restaurant ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { onOpenRestaurant(restaurant.id) }
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                AsyncImage(
+                    model = restaurant.image,
+                    contentDescription = restaurant.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(10.dp)),
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = restaurant.name,
+                        color = palette.foreground,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = restaurant.cuisine,
+                        color = palette.mutedForeground,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
+        if (wishlist.restaurants.size > 3) {
+            Text(
+                text = "+ ${wishlist.restaurants.size - 3} more",
+                color = palette.mutedForeground,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+            )
         }
     }
 }

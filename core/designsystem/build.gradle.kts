@@ -26,6 +26,8 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:model"))
+    implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.animation)

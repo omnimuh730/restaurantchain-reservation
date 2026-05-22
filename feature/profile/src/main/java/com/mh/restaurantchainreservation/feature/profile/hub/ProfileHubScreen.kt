@@ -312,10 +312,6 @@ private fun ProfileHubCollapsingHeader(
             Box(
                 modifier = Modifier
                     .size(CollapsingTitleHeaderMetrics.trailingSlotSize)
-                    .shadow(elevation = 4.dp, shape = CircleShape)
-                    .clip(CircleShape)
-                    .background(palette.cardSurface)
-                    .border(1.dp, palette.border, CircleShape)
                     .clickable(
                         role = Role.Button,
                         onClickLabel = stringResource(I18nR.string.profile_hub_notifications_aria),
@@ -327,17 +323,17 @@ private fun ProfileHubCollapsingHeader(
                     imageVector = Icons.Outlined.NotificationsNone,
                     contentDescription = stringResource(I18nR.string.profile_hub_notifications_aria),
                     tint = palette.foreground,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(22.dp),
                 )
                 if (unreadCount > 0) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .padding(top = 6.dp, end = 6.dp)
+                            .padding(top = 4.dp, end = 4.dp)
                             .size(10.dp)
                             .clip(CircleShape)
                             .background(Color.Red)
-                            .border(2.dp, palette.cardSurface, CircleShape),
+                            .border(2.dp, palette.pageBackground, CircleShape),
                     )
                 }
             }
