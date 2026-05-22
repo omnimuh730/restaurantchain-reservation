@@ -56,6 +56,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -67,7 +68,10 @@ import com.mh.restaurantchainreservation.core.designsystem.components.hubSurface
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroup
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroupItem
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroupVariant
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantText
 import com.mh.restaurantchainreservation.core.designsystem.components.hubTitleCollapseProgress
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantTextColor
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantTextRole
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.LocaleManager
@@ -517,11 +521,9 @@ private fun AccountSettingsBlock(
     val freeLabel = stringResource(I18nR.string.profile_menu_free)
 
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-        Text(
+        RestaurantText(
             text = stringResource(I18nR.string.profile_account_settings),
-            color = palette.foreground,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
+            role = RestaurantTextRole.SectionTitle,
         )
         Spacer(Modifier.height(16.dp))
         ListGroup(
@@ -536,11 +538,12 @@ private fun AccountSettingsBlock(
                     description = locationAddress,
                     icon = { MenuIcon(Icons.Outlined.LocationOn) },
                     rightContent = {
-                        Text(
+                        RestaurantText(
                             text = locationName,
-                            color = palette.mutedForeground,
-                            fontSize = 14.sp,
+                            role = RestaurantTextRole.Body,
+                            color = RestaurantTextColor.Sub,
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     },
                     onClick = onLocationClick,
@@ -550,11 +553,10 @@ private fun AccountSettingsBlock(
                     label = stringResource(I18nR.string.profile_menu_subscription),
                     icon = { MenuIcon(Icons.Outlined.WorkspacePremium) },
                     rightContent = {
-                        Text(
+                        RestaurantText(
                             text = if (isPro) proLabel else freeLabel,
-                            color = if (isPro) palette.foreground else palette.mutedForeground,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Normal,
+                            role = RestaurantTextRole.Body,
+                            color = if (isPro) RestaurantTextColor.Main else RestaurantTextColor.Sub,
                         )
                     },
                     onClick = onSubscriptionClick,
@@ -620,17 +622,16 @@ private fun VersionFooter() {
             .padding(bottom = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
+        RestaurantText(
             text = stringResource(I18nR.string.profile_version, APP_VERSION),
-            color = palette.mutedForeground.copy(alpha = 0.85f),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
+            role = RestaurantTextRole.BodySmall,
+            color = RestaurantTextColor.Sub,
         )
         Spacer(Modifier.height(2.dp))
-        Text(
+        RestaurantText(
             text = stringResource(I18nR.string.profile_last_released, formattedDate),
-            color = palette.mutedForeground.copy(alpha = 0.65f),
-            fontSize = 11.sp,
+            role = RestaurantTextRole.Micro,
+            color = RestaurantTextColor.Sub,
         )
     }
 }

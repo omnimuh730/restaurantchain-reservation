@@ -19,17 +19,16 @@ import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantTextColor
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantTextRole
 
 @Immutable
 data class ListGroupItem(
@@ -43,15 +42,6 @@ data class ListGroupItem(
 )
 
 enum class ListGroupVariant { Default, Bordered, Separated }
-
-/** Airbnb-style menu row: 16sp regular, primary text — no bold/semi-bold. */
-private val MenuRowLabelStyle
-    @Composable
-    get() = MaterialTheme.typography.bodyLarge.copy(
-        fontSize = 16.sp,
-        lineHeight = 22.sp,
-        fontWeight = FontWeight.Normal,
-    )
 
 @Composable
 fun ListGroup(
@@ -131,20 +121,19 @@ private fun ListRow(
             }
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(
+            RestaurantText(
                 text = item.label,
-                style = MenuRowLabelStyle,
-                color = palette.foreground,
+                role = RestaurantTextRole.MenuRow,
+                color = RestaurantTextColor.Main,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             if (item.description != null) {
                 Spacer(Modifier.height(2.dp))
-                Text(
+                RestaurantText(
                     text = item.description,
-                    color = palette.mutedForeground,
-                    fontSize = 11.sp,
-                    lineHeight = 14.sp,
+                    role = RestaurantTextRole.Caption,
+                    color = RestaurantTextColor.Sub,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

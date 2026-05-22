@@ -10,6 +10,10 @@ data class AccentPair(val container: Color, val onContainer: Color)
 
 /**
  * Semantic colors exposed to Compose UI. Built from [RestaurantColors] — light mode only.
+ *
+ * Text hierarchy (Airbnb): [foreground] main → [bodyForeground] paragraphs →
+ * [mutedForeground] sub/metadata → [tertiaryForeground] disabled.
+ * Pair with [RestaurantTextRole] / [RestaurantTextColor] via [RestaurantTextStyles].
  */
 @Immutable
 data class RestaurantPalette(

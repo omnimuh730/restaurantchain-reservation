@@ -16,14 +16,14 @@ object RestaurantColors {
         /** Primary brand / CTA pink */
         const val BrandPrimary: Long = 0xFFFF385C
 
-        /** Titles, primary text */
+        /** Carbon — titles, menu labels, primary UI text (Airbnb) */
         const val TextPrimary: Long = 0xFF222222
-        /** Body copy, paragraphs */
+        /** Long-form body copy between main and sub */
         const val TextBody: Long = 0xFF484848
-        /** Subtitles, captions, muted labels */
-        const val TextSecondary: Long = 0xFF767676
-        /** Disabled text, placeholders */
-        const val TextTertiary: Long = 0xFFB0B0B0
+        /** Slate — metadata, subtitles, trailing values (Airbnb) */
+        const val TextSecondary: Long = 0xFF6A6A6A
+        /** Silver — disabled text, inactive controls (Airbnb) */
+        const val TextTertiary: Long = 0xFFC1C1C1
 
         /** Cards, buttons, elevated UI */
         const val SurfaceCard: Long = 0xFFFFFFFF
@@ -77,9 +77,13 @@ object RestaurantColors {
     // ─── Text ──────────────────────────────────────────────────────────────────
 
     object Text {
+        /** Main — Carbon */
         val primary: Color = Primitives.TextPrimary.c
+        /** Body paragraphs */
         val body: Color = Primitives.TextBody.c
+        /** Sub — Slate (metadata, descriptions under menu rows) */
         val secondary: Color = Primitives.TextSecondary.c
+        /** Tertiary — Silver (disabled, placeholders) */
         val tertiary: Color = Primitives.TextTertiary.c
     }
 
