@@ -150,8 +150,16 @@ object DiscoverData {
         City("ny", "New York", "https://images.unsplash.com/photo-1775144581014-bf6cb3ab9f06?w=400&h=300&fit=crop"),
         City("la", "Los Angeles", "https://images.unsplash.com/photo-1680627723996-5823e984e172?w=400&h=300&fit=crop"),
         City("seattle", "Seattle", "https://images.unsplash.com/photo-1589572546737-8377644cf951?w=400&h=300&fit=crop"),
-        City("chicago", "Chicago", "https://images.unsplash.com/photo-1494522358652-f30e61a603d5?w=400&h=300&fit=crop"),
-        City("boston", "Boston", "https://images.unsplash.com/photo-1506197067357-23c07593a9aa?w=400&h=300&fit=crop"),
+        City(
+            "chicago",
+            "Chicago",
+            "https://images.pexels.com/photos/2901209/pexels-photo-2901209.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop",
+        ),
+        City(
+            "boston",
+            "Boston",
+            "https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop",
+        ),
         City("miami", "Miami", "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=400&h=300&fit=crop"),
         City("austin", "Austin", "https://images.unsplash.com/photo-1531218150217-54595bc2b79d?w=400&h=300&fit=crop"),
         City("denver", "Denver", "https://images.unsplash.com/photo-1546156929-a1951014851e?w=400&h=300&fit=crop"),

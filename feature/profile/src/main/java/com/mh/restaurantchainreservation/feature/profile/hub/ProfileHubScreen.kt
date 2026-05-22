@@ -411,31 +411,12 @@ private fun DailyRewardCard(onClick: () -> Unit) {
             )
         }
         Column(modifier = Modifier.weight(1f)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = stringResource(I18nR.string.profile_daily_reward_title),
-                    color = palette.foreground,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(palette.brand)
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                ) {
-                    Text(
-                        text = stringResource(I18nR.string.profile_daily_badge).uppercase(),
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.5.sp,
-                    )
-                }
-            }
+            Text(
+                text = stringResource(I18nR.string.profile_daily_reward_title),
+                color = palette.foreground,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+            )
             Spacer(Modifier.height(4.dp))
             Text(
                 text = stringResource(I18nR.string.profile_daily_reward_subtitle),
