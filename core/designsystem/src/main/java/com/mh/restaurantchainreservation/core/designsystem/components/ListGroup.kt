@@ -44,6 +44,15 @@ data class ListGroupItem(
 
 enum class ListGroupVariant { Default, Bordered, Separated }
 
+/** Airbnb-style menu row: 16sp regular, primary text — no bold/semi-bold. */
+private val MenuRowLabelStyle
+    @Composable
+    get() = MaterialTheme.typography.bodyLarge.copy(
+        fontSize = 16.sp,
+        lineHeight = 22.sp,
+        fontWeight = FontWeight.Normal,
+    )
+
 @Composable
 fun ListGroup(
     items: List<ListGroupItem>,
@@ -124,10 +133,8 @@ private fun ListRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = item.label,
+                style = MenuRowLabelStyle,
                 color = palette.foreground,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-                fontWeight = FontWeight.Normal,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -153,7 +160,7 @@ private fun ListRow(
             Icon(
                 imageVector = Icons.Outlined.ChevronRight,
                 contentDescription = null,
-                tint = palette.mutedForeground,
+                tint = palette.foreground,
                 modifier = Modifier.size(18.dp),
             )
         }

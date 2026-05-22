@@ -66,7 +66,9 @@ import com.mh.restaurantchainreservation.core.designsystem.components.icons.Bott
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucidePaths
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
+import com.mh.restaurantchainreservation.core.designsystem.components.surfaceTopBorder
 import com.mh.restaurantchainreservation.core.designsystem.components.surfaceTopEdgeShadow
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.QrPayNavIcon
 import kotlin.math.cos
@@ -113,8 +115,8 @@ private val QrFabElevationSpring = spring<Dp>(
     dampingRatio = Spring.DampingRatioNoBouncy,
     stiffness = Spring.StiffnessMediumLow,
 )
-/** Legacy inset hook; top border removed in favor of [surfaceTopEdgeShadow]. */
-internal val BottomNavTopBorderWidth = 0.dp
+/** Top separator on the main bottom nav ([surfaceTopBorder]). */
+internal val BottomNavTopBorderWidth = RestaurantColors.Divider.ThicknessDp.dp
 
 /**
  * Space above the tab row reserved in the animated clip bounds for the docked QR FAB,
@@ -166,6 +168,7 @@ fun BottomNavBar(
                 .wrapContentHeight()
                 .surfaceTopEdgeShadow()
                 .background(navBackground)
+                .surfaceTopBorder(palette.border)
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
             FractionalTabNavLayout(

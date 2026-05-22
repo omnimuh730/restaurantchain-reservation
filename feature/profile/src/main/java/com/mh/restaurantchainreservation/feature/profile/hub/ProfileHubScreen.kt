@@ -554,7 +554,7 @@ private fun AccountSettingsBlock(
                             text = if (isPro) proLabel else freeLabel,
                             color = if (isPro) palette.foreground else palette.mutedForeground,
                             fontSize = 14.sp,
-                            fontWeight = if (isPro) FontWeight.SemiBold else FontWeight.Normal,
+                            fontWeight = FontWeight.Normal,
                         )
                     },
                     onClick = onSubscriptionClick,
@@ -586,7 +586,7 @@ private fun AccountSettingsBlock(
                 ListGroupItem(
                     id = "log-out",
                     label = stringResource(I18nR.string.profile_menu_log_out),
-                    icon = { MenuIcon(Icons.AutoMirrored.Outlined.Logout, tint = palette.destructive) },
+                    icon = { MenuIcon(Icons.AutoMirrored.Outlined.Logout) },
                     onClick = onLogoutClick,
                 ),
             ),
@@ -603,7 +603,7 @@ private fun MenuIcon(
     Icon(
         imageVector = icon,
         contentDescription = null,
-        tint = tint ?: palette.foreground.copy(alpha = 0.70f),
+        tint = tint ?: palette.foreground,
         modifier = Modifier.size(24.dp),
     )
 }

@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -88,9 +89,26 @@ fun Modifier.hubSurfaceShadow(
     spotColor = Color.Black.copy(alpha = spotAlpha),
 )
 
+/** 1px line along the top edge (e.g. bottom nav separator). */
+fun Modifier.surfaceTopBorder(
+    color: Color,
+    width: Dp = RestaurantColors.Divider.ThicknessDp.dp,
+): Modifier = drawWithContent {
+    drawContent()
+    val strokePx = width.toPx()
+    if (strokePx > 0f) {
+        drawLine(
+            color = color,
+            start = Offset(0f, strokePx * 0.5f),
+            end = Offset(size.width, strokePx * 0.5f),
+            strokeWidth = strokePx,
+        )
+    }
+}
+
 /**
  * Soft upward shadow for fixed footers (bottom nav) — same black ambient/spot feel as
- * [hubSurfaceShadow], drawn above the surface instead of a 1dp border line.
+ * [hubSurfaceShadow], drawn above the surface. Pairs with [surfaceTopBorder].
  */
 fun Modifier.surfaceTopEdgeShadow(
     height: Dp = 8.dp,
