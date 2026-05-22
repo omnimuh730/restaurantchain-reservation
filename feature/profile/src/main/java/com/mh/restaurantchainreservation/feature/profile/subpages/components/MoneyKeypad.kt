@@ -10,7 +10,9 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,13 +31,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -95,29 +99,32 @@ fun AnimatedAmountDisplay(
 }
 
 /**
- * 3x4 numeric keypad. Bottom row is `0` + back. Optional `.` slot for USD.
- * Triggers callbacks on each press.
+ * 4×3 numeric keypad. Bottom row: **C** (clear all), `0`, backspace; USD adds `.` before `0`.
  */
 @Composable
 fun MoneyKeypad(
     currency: Currency,
     onDigit: (String) -> Unit,
     onBackspace: () -> Unit,
+    onClear: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val onDigitLatest by rememberUpdatedState(onDigit)
+    val onBackspaceLatest by rememberUpdatedState(onBackspace)
+    val onClearLatest by rememberUpdatedState(onClear)
     val rows = if (currency == Currency.USD) {
         listOf(
             listOf("1", "2", "3"),
             listOf("4", "5", "6"),
             listOf("7", "8", "9"),
-            listOf(".", "0", "back"),
+            listOf("clear", ".", "0", "back"),
         )
     } else {
         listOf(
             listOf("1", "2", "3"),
             listOf("4", "5", "6"),
             listOf("7", "8", "9"),
-            listOf("", "0", "back"),
+            listOf("clear", "0", "back"),
         )
     }
 
@@ -135,9 +142,9 @@ fun MoneyKeypad(
                         key = key,
                         onClick = {
                             when (key) {
-                                "" -> Unit
-                                "back" -> onBackspace()
-                                else -> onDigit(key)
+                                "clear" -> onClearLatest()
+                                "back" -> onBackspaceLatest()
+                                else -> onDigitLatest(key)
                             }
                         },
                         modifier = Modifier.weight(1f),
@@ -152,15 +159,26 @@ fun MoneyKeypad(
 private fun KeypadButton(key: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val palette = LocalRestaurantPalette.current
     val shape = RoundedCornerShape(18.dp)
-    val isEmpty = key.isBlank()
-    var pressed by remember { mutableStateOf(false) }
+    val isClear = key == "clear"
+    val isBackspace = key == "back"
+    val onClickLatest by rememberUpdatedState(onClick)
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (pressed) 0.94f else 1f,
         animationSpec = spring(stiffness = 520f, dampingRatio = 0.72f),
         label = "money_keypad_scale",
     )
+    val clearLabel = if (isClear) "Clear amount" else null
     Box(
         modifier = modifier
+            .then(
+                if (clearLabel != null) {
+                    Modifier.semantics { contentDescription = clearLabel }
+                } else {
+                    Modifier
+                },
+            )
             .height(58.dp)
             .graphicsLayer {
                 scaleX = scale
@@ -169,32 +187,30 @@ private fun KeypadButton(key: String, onClick: () -> Unit, modifier: Modifier = 
             .clip(shape)
             .background(
                 when {
-                    isEmpty -> Color.Transparent
+                    isClear -> if (pressed) palette.brand.copy(alpha = 0.16f) else palette.brand.copy(alpha = 0.07f)
+                    isBackspace -> if (pressed) palette.mutedSurface else palette.cardSurface
                     pressed -> palette.brand.copy(alpha = 0.10f)
                     else -> palette.cardSurface
                 },
             )
-            .pointerInput(key, isEmpty) {
-                if (isEmpty) return@pointerInput
-                detectTapGestures(
-                    onPress = {
-                        pressed = true
-                        onClick()
-                        try {
-                            tryAwaitRelease()
-                        } finally {
-                            pressed = false
-                        }
-                    },
-                )
-            },
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = { onClickLatest() },
+            ),
         contentAlignment = Alignment.Center,
     ) {
-        when (key) {
-            "" -> Unit
-            "back" -> Icon(
+        when {
+            isClear -> Text(
+                text = "C",
+                color = palette.brand,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp,
+            )
+            isBackspace -> Icon(
                 imageVector = Icons.Outlined.Backspace,
-                contentDescription = "Backspace",
+                contentDescription = "Clear last digit",
                 tint = palette.mutedForeground,
                 modifier = Modifier.size(22.dp),
             )
@@ -207,6 +223,9 @@ private fun KeypadButton(key: String, onClick: () -> Unit, modifier: Modifier = 
         }
     }
 }
+
+/** Resets the raw amount entry string (calculator **C**). */
+fun clearAmountEntry(): String = ""
 
 /**
  * Format an integer/decimal amount with thousands separators.

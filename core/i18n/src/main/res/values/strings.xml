@@ -92,6 +92,8 @@
     <string name="profile_menu_help">Get help</string>
     <string name="profile_menu_contact_support">Contact support</string>
     <string name="profile_menu_log_out">Log out</string>
+    <string name="profile_logout_confirm_title">Log out?</string>
+    <string name="profile_logout_confirm_body">You will need to sign in again to use Tonight Wallet, cards, and reservations.</string>
     <string name="profile_menu_language">Language</string>
     <string name="profile_lang_korean">한국어</string>
     <string name="profile_lang_english">English</string>

@@ -3,6 +3,7 @@ package com.mh.restaurantchainreservation.feature.profile.subpages
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -40,7 +42,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationCenter
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.feature.profile.data.ProfileWalletStore
+import com.mh.restaurantchainreservation.feature.profile.data.WalletMutationResult
+import com.mh.restaurantchainreservation.feature.profile.hub.formatKrwHub
+import com.mh.restaurantchainreservation.feature.profile.hub.formatUsdHub
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.AnimatedAmountDisplay
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.Currency
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.MoneyKeypad
@@ -59,6 +66,20 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var amountStr by rememberSaveable(currency) { mutableStateOf(if (currency == Currency.KRW) "500000" else "10") }
     var recipient by rememberSaveable { mutableStateOf("") }
     val activeAmount = amountAsNumber(amountStr)
+
+    val storeCards by ProfileWalletStore.cards.collectAsState()
+    val availableKrw = storeCards.sumOf { it.krwBalance.toLong() }
+    val availableUsd = storeCards.sumOf { it.usdBalance }
+    val availableLabel = if (currency == Currency.KRW) {
+        formatKrwHub(availableKrw)
+    } else {
+        formatUsdHub(availableUsd)
+    }
+    val afterGift = if (currency == Currency.KRW) {
+        availableKrw.toDouble() - activeAmount
+    } else {
+        availableUsd - activeAmount
+    }
 
     Column(
         modifier = modifier
@@ -85,6 +106,13 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
             Spacer(Modifier.size(12.dp))
             Text("Send a gift", color = palette.foreground, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
         }
+
+        Text(
+            text = "Available ${if (currency == Currency.KRW) "domestic" else "foreign"}: $availableLabel",
+            color = palette.mutedForeground,
+            fontSize = 13.sp,
+            modifier = Modifier.padding(horizontal = 20.dp),
+        )
 
         Spacer(Modifier.height(12.dp))
 
@@ -132,6 +160,20 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
             })
         }
 
+        if (activeAmount > 0) {
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = "Balance after gift: " + if (currency == Currency.KRW) {
+                    formatKrwHub(afterGift.coerceAtLeast(0.0).toLong())
+                } else {
+                    formatUsdHub(afterGift.coerceAtLeast(0.0))
+                },
+                color = if (afterGift < 0) palette.destructive else palette.mutedForeground,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(horizontal = 20.dp),
+            )
+        }
+
         Spacer(Modifier.height(24.dp))
 
         // Presets
@@ -158,7 +200,11 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
         MoneyKeypad(
             currency = currency,
             onDigit = { amountStr = appendDigit(amountStr, it, currency) },
-            onBackspace = { amountStr = backspaceDigit(amountStr) },
+            onBackspace = {
+                val next = backspaceDigit(amountStr)
+                amountStr = if (next == "0") "" else next
+            },
+            onClear = { amountStr = "" },
             modifier = Modifier.padding(horizontal = 20.dp),
         )
 
@@ -174,7 +220,16 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 .height(52.dp)
                 .clip(RoundedCornerShape(percent = 50))
                 .background(if (canSend) palette.brand else palette.brand.copy(alpha = 0.3f))
-                .clickable(enabled = canSend, onClick = onBack),
+                .clickable(enabled = canSend) {
+                    when (val result = ProfileWalletStore.sendGift(currency, activeAmount, recipient.trim())) {
+                        is WalletMutationResult.Success -> {
+                            GlobalNotificationCenter.success("Gift sent", result.message)
+                            onBack()
+                        }
+                        is WalletMutationResult.Error ->
+                            GlobalNotificationCenter.info("Unable to send gift", result.message)
+                    }
+                },
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -200,86 +255,67 @@ private fun GiftCard(currency: Currency, amountStr: String, modifier: Modifier =
     }
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .height(168.dp)
+            .clip(RoundedCornerShape(22.dp))
             .background(gradient)
-            .padding(20.dp),
+            .padding(18.dp),
     ) {
-        Column {
+        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
             Text(
-                text = "Gift Card Balance",
-                color = RestaurantColors.Overlay.textOnImageMuted,
+                "Gift Card Balance",
+                color = RestaurantColors.Base.white.copy(alpha = 0.72f),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
-                letterSpacing = 1.sp,
             )
-            Spacer(Modifier.height(12.dp))
             AnimatedAmountDisplay(
-                amount = formatAmountString(amountStr, currency),
+                amount = formatAmountString(amountStr.ifEmpty { "0" }, currency),
                 symbol = if (currency == Currency.KRW) "₩" else "$",
-                symbolColor = RestaurantColors.Overlay.textOnImageMuted,
+                symbolColor = RestaurantColors.Base.white,
                 valueColor = RestaurantColors.Base.white,
-                fontSize = 36,
+                fontSize = 34,
             )
-            Spacer(Modifier.height(12.dp))
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(RestaurantColors.Base.whiteAlpha(0.18f))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-            ) {
-                Text("TONIGHT", color = RestaurantColors.Base.white, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
-            }
         }
     }
 }
 
 @Composable
 private fun CurrencySwitchSquare(currency: Currency, onToggle: () -> Unit) {
-    val container = if (currency == Currency.KRW) RestaurantColors.Currency.krwContainer else RestaurantColors.Currency.usdContainer
-    val content = if (currency == Currency.KRW) RestaurantColors.Brand.deepPink else RestaurantColors.Payment.google
-    Column(
+    val palette = LocalRestaurantPalette.current
+    Box(
         modifier = Modifier
-            .size(width = 48.dp, height = 64.dp)
+            .size(52.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(container)
+            .border(1.dp, palette.border, RoundedCornerShape(16.dp))
+            .background(palette.cardSurface)
             .clickable(onClick = onToggle),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = if (currency == Currency.KRW) "$" else "₩",
-            color = content,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Icon(
-            imageVector = Icons.Filled.SwapHoriz,
-            contentDescription = "Switch currency",
-            tint = content,
-            modifier = Modifier.size(14.dp),
-        )
+        Icon(Icons.Filled.SwapHoriz, contentDescription = "Switch currency", tint = palette.foreground, modifier = Modifier.size(22.dp))
     }
 }
 
 @Composable
-private fun GiftPresetChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun GiftPresetChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val palette = LocalRestaurantPalette.current
-    val shape = RoundedCornerShape(percent = 50)
     Box(
         modifier = modifier
             .height(40.dp)
-            .clip(shape)
-            .background(if (selected) palette.brand else palette.cardSurface)
-            .border(1.dp, if (selected) palette.brand else palette.border, shape)
+            .clip(RoundedCornerShape(999.dp))
+            .background(if (selected) palette.foreground else palette.mutedSurface)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = label,
-            color = if (selected) RestaurantColors.Base.white else palette.foreground,
+            label,
+            color = if (selected) palette.cardSurface else palette.foreground,
             fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
         )
     }
 }
