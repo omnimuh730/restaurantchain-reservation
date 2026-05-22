@@ -333,7 +333,7 @@ fun RestaurantReviewsScreen(
     }
 
     if (showHowReviewsWork) {
-        HowReviewsWorkModal(onClose = { showHowReviewsWork = false })
+        HowReviewsWorkDialog(onClose = { showHowReviewsWork = false })
     }
 }
 
@@ -1033,84 +1033,6 @@ private fun ReviewCard(
                 color = if (helpful) palette.brand else palette.mutedForeground,
                 fontSize = 11.sp,
             )
-        }
-    }
-}
-
-@Composable
-private fun HowReviewsWorkModal(onClose: () -> Unit) {
-    val palette = LocalRestaurantPalette.current
-
-    Dialog(
-        onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(RestaurantColors.Overlay.scrimMedium)
-                .clickable(onClick = onClose),
-            contentAlignment = Alignment.BottomCenter,
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(palette.cardSurface)
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() },
-                        onClick = {},
-                    )
-                    .padding(24.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top,
-                ) {
-                    Text(
-                        text = "How reviews work",
-                        color = palette.foreground,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clickable(onClick = onClose),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(Icons.Filled.Close, contentDescription = "Close", tint = palette.foreground)
-                    }
-                }
-
-                val paragraphs = listOf(
-                    "Reviews come from guests who have dined at this restaurant.",
-                    "Reviews are sorted by recency by default. You can also sort by highest or lowest rating.",
-                    "Only guests who completed a reservation can leave a review. Reviews are checked for policy issues before they appear.",
-                )
-                paragraphs.forEach { paragraph ->
-                    Text(
-                        text = paragraph,
-                        color = palette.foreground.copy(alpha = 0.9f),
-                        fontSize = 16.sp,
-                        lineHeight = 28.sp,
-                        modifier = Modifier.padding(top = 20.dp),
-                    )
-                }
-
-                Text(
-                    text = "Learn more in our Help Center",
-                    color = palette.foreground,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.padding(top = 16.dp),
-                )
-            }
         }
     }
 }
