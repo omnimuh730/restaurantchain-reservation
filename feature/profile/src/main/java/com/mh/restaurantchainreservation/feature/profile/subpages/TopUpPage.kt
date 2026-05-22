@@ -51,6 +51,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -72,7 +73,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationCenter
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.feature.profile.data.ProfileWalletStore
+import com.mh.restaurantchainreservation.feature.profile.data.WalletMutationResult
+import com.mh.restaurantchainreservation.feature.profile.hub.formatKrwHub
+import com.mh.restaurantchainreservation.feature.profile.hub.formatUsdHub
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.AnimatedAmountDisplay
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.Currency
 import com.mh.restaurantchainreservation.feature.profile.subpages.components.MoneyKeypad
@@ -121,9 +127,16 @@ fun TopUpPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var receiptId by rememberSaveable { mutableStateOf("") }
     var txnId by rememberSaveable { mutableStateOf("") }
     var errorMsg by rememberSaveable { mutableStateOf<String?>(null) }
+    var balanceBeforeTopUp by rememberSaveable { mutableStateOf(0.0) }
+
+    val storeCards by ProfileWalletStore.cards.collectAsState()
+    val domesticBalance = remember(storeCards) { ProfileWalletStore.totalKrwLong() }
+    val foreignBalance = remember(storeCards) { ProfileWalletStore.totalUsd() }
 
     val provider = Providers.firstOrNull { it.id == providerId }
     val activeAmount = amountAsNumber(amountStr)
+    val currentBalance = if (currency == Currency.KRW) domesticBalance.toDouble() else foreignBalance
+    val projectedBalance = currentBalance + activeAmount
 
     Box(
         modifier = modifier
@@ -144,6 +157,7 @@ fun TopUpPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     currency = currency,
                     amountStr = amountStr,
                     activeAmount = activeAmount,
+                    currentBalanceLabel = formatWalletTotal(currency, domesticBalance, foreignBalance),
                     provider = provider,
                     onBack = onBack,
                     onCurrencyToggle = {
@@ -151,6 +165,7 @@ fun TopUpPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     },
                     onDigit = { amountStr = appendDigit(amountStr, it, currency) },
                     onBackspace = { amountStr = backspaceDigit(amountStr) },
+                    onClear = { amountStr = "" },
                     onPickPreset = { amountStr = it.toString() },
                     onPickProvider = { providerSheetOpen = true },
                     onContinue = { step = TopUpStep.Confirm },
@@ -158,10 +173,13 @@ fun TopUpPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 TopUpStep.Confirm -> ConfirmView(
                     currency = currency,
                     activeAmount = activeAmount,
+                    currentBalance = currentBalance,
+                    projectedBalance = projectedBalance,
                     provider = provider,
                     onBack = { step = TopUpStep.Select },
                     onChangeProvider = { providerSheetOpen = true },
                     onConfirm = {
+                        balanceBeforeTopUp = currentBalance
                         if (provider?.id == "bank") {
                             otp = ""
                             otpError = null
@@ -205,15 +223,32 @@ fun TopUpPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     onStageDone = {
                         processingStage += 1
                         if (processingStage >= 4) {
-                            receiptId = "TOP-2026-${Random.nextInt(100000, 999999)}"
-                            txnId = "TXN-${Random.nextInt(10_000_000, 99_999_999)}"
-                            step = TopUpStep.Done
+                            when (
+                                val result = ProfileWalletStore.topUpWallet(currency, activeAmount)
+                            ) {
+                                is WalletMutationResult.Success -> {
+                                    receiptId = "TOP-2026-${Random.nextInt(100000, 999999)}"
+                                    txnId = "TXN-${Random.nextInt(10_000_000, 99_999_999)}"
+                                    GlobalNotificationCenter.success("Top up complete", result.message)
+                                    step = TopUpStep.Done
+                                }
+                                is WalletMutationResult.Error -> {
+                                    errorMsg = result.message
+                                    step = TopUpStep.Error
+                                }
+                            }
                         }
                     },
                 )
                 TopUpStep.Done -> DoneView(
                     currency = currency,
                     activeAmount = activeAmount,
+                    balanceBefore = balanceBeforeTopUp,
+                    balanceAfter = if (currency == Currency.KRW) {
+                        ProfileWalletStore.totalKrwLong().toDouble()
+                    } else {
+                        ProfileWalletStore.totalUsd()
+                    },
                     provider = provider,
                     receiptId = receiptId,
                     txnId = txnId,
@@ -253,15 +288,27 @@ fun TopUpPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 @Composable
+private fun formatWalletTotal(
+    currency: Currency,
+    domesticKrw: Long,
+    foreignUsd: Double,
+): String = when (currency) {
+    Currency.KRW -> formatKrwHub(domesticKrw)
+    Currency.USD -> formatUsdHub(foreignUsd)
+}
+
+@Composable
 private fun SelectView(
     currency: Currency,
     amountStr: String,
     activeAmount: Double,
+    currentBalanceLabel: String,
     provider: PaymentProvider?,
     onBack: () -> Unit,
     onCurrencyToggle: () -> Unit,
     onDigit: (String) -> Unit,
     onBackspace: () -> Unit,
+    onClear: () -> Unit,
     onPickPreset: (Long) -> Unit,
     onPickProvider: () -> Unit,
     onContinue: () -> Unit,
@@ -273,7 +320,14 @@ private fun SelectView(
             .padding(top = 16.dp),
     ) {
         TopBar(title = "Top up", onBack = onBack)
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "Current ${if (currency == Currency.KRW) "domestic" else "foreign"} balance: $currentBalanceLabel",
+            color = palette.mutedForeground,
+            fontSize = 13.sp,
+            modifier = Modifier.padding(horizontal = 20.dp),
+        )
+        Spacer(Modifier.height(12.dp))
 
         // Animated hero amount + currency toggle
         Row(
@@ -324,6 +378,7 @@ private fun SelectView(
             currency = currency,
             onDigit = onDigit,
             onBackspace = onBackspace,
+            onClear = onClear,
             modifier = Modifier.padding(horizontal = 20.dp),
         )
 
@@ -348,6 +403,8 @@ private fun SelectView(
 private fun ConfirmView(
     currency: Currency,
     activeAmount: Double,
+    currentBalance: Double,
+    projectedBalance: Double,
     provider: PaymentProvider?,
     onBack: () -> Unit,
     onChangeProvider: () -> Unit,
@@ -449,6 +506,21 @@ private fun ConfirmView(
                 .padding(16.dp),
         ) {
             TotalsRow("Top Up Amount", formatMoney(activeAmount, currency), palette.foreground, palette.foreground)
+            Spacer(Modifier.height(6.dp))
+            TotalsRow(
+                "Current balance",
+                formatMoney(currentBalance, currency),
+                palette.mutedForeground,
+                palette.foreground,
+            )
+            Spacer(Modifier.height(6.dp))
+            TotalsRow(
+                "Balance after top up",
+                formatMoney(projectedBalance, currency),
+                palette.foreground,
+                palette.success,
+                bold = true,
+            )
             Spacer(Modifier.height(6.dp))
             TotalsRow("Processing Fee", "FREE", palette.mutedForeground, palette.success)
             Spacer(Modifier.height(8.dp))
@@ -769,6 +841,8 @@ private fun StageRow(index: Int, label: String, state: String) {
 private fun DoneView(
     currency: Currency,
     activeAmount: Double,
+    balanceBefore: Double,
+    balanceAfter: Double,
     provider: PaymentProvider?,
     receiptId: String,
     txnId: String,
@@ -836,8 +910,14 @@ private fun DoneView(
             ReceiptRow("Transaction ID", txnId)
             ReceiptRow("Method", provider?.name ?: "—")
             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border))
+            ReceiptRow("Balance before", formatMoney(balanceBefore, currency))
+            ReceiptRow(
+                "New balance",
+                formatMoney(balanceAfter, currency),
+                valueColor = palette.success,
+                bold = true,
+            )
             ReceiptRow("Top Up", "+${formatMoney(activeAmount, currency)}", valueColor = palette.success, bold = true)
-            ReceiptRow("Added", formatMoney(activeAmount, currency), bold = true)
         }
 
         Spacer(Modifier.weight(1f))

@@ -1,7 +1,15 @@
 package com.mh.restaurantchainreservation.feature.profile.hub
 
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.util.lerp
+import androidx.compose.ui.zIndex
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
  * Shared motion for stacked credit-card [HorizontalPager]s (hub + full cards page).
@@ -73,5 +81,29 @@ internal object HubStackedCarouselMotion {
         val absD = abs(pageOffsetPages).coerceAtMost(DClamp)
         val focusT = 1f - absD.coerceIn(0f, 1f)
         return lerp(0.76f, 1f, focusT).coerceIn(0.62f, 1f)
+    }
+
+    /**
+     * Stacked pager page transforms without [graphicsLayer].
+     * Huawei / API 31 devices drop themed card backgrounds when a child sits under
+     * [graphicsLayer] alpha + scale (offscreen layer + [Canvas]/[drawBehind] do not composite).
+     */
+    fun Modifier.hubStackedCarouselPage(pageOffsetPages: Float, density: Float): Modifier {
+        val d = pageOffsetPages
+        return this
+            .zIndex(zIndexForPage(d))
+            .offset {
+                IntOffset(
+                    x = translationX(d, density).roundToInt(),
+                    y = translationY(d, density).roundToInt(),
+                )
+            }
+            .graphicsLayer(
+                scaleX = scaleForPage(d),
+                scaleY = scaleForPage(d),
+                rotationZ = rotationZForPage(d),
+                transformOrigin = TransformOrigin(0.5f, 0.52f),
+            )
+            .alpha(alphaForPage(d))
     }
 }

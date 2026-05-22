@@ -1,10 +1,17 @@
 package com.mh.restaurantchainreservation.feature.profile.hub
 
+import android.os.Build
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -25,7 +32,7 @@ import kotlin.math.hypot
 import kotlin.math.sin
 import kotlin.random.Random
 
-internal enum class HubCardThemeId {
+enum class HubCardThemeId {
     Ink,
     Rose,
     Amethyst,
@@ -34,7 +41,7 @@ internal enum class HubCardThemeId {
     Forest,
 }
 
-internal enum class HubCardPattern {
+enum class HubCardPattern {
     Stars,
     Grid,
     Wave,
@@ -43,7 +50,7 @@ internal enum class HubCardPattern {
     None,
 }
 
-internal data class HubCardThemeSpec(
+data class HubCardThemeSpec(
     val id: HubCardThemeId,
     val gradient: List<Color>,
     val glow: Color,
@@ -77,7 +84,7 @@ private val ForestGradient = RestaurantColors.HubCard.forest
  * Credit card themes aligned with web `CARD_THEMES` (135° gradients, glow / highlight / shadow rgba, default pattern per id).
  * Rose gradient and glow use [brandColor] when provided (CSS `color-mix` with `var(--primary)`); otherwise primary defaults to `#FF385C`.
  */
-internal fun hubCardThemeSpec(
+fun hubCardThemeSpec(
     id: HubCardThemeId,
     /** When set, Rose theme uses `color-mix`-style stops and glow from this primary (web `var(--primary)`). */
     brandColor: Color? = null,
@@ -141,7 +148,7 @@ internal fun hubCardThemeSpec(
 }
 
 /** Same 135° multi-stop gradient as the card canvas (use in `drawBehind { drawRect(...) }`). */
-internal fun hubCardThemeBackgroundBrush(
+fun hubCardThemeBackgroundBrush(
     themeId: HubCardThemeId,
     widthPx: Float,
     heightPx: Float,
@@ -154,7 +161,7 @@ internal fun hubCardThemeBackgroundBrush(
     h = heightPx,
 )
 
-internal fun hubCardLabelMuted(themeId: HubCardThemeId): Color = when (themeId) {
+fun hubCardLabelMuted(themeId: HubCardThemeId): Color = when (themeId) {
     HubCardThemeId.Ocean -> RestaurantColors.HubCard.chipOcean.copy(alpha = 0.92f)
     HubCardThemeId.Forest -> RestaurantColors.HubCard.chipForest.copy(alpha = 0.90f)
     HubCardThemeId.Amethyst -> RestaurantColors.HubCard.chipAmethyst.copy(alpha = 0.90f)
@@ -492,10 +499,11 @@ private fun DrawScope.drawHubCardOverlaySheen(w: Float, h: Float) {
         start = start,
         end = end,
     )
+    val sheenBlend = if (Build.VERSION.SDK_INT >= 33) BlendMode.Overlay else BlendMode.SrcOver
     drawRect(
         brush = brush,
-        alpha = 0.3f,
-        blendMode = BlendMode.Overlay,
+        alpha = if (Build.VERSION.SDK_INT >= 33) 0.3f else 0.14f,
+        blendMode = sheenBlend,
     )
 }
 
@@ -556,28 +564,72 @@ private fun DrawScope.drawEdgeRimlight(w: Float, h: Float) {
     )
 }
 
+/** Pattern, corner wash, and sheen drawn on top of the base gradient. */
+fun DrawScope.drawHubThemedCardDecorations(
+    themeId: HubCardThemeId,
+    patternOverride: HubCardPattern? = null,
+    brandColor: Color? = null,
+) {
+    val spec = hubCardThemeSpec(themeId, brandColor)
+    val w = size.width
+    val h = size.height
+    drawHubCardPattern(
+        pattern = patternOverride ?: spec.pattern,
+        highlight = spec.highlight,
+        shadow = spec.shadow,
+        w = w,
+        h = h,
+    )
+    drawHubCardCornerRadialWash(w = w, h = h)
+    drawHubCardOverlaySheen(w = w, h = h)
+}
+
+/**
+ * Full themed card canvas (gradient + decorations). Prefer [hubThemedCardSurfaceModifier] on
+ * card faces so the gradient uses [Modifier.background] (reliable on API 31 / Huawei).
+ */
+fun DrawScope.drawHubThemedCardBackground(
+    themeId: HubCardThemeId,
+    patternOverride: HubCardPattern? = null,
+    brandColor: Color? = null,
+) {
+    val spec = hubCardThemeSpec(themeId, brandColor)
+    val w = size.width
+    val h = size.height
+    drawRect(brush = hubLinearBgBrush(spec.gradient, shift = 0f, w, h))
+    drawHubThemedCardDecorations(
+        themeId = themeId,
+        patternOverride = patternOverride,
+        brandColor = brandColor,
+    )
+}
+
 @Composable
-internal fun HubThemedCardBackground(
+fun HubThemedCardBackground(
     themeId: HubCardThemeId,
     modifier: Modifier = Modifier,
     patternOverride: HubCardPattern? = null,
     /** Rose gradient/glow use design-system primary when set (web `var(--primary)`). */
     brandColor: Color? = null,
 ) {
-    val spec = hubCardThemeSpec(themeId, brandColor)
-    Canvas(modifier = modifier.fillMaxSize()) {
-        val w = size.width
-        val h = size.height
-        drawRect(brush = hubLinearBgBrush(spec.gradient, shift = 0f, w, h))
-        drawHubCardPattern(
-            pattern = patternOverride ?: spec.pattern,
-            highlight = spec.highlight,
-            shadow = spec.shadow,
-            w = w,
-            h = h,
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val wPx = with(LocalDensity.current) { maxWidth.toPx() }
+        val hPx = with(LocalDensity.current) { maxHeight.toPx() }
+        val baseBrush = remember(themeId, brandColor, wPx, hPx) {
+            hubCardThemeBackgroundBrush(themeId, wPx, hPx, brandColor = brandColor)
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(baseBrush)
+                .drawBehind {
+                    drawHubThemedCardDecorations(
+                        themeId = themeId,
+                        patternOverride = patternOverride,
+                        brandColor = brandColor,
+                    )
+                },
         )
-        drawHubCardCornerRadialWash(w = w, h = h)
-        drawHubCardOverlaySheen(w = w, h = h)
     }
 }
 

@@ -36,7 +36,9 @@ import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.PeopleOutline
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.WorkspacePremium
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -83,6 +85,8 @@ import com.mh.restaurantchainreservation.core.model.LocationStore
 import com.mh.restaurantchainreservation.core.model.NotificationStore
 import com.mh.restaurantchainreservation.core.model.PlanType
 import com.mh.restaurantchainreservation.core.model.SubscriptionStore
+import com.mh.restaurantchainreservation.feature.profile.data.ProfileWalletStore
+import com.mh.restaurantchainreservation.feature.profile.subpages.components.Currency
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -122,6 +126,7 @@ fun ProfileHubScreen(
     var pendingAvatar by rememberSaveable { mutableStateOf<String?>(null) }
     var tierStatusOpen by rememberSaveable { mutableStateOf(false) }
     var bonusOpen by rememberSaveable { mutableStateOf(false) }
+    var showLogoutConfirm by rememberSaveable { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -207,7 +212,7 @@ fun ProfileHubScreen(
                     onSettingsClick = onOpenSettings,
                     onHelpClick = onOpenHelp,
                     onContactSupportClick = onOpenContactSupport,
-                    onLogoutClick = onLogout,
+                    onLogoutClick = { showLogoutConfirm = true },
                 )
             }
             item(key = "version_footer") {
@@ -244,10 +249,51 @@ fun ProfileHubScreen(
     DailyBonusModal(
         visible = bonusOpen,
         onDismiss = { bonusOpen = false },
-        onClaim = {
+        onClaim = { reward ->
             DailyBonusStore.markClaimed(context)
+            if (reward.kind == DailyRewardKind.Bonus) {
+                val krw = reward.label.filter { it.isDigit() }.toDoubleOrNull()
+                if (krw != null && krw > 0) {
+                    ProfileWalletStore.topUpWallet(Currency.KRW, krw)
+                }
+            }
+            bonusOpen = false
         },
     )
+
+    if (showLogoutConfirm) {
+        AlertDialog(
+            onDismissRequest = { showLogoutConfirm = false },
+            title = {
+                Text(
+                    text = stringResource(I18nR.string.profile_logout_confirm_title),
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                Text(stringResource(I18nR.string.profile_logout_confirm_body))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutConfirm = false
+                        onLogout()
+                    },
+                ) {
+                    Text(
+                        text = stringResource(I18nR.string.profile_menu_log_out),
+                        color = palette.brand,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutConfirm = false }) {
+                    Text(stringResource(I18nR.string.common_cancel))
+                }
+            },
+        )
+    }
 }
 
 @Composable

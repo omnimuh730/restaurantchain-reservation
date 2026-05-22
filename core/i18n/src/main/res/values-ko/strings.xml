@@ -92,6 +92,8 @@
     <string name="profile_menu_help">도움말</string>
     <string name="profile_menu_contact_support">고객센터 문의</string>
     <string name="profile_menu_log_out">로그아웃</string>
+    <string name="profile_logout_confirm_title">로그아웃할까요?</string>
+    <string name="profile_logout_confirm_body">다시 이용하려면 로그인이 필요합니다. 지갑, 카드, 예약 정보에 접근할 수 없습니다.</string>
     <string name="profile_menu_language">언어</string>
     <string name="profile_lang_korean">한국어</string>
     <string name="profile_lang_english">English</string>

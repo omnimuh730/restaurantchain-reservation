@@ -5,7 +5,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -34,6 +37,7 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestauran
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -221,18 +225,34 @@ internal fun SharedHubCardFace(
         )
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(1.58f)
-            .clip(cardShape),
+            .aspectRatio(1.58f),
     ) {
-        HubThemedCardBackground(
-            themeId = model.themeId,
-            patternOverride = model.pattern,
-            brandColor = palette.brand,
-            modifier = Modifier.fillMaxSize(),
-        )
+        val wPx = with(LocalDensity.current) { maxWidth.toPx() }
+        val hPx = with(LocalDensity.current) { maxHeight.toPx() }
+        val baseBrush = remember(model.themeId, palette.brand, wPx, hPx) {
+            hubCardThemeBackgroundBrush(
+                themeId = model.themeId,
+                widthPx = wPx,
+                heightPx = hPx,
+                brandColor = palette.brand,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(cardShape)
+                .background(baseBrush)
+                .drawBehind {
+                    drawHubThemedCardDecorations(
+                        themeId = model.themeId,
+                        patternOverride = model.pattern,
+                        brandColor = palette.brand,
+                    )
+                },
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -386,6 +406,7 @@ internal fun SharedHubCardFace(
                     )
                 }
             }
+        }
         }
     }
 }

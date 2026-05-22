@@ -209,13 +209,14 @@ fun RestaurantReviewsScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.statusBars)
-            .graphicsLayer { translationX = slideProgress * screenWidthPx }
             .background(palette.pageBackground),
     ) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .graphicsLayer { translationX = slideProgress * screenWidthPx },
             contentPadding = PaddingValues(bottom = 48.dp),
         ) {
             stickyHeader(key = "reviews-stats-header") {

@@ -30,37 +30,24 @@ import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
-import com.mh.restaurantchainreservation.feature.profile.data.MockProfileCreditCards
-
-private data class HubCreditCard(
-    val id: String,
-    val productLabel: String,
-    val holder: String,
-    val lastFour: String,
-    val krwBalance: Long,
-    val usdBalance: Double,
-    val themeId: HubCardThemeId,
-    val pattern: HubCardPattern? = null,
-    val showBalance: Boolean,
-    val showDualBalance: Boolean = false,
-)
+import com.mh.restaurantchainreservation.feature.profile.data.ProfileWalletStore
+import com.mh.restaurantchainreservation.feature.profile.data.WalletCardRecord
 
 @Composable
 fun CreditCardsHubSection(
@@ -70,29 +57,15 @@ fun CreditCardsHubSection(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val cards = remember {
-        MockProfileCreditCards.cards.map { def ->
-            HubCreditCard(
-                id = def.id,
-                productLabel = def.nickname,
-                holder = MockProfileCreditCards.HOLDER.uppercase(),
-                lastFour = def.lastFour,
-                krwBalance = def.krwBalanceLong,
-                usdBalance = def.usdBalance,
-                themeId = def.themeId,
-                pattern = def.pattern,
-                showBalance = true,
-                showDualBalance = def.showDualBalance,
-            )
-        }
-    }
-    val totalKrw = remember(cards) { cards.sumOf { it.krwBalance } }
-    val totalUsd = remember(cards) { cards.sumOf { it.usdBalance } }
+    val storeCards by ProfileWalletStore.cards.collectAsState()
+    val totalKrw = storeCards.sumOf { it.krwBalance.toLong() }
+    val totalUsd = storeCards.sumOf { it.usdBalance }
     val subtitle = remember(totalKrw, totalUsd) {
         "Total · ${formatKrwHub(totalKrw)} · ${formatUsdHub(totalUsd)}"
     }
 
-    val pagerState = rememberPagerState(pageCount = { cards.size + 1 })
+    val density = LocalDensity.current.density
+    val pagerState = rememberPagerState(pageCount = { storeCards.size + 1 })
     val stackedFling = PagerDefaults.flingBehavior(
         state = pagerState,
         snapAnimationSpec = spring(
@@ -184,21 +157,11 @@ fun CreditCardsHubSection(
             ) { page ->
                 val d = pagerState.getOffsetDistanceInPages(page).coerceIn(-2.5f, 2.5f)
                 Box(
-                    modifier = Modifier
-                        .zIndex(HubStackedCarouselMotion.zIndexForPage(d))
-                        .graphicsLayer {
-                            transformOrigin = TransformOrigin(0.5f, 0.52f)
-                            cameraDistance = 14f * density
-                            rotationZ = HubStackedCarouselMotion.rotationZForPage(d)
-                            val scale = HubStackedCarouselMotion.scaleForPage(d)
-                            scaleX = scale
-                            scaleY = scale
-                            translationX = HubStackedCarouselMotion.translationX(d, density)
-                            translationY = HubStackedCarouselMotion.translationY(d, density)
-                            alpha = HubStackedCarouselMotion.alphaForPage(d)
-                        },
+                    modifier = with(HubStackedCarouselMotion) {
+                        Modifier.hubStackedCarouselPage(pageOffsetPages = d, density = density)
+                    },
                 ) {
-                    if (page >= cards.size) {
+                    if (page >= storeCards.size) {
                         AddNewCreditCardTile(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -206,7 +169,7 @@ fun CreditCardsHubSection(
                         )
                     } else {
                         HubCreditCardFace(
-                            card = cards[page],
+                            card = storeCards[page],
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .hubCardClickable(onClick = onOpenCardInfo),
@@ -225,7 +188,7 @@ fun CreditCardsHubSection(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            repeat(cards.size + 1) { index ->
+            repeat(storeCards.size + 1) { index ->
                 if (index > 0) Spacer(Modifier.width(6.dp))
                 val selected = index == pagerState.currentPage
                 if (selected) {
@@ -257,7 +220,7 @@ fun CreditCardsHubSection(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "${cards.size} cards · tap to manage",
+                text = "${storeCards.size} cards · tap to manage",
                 color = palette.mutedForeground,
                 fontSize = 12.sp,
             )
@@ -273,19 +236,19 @@ fun CreditCardsHubSection(
 }
 
 @Composable
-private fun HubCreditCardFace(card: HubCreditCard, modifier: Modifier = Modifier) {
+private fun HubCreditCardFace(card: WalletCardRecord, modifier: Modifier = Modifier) {
     SharedHubCardFace(
         model = SharedHubCardFaceModel(
-            productLabel = card.productLabel,
+            productLabel = card.nickname,
             holder = card.holder,
             lastFour = card.lastFour,
-            krwBalance = card.krwBalance,
+            krwBalance = card.krwBalance.toLong(),
             usdBalance = card.usdBalance,
             themeId = card.themeId,
-            pattern = card.pattern ?: hubCardThemeSpec(card.themeId).pattern,
-            showBalance = card.showBalance,
+            pattern = card.pattern,
+            showBalance = true,
             showDualBalance = card.showDualBalance,
-            frozen = false,
+            frozen = card.frozen,
         ),
         modifier = modifier,
     )

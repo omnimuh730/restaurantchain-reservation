@@ -20,6 +20,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,7 +41,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.HubSurface
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.TonightLogoMark
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
-import com.mh.restaurantchainreservation.feature.profile.data.MockProfileCreditCards
+import com.mh.restaurantchainreservation.feature.profile.data.ProfileWalletStore
 import com.mh.restaurantchainreservation.feature.profile.hub.formatKrwHub
 import com.mh.restaurantchainreservation.feature.profile.hub.formatUsdHub
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
@@ -55,6 +57,10 @@ fun WalletCardStack(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
+    val cards by ProfileWalletStore.cards.collectAsState()
+    val totalKrw = cards.sumOf { it.krwBalance.toLong() }
+    val totalUsd = cards.sumOf { it.usdBalance }
+    val primaryLastFour = cards.firstOrNull()?.lastFour ?: "0000"
     val cardShape = HubSurfaceCardDefaults.QuickActionShape
     val masked = stringResource(I18nR.string.profile_wallet_masked)
 
@@ -143,7 +149,7 @@ fun WalletCardStack(
                 BalanceCell(
                     title = stringResource(I18nR.string.profile_wallet_domestic_krw),
                     valueText = if (showBalance) {
-                        formatKrwHub(MockProfileCreditCards.totalKrwLong())
+                        formatKrwHub(totalKrw)
                     } else {
                         masked
                     },
@@ -153,7 +159,7 @@ fun WalletCardStack(
                 BalanceCell(
                     title = stringResource(I18nR.string.profile_wallet_foreign_usd),
                     valueText = if (showBalance) {
-                        formatUsdHub(MockProfileCreditCards.totalUsd())
+                        formatUsdHub(totalUsd)
                     } else {
                         masked
                     },
@@ -170,7 +176,7 @@ fun WalletCardStack(
             ) {
                 Text(
                     text = if (showBalance) {
-                        "•••• •••• •••• ${MockProfileCreditCards.primaryLastFour()} · ${MockProfileCreditCards.HOLDER.uppercase()}"
+                        "•••• •••• •••• $primaryLastFour · ${cards.firstOrNull()?.holder?.uppercase().orEmpty()}"
                     } else {
                         masked
                     },
