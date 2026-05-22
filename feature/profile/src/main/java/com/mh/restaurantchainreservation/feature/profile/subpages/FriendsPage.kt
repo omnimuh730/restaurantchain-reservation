@@ -1213,7 +1213,7 @@ private fun FriendPreviewDialog(
 ) {
     val palette = LocalRestaurantPalette.current
     val sharedBookings = (contact.id.hashCode().let { kotlin.math.abs(it) } % 9) + 1
-    val favoriteCuisine = listOf("K-BBQ", "Omakase", "Brunch", "Italian")[sharedBookings % 4]
+    val favoriteCuisine = listOf("BBQ", "Omakase", "Brunch", "Italian")[sharedBookings % 4]
     val handle = contact.username?.let { "@$it" } ?: contact.phone.orEmpty()
 
     Dialog(

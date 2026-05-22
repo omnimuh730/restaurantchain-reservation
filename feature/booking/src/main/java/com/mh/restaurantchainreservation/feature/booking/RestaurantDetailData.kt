@@ -351,6 +351,13 @@ object RestaurantDetailData {
     /** Distinct image URLs for the popular-menu carousel and fullscreen gallery. */
     fun popularMenuImages(): List<String> = menuItems.mapNotNull { it.imageUrl }.distinct()
 
+    /** Menu items with images for the popular-menu rail (name + category + price). */
+    fun popularMenuPreviewItems(limit: Int = 6): List<MenuItem> =
+        menuItems
+            .filter { it.imageUrl != null }
+            .distinctBy { it.imageUrl }
+            .take(limit)
+
     val menuCategories: List<String> = listOf(
         "Appetizers", "Nigiri", "Sashimi", "Rolls", "Main Course", "Noodles", "Desserts", "Beverages",
     )

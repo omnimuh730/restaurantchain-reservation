@@ -123,8 +123,8 @@
     <string name="profile_wallet_usd_value">$300.45</string>
 
     <!-- Default location -->
-    <string name="profile_default_location_name">Gangnam Station</string>
-    <string name="profile_default_location_address">Gangnam-gu, Seoul</string>
+    <string name="profile_default_location_name">Union Square</string>
+    <string name="profile_default_location_address">San Francisco, CA</string>
 
     <!-- Avatar picker -->
     <string name="profile_avatar_picker_title">Choose photo</string>

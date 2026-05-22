@@ -115,6 +115,8 @@ import com.mh.restaurantchainreservation.core.designsystem.components.HeartButto
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuSeeAllCard
+import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuTile
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -191,11 +193,8 @@ private val SeeAllThumbnailSlideStart = ThumbnailLayer(
 )
 
 private val SeeAllThumbShape = RoundedCornerShape(12.dp)
-private val FoodTypeSeeAllThumbShape = RoundedCornerShape(8.dp)
-private const val FoodTypeSeeAllLabelFontScale = 1.18f
 /** Profile hub card shell for Dining News + restaurant “More” tiles. */
 private val MoreCardShape = HubSurfaceCardDefaults.QuickActionShape
-private val FoodTypeSeeAllCardShape = RoundedCornerShape(DiscoverPopularMenuTileCornerRadius)
 private val DiningNewsCardShape = MoreCardShape
 
 /** Restaurant cards shown per home rail before the More tile. */
@@ -1043,70 +1042,18 @@ private fun FoodRail(foodTypes: List<FoodType>, onClick: (String) -> Unit) {
     }
 }
 
-/** Image with bottom gradient + place count; food name below (like [AirbnbMiniCard] title). */
 @Composable
 private fun FoodTypeRailTile(
     food: FoodType,
     onClick: () -> Unit,
 ) {
-    val palette = LocalRestaurantPalette.current
     val placeCount = remember(food.id) { DiscoverData.byFoodType(food.id).size }
-    val shape = RoundedCornerShape(DiscoverPopularMenuTileCornerRadius)
-    PressableScale(
+    DiscoverMenuTile(
+        imageUrl = food.image,
+        title = food.label,
+        imageCaption = "$placeCount places",
         onClick = onClick,
-        modifier = Modifier.width(DiscoverPopularMenuTileSize),
-    ) {
-        Column {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .size(DiscoverPopularMenuTileSize)
-                    .discoverImageCardSurface(shape)
-                    .background(palette.mutedSurface),
-            ) {
-                AsyncImage(
-                    model = food.image,
-                    contentDescription = food.label,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colorStops = arrayOf(
-                                    0f to Color.Transparent,
-                                    0.42f to Color.Transparent,
-                                    0.68f to Color.Black.copy(alpha = 0.38f),
-                                    1f to Color.Black.copy(alpha = 0.82f),
-                                ),
-                            ),
-                        ),
-                )
-                Text(
-                    text = "$placeCount places",
-                    color = Color.White.copy(alpha = 0.92f),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal,
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(horizontal = 10.dp, vertical = 10.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Text(
-                text = food.label,
-                color = palette.foreground,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
+    )
 }
 
 @Composable
@@ -1886,14 +1833,9 @@ private fun FoodTypeSeeAllCard(
     previewImages: List<Any>,
     onClick: () -> Unit,
 ) {
-    StackedSeeAllCard(
-        width = DiscoverPopularMenuTileSize,
-        height = DiscoverPopularMenuTileSize,
+    DiscoverMenuSeeAllCard(
         previewImages = previewImages,
         onClick = onClick,
-        cardShape = FoodTypeSeeAllCardShape,
-        thumbCornerShape = FoodTypeSeeAllThumbShape,
-        footerFontScale = FoodTypeSeeAllLabelFontScale,
     )
 }
 

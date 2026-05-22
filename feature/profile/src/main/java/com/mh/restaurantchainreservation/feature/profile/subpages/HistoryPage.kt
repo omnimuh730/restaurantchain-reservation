@@ -1362,7 +1362,7 @@ private fun generateMockTransactions(count: Int): List<Txn> {
         RestaurantInfo("Bella Napoli", "789 Pizza St, San Francisco, CA 94102", listOf(InvoiceItem(1, "Margherita Pizza", 18.00), InvoiceItem(1, "Tiramisu", 8.00))),
         RestaurantInfo("Le Petit Bistro", "234 Bistro Ave, San Francisco, CA 94115", listOf(InvoiceItem(1, "Steak Frites", 42.00), InvoiceItem(1, "Red Wine", 15.00))),
         RestaurantInfo("Taco Fiesta", "567 Taco Blvd, San Francisco, CA 94103", listOf(InvoiceItem(1, "Taco Trio", 15.00), InvoiceItem(1, "Guacamole", 4.00))),
-        RestaurantInfo("Gangnam BBQ", "120 Korea Way, San Francisco, CA 94108", listOf(InvoiceItem(1, "Wagyu Set", 48.00), InvoiceItem(1, "Banchan", 6.00))),
+        RestaurantInfo("Mission Smoke BBQ", "789 Mission St, San Francisco, CA 94103", listOf(InvoiceItem(1, "Brisket Plate", 48.00), InvoiceItem(1, "House Pickles", 6.00))),
         RestaurantInfo("Saigon Pho", "88 Mission St, San Francisco, CA 94105", listOf(InvoiceItem(1, "Pho Bowl", 16.00), InvoiceItem(1, "Spring Rolls", 7.00))),
         RestaurantInfo("Verde Trattoria", "321 Vine St, San Francisco, CA 94117", listOf(InvoiceItem(1, "Truffle Pasta", 32.00), InvoiceItem(1, "Affogato", 9.00))),
         RestaurantInfo("The Burger Lab", "12 Market St, San Francisco, CA 94103", listOf(InvoiceItem(1, "Lab Burger", 17.50), InvoiceItem(1, "Truffle Fries", 8.00))),

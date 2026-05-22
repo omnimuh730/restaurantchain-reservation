@@ -115,13 +115,13 @@ private val mockUsers = mapOf(
         password = "aaa",
         name = "Demo User",
         active = true,
-        securityQA = listOf("pet" to "fluffy", "birthCity" to "seoul", "favoriteFood" to "pizza"),
+        securityQA = listOf("pet" to "fluffy", "birthCity" to "denver", "favoriteFood" to "pizza"),
     ),
     "admin" to MockUser(
         password = "Admin123",
         name = "Admin",
         active = false,
-        securityQA = listOf("birthCity" to "seoul", "firstSchool" to "greenfield", "motherMaiden" to "kim"),
+        securityQA = listOf("birthCity" to "denver", "firstSchool" to "greenfield", "motherMaiden" to "kim"),
     ),
     "foodie99" to MockUser(
         password = "Yummy123",
@@ -747,7 +747,7 @@ fun ForgotPasswordScreen(
                             loading = loading,
                             modifier = Modifier.padding(top = 20.dp),
                         )
-                        InfoCard(text = "Test accounts: demo / aaa. Recovery answers include fluffy, seoul, or pizza.")
+                        InfoCard(text = "Test accounts: demo / aaa. Recovery answers include fluffy, denver, or pizza.")
                     }
                     ForgotStep.Security -> {
                         val user = foundUserKey?.let { mockUsers[it] }

@@ -13,10 +13,10 @@ data class UserLocation(
 
 object LocationStore {
     private val DefaultLocation = UserLocation(
-        name = "Gangnam Station",
-        address = "Gangnam-gu, Seoul",
-        lat = 37.4980,
-        lng = 127.0276,
+        name = "Union Square",
+        address = "San Francisco, CA",
+        lat = 37.7879,
+        lng = -122.4075,
     )
 
     private val _current = MutableStateFlow(DefaultLocation)

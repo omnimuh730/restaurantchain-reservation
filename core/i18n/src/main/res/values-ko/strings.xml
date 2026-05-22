@@ -123,8 +123,8 @@
     <string name="profile_wallet_usd_value">$300.45</string>
 
     <!-- Default location -->
-    <string name="profile_default_location_name">강남역</string>
-    <string name="profile_default_location_address">서울 강남구</string>
+    <string name="profile_default_location_name">유니온 스퀘어</string>
+    <string name="profile_default_location_address">샌프란시스코, CA</string>
 
     <!-- Avatar picker -->
     <string name="profile_avatar_picker_title">사진 선택</string>

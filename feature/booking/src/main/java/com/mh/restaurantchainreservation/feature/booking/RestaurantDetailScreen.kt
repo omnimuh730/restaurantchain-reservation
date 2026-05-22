@@ -87,6 +87,8 @@ import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.badge.AnimatedGuestFavoriteCenterBadge
 import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteRatingLaurelRow
 import com.mh.restaurantchainreservation.core.designsystem.badge.guestFavoriteDescription
+import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuSeeAllCard
+import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuTile
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
@@ -1112,8 +1114,12 @@ private fun PopularMenuSection(
     onOpenPhotoGrid: (RestaurantPhotoGallerySource) -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
+    val previewItems = remember {
+        RestaurantDetailData.popularMenuPreviewItems(PopularMenuPreviewCount)
+            .filter { it.imageUrl != null }
+    }
     val allImages = remember { RestaurantDetailData.popularMenuImages() }
-    val previewImages = remember(allImages) { allImages.take(PopularMenuPreviewCount) }
+    val priceFormat = remember { NumberFormat.getCurrencyInstance(Locale.US) }
 
     Column(modifier = Modifier.padding(vertical = 24.dp)) {
         Text(
@@ -1126,44 +1132,25 @@ private fun PopularMenuSection(
         LazyRow(
             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top,
         ) {
             items(
-                count = previewImages.size,
-                key = { previewImages[it] },
-            ) { index ->
-                val imageUrl = previewImages[index]
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(112.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .border(1.dp, palette.border, RoundedCornerShape(16.dp))
-                        .clickable { onOpenPhotoGrid(RestaurantPhotoGallerySource.PopularMenu) },
+                items = previewItems,
+                key = { it.imageUrl ?: it.name },
+            ) { item ->
+                DiscoverMenuTile(
+                    imageUrl = item.imageUrl!!,
+                    title = item.name,
+                    imageCaption = priceFormat.format(item.price).replace(".00", ""),
+                    onClick = { onOpenPhotoGrid(RestaurantPhotoGallerySource.PopularMenu) },
                 )
             }
             if (allImages.isNotEmpty()) {
                 item(key = "popular-menu-see-all") {
-                    Box(
-                        modifier = Modifier
-                            .size(112.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .border(1.dp, palette.border, RoundedCornerShape(16.dp))
-                            .background(palette.mutedSurface)
-                            .clickable {
-                                onOpenPhotoGrid(RestaurantPhotoGallerySource.PopularMenu)
-                            },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = "See all",
-                            color = palette.foreground,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+                    DiscoverMenuSeeAllCard(
+                        previewImages = allImages.take(3),
+                        onClick = { onOpenPhotoGrid(RestaurantPhotoGallerySource.PopularMenu) },
+                    )
                 }
             }
         }
