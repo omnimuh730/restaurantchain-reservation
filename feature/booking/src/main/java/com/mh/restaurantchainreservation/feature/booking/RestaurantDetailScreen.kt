@@ -261,7 +261,11 @@ fun RestaurantDetailScreen(
     val payload = loadedPayload
     val heroImages = payload?.gallery ?: listOf(restaurant.image)
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(palette.pageBackground),
+    ) {
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
@@ -286,7 +290,7 @@ fun RestaurantDetailScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .offset(y = -SheetTopRadius)
-                            .detailSheetTopRoundedBackground(palette.cardSurface)
+                            .detailSheetTopRoundedBackground(palette.pageBackground)
                             .clip(HeaderSheetShape),
                     ) {
                         HeaderSummaryCard(
@@ -382,10 +386,10 @@ private fun DetailTopBar(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                if (solid) palette.cardSurface.copy(alpha = 0.95f) else Color.Transparent,
+                if (solid) palette.pageBackground.copy(alpha = 0.95f) else Color.Transparent,
             )
             .then(
-                if (solid) Modifier.border(1.dp, palette.borderSoft) else Modifier,
+                if (solid) Modifier.border(1.dp, palette.border) else Modifier,
             )
             .windowInsetsPadding(WindowInsets.statusBars),
     ) {
@@ -693,7 +697,7 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit)
 private fun DetailInsetDivider(modifier: Modifier = Modifier) {
     val palette = LocalRestaurantPalette.current
     HorizontalDivider(
-        color = palette.borderSoft,
+        color = palette.border,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = DetailInfoHorizontalPadding),
@@ -710,7 +714,7 @@ private fun RatingsSummaryDivider(
             .padding(horizontal = 10.dp)
             .width(1.dp)
             .height(DetailStatsDividerHeight)
-            .background(palette.borderSoft),
+            .background(palette.border),
     )
 }
 
@@ -975,7 +979,7 @@ private fun ReviewPreviewColumnDivider(modifier: Modifier = Modifier) {
         modifier = modifier
             .width(ReviewCarouselDividerWidth)
             .height(GuestReviewPreviewHeight)
-            .background(palette.borderSoft),
+            .background(palette.border),
     )
 }
 
@@ -1037,7 +1041,7 @@ private fun GuestReviewPreviewItem(
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = null,
-                    tint = if (index < filledStars) palette.foreground else palette.borderSoft,
+                    tint = if (index < filledStars) palette.foreground else palette.border,
                     modifier = Modifier.size(12.dp),
                 )
             }
@@ -1196,8 +1200,8 @@ private fun BookingBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(palette.cardSurface)
-            .border(1.dp, palette.borderSoft)
+            .background(palette.pageBackground)
+            .border(1.dp, palette.border)
             .windowInsetsPadding(WindowInsets.navigationBars)
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,

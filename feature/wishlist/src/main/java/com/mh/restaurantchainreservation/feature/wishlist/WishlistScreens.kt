@@ -145,7 +145,7 @@ fun WishlistScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         AnimatedContent(
             targetState = openCollectionId,
@@ -491,7 +491,7 @@ private fun RecentlyViewedDetailPage(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
@@ -621,7 +621,7 @@ private fun UserWishlistDetailPage(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         LazyColumn(
             state = listState,
@@ -808,7 +808,7 @@ private fun ToolbarTextButton(
 ) {
     val palette = LocalRestaurantPalette.current
     val pillShape = RoundedCornerShape(percent = 50)
-    val pillBackground = if (palette.isDark) palette.mutedSurface else palette.cardSurface
+    val pillBackground = palette.cardSurface
     Row(
         modifier = Modifier
             .heightIn(min = 32.dp)

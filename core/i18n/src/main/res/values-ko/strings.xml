@@ -324,10 +324,14 @@
 
     <!-- Show QR modal -->
     <string name="show_qr_title">도착 QR</string>
-    <string name="show_qr_subtitle">호스트 스탠드에서 보여주세요.</string>
+    <string name="show_qr_your_code">도착 QR</string>
+    <string name="show_qr_subtitle">저녁 예약 도착 시 호스트 스탠드에서 보여주세요.</string>
     <string name="show_qr_close">QR 닫기</string>
+    <string name="show_qr_secure">레스토랑에서 체크인할 때 이 코드를 제시하세요.</string>
+    <string name="show_qr_copy">코드 복사</string>
+    <string name="show_qr_copied">복사됨</string>
     <string name="show_qr_save">저장</string>
-    <string name="show_qr_share">공유</string>
+    <string name="show_qr_share">코드 공유</string>
 
     <!-- Add booking code modal -->
     <string name="add_code_title">예약 코드 추가</string>

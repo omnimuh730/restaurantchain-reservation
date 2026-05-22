@@ -34,7 +34,6 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Constraints
 import kotlin.math.roundToInt
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -67,6 +66,8 @@ import com.mh.restaurantchainreservation.core.designsystem.components.icons.Bott
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucidePaths
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
+import com.mh.restaurantchainreservation.core.designsystem.components.surfaceTopEdgeShadow
+import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.QrPayNavIcon
 import kotlin.math.cos
 import kotlin.math.sin
@@ -112,8 +113,8 @@ private val QrFabElevationSpring = spring<Dp>(
     dampingRatio = Spring.DampingRatioNoBouncy,
     stiffness = Spring.StiffnessMediumLow,
 )
-internal val BottomNavTopBorderWidth = 1.dp
-private val NavTopBorderWidth = BottomNavTopBorderWidth
+/** Legacy inset hook; top border removed in favor of [surfaceTopEdgeShadow]. */
+internal val BottomNavTopBorderWidth = 0.dp
 
 /**
  * Space above the tab row reserved in the animated clip bounds for the docked QR FAB,
@@ -134,8 +135,6 @@ private val DotBorder = 2.dp
 
 private const val ActiveStrokeWidth = 2.5f
 private const val InactiveStrokeWidth = 1.8f
-private const val SurfaceTranslucentAlpha = 0.95f
-
 @Composable
 fun BottomNavBar(
     tabs: List<BottomNavTab>,
@@ -147,8 +146,8 @@ fun BottomNavBar(
     profileBadgeCount: Int = 0,
     showProfileDot: Boolean = false,
 ) {
-    val cardSurface = MaterialTheme.colorScheme.surface
-    val borderColor = MaterialTheme.colorScheme.outline
+    val palette = LocalRestaurantPalette.current
+    val navBackground = palette.pageBackground
     val discover = tabs.firstOrNull { it.id == BottomNavTabId.Discover }
     val wishlist = tabs.firstOrNull { it.id == BottomNavTabId.Wishlist }
     val dining = tabs.firstOrNull { it.id == BottomNavTabId.Dining }
@@ -165,17 +164,15 @@ fun BottomNavBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
+                .surfaceTopEdgeShadow()
+                .background(navBackground)
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            HorizontalDivider(
-                color = borderColor,
-                thickness = NavTopBorderWidth,
-            )
             FractionalTabNavLayout(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(TabRowHeight)
-                    .background(cardSurface.copy(alpha = SurfaceTranslucentAlpha)),
+                    .background(navBackground),
                 discover = discover?.let { tab ->
                     {
                         TabButton(
@@ -228,7 +225,6 @@ fun BottomNavBar(
             contentDescription = qrPayContentDescription,
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = NavTopBorderWidth)
                 .graphicsLayer { translationY = -QrAboveNavBarLift.toPx() },
         )
     }
@@ -457,13 +453,13 @@ private fun CountBadge(
 
 @Composable
 private fun AlertDot(modifier: Modifier = Modifier) {
-    val card = MaterialTheme.colorScheme.surface
+    val palette = LocalRestaurantPalette.current
     val destructive = MaterialTheme.colorScheme.error
     Box(
         modifier = modifier
             .size(DotSize)
             .clip(CircleShape)
-            .background(card),
+            .background(palette.pageBackground),
         contentAlignment = Alignment.Center,
     ) {
         Box(

@@ -205,7 +205,7 @@ fun RestaurantPhotoShareSheet(
                         )
                     }
                 }
-                HorizontalDivider(color = palette.borderSoft)
+                HorizontalDivider(color = palette.border)
                 PhotoShareContacts.forEach { contact ->
                     PhotoShareContactRow(
                         contact = contact,
@@ -214,7 +214,7 @@ fun RestaurantPhotoShareSheet(
                             triggerDismiss()
                         },
                     )
-                    HorizontalDivider(color = palette.borderSoft)
+                    HorizontalDivider(color = palette.border)
                 }
                 Row(
                     modifier = Modifier
@@ -264,7 +264,7 @@ private fun PhotoShareContactRow(
                 .size(44.dp)
                 .clip(CircleShape)
                 .background(palette.mutedSurface)
-                .border(1.dp, palette.borderSoft, CircleShape),
+                .border(1.dp, palette.border, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Text(

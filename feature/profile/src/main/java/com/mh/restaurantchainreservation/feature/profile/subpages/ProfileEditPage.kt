@@ -147,7 +147,7 @@ private fun TierBenefitsPanel() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .border(1.dp, palette.border.copy(alpha = 0.6f), shape)
+            .border(1.dp, palette.border, shape)
             .background(palette.cardSurface)
             .padding(16.dp),
     ) {

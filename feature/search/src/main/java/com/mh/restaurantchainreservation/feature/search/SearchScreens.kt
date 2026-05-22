@@ -96,7 +96,7 @@ fun SearchResultsScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -236,7 +236,7 @@ private fun SearchHeroMap(count: Int) {
             .background(palette.mutedSurface),
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val road = palette.border.copy(alpha = 0.72f)
+            val road = palette.border
             repeat(6) { idx ->
                 val y = size.height * (0.14f + idx * 0.16f)
                 drawLine(road, Offset(0f, y), Offset(size.width, y + if (idx % 2 == 0) 42f else -28f), strokeWidth = 16f)
@@ -320,7 +320,7 @@ private fun SearchRestaurantCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .border(1.dp, palette.borderSoft, RoundedCornerShape(24.dp))
+            .border(1.dp, palette.border, RoundedCornerShape(24.dp))
             .background(palette.cardSurface)
             .padding(10.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),

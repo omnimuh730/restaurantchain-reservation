@@ -354,7 +354,7 @@ fun DiscoverHomeScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         val density = LocalDensity.current
         val statusBarInsets = WindowInsets.statusBars
@@ -401,7 +401,7 @@ fun DiscoverHomeScreen(
                         .offset(y = (-32).dp)
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
-                        .background(palette.cardSurface)
+                        .background(palette.pageBackground)
                         .padding(top = 18.dp, bottom = 0.dp),
                 ) {
                     QuickCategoryGrid(DiscoverData.QUICK_CATEGORIES, onOpenCategory)
@@ -477,7 +477,7 @@ fun DiscoverHomeScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(palette.cardSurface)
+                        .background(palette.pageBackground)
                         .padding(top = headerTopPadding),
                 ) {
                     RestaurantsByPriceHeaderAndTabs(
@@ -724,8 +724,8 @@ private fun CompactDiscoverBar(
     }
 }
 
-private fun discoverGlassBarEdgeColor(palette: RestaurantPalette): Color =
-    if (palette.isDark) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.42f)
+private fun discoverGlassBarEdgeColor(@Suppress("UNUSED_PARAMETER") palette: RestaurantPalette): Color =
+    Color.White.copy(alpha = 0.42f)
 
 private data class GlassPillLayers(
     val baseFill: Color,
@@ -739,26 +739,6 @@ private fun discoverGlassPillLayers(
     compact: Boolean,
     opaqueGlass: Boolean,
 ): GlassPillLayers {
-    if (palette.isDark) {
-        val strong = opaqueGlass && compact
-        val base = when {
-            strong -> palette.cardSurface.copy(alpha = 0.88f)
-            compact -> palette.cardSurface.copy(alpha = 0.60f)
-            else -> palette.cardSurface.copy(alpha = 0.42f)
-        }
-        val border = when {
-            strong -> 0.35f
-            compact -> 0.28f
-            else -> 0.26f
-        }
-        val icon = Color.White.copy(alpha = if (strong) 0.18f else 0.12f)
-        val grad = when {
-            strong -> 0.28f
-            compact -> 0.24f
-            else -> 0.20f
-        }
-        return GlassPillLayers(base, border, icon, grad)
-    }
     val strong = opaqueGlass && compact
     val baseAlpha = when {
         strong -> 0.52f
@@ -788,9 +768,10 @@ private fun discoverGlassPillLayers(
     )
 }
 
-private fun discoverGlassPillBorderColor(palette: RestaurantPalette, borderAlpha: Float): Color =
-    if (palette.isDark) Color.White.copy(alpha = (borderAlpha * 0.42f + 0.10f).coerceIn(0.12f, 0.36f))
-    else Color.White.copy(alpha = borderAlpha.coerceIn(0f, 1f))
+private fun discoverGlassPillBorderColor(
+    @Suppress("UNUSED_PARAMETER") palette: RestaurantPalette,
+    borderAlpha: Float,
+): Color = Color.White.copy(alpha = borderAlpha.coerceIn(0f, 1f))
 
 @Composable
 private fun GlassSearchButton(

@@ -270,7 +270,7 @@ private fun ProcessingView(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -427,7 +427,7 @@ private fun AlreadyProView(onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .border(1.dp, palette.border.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                .border(1.dp, palette.border, RoundedCornerShape(16.dp))
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {

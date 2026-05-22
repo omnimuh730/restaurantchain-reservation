@@ -85,6 +85,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.core.model.AppNotification
@@ -331,12 +332,12 @@ private fun RowScope.FilterChip(
 private fun InboxDigest(unreadCount: Int, readCount: Int) {
     val palette = LocalRestaurantPalette.current
     val shape = RoundedCornerShape(20.dp)
-    val digestSurface = if (palette.isDark) palette.cardSurface else Color(0xFFFAF9F5)
+    val digestSurface = RestaurantColors.Semantic.digestWarm
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .border(1.dp, palette.border.copy(alpha = 0.6f), shape)
+            .border(1.dp, palette.border, shape)
             .background(digestSurface)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -429,7 +430,7 @@ private fun FeaturedReservationCard(notification: AppNotification) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .border(1.dp, palette.border.copy(alpha = 0.7f), shape)
+            .border(1.dp, palette.border, shape)
             .background(palette.cardSurface)
             .padding(14.dp),
         verticalAlignment = Alignment.Top,
@@ -684,7 +685,7 @@ private fun NotificationCard(notification: AppNotification) {
 
     val shape = RoundedCornerShape(18.dp)
     val borderColor = if (notification.read) {
-        palette.border.copy(alpha = 0.5f)
+        palette.border
     } else {
         palette.brand.copy(alpha = 0.22f)
     }
@@ -1286,7 +1287,7 @@ private fun EmptyIllustration() {
             scale = cardScale * 0.98f,
             alpha = leftAlpha.value,
             background = palette.mutedSurface,
-            borderColor = palette.border.copy(alpha = 0.7f),
+            borderColor = palette.border,
             bellTint = palette.brand.copy(alpha = 0.55f),
             bellAlpha = bellAlpha,
         )
@@ -1298,7 +1299,7 @@ private fun EmptyIllustration() {
             scale = cardScale * 0.98f,
             alpha = rightAlpha.value,
             background = palette.cardSurface,
-            borderColor = palette.border.copy(alpha = 0.7f),
+            borderColor = palette.border,
             bellTint = palette.brand.copy(alpha = 0.55f),
             bellAlpha = bellAlpha,
         )
@@ -1311,7 +1312,7 @@ private fun EmptyIllustration() {
                 .scale(centerScale.value * cardScale)
                 .clip(RoundedCornerShape(22.dp))
                 .background(palette.cardSurface)
-                .border(1.dp, palette.border.copy(alpha = 0.7f), RoundedCornerShape(22.dp)),
+                .border(1.dp, palette.border, RoundedCornerShape(22.dp)),
             contentAlignment = Alignment.Center,
         ) {
             Box(

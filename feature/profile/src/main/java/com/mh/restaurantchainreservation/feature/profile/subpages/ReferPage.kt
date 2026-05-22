@@ -142,7 +142,7 @@ private fun CodeRow(code: String, copied: Boolean, onCopy: () -> Unit) {
             .fillMaxWidth()
             .clip(rowShape)
             .background(palette.cardSurface)
-            .border(1.dp, palette.border.copy(alpha = 0.6f), rowShape)
+            .border(1.dp, palette.border, rowShape)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -217,7 +217,7 @@ private fun StatTile(value: String, label: String, highlight: Boolean, modifier:
         modifier = modifier
             .clip(cardShape)
             .background(palette.cardSurface)
-            .border(1.dp, palette.border.copy(alpha = 0.6f), cardShape)
+            .border(1.dp, palette.border, cardShape)
             .padding(vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -310,7 +310,7 @@ private fun ReferQrCard(code: String) {
             .fillMaxWidth()
             .clip(cardShape)
             .background(palette.cardSurface)
-            .border(1.dp, palette.border.copy(alpha = 0.6f), cardShape)
+            .border(1.dp, palette.border, cardShape)
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -338,7 +338,7 @@ private fun ReferQrCard(code: String) {
                 .size(200.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .background(Color.White)
-                .border(1.dp, palette.border.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                .border(1.dp, palette.border, RoundedCornerShape(16.dp))
                 .padding(14.dp),
             contentAlignment = Alignment.Center,
         ) {

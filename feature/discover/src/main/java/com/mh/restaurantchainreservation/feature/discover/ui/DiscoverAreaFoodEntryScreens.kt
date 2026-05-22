@@ -69,7 +69,7 @@ fun WhereToEatAreaListScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface)
+            .background(palette.pageBackground)
             .windowInsetsPadding(WindowInsets.statusBars),
     ) {
         Row(
@@ -159,7 +159,7 @@ private fun WhereToEatAreaCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(palette.cardSurface)
-            .border(1.dp, palette.borderSoft, RoundedCornerShape(20.dp))
+            .border(1.dp, palette.border, RoundedCornerShape(20.dp))
             .clickable(onClick = onClick),
     ) {
         Box(
@@ -308,7 +308,7 @@ fun FoodTypeCuisineListScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface)
+            .background(palette.pageBackground)
             .windowInsetsPadding(WindowInsets.statusBars),
     ) {
         Row(

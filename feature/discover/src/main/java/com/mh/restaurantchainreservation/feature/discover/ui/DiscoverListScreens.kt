@@ -198,7 +198,7 @@ private fun ListScaffold(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(palette.cardSurface)
+                .background(palette.pageBackground)
                 .windowInsetsPadding(WindowInsets.statusBars),
         ) {
             Row(

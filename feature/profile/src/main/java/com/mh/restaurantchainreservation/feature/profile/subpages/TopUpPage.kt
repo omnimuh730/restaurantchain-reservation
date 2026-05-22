@@ -127,7 +127,7 @@ fun TopUpPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface)
+            .background(palette.pageBackground)
             .statusBarsPadding(),
     ) {
         AnimatedContent(

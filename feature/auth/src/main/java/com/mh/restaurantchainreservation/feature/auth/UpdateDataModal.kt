@@ -305,7 +305,7 @@ fun UpdateDataModal(
                         }
                         .clip(RoundedCornerShape(28.dp))
                         .background(palette.cardSurface)
-                        .border(1.dp, palette.borderSoft, RoundedCornerShape(28.dp))
+                        .border(1.dp, palette.border, RoundedCornerShape(28.dp))
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() },
@@ -336,12 +336,8 @@ fun UpdateDataModal(
 }
 
 /** Soft slate veil on top of [HazeMaterials.thin], matching Discover glass overlays. */
-private fun updateDataOverlayVeil(palette: RestaurantPalette): Color =
-    if (palette.isDark) {
-        Color.Black.copy(alpha = 0.42f)
-    } else {
-        Color(0xFF3D4F63).copy(alpha = 0.32f)
-    }
+private fun updateDataOverlayVeil(@Suppress("UNUSED_PARAMETER") palette: RestaurantPalette): Color =
+    Color(0xFF3D4F63).copy(alpha = 0.32f)
 
 @Composable
 private fun PromptContent(
@@ -757,7 +753,7 @@ private fun WhatsNewCollapsingTitle(
         }
         HorizontalDivider(
             modifier = Modifier.padding(top = WhatsNewTitleToDividerGap),
-            color = palette.border.copy(alpha = borderAlpha),
+            color = palette.border,
         )
     }
 }

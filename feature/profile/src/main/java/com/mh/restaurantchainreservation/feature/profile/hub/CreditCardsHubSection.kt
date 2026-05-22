@@ -132,7 +132,7 @@ fun CreditCardsHubSection(
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(999.dp))
-                    .border(1.dp, palette.border.copy(alpha = 0.65f), RoundedCornerShape(999.dp))
+                    .border(1.dp, palette.border, RoundedCornerShape(999.dp))
                     .clickable(role = Role.Button, onClick = onManageCards)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,

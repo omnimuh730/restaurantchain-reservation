@@ -143,18 +143,9 @@ fun GatheredWelcomeModal(
                 .fillMaxSize()
                 .background(
                     if (supportsBackdropBlur) {
-                        // Light veil on top of real backdrop blur (like bg-white/30 + backdrop-blur-sm).
-                        if (palette.isDark) {
-                            Color.White.copy(alpha = backdropAlpha.value * 0.22f)
-                        } else {
-                            Color.White.copy(alpha = backdropAlpha.value * 0.38f)
-                        }
+                        Color.White.copy(alpha = backdropAlpha.value * 0.38f)
                     } else {
-                        if (palette.isDark) {
-                            Color.White.copy(alpha = backdropAlpha.value * 0.28f)
-                        } else {
-                            Color.White.copy(alpha = backdropAlpha.value * 0.82f)
-                        }
+                        Color.White.copy(alpha = backdropAlpha.value * 0.82f)
                     },
                 )
                 .clickable(

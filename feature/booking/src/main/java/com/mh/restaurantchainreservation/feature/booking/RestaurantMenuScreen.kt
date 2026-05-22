@@ -121,7 +121,7 @@ fun RestaurantMenuScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         Box(
             modifier = Modifier
@@ -195,7 +195,7 @@ fun RestaurantMenuScreen(
             },
         )
 
-        HorizontalDivider(color = palette.borderSoft)
+        HorizontalDivider(color = palette.border)
 
         HorizontalPager(
             state = pagerState,
@@ -346,7 +346,7 @@ private fun RowMenuItem(item: MenuItem) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .border(1.dp, palette.borderSoft, RoundedCornerShape(16.dp))
+            .border(1.dp, palette.border, RoundedCornerShape(16.dp))
             .background(palette.cardSurface)
             .padding(16.dp),
     ) {

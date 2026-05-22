@@ -91,7 +91,7 @@ private fun ToastCard(toast: WishlistToastState, onChange: (() -> Unit)?) {
             .shadow(12.dp, RoundedCornerShape(14.dp))
             .clip(RoundedCornerShape(14.dp))
             .background(palette.cardSurface)
-            .border(1.dp, palette.borderSoft, RoundedCornerShape(14.dp))
+            .border(1.dp, palette.border, RoundedCornerShape(14.dp))
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

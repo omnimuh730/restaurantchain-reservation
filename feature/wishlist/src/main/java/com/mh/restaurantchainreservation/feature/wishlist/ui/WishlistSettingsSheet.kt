@@ -198,7 +198,7 @@ private fun SettingsSheetDivider() {
     val palette = LocalRestaurantPalette.current
     HorizontalDivider(
         modifier = Modifier.padding(horizontal = SettingsSheetHorizontalPadding),
-        color = palette.borderSoft,
+        color = palette.border,
     )
 }
 

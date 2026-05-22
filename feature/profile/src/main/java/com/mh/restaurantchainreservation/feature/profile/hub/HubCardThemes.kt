@@ -13,6 +13,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -110,7 +111,7 @@ internal fun hubCardThemeSpec(
         pattern = HubCardPattern.Stars,
     )
     HubCardThemeId.Rose -> {
-        val primary = brandColor ?: Color(0xFFFF385C)
+        val primary = brandColor ?: RestaurantColors.Brand.primary
         val black = Color.Black
         HubCardThemeSpec(
             id = id,

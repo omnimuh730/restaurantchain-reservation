@@ -246,7 +246,7 @@ fun BookTableScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(width = 1.dp, color = palette.borderSoft)
+                    .border(width = 1.dp, color = palette.border)
                     .background(palette.cardSurface.copy(alpha = 0.96f))
                     .windowInsetsPadding(WindowInsets.navigationBars)
                     .padding(horizontal = 20.dp, vertical = 12.dp),

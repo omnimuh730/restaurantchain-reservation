@@ -86,7 +86,7 @@ fun DiningTabBar(
             )
             .clip(trackShape)
             .background(palette.cardSurface)
-            .border(1.dp, palette.border.copy(alpha = if (pinned) 0.5f else 0.35f), trackShape)
+            .border(1.dp, palette.border, trackShape)
             .padding(4.dp),
     ) {
         Row(

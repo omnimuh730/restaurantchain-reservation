@@ -221,7 +221,7 @@ private fun TierProgressCard(onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(tierShape)
-            .border(1.dp, palette.border.copy(alpha = 0.6f), tierShape)
+            .border(1.dp, palette.border, tierShape)
             .background(palette.mutedSurface.copy(alpha = 0.6f))
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 14.dp),

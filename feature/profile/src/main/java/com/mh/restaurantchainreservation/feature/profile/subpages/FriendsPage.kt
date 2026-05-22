@@ -381,7 +381,7 @@ private fun SentRequestsSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(20.dp))
-                    .border(1.dp, palette.border.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
+                    .border(1.dp, palette.border, RoundedCornerShape(20.dp))
                     .background(palette.cardSurface),
             ) {
                 requests.forEachIndexed { index, request ->
@@ -421,7 +421,7 @@ private fun PendingSentRow(request: FriendRequest, showDivider: Boolean, onCance
             }
         }
         if (showDivider) {
-            Box(Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(1.dp).background(palette.border.copy(alpha = 0.5f)))
+            Box(Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(1.dp).background(palette.border))
         }
     }
 }
@@ -463,7 +463,7 @@ private fun FriendRequestsSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .border(1.dp, palette.border.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
+                .border(1.dp, palette.border, RoundedCornerShape(20.dp))
                 .background(palette.cardSurface),
         ) {
             requests.forEachIndexed { idx, req ->
@@ -669,7 +669,7 @@ private fun FriendRequestRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(1.dp)
-                    .background(palette.border.copy(alpha = 0.5f)),
+                    .background(palette.border),
             )
         }
     }
@@ -709,7 +709,7 @@ private fun AddFriendCta(onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .border(1.dp, palette.border.copy(alpha = 0.6f), shape)
+            .border(1.dp, palette.border, shape)
             .background(palette.cardSurface)
             .clickable(onClick = onClick)
             .padding(16.dp),
@@ -753,7 +753,7 @@ private fun AddFriendForm(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .border(1.dp, palette.border.copy(alpha = 0.6f), shape)
+            .border(1.dp, palette.border, shape)
             .background(palette.cardSurface)
             .padding(16.dp),
     ) {
@@ -784,7 +784,7 @@ private fun AddFriendForm(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(palette.border.copy(alpha = 0.5f)),
+                .background(palette.border),
         )
         Spacer(Modifier.height(14.dp))
 
@@ -897,7 +897,7 @@ private fun ContactsSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .border(1.dp, palette.border.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
+                .border(1.dp, palette.border, RoundedCornerShape(20.dp))
                 .background(palette.cardSurface),
         ) {
             if (contacts.isEmpty()) {
@@ -1016,7 +1016,7 @@ private fun ContactRow(
                     .fillMaxWidth()
                     .padding(horizontal = 14.dp)
                     .height(1.dp)
-                    .background(palette.border.copy(alpha = 0.5f)),
+                    .background(palette.border),
             )
         }
     }
@@ -1075,7 +1075,7 @@ private fun BlockedContactsSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .border(1.dp, palette.border.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
+                .border(1.dp, palette.border, RoundedCornerShape(20.dp))
                 .background(palette.cardSurface),
         ) {
             if (blocked.isEmpty()) {
@@ -1179,7 +1179,7 @@ private fun BlockedRow(
                     .fillMaxWidth()
                     .padding(horizontal = 14.dp)
                     .height(1.dp)
-                    .background(palette.border.copy(alpha = 0.5f)),
+                    .background(palette.border),
             )
         }
     }

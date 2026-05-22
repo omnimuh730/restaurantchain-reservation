@@ -317,7 +317,7 @@ private fun GiftFront(palette: com.mh.restaurantchainreservation.core.designsyst
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .background(palette.mutedSurface)
-            .border(1.dp, palette.border.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+            .border(1.dp, palette.border, RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -333,7 +333,7 @@ private fun GiftFront(palette: com.mh.restaurantchainreservation.core.designsyst
 private fun GiftBack(reward: DailyReward, picked: Boolean, modifier: Modifier) {
     val palette = LocalRestaurantPalette.current
     val bg = if (picked) palette.brand.copy(alpha = 0.10f) else palette.mutedSurface.copy(alpha = 0.4f)
-    val borderColor = if (picked) palette.brand else palette.border.copy(alpha = 0.3f)
+    val borderColor = if (picked) palette.brand else palette.border
     val borderWidth: Dp = if (picked) 2.dp else 1.dp
     Box(
         modifier = modifier
@@ -388,7 +388,7 @@ private fun RewardSummary(reward: DailyReward?) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(palette.mutedSurface.copy(alpha = 0.5f))
-            .border(1.dp, palette.border.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+            .border(1.dp, palette.border, RoundedCornerShape(12.dp))
             .padding(14.dp),
     ) {
         Text(

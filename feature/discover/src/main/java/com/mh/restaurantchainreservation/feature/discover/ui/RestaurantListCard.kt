@@ -74,7 +74,7 @@ fun RestaurantListCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(palette.cardSurface)
-            .border(1.dp, palette.borderSoft, RoundedCornerShape(20.dp)),
+            .border(1.dp, palette.border, RoundedCornerShape(20.dp)),
     ) {
         Column(
             modifier = Modifier.clickable(onClick = onClick),

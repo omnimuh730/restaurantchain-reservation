@@ -839,7 +839,7 @@ private fun AuthSurface(
     val palette = LocalRestaurantPalette.current
     val base = Modifier
         .fillMaxSize()
-        .background(palette.cardSurface)
+        .background(palette.pageBackground)
         .statusBarsPadding()
     Box(modifier = modifier.then(base), contentAlignment = Alignment.TopCenter) {
         val columnModifier = Modifier
@@ -1224,7 +1224,7 @@ private fun DemoHint() {
             .padding(top = 16.dp)
             .clip(RoundedCornerShape(22.dp))
             .background(palette.mutedSurface.copy(alpha = 0.65f))
-            .border(1.dp, palette.borderSoft, RoundedCornerShape(22.dp))
+            .border(1.dp, palette.border, RoundedCornerShape(22.dp))
             .padding(14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -1343,7 +1343,7 @@ private fun RegisterStepBottomBar(
             .navigationBarsPadding()
             .imePadding(),
     ) {
-        HorizontalDivider(color = palette.border.copy(alpha = 0.65f))
+        HorizontalDivider(color = palette.border)
         Column(
             modifier = Modifier
                 .fillMaxWidth()

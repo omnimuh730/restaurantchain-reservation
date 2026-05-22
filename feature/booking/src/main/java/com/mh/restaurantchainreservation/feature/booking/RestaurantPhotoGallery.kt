@@ -128,7 +128,7 @@ fun RestaurantPhotoGridScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             PhotoGridTopBar(
@@ -201,9 +201,7 @@ private fun PhotoGridTopBar(
             .drawBehind {
                 if (showBottomBorder) {
                     drawLine(
-                        color = palette.border.copy(
-                            alpha = CollapsingTitleHeaderMetrics.stickyHeaderBorderAlphaMultiplier,
-                        ),
+                        color = palette.border,
                         start = Offset(0f, size.height - strokePx * 0.5f),
                         end = Offset(size.width, size.height - strokePx * 0.5f),
                         strokeWidth = strokePx,
@@ -272,7 +270,7 @@ fun RestaurantPhotoFullscreenViewer(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(Color.Black),
     ) {
         Box(
             modifier = Modifier
@@ -292,7 +290,7 @@ fun RestaurantPhotoFullscreenViewer(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(palette.cardSurface)
+                        .background(Color.Black)
                         .graphicsLayer { clip = true },
                 ) {
                     FullscreenPhotoPage(

@@ -7,7 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import com.mh.restaurantchainreservation.core.designsystem.theme.RestaurantTheme
-import com.mh.restaurantchainreservation.core.designsystem.theme.rememberThemeController
 import com.mh.restaurantchainreservation.core.i18n.LocaleManager
 import com.mh.restaurantchainreservation.core.model.AuthSessionStore
 import com.mh.restaurantchainreservation.core.model.DailyBonusStore
@@ -24,9 +23,8 @@ class MainActivity : ComponentActivity() {
         DailyBonusStore.init(applicationContext)
         enableEdgeToEdge()
         setContent {
-            val themeController = rememberThemeController(applicationContext)
             val windowSizeClass = calculateWindowSizeClass(this)
-            RestaurantTheme(preference = themeController.preference) {
+            RestaurantTheme {
                 RestaurantNavHost(windowSizeClass = windowSizeClass)
             }
         }

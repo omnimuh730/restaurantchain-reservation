@@ -120,7 +120,7 @@ fun ProfileHubScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         val listState = rememberLazyListState()
         val density = LocalDensity.current
@@ -262,7 +262,7 @@ private fun ProfileHubCollapsingHeader(
                     .shadow(elevation = 4.dp, shape = CircleShape)
                     .clip(CircleShape)
                     .background(palette.cardSurface)
-                    .border(1.dp, palette.border.copy(alpha = 0.4f), CircleShape)
+                    .border(1.dp, palette.border, CircleShape)
                     .clickable(
                         role = Role.Button,
                         onClickLabel = stringResource(I18nR.string.profile_hub_notifications_aria),

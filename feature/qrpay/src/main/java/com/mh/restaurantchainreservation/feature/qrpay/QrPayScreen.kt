@@ -98,7 +98,7 @@ fun QrPayScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface)
+            .background(palette.pageBackground)
             .windowInsetsPadding(WindowInsets.systemBars),
     ) {
         QrPayHeader(
@@ -164,7 +164,7 @@ private fun QrPayHeader(
         modifier = Modifier
             .fillMaxWidth()
             .background(palette.cardSurface)
-            .border(width = 1.dp, color = palette.borderSoft)
+            .border(width = 1.dp, color = palette.border)
             .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -475,7 +475,7 @@ private fun PayToCard(payTo: String) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(palette.cardSurface)
-            .border(1.dp, palette.borderSoft, RoundedCornerShape(20.dp))
+            .border(1.dp, palette.border, RoundedCornerShape(20.dp))
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -523,7 +523,7 @@ private fun AmountCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
             .background(palette.cardSurface)
-            .border(1.dp, palette.borderSoft, RoundedCornerShape(24.dp))
+            .border(1.dp, palette.border, RoundedCornerShape(24.dp))
             .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

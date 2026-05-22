@@ -276,7 +276,7 @@ private fun PlaceRow(place: UserLocation, selected: Boolean, showDivider: Boolea
             }
         }
         if (showDivider) {
-            Box(Modifier.fillMaxWidth().height(1.dp).padding(start = 64.dp).background(palette.border.copy(alpha = 0.55f)))
+            Box(Modifier.fillMaxWidth().height(1.dp).padding(start = 64.dp).background(palette.border))
         }
     }
 }

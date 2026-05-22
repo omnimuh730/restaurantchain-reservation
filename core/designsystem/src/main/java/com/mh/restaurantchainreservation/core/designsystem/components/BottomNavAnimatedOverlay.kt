@@ -42,7 +42,7 @@ fun BottomNavAnimatedOverlay(
     val navigationBarInsetPx = WindowInsets.navigationBars.getBottom(density)
     val minBarLayoutPx = remember(density, navigationBarInsetPx) {
         with(density) {
-            (BottomNavTopBorderWidth + BottomNavTabRowHeight).toPx().roundToInt() + navigationBarInsetPx
+            BottomNavTabRowHeight.toPx().roundToInt() + navigationBarInsetPx
         }
     }
     val layoutHeightPx = maxOf(barLayoutHeightPx, minBarLayoutPx)
