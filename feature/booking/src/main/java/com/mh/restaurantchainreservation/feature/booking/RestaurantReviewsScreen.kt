@@ -1,17 +1,11 @@
 package com.mh.restaurantchainreservation.feature.booking
 
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,9 +24,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.snapshotFlow
@@ -54,6 +49,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -64,18 +60,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.graphics.lerp as lerpColor
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
+import android.app.Activity
+import androidx.core.view.WindowCompat
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -84,9 +89,14 @@ import java.text.NumberFormat
 import java.util.Locale
 
 private val StarAccent = RestaurantColors.Semantic.starAmber
-private val HeaderExpandedHeight = 536.dp
-private val HeaderCompactHeight = 72.dp
-private val SearchModeHeaderHeight = HeaderCompactHeight + 60.dp
+/** Matches [DetailTopBar] action row. */
+private val ReviewsTopBarRowHeight = 56.dp
+private val ReviewsTopBarHorizontalPadding = 16.dp
+/** Scroll span after the section divider touches the header bottom (gray → white + border). */
+private val Phase2HeaderWhiteTransitionRange = 48.dp
+/** Compact header chrome slides up over this distance once inline toolbar is gone. */
+private val CompactHeaderEnterSlideDp = 12.dp
+private const val CompactHeaderEnterDurationMs = 280
 private const val InitialReviewCount = 5
 private const val ReviewBatchSize = 5
 
@@ -121,7 +131,6 @@ private val subRatingMetrics = listOf(
 
 private data class ReviewSubCategory(val key: String, val emoji: String, val value: Int?)
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RestaurantReviewsScreen(
     restaurant: Restaurant,
@@ -134,11 +143,10 @@ fun RestaurantReviewsScreen(
     var entered by remember { mutableStateOf(false) }
     var showHowReviewsWork by remember { mutableStateOf(false) }
     var sortOpen by remember { mutableStateOf(false) }
-    var sortMenuFromCompactHeader by remember { mutableStateOf(false) }
     var sortBy by remember { mutableStateOf(ReviewSortBy.MostRecent) }
     var searchOpen by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
-    var compactHeader by remember { mutableStateOf(false) }
+    var sortMenuFromCompactHeader by remember { mutableStateOf(false) }
     var reviewLimit by remember { mutableIntStateOf(InitialReviewCount) }
 
     val listState = rememberLazyListState()
@@ -180,24 +188,51 @@ fun RestaurantReviewsScreen(
     }
 
     val density = LocalDensity.current
-    val compactThresholdPx = with(density) { 64.dp.toPx() }
-    val expandThresholdPx = with(density) { 24.dp.toPx() }
+    val phase2RangePx = with(density) { Phase2HeaderWhiteTransitionRange.toPx() }
+    val compactHeaderSlidePx = with(density) { CompactHeaderEnterSlideDp.toPx() }
+    var statsSectionHeightPx by remember { mutableIntStateOf(0) }
+    var topBarHeightPx by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(listState) {
-        snapshotFlow {
-            if (listState.firstVisibleItemIndex > 0) {
-                Float.MAX_VALUE
+    val headerTransition by remember(
+        searchOpen,
+        listState,
+        statsSectionHeightPx,
+        topBarHeightPx,
+        phase2RangePx,
+    ) {
+        derivedStateOf {
+            if (searchOpen) {
+                ReviewsHeaderTransition(phase2Progress = 1f, showCompactHeader = true)
             } else {
-                listState.firstVisibleItemScrollOffset.toFloat()
-            }
-        }.collect { top ->
-            compactHeader = when {
-                !compactHeader && top > compactThresholdPx -> true
-                compactHeader && top < expandThresholdPx -> false
-                else -> compactHeader
+                computeReviewsHeaderTransition(
+                    listState = listState,
+                    statsSectionHeightPx = statsSectionHeightPx,
+                    topBarHeightPx = topBarHeightPx,
+                    phase2RangePx = phase2RangePx,
+                )
             }
         }
     }
+    val phase2Progress = headerTransition.phase2Progress
+    val rawShowCompactHeader = headerTransition.showCompactHeader
+
+    val compactHeaderProgress by animateFloatAsState(
+        targetValue = if (rawShowCompactHeader) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = CompactHeaderEnterDurationMs,
+            easing = FastOutSlowInEasing,
+        ),
+        label = "reviewsCompactHeader",
+    )
+
+    val topBarSurfaceColor =
+        if (searchOpen) {
+            palette.pageBackground
+        } else if (phase2Progress <= 0f) {
+            palette.mutedSurface
+        } else {
+            lerpColor(palette.mutedSurface, palette.pageBackground, phase2Progress)
+        }
 
     val screenWidthPx = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
     val slideProgress by animateFloatAsState(
@@ -206,79 +241,81 @@ fun RestaurantReviewsScreen(
         label = "reviewsSlide",
     )
 
-    Box(
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = topBarSurfaceColor.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
+        }
+    }
+
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.statusBars)
             .graphicsLayer { translationX = slideProgress * screenWidthPx }
             .background(palette.pageBackground),
     ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 48.dp),
-        ) {
-            stickyHeader(key = "reviews-stats-header") {
-                ReviewsStickyHeader(
-                    restaurant = restaurant,
-                    searchOpen = searchOpen,
-                    compactHeader = compactHeader,
-                    sortBy = sortBy,
-                    sortOpen = sortOpen,
-                    compactSortMenuExpanded = sortOpen && sortMenuFromCompactHeader,
-                    onSortOpenChange = { open ->
-                        sortOpen = open
-                        if (open) sortMenuFromCompactHeader = true
-                    },
-                    onSortByChange = {
-                        sortBy = it
-                        sortOpen = false
-                    },
-                    onSearchOpen = {
-                        sortOpen = false
-                        searchOpen = true
-                    },
-                    onBack = onBack,
-                    onShowHowReviewsWork = { showHowReviewsWork = true },
-                    searchText = searchText,
-                    onSearchTextChange = { searchText = it },
-                    onCancelSearch = {
-                        searchOpen = false
-                        searchText = ""
-                    },
-                )
-            }
-
-            item(key = "reviews-body") {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                        .padding(top = 20.dp),
-                ) {
-                    ReviewsToolbar(
-                        reviewCount = sortedAndFiltered.size,
-                        searchOpen = searchOpen,
-                        sortBy = sortBy,
-                        sortOpen = sortOpen,
-                        onSortOpenChange = { open ->
-                            sortOpen = open
-                            if (open) sortMenuFromCompactHeader = false
-                        },
-                        onSortByChange = {
-                            sortBy = it
-                            sortOpen = false
-                        },
-                        onSearchOpen = {
-                            sortOpen = false
-                            searchOpen = true
-                        },
-                        sortMenuExpanded = sortOpen && !sortMenuFromCompactHeader,
-                    )
-
-                    Spacer(Modifier.height(4.dp))
+        Box(modifier = Modifier.weight(1f)) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 48.dp),
+            ) {
+                if (!searchOpen) {
+                    item(key = "reviews-stats") {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(palette.mutedSurface)
+                                .onSizeChanged { statsSectionHeightPx = it.height },
+                        ) {
+                            ReviewsStatsExpandedContent(
+                                restaurant = restaurant,
+                                onShowHowReviewsWork = { showHowReviewsWork = true },
+                                sectionDividerAlpha =
+                                    if (phase2Progress <= 0f) 1f else 1f - phase2Progress,
+                            )
+                        }
+                    }
                 }
-            }
+
+                item(key = "reviews-toolbar") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(palette.pageBackground),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp)
+                                .padding(top = 20.dp),
+                        ) {
+                            ReviewsToolbar(
+                                reviewCount = sortedAndFiltered.size,
+                                searchOpen = searchOpen,
+                                sortBy = sortBy,
+                                sortOpen = sortOpen,
+                                onSortOpenChange = { open ->
+                                    sortOpen = open
+                                    if (open) sortMenuFromCompactHeader = false
+                                },
+                                onSortByChange = {
+                                    sortBy = it
+                                    sortOpen = false
+                                },
+                                onSearchOpen = {
+                                    sortOpen = false
+                                    searchOpen = true
+                                },
+                                sortMenuExpanded = sortOpen && !sortMenuFromCompactHeader,
+                            )
+
+                            Spacer(Modifier.height(4.dp))
+                        }
+                    }
+                }
 
             itemsIndexed(
                 items = visibleReviews,
@@ -317,18 +354,65 @@ fun RestaurantReviewsScreen(
                     }
                 }
             }
-        }
+            }
 
-        if (sortOpen) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() },
-                        onClick = { sortOpen = false },
-                    ),
-            )
+            if (searchOpen) {
+                ReviewsFixedSearchHeader(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .zIndex(2f)
+                        .onSizeChanged { topBarHeightPx = it.height },
+                    surfaceColor = topBarSurfaceColor,
+                    searchText = searchText,
+                    onSearchTextChange = { searchText = it },
+                    onCancelSearch = {
+                        searchOpen = false
+                        searchText = ""
+                    },
+                    onBack = onBack,
+                )
+            } else {
+                ReviewsTopActionBar(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .zIndex(2f)
+                        .onSizeChanged { topBarHeightPx = it.height },
+                    surfaceColor = topBarSurfaceColor,
+                    phase2Progress = phase2Progress,
+                    compactHeaderProgress = compactHeaderProgress,
+                    compactHeaderSlidePx = compactHeaderSlidePx,
+                    sortBy = sortBy,
+                    sortMenuExpanded = sortOpen && sortMenuFromCompactHeader,
+                    onSortOpenChange = { open ->
+                        sortOpen = open
+                        if (open) sortMenuFromCompactHeader = true
+                    },
+                    onSortByChange = {
+                        sortBy = it
+                        sortOpen = false
+                    },
+                    onSearchOpen = {
+                        sortOpen = false
+                        searchOpen = true
+                    },
+                    onBack = onBack,
+                )
+            }
+
+            if (sortOpen) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(3f)
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() },
+                            onClick = { sortOpen = false },
+                        ),
+                )
+            }
         }
     }
 
@@ -337,84 +421,148 @@ fun RestaurantReviewsScreen(
     }
 }
 
+private data class ReviewsHeaderTransition(
+    /** Gray → white header background while section divider reaches header bottom. */
+    val phase2Progress: Float,
+    /** True once inline toolbar has fully scrolled under the header (then show compact chrome). */
+    val showCompactHeader: Boolean,
+)
+
+/**
+ * Scroll-linked header metrics: linear phase 2; compact chrome only after inline toolbar is gone.
+ */
+private fun computeReviewsHeaderTransition(
+    listState: LazyListState,
+    statsSectionHeightPx: Int,
+    topBarHeightPx: Int,
+    phase2RangePx: Float,
+): ReviewsHeaderTransition {
+    val layoutInfo = listState.layoutInfo
+    val visibleItems = layoutInfo.visibleItemsInfo
+    val statsItem = visibleItems.find { it.key == "reviews-stats" }
+    val toolbarItem = visibleItems.find { it.key == "reviews-toolbar" }
+    val headerBottomPx = topBarHeightPx.coerceAtLeast(1)
+
+    val phase2Progress =
+        when {
+            statsItem == null -> 1f
+            statsSectionHeightPx <= 0 -> 0f
+            else -> {
+                val dividerBottomInLazy = statsItem.offset + statsSectionHeightPx
+                val gapToHeaderBottom = dividerBottomInLazy - headerBottomPx
+                when {
+                    gapToHeaderBottom > 0 -> 0f
+                    else -> (-gapToHeaderBottom.toFloat() / phase2RangePx).coerceIn(0f, 1f)
+                }
+            }
+        }
+
+    val showCompactHeader =
+        phase2Progress >= 1f &&
+            when (val toolbar = toolbarItem) {
+                null -> listState.firstVisibleItemIndex > 0
+                else -> toolbar.offset + toolbar.size <= headerBottomPx
+            }
+
+    return ReviewsHeaderTransition(
+        phase2Progress = phase2Progress,
+        showCompactHeader = showCompactHeader,
+    )
+}
+
 @Composable
-private fun ReviewsStickyHeader(
-    restaurant: Restaurant,
-    searchOpen: Boolean,
-    searchText: String,
-    onSearchTextChange: (String) -> Unit,
-    onCancelSearch: () -> Unit,
-    compactHeader: Boolean,
+private fun ReviewsTopActionBar(
+    surfaceColor: Color,
+    phase2Progress: Float,
+    compactHeaderProgress: Float,
+    compactHeaderSlidePx: Float,
     sortBy: ReviewSortBy,
-    sortOpen: Boolean,
-    compactSortMenuExpanded: Boolean,
+    sortMenuExpanded: Boolean,
     onSortOpenChange: (Boolean) -> Unit,
     onSortByChange: (ReviewSortBy) -> Unit,
     onSearchOpen: () -> Unit,
     onBack: () -> Unit,
-    onShowHowReviewsWork: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val headerHeight by animateDpAsState(
-        targetValue = when {
-            searchOpen -> SearchModeHeaderHeight
-            compactHeader -> HeaderCompactHeight
-            else -> HeaderExpandedHeight
-        },
-        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
-        label = "headerHeight",
-    )
 
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(headerHeight),
-        color = palette.pageBackground,
-        shadowElevation = if (compactHeader || searchOpen) 2.dp else 0.dp,
+    Column(
+        modifier = modifier
+            .background(surfaceColor),
     ) {
-        if (searchOpen) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .windowInsetsTopHeight(WindowInsets.statusBars)
+                .background(surfaceColor),
+        )
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = surfaceColor,
+            shadowElevation = if (phase2Progress >= 1f) 2.dp else 0.dp,
+        ) {
+            ReviewsHeaderActionRow(
+                surfaceColor = surfaceColor,
+                compactHeaderProgress = compactHeaderProgress,
+                compactHeaderSlidePx = compactHeaderSlidePx,
+                sortBy = sortBy,
+                sortMenuExpanded = sortMenuExpanded,
+                onSortOpenChange = onSortOpenChange,
+                onSortByChange = onSortByChange,
+                onSearchOpen = onSearchOpen,
+                onBack = onBack,
+            )
+        }
+        if (phase2Progress > 0f) {
+            HorizontalDivider(
+                modifier = Modifier.alpha(phase2Progress),
+                color = palette.border,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReviewsFixedSearchHeader(
+    surfaceColor: Color,
+    searchText: String,
+    onSearchTextChange: (String) -> Unit,
+    onCancelSearch: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .background(surfaceColor),
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .windowInsetsTopHeight(WindowInsets.statusBars)
+                .background(surfaceColor),
+        )
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = surfaceColor,
+            shadowElevation = 2.dp,
+        ) {
             ReviewsSearchModeHeader(
                 searchText = searchText,
                 onSearchTextChange = onSearchTextChange,
                 onCancel = onCancelSearch,
                 onBack = onBack,
             )
-        } else {
-            Box(modifier = Modifier.fillMaxSize()) {
-                ReviewsHeaderActionRow(
-                    compactHeader = compactHeader,
-                    sortBy = sortBy,
-                    sortMenuExpanded = compactSortMenuExpanded,
-                    onSortOpenChange = onSortOpenChange,
-                    onSortByChange = onSortByChange,
-                    onSearchOpen = onSearchOpen,
-                    onBack = onBack,
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = HeaderCompactHeight)
-                        .alpha(if (compactHeader) 0f else 1f)
-                        .scale(if (compactHeader) 0.95f else 1f),
-                ) {
-                    if (!compactHeader) {
-                        ReviewsStatsExpandedContent(
-                            restaurant = restaurant,
-                            onShowHowReviewsWork = onShowHowReviewsWork,
-                        )
-                    }
-                }
-            }
         }
+        val palette = LocalRestaurantPalette.current
+        HorizontalDivider(color = palette.border)
     }
-
-    HorizontalDivider(color = palette.border)
 }
 
 @Composable
 private fun ReviewsHeaderActionRow(
-    compactHeader: Boolean,
+    surfaceColor: Color,
+    compactHeaderProgress: Float,
+    compactHeaderSlidePx: Float,
     sortBy: ReviewSortBy,
     sortMenuExpanded: Boolean,
     onSortOpenChange: (Boolean) -> Unit,
@@ -423,22 +571,18 @@ private fun ReviewsHeaderActionRow(
     onBack: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
+    val compactSlideY = compactHeaderSlidePx * (1f - compactHeaderProgress)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(HeaderCompactHeight)
-            .padding(horizontal = if (compactHeader) 16.dp else 20.dp),
+            .height(ReviewsTopBarRowHeight)
+            .padding(horizontal = ReviewsTopBarHorizontalPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onBack,
-                ),
-            contentAlignment = Alignment.Center,
+        ReviewsGlassCircleButton(
+            onClick = onBack,
+            background = surfaceColor,
         ) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
@@ -448,81 +592,134 @@ private fun ReviewsHeaderActionRow(
             )
         }
 
-        Text(
-            text = "Reviews",
-            color = palette.foreground,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.ExtraBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier
-                .padding(start = 12.dp)
-                .weight(1f)
-                .alpha(if (compactHeader) 1f else 0f),
-        )
-
-        AnimatedVisibility(
-            visible = compactHeader,
-            enter = fadeIn(tween(300)) + slideInHorizontally { it / 4 },
-            exit = fadeOut(tween(200)),
-        ) {
+        if (compactHeaderProgress > 0.01f) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 12.dp)
+                    .graphicsLayer {
+                        alpha = compactHeaderProgress
+                        translationY = compactSlideY
+                    },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box {
-                    Row(
-                        modifier = Modifier
-                            .height(36.dp)
-                            .clip(RoundedCornerShape(percent = 50))
-                            .border(1.dp, palette.border, RoundedCornerShape(percent = 50))
-                            .background(palette.cardSurface)
-                            .clickable { onSortOpenChange(!sortMenuExpanded) },
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Icon(
-                            Icons.Outlined.Tune,
-                            contentDescription = null,
-                            tint = palette.foreground,
-                            modifier = Modifier
-                                .padding(start = 12.dp)
-                                .size(16.dp),
-                        )
-                        Text(
-                            text = sortBy.label(),
-                            color = palette.foreground,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(end = 12.dp),
-                        )
-                    }
-                    SortDropdownMenu(
-                        expanded = sortMenuExpanded,
-                        sortBy = sortBy,
-                        onDismiss = { onSortOpenChange(false) },
-                        onSortByChange = onSortByChange,
-                    )
-                }
+                Text(
+                    text = "Reviews",
+                    color = palette.foreground,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
 
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .border(1.dp, palette.border, CircleShape)
-                        .background(palette.cardSurface)
-                        .clickable(onClick = onSearchOpen),
-                    contentAlignment = Alignment.Center,
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(
-                        Icons.Outlined.Search,
-                        contentDescription = "Search reviews",
-                        tint = palette.foreground,
-                        modifier = Modifier.size(18.dp),
+                    ReviewsCompactSortSearchActions(
+                        sortBy = sortBy,
+                        sortMenuExpanded = sortMenuExpanded,
+                        onSortOpenChange = onSortOpenChange,
+                        onSortByChange = onSortByChange,
+                        onSearchOpen = onSearchOpen,
+                        sortButtonHeight = 36.dp,
+                        searchButtonSize = 36.dp,
+                        sortIconSize = 16.dp,
+                        searchIconSize = 18.dp,
+                        sortTextSize = 14.sp,
                     )
                 }
             }
+        } else {
+            Spacer(modifier = Modifier.weight(1f))
         }
+    }
+}
+
+@Composable
+private fun ReviewsCompactSortSearchActions(
+    sortBy: ReviewSortBy,
+    sortMenuExpanded: Boolean,
+    onSortOpenChange: (Boolean) -> Unit,
+    onSortByChange: (ReviewSortBy) -> Unit,
+    onSearchOpen: () -> Unit,
+    sortButtonHeight: Dp,
+    searchButtonSize: Dp,
+    sortIconSize: Dp,
+    searchIconSize: Dp,
+    sortTextSize: TextUnit,
+) {
+    val palette = LocalRestaurantPalette.current
+
+    Box {
+        Row(
+            modifier = Modifier
+                .height(sortButtonHeight)
+                .clip(RoundedCornerShape(percent = 50))
+                .border(1.dp, palette.border, RoundedCornerShape(percent = 50))
+                .background(palette.cardSurface)
+                .clickable { onSortOpenChange(!sortMenuExpanded) },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(
+                Icons.Outlined.Tune,
+                contentDescription = null,
+                tint = palette.foreground,
+                modifier = Modifier
+                    .padding(start = 12.dp)
+                    .size(sortIconSize),
+            )
+            Text(
+                text = sortBy.label(),
+                color = palette.foreground,
+                fontSize = sortTextSize,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(end = 12.dp),
+            )
+        }
+        SortDropdownMenu(
+            expanded = sortMenuExpanded,
+            sortBy = sortBy,
+            onDismiss = { onSortOpenChange(false) },
+            onSortByChange = onSortByChange,
+        )
+    }
+
+    Box(
+        modifier = Modifier
+            .size(searchButtonSize)
+            .clip(CircleShape)
+            .border(1.dp, palette.border, CircleShape)
+            .background(palette.cardSurface)
+            .clickable(onClick = onSearchOpen),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            Icons.Outlined.Search,
+            contentDescription = "Search reviews",
+            tint = palette.foreground,
+            modifier = Modifier.size(searchIconSize),
+        )
+    }
+}
+
+@Composable
+private fun ReviewsGlassCircleButton(
+    onClick: () -> Unit,
+    background: Color,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(background)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
     }
 }
 
@@ -530,43 +727,48 @@ private fun ReviewsHeaderActionRow(
 private fun ReviewsStatsExpandedContent(
     restaurant: Restaurant,
     onShowHowReviewsWork: () -> Unit,
+    sectionDividerAlpha: Float = 1f,
 ) {
     val palette = LocalRestaurantPalette.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 40.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = formatRating(restaurant.rating),
-            color = palette.foreground,
-            fontSize = 56.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = "Based on ${NumberFormat.getIntegerInstance(Locale.US).format(restaurant.reviews)} guest reviews",
-            color = palette.mutedForeground,
-            fontSize = 15.sp,
-            lineHeight = 24.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-        Text(
-            text = "How reviews work",
-            color = palette.foreground,
-            fontSize = 14.sp,
-            textDecoration = TextDecoration.Underline,
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
             modifier = Modifier
-                .padding(top = 8.dp)
-                .clickable(onClick = onShowHowReviewsWork),
-        )
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+        ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = formatRating(restaurant.rating),
+                color = palette.foreground,
+                fontSize = 56.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = "Based on ${NumberFormat.getIntegerInstance(Locale.US).format(restaurant.reviews)} guest reviews",
+                color = palette.mutedForeground,
+                fontSize = 15.sp,
+                lineHeight = 24.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+            Text(
+                text = "How reviews work",
+                color = palette.mutedForeground,
+                fontSize = 14.sp,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .clickable(onClick = onShowHowReviewsWork),
+            )
+        }
 
         HorizontalDivider(
             color = palette.border,
-            modifier = Modifier.padding(top = 24.dp),
+            modifier = Modifier.padding(top = 20.dp),
         )
 
         Row(
@@ -663,6 +865,16 @@ private fun ReviewsStatsExpandedContent(
                 }
             }
         }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        HorizontalDivider(
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(sectionDividerAlpha),
+            color = palette.border,
+        )
     }
 }
 
@@ -704,7 +916,7 @@ private fun ReviewsSearchModeHeader(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(HeaderCompactHeight),
+                .height(ReviewsTopBarRowHeight),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
