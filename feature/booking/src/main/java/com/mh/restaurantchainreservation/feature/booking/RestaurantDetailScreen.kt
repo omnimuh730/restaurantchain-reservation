@@ -91,12 +91,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.badge.AnimatedGuestFavoriteCenterBadge
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuSeeAllCard
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuTile
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
+import com.mh.restaurantchainreservation.core.model.withDerivedGuestFavoriteLevel
 import java.text.NumberFormat
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
@@ -114,6 +116,8 @@ private val DetailListBottomPadding = 148.dp
 private val ReviewsScrollGapAboveBookingBar = 16.dp
 /** Booking bar row (padding + price + Reserve), excluding system nav inset handled on the bar. */
 private val BookingBarEstimatedHeight = 84.dp
+private val DetailStatsSideColumnWeight = 0.9f
+private val DetailStatsCenterColumnWeight = 1.75f
 private val DetailStatsDividerHeight = 36.dp
 private val DetailStatsRowVerticalPadding = 20.dp
 private val BookingBarTopShadowElevation = 10.dp
@@ -217,8 +221,10 @@ fun RestaurantDetailScreen(
 ) {
     val palette = LocalRestaurantPalette.current
     val restaurant = remember(restaurantId) {
-        com.mh.restaurantchainreservation.core.model.DiscoverData.findById(restaurantId)
-            ?: com.mh.restaurantchainreservation.core.model.DiscoverData.MONTHLY_BEST.first()
+        (
+            com.mh.restaurantchainreservation.core.model.DiscoverData.findById(restaurantId)
+                ?: com.mh.restaurantchainreservation.core.model.DiscoverData.MONTHLY_BEST.first()
+            ).withDerivedGuestFavoriteLevel()
     }
     var loadPhase by remember(restaurantId) { mutableStateOf(DetailLoadPhase.Shell) }
     var loadedPayload by remember(restaurantId) { mutableStateOf<DetailLoadedPayload?>(null) }
@@ -671,6 +677,10 @@ private fun RestaurantDetailLoadingDots(modifier: Modifier = Modifier) {
 @Composable
 private fun RatingsSummaryRow(restaurant: Restaurant, onScrollToReviews: () -> Unit) {
     val palette = LocalRestaurantPalette.current
+    val laurelTier = restaurant.guestFavoriteLevel.toDetailLaurelTier()
+    val showGuestFavorite = restaurant.guestFavoriteLevel.isGuestFavorite()
+    val sideWeight = if (showGuestFavorite) DetailStatsSideColumnWeight else 1f
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -683,7 +693,7 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onScrollToReviews: () -> U
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(sideWeight),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -701,12 +711,25 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onScrollToReviews: () -> U
                 }
             }
         }
+        if (showGuestFavorite) {
+            RatingsSummaryDivider(
+                palette = palette,
+                modifier = Modifier.align(Alignment.CenterVertically),
+            )
+            AnimatedGuestFavoriteCenterBadge(
+                tier = laurelTier,
+                animationKey = restaurant.id,
+                modifier = Modifier.weight(DetailStatsCenterColumnWeight),
+                laurelHeight = 38.dp,
+                titleSize = 20.sp,
+            )
+        }
         RatingsSummaryDivider(
             palette = palette,
             modifier = Modifier.align(Alignment.CenterVertically),
         )
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(sideWeight),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(

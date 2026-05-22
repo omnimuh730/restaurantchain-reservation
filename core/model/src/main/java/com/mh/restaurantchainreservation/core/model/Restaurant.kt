@@ -1,5 +1,15 @@
 package com.mh.restaurantchainreservation.core.model
 
+/** Airbnb-style guest favorite tier for laurel badge artwork. */
+enum class GuestFavoriteLevel {
+    /** No laurel badge. */
+    None,
+    /** Standard guest favorite — black laurel (`leaf`). */
+    Normal,
+    /** Top-tier guest favorite — shown with black laurel on detail. */
+    High,
+}
+
 /**
  * Display-ready restaurant card model. Mirrors React `RestaurantData` from
  * `src/app/pages/detail/restaurantDetailData.ts` with the i18n labels already
@@ -16,7 +26,31 @@ data class Restaurant(
     val image: String,
     val area: String? = null,
     val tag: String? = null,
+    val guestFavoriteLevel: GuestFavoriteLevel = GuestFavoriteLevel.None,
 )
+
+/** Derives a guest-favorite tier from rating, review volume, and marketing tags. */
+fun deriveGuestFavoriteLevel(
+    rating: Double,
+    reviews: Int,
+    tag: String? = null,
+): GuestFavoriteLevel = when {
+    rating >= 4.75 && reviews >= 800 -> GuestFavoriteLevel.High
+    rating >= 4.5 && reviews >= 350 -> GuestFavoriteLevel.Normal
+    tag?.contains("favorite", ignoreCase = true) == true -> GuestFavoriteLevel.Normal
+    tag?.contains("Monthly Best", ignoreCase = true) == true && rating >= 4.65 ->
+        GuestFavoriteLevel.High
+    tag?.contains("Romantic", ignoreCase = true) == true && rating >= 4.7 ->
+        GuestFavoriteLevel.High
+    else -> GuestFavoriteLevel.None
+}
+
+fun Restaurant.withDerivedGuestFavoriteLevel(): Restaurant =
+    if (guestFavoriteLevel != GuestFavoriteLevel.None) {
+        this
+    } else {
+        copy(guestFavoriteLevel = deriveGuestFavoriteLevel(rating, reviews, tag))
+    }
 
 /** Mock reservation slot for discover list cards (available vs crossed-out). */
 data class RestaurantTimeSlot(
@@ -396,6 +430,7 @@ object DiscoverData {
     val ALL: List<Restaurant> by lazy {
         (MONTHLY_BEST + LOVED_BY_LOCALS + VIRAL + DATE_NIGHT + buildPriceTierCatalog())
             .distinctBy { it.id }
+            .map { it.withDerivedGuestFavoriteLevel() }
     }
 
     fun findById(id: String): Restaurant? = ALL.firstOrNull { it.id == id }
