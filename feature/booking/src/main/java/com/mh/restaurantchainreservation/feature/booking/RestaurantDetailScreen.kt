@@ -95,6 +95,8 @@ import com.mh.restaurantchainreservation.core.designsystem.badge.AnimatedGuestFa
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuSeeAllCard
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuTile
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
+import com.mh.restaurantchainreservation.core.designsystem.components.ShareWithContactsSheet
+import com.mh.restaurantchainreservation.core.model.SharedContentStore
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
@@ -232,6 +234,7 @@ fun RestaurantDetailScreen(
     var showReviews by remember { mutableStateOf(false) }
     var showHowReviewsWork by remember { mutableStateOf(false) }
     var showAmenities by remember { mutableStateOf(false) }
+    var showShareSheet by remember { mutableStateOf(false) }
     var headerSolid by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -397,8 +400,24 @@ fun RestaurantDetailScreen(
             solid = headerSolid,
             saved = saved,
             onBack = onBack,
+            onShare = { showShareSheet = true },
             onToggleSave = { saved = !saved },
         )
+
+        if (showShareSheet) {
+            val cuisineLine = if (restaurant.cuisine.isNotBlank()) {
+                "${restaurant.cuisine} · ★ ${"%.1f".format(restaurant.rating)}"
+            } else {
+                "★ ${"%.1f".format(restaurant.rating)}"
+            }
+            ShareWithContactsSheet(
+                subtitle = "${restaurant.name} · $cuisineLine",
+                onDismiss = { showShareSheet = false },
+                onShare = { contactIds ->
+                    SharedContentStore.shareRestaurant(restaurant, contactIds)
+                },
+            )
+        }
 
         if (contentReady) {
             BookingBar(
@@ -435,6 +454,7 @@ private fun DetailTopBar(
     solid: Boolean,
     saved: Boolean,
     onBack: () -> Unit,
+    onShare: () -> Unit,
     onToggleSave: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -479,7 +499,7 @@ private fun DetailTopBar(
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                GlassCircleButton(onClick = { }, background = buttonBg) {
+                GlassCircleButton(onClick = onShare, background = buttonBg) {
                     Icon(Icons.Default.Share, "Share", tint = palette.foreground, modifier = Modifier.size(18.dp))
                 }
                 GlassCircleButton(onClick = onToggleSave, background = buttonBg) {

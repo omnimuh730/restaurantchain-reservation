@@ -48,6 +48,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
@@ -243,6 +244,16 @@ fun RestaurantReviewsScreen(
 
     val view = LocalView.current
     if (!view.isInEditMode) {
+        DisposableEffect(view) {
+            val window = (view.context as Activity).window
+            val previousStatusBarColor = window.statusBarColor
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            val previousLightStatusBars = insetsController.isAppearanceLightStatusBars
+            onDispose {
+                window.statusBarColor = previousStatusBarColor
+                insetsController.isAppearanceLightStatusBars = previousLightStatusBars
+            }
+        }
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = topBarSurfaceColor.toArgb()
