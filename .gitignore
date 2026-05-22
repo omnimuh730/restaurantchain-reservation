@@ -24,3 +24,4 @@ build/
 # Local scratch & Android release outputs (not committed)
 .tmp/
 app/release/
+.idea/
