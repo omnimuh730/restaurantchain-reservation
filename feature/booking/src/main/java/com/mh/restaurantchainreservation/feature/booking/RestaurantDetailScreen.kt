@@ -14,7 +14,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -24,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -63,7 +61,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
@@ -81,20 +78,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.mh.restaurantchainreservation.core.designsystem.badge.AnimatedGuestFavoriteCenterBadge
-import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteRatingLaurelRow
-import com.mh.restaurantchainreservation.core.designsystem.badge.guestFavoriteDescription
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuSeeAllCard
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuTile
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
-import com.mh.restaurantchainreservation.core.model.withDerivedGuestFavoriteLevel
 import java.text.NumberFormat
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
@@ -107,8 +99,6 @@ private val HeaderSheetShape = RoundedCornerShape(topStart = SheetTopRadius, top
 private val HeroHeight = 288.dp
 private val DetailInfoHorizontalPadding = 24.dp
 private val DetailListBottomPadding = 148.dp
-private val DetailStatsSideColumnWeight = 0.9f
-private val DetailStatsCenterColumnWeight = 1.75f
 private val DetailStatsDividerHeight = 36.dp
 private val DetailStatsRowVerticalPadding = 20.dp
 private val BookingBarTopShadowElevation = 10.dp
@@ -198,7 +188,6 @@ fun RestaurantDetailScreen(
     val restaurant = remember(restaurantId) {
         com.mh.restaurantchainreservation.core.model.DiscoverData.findById(restaurantId)
             ?: com.mh.restaurantchainreservation.core.model.DiscoverData.MONTHLY_BEST.first()
-                .withDerivedGuestFavoriteLevel()
     }
     var loadPhase by remember(restaurantId) { mutableStateOf(DetailLoadPhase.Shell) }
     var loadedPayload by remember(restaurantId) { mutableStateOf<DetailLoadedPayload?>(null) }
@@ -320,13 +309,6 @@ fun RestaurantDetailScreen(
                                     onShowAll = { showAmenities = true },
                                 )
                                 LocationSection(restaurant = restaurant, ext = payload.ext)
-                                if (restaurant.guestFavoriteLevel.isGuestFavorite()) {
-                                    GuestFavoriteSection(
-                                        restaurant = restaurant,
-                                        reviews = payload.topReviews,
-                                        onOpenReviews = { showReviews = true },
-                                    )
-                                }
                                 CancellationPolicySection()
                                 PopularMenuSection(
                                     onShowMenu = onShowMenu,
@@ -623,10 +605,6 @@ private fun RestaurantDetailLoadingDots(modifier: Modifier = Modifier) {
 @Composable
 private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit) {
     val palette = LocalRestaurantPalette.current
-    val laurelTier = restaurant.guestFavoriteLevel.toLaurelTier()
-    val showBadge = restaurant.guestFavoriteLevel.isGuestFavorite()
-
-    val sideWeight = if (showBadge) DetailStatsSideColumnWeight else 1f
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -639,7 +617,7 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit)
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
-            modifier = Modifier.weight(sideWeight),
+            modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -657,25 +635,12 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit)
                 }
             }
         }
-        if (showBadge) {
-            RatingsSummaryDivider(
-                palette = palette,
-                modifier = Modifier.align(Alignment.CenterVertically),
-            )
-            AnimatedGuestFavoriteCenterBadge(
-                tier = laurelTier,
-                animationKey = restaurant.id,
-                modifier = Modifier.weight(DetailStatsCenterColumnWeight),
-                laurelHeight = 38.dp,
-                titleSize = 20.sp,
-            )
-        }
         RatingsSummaryDivider(
             palette = palette,
             modifier = Modifier.align(Alignment.CenterVertically),
         )
         Column(
-            modifier = Modifier.weight(sideWeight),
+            modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -835,260 +800,6 @@ private fun LocationSection(restaurant: Restaurant, ext: RestaurantExtendedData)
         )
     }
     DetailInsetDivider()
-}
-
-@Composable
-private fun GuestFavoriteSection(
-    restaurant: Restaurant,
-    reviews: List<ReviewEntry>,
-    onOpenReviews: () -> Unit,
-) {
-    val palette = LocalRestaurantPalette.current
-    Column(modifier = Modifier.padding(vertical = 24.dp)) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            GuestFavoriteRatingLaurelRow(
-                tier = restaurant.guestFavoriteLevel.toLaurelTier(),
-                ratingText = formatRating(restaurant.rating),
-                ratingFontSize = 52.sp,
-                laurelHeight = 56.dp,
-            )
-            Text(
-                text = "Guest favorite",
-                color = palette.foreground,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-            guestFavoriteDescription(restaurant.guestFavoriteLevel.toLaurelTier())?.let { description ->
-                Text(
-                    text = description,
-                    color = palette.mutedForeground,
-                    fontSize = 15.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
-                )
-            }
-        }
-        DetailInsetDivider(modifier = Modifier.padding(top = 20.dp, bottom = 10.dp))
-        GuestReviewsCarousel(
-            reviews = reviews,
-            onShowMore = onOpenReviews,
-            modifier = Modifier.padding(top = 20.dp),
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = DetailInfoHorizontalPadding)
-                .padding(top = 20.dp)
-                .height(48.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(palette.mutedSurface)
-                .clickable(onClick = onOpenReviews),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "Show all ${NumberFormat.getIntegerInstance(Locale.US).format(restaurant.reviews)} reviews",
-                color = palette.foreground,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-    }
-    DetailInsetDivider(modifier = Modifier.padding(top = 8.dp))
-}
-
-private val GuestReviewPreviewHeight = 200.dp
-private val ReviewPreviewBodyLineHeight = 22.sp
-private val ReviewPreviewShowMoreRowHeight = 22.dp
-private val ReviewPreviewMaxBodyLines = 3
-private val ReviewCarouselDividerWidth = 1.dp
-private val ReviewCarouselContentPadding = 24.dp
-/** How much of the next card (avatar + text) peeks on the right while the active card is snapped. */
-private const val ReviewCarouselNextPeekFraction = 0.24f
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun GuestReviewsCarousel(
-    reviews: List<ReviewEntry>,
-    onShowMore: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    if (reviews.isEmpty()) return
-
-    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
-        val viewportWidth = maxWidth - DetailInfoHorizontalPadding
-        val nextPeekWidth = viewportWidth * ReviewCarouselNextPeekFraction
-        val pageWidth = viewportWidth - nextPeekWidth
-        val pagerState = rememberPagerState(pageCount = { reviews.size })
-
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = DetailInfoHorizontalPadding)
-                .clipToBounds(),
-            pageSize = PageSize.Fixed(pageWidth),
-            pageSpacing = 0.dp,
-            contentPadding = PaddingValues(end = DetailInfoHorizontalPadding),
-            beyondViewportPageCount = 1,
-        ) { page ->
-            GuestReviewCarouselPage(
-                review = reviews[page],
-                index = page,
-                pageWidth = pageWidth,
-                onShowMore = onShowMore,
-            )
-        }
-    }
-}
-
-@Composable
-private fun GuestReviewCarouselPage(
-    review: ReviewEntry,
-    index: Int,
-    pageWidth: Dp,
-    onShowMore: () -> Unit,
-) {
-    val contentWidth =
-        if (index == 0) {
-            pageWidth
-        } else {
-            pageWidth - ReviewCarouselDividerWidth
-        }
-    Row(
-        modifier = Modifier
-            .width(pageWidth)
-            .clipToBounds(),
-        verticalAlignment = Alignment.Top,
-    ) {
-        if (index > 0) {
-            ReviewPreviewColumnDivider()
-        }
-        GuestReviewPreviewItem(
-            review = review,
-            cardWidth = contentWidth,
-            onShowMore = onShowMore,
-        )
-    }
-}
-
-@Composable
-private fun ReviewPreviewColumnDivider(modifier: Modifier = Modifier) {
-    val palette = LocalRestaurantPalette.current
-    Box(
-        modifier = modifier
-            .width(ReviewCarouselDividerWidth)
-            .height(GuestReviewPreviewHeight)
-            .background(palette.border),
-    )
-}
-
-@Composable
-private fun GuestReviewPreviewItem(
-    review: ReviewEntry,
-    cardWidth: Dp,
-    onShowMore: () -> Unit,
-) {
-    val palette = LocalRestaurantPalette.current
-    val filledStars = review.rating.coerceIn(0, 5)
-
-    Column(
-        modifier = Modifier
-            .width(cardWidth)
-            .height(GuestReviewPreviewHeight)
-            .padding(horizontal = ReviewCarouselContentPadding),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(palette.mutedSurface),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = review.name.take(1).uppercase(),
-                    color = palette.foreground,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = review.name,
-                    color = palette.foreground,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = formatReviewMonthYear(review.publishedAtEpochMs),
-                    color = palette.mutedForeground,
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(top = 2.dp),
-                )
-            }
-        }
-        Row(
-            modifier = Modifier.padding(top = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            repeat(5) { index ->
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = null,
-                    tint = if (index < filledStars) palette.foreground else palette.border,
-                    modifier = Modifier.size(12.dp),
-                )
-            }
-            Text(
-                text = "· ${formatReviewCarouselScore(review)}",
-                color = palette.foreground,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(start = 6.dp),
-            )
-        }
-        Column(
-            modifier = Modifier
-                .padding(top = 10.dp)
-                .fillMaxWidth(),
-        ) {
-            Text(
-                text = review.text,
-                color = palette.foreground,
-                fontSize = 16.sp,
-                lineHeight = ReviewPreviewBodyLineHeight,
-                maxLines = ReviewPreviewMaxBodyLines,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = ReviewPreviewShowMoreRowHeight),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "Show more",
-                    color = palette.foreground,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable(onClick = onShowMore),
-                )
-            }
-        }
-        Spacer(modifier = Modifier.weight(1f))
-    }
 }
 
 @Composable

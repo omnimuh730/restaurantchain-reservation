@@ -78,10 +78,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteRatingLaurelRow
-import com.mh.restaurantchainreservation.core.designsystem.badge.guestFavoriteDescription
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
+import java.text.NumberFormat
+import java.util.Locale
 
 private val StarAccent = RestaurantColors.Semantic.starAmber
 private val HeaderExpandedHeight = 536.dp
@@ -540,41 +540,20 @@ private fun ReviewsStatsExpandedContent(
             .padding(bottom = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        GuestFavoriteRatingLaurelRow(
-            tier = restaurant.guestFavoriteLevel.toLaurelTier(),
-            ratingText = formatRating(restaurant.rating),
-            ratingFontSize = 56.sp,
-            laurelHeight = 72.dp,
+        Text(
+            text = formatRating(restaurant.rating),
+            color = palette.foreground,
+            fontSize = 56.sp,
+            fontWeight = FontWeight.Bold,
         )
-
-        if (restaurant.guestFavoriteLevel.isGuestFavorite()) {
-            Text(
-                text = "Guest favorite",
-                color = palette.foreground,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-            guestFavoriteDescription(restaurant.guestFavoriteLevel.toLaurelTier())?.let { description ->
-                Text(
-                    text = description,
-                    color = palette.mutedForeground,
-                    fontSize = 15.sp,
-                    lineHeight = 24.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
-        } else {
-            Text(
-                text = "Based on ${restaurant.reviews} guest reviews",
-                color = palette.mutedForeground,
-                fontSize = 15.sp,
-                lineHeight = 24.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-        }
+        Text(
+            text = "Based on ${NumberFormat.getIntegerInstance(Locale.US).format(restaurant.reviews)} guest reviews",
+            color = palette.mutedForeground,
+            fontSize = 15.sp,
+            lineHeight = 24.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 8.dp),
+        )
         Text(
             text = "How reviews work",
             color = palette.foreground,

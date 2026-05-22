@@ -388,11 +388,6 @@ fun detailHeaderHoursLine(restaurant: Restaurant, ext: RestaurantExtendedData): 
 fun formatRating(n: Double): String =
     if (n == n.toInt().toDouble()) n.toInt().toString() else n.toString()
 
-fun formatReviewCarouselScore(review: ReviewEntry): String {
-    val score = review.ratingScore ?: review.rating.toDouble()
-    return String.format(Locale.US, "%.1f", score)
-}
-
 fun formatReviewMonthYear(publishedAtEpochMs: Long): String =
     SimpleDateFormat("MMMM yyyy", Locale.US).format(Date(publishedAtEpochMs))
 
