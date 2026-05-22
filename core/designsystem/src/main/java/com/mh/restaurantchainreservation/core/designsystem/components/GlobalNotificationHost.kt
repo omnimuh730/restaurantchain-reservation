@@ -124,7 +124,7 @@ private fun ToastCard(message: GlobalNotificationMessage) {
             .shadow(16.dp, RoundedCornerShape(18.dp))
             .clip(RoundedCornerShape(18.dp))
             .background(palette.cardSurface)
-            .border(1.dp, palette.borderSoft, RoundedCornerShape(18.dp))
+            .border(1.dp, palette.border, RoundedCornerShape(18.dp))
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),

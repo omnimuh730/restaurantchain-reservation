@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -185,6 +186,7 @@ private fun scaledSpec(cardWidth: Dp): ReservationScaledSpec {
 fun NextUpCard(
     booking: Booking,
     onClick: () -> Unit,
+    onQrClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -204,6 +206,7 @@ fun NextUpCard(
             ReservationCardBody(
                 booking = booking,
                 spec = spec,
+                onQrClick = onQrClick,
             )
         }
     }
@@ -213,6 +216,7 @@ fun NextUpCard(
 private fun ReservationCardBody(
     booking: Booking,
     spec: ReservationScaledSpec,
+    onQrClick: () -> Unit,
 ) {
     val density = LocalDensity.current
     val gapPx = with(density) { spec.columnGap.roundToPx() }
@@ -253,6 +257,7 @@ private fun ReservationCardBody(
                 confirmationNo = booking.confirmationNo,
                 spec = spec,
                 panelHeight = with(density) { qrPanelHeightPx.toDp() },
+                onClick = onQrClick,
                 modifier = Modifier.width(rightWidthDp),
             )
         }.first().measure(Constraints.fixed(rightWidth, qrPanelHeightPx))
@@ -705,6 +710,7 @@ private fun QrReservationPanel(
     confirmationNo: String,
     spec: ReservationScaledSpec,
     panelHeight: Dp,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(spec.qrRadius)
@@ -714,6 +720,11 @@ private fun QrReservationPanel(
             .height(panelHeight)
             .fillMaxWidth()
             .clip(shape)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick,
+            )
             .border(spec.qrBorderWidth, PinkLine, shape)
             .background(PinkSoft.copy(alpha = 0.35f))
             .padding(horizontal = spec.qrPaddingH, vertical = spec.qrPaddingV),

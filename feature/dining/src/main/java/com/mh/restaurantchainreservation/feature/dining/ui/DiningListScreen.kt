@@ -111,7 +111,7 @@ fun DiningListScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         val listState = rememberLazyListState()
         val density = LocalDensity.current
@@ -163,6 +163,7 @@ fun DiningListScreen(
                             NextUpCard(
                                 booking = nextBooking,
                                 onClick = { onOpenDetail(nextBooking.id) },
+                                onQrClick = { DiningStore.openShowQR(nextBooking.id) },
                             )
                         } else {
                             EmptyNextCard()

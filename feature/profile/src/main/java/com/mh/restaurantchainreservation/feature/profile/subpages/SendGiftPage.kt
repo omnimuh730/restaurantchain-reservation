@@ -62,7 +62,7 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface)
+            .background(palette.pageBackground)
             .statusBarsPadding(),
     ) {
         Row(

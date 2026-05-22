@@ -99,7 +99,7 @@ fun RestaurantAmenitiesScreen(
         modifier = modifier
             .fillMaxSize()
             .graphicsLayer { translationX = slideProgress * screenWidthPx }
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
         contentPadding = PaddingValues(bottom = 48.dp),
     ) {
         item(key = "amenities-header") {
@@ -193,7 +193,7 @@ private fun AmenityListRow(
         }
         if (showDivider) {
             HorizontalDivider(
-                color = palette.borderSoft,
+                color = palette.border,
                 thickness = 1.dp,
             )
         }

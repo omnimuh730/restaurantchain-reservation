@@ -191,7 +191,7 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         SubpageLazyScaffold(
             title = "Activity",
@@ -309,7 +309,7 @@ private fun LoadingTransactionSkeleton() {
                     .fillMaxWidth()
                     .height(72.dp)
                     .clip(RoundedCornerShape(22.dp))
-                    .border(1.dp, palette.border.copy(alpha = 0.45f), RoundedCornerShape(22.dp))
+                    .border(1.dp, palette.border, RoundedCornerShape(22.dp))
                     .background(palette.cardSurface)
                     .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -363,7 +363,7 @@ private fun GroupCard(items: List<Txn>, onTap: (String) -> Unit) {
     ) {
         items.forEachIndexed { i, t ->
             if (i > 0) {
-                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border.copy(alpha = 0.7f)))
+                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border))
             }
             TxnRow(txn = t, onClick = { onTap(t.id) })
         }
@@ -419,7 +419,7 @@ private fun ActivityStickyDateAndCategoryRow(
         )
         HorizontalDivider(
             modifier = Modifier.padding(top = 10.dp),
-            color = palette.border.copy(alpha = 0.45f),
+            color = palette.border,
         )
     }
 }
@@ -463,7 +463,7 @@ private fun ActivityCategoryChip(
             .clip(shape)
             .border(
                 1.dp,
-                if (isSelected) palette.brand else palette.border.copy(alpha = 0.65f),
+                if (isSelected) palette.brand else palette.border,
                 shape,
             )
             .background(if (isSelected) palette.brand.copy(alpha = 0.10f) else palette.mutedSurface.copy(alpha = 0.45f))
@@ -710,7 +710,7 @@ private fun PeriodPicker(value: DateRangeMs, onChange: (DateRangeMs) -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
-                        .background(palette.border.copy(alpha = 0.7f)),
+                        .background(palette.border),
                 )
                 Row(
                     modifier = Modifier
@@ -1133,7 +1133,7 @@ private fun InvoiceDialog(txn: Txn, onDismiss: () -> Unit) {
             )
 
             Spacer(Modifier.height(16.dp))
-            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border.copy(alpha = 0.7f)))
+            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border))
             Spacer(Modifier.height(16.dp))
 
             if (txn.isDebit && txn.items.isNotEmpty()) {
@@ -1187,14 +1187,14 @@ private fun InvoiceDialog(txn: Txn, onDismiss: () -> Unit) {
                     }
                 }
                 Spacer(Modifier.height(10.dp))
-                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border.copy(alpha = 0.5f)))
+                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border))
                 Spacer(Modifier.height(10.dp))
                 ReceiptLine("Subtotal", "$" + "%.2f".format(txn.subtotal))
                 ReceiptLine("Tax", "$" + "%.2f".format(txn.tax))
                 if (txn.serviceFee > 0) ReceiptLine("Service Fee", "$" + "%.2f".format(txn.serviceFee))
                 if (txn.discount > 0) ReceiptLine("Discount", "-$" + "%.2f".format(txn.discount), valueColor = palette.success)
                 Spacer(Modifier.height(8.dp))
-                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border.copy(alpha = 0.7f)))
+                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border))
                 Spacer(Modifier.height(12.dp))
             }
 
@@ -1362,7 +1362,7 @@ private fun generateMockTransactions(count: Int): List<Txn> {
         RestaurantInfo("Bella Napoli", "789 Pizza St, San Francisco, CA 94102", listOf(InvoiceItem(1, "Margherita Pizza", 18.00), InvoiceItem(1, "Tiramisu", 8.00))),
         RestaurantInfo("Le Petit Bistro", "234 Bistro Ave, San Francisco, CA 94115", listOf(InvoiceItem(1, "Steak Frites", 42.00), InvoiceItem(1, "Red Wine", 15.00))),
         RestaurantInfo("Taco Fiesta", "567 Taco Blvd, San Francisco, CA 94103", listOf(InvoiceItem(1, "Taco Trio", 15.00), InvoiceItem(1, "Guacamole", 4.00))),
-        RestaurantInfo("Gangnam BBQ", "120 Korea Way, San Francisco, CA 94108", listOf(InvoiceItem(1, "Wagyu Set", 48.00), InvoiceItem(1, "Banchan", 6.00))),
+        RestaurantInfo("Mission Smoke BBQ", "789 Mission St, San Francisco, CA 94103", listOf(InvoiceItem(1, "Brisket Plate", 48.00), InvoiceItem(1, "House Pickles", 6.00))),
         RestaurantInfo("Saigon Pho", "88 Mission St, San Francisco, CA 94105", listOf(InvoiceItem(1, "Pho Bowl", 16.00), InvoiceItem(1, "Spring Rolls", 7.00))),
         RestaurantInfo("Verde Trattoria", "321 Vine St, San Francisco, CA 94117", listOf(InvoiceItem(1, "Truffle Pasta", 32.00), InvoiceItem(1, "Affogato", 9.00))),
         RestaurantInfo("The Burger Lab", "12 Market St, San Francisco, CA 94103", listOf(InvoiceItem(1, "Lab Burger", 17.50), InvoiceItem(1, "Truffle Fries", 8.00))),

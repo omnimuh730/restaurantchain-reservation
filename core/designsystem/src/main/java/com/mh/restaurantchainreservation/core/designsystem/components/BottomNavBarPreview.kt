@@ -18,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mh.restaurantchainreservation.core.designsystem.theme.RestaurantTheme
-import com.mh.restaurantchainreservation.core.designsystem.theme.ThemePreference
 
 private val PreviewTabs = listOf(
     BottomNavTab(BottomNavTabId.Discover, "Discover"),
@@ -34,34 +33,26 @@ private val PreviewTabsKo = listOf(
     BottomNavTab(BottomNavTabId.Profile, "프로필"),
 )
 
-@Preview(name = "Bottom Nav · Light", showBackground = true, backgroundColor = 0xFFFFFFFF)
+@Preview(name = "Bottom Nav", showBackground = true, backgroundColor = 0xFFF7F7F7)
 @Composable
 private fun BottomNavBarLightPreview() {
-    RestaurantTheme(preference = ThemePreference.Light) {
+    RestaurantTheme {
         InteractivePreview(tabs = PreviewTabs)
     }
 }
 
-@Preview(name = "Bottom Nav · Dark", showBackground = true, backgroundColor = 0xFF0E0E11)
-@Composable
-private fun BottomNavBarDarkPreview() {
-    RestaurantTheme(preference = ThemePreference.Dark) {
-        InteractivePreview(tabs = PreviewTabs)
-    }
-}
-
-@Preview(name = "Bottom Nav · Korean", showBackground = true, backgroundColor = 0xFFFFFFFF)
+@Preview(name = "Bottom Nav · Korean", showBackground = true, backgroundColor = 0xFFF7F7F7)
 @Composable
 private fun BottomNavBarKoreanPreview() {
-    RestaurantTheme(preference = ThemePreference.Light) {
+    RestaurantTheme {
         InteractivePreview(tabs = PreviewTabsKo)
     }
 }
 
-@Preview(name = "Bottom Nav · Badged Profile", showBackground = true, backgroundColor = 0xFFFFFFFF)
+@Preview(name = "Bottom Nav · Badged Profile", showBackground = true, backgroundColor = 0xFFF7F7F7)
 @Composable
 private fun BottomNavBarBadgePreview() {
-    RestaurantTheme(preference = ThemePreference.Light) {
+    RestaurantTheme {
         InteractivePreview(
             tabs = PreviewTabs,
             initialActive = BottomNavTabId.Discover,
@@ -71,10 +62,10 @@ private fun BottomNavBarBadgePreview() {
     }
 }
 
-@Preview(name = "Bottom Nav · Alert Dot", showBackground = true, backgroundColor = 0xFFFFFFFF)
+@Preview(name = "Bottom Nav · Alert Dot", showBackground = true, backgroundColor = 0xFFF7F7F7)
 @Composable
 private fun BottomNavBarDotPreview() {
-    RestaurantTheme(preference = ThemePreference.Light) {
+    RestaurantTheme {
         InteractivePreview(
             tabs = PreviewTabs,
             initialActive = BottomNavTabId.Wishlist,

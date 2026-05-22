@@ -83,7 +83,7 @@ private fun SubpageCollapsingLayout(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         LazyColumn(
             state = listState,
@@ -199,7 +199,7 @@ fun SubpageScaffold(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(palette.cardSurface),
+                .background(palette.pageBackground),
         ) {
             Column(
                 modifier = Modifier

@@ -185,9 +185,10 @@ fun RestaurantNavHost(
     }
 
     val bottomNavScrollBehavior = rememberBottomNavScrollBehavior()
+    val hideTabNavigation = hidesMainTabNavigation(destination?.route)
     val showBottomBarSlot = isCompact &&
         showAppChrome &&
-        shouldShowBottomNavBar(destination?.route) &&
+        !hideTabNavigation &&
         !suppressBottomNav
     val scrollNavShowProgress by animateFloatAsState(
         targetValue = if (!showBottomBarSlot || !bottomNavScrollBehavior.isVisible) 0f else 1f,
@@ -305,7 +306,7 @@ fun RestaurantNavHost(
                     }
                 }
             }
-        } else if (showAppChrome) {
+        } else if (showAppChrome && !hideTabNavigation) {
             Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                 NavigationRail {
                     bottomTabs.forEach { tab ->
@@ -345,6 +346,26 @@ fun RestaurantNavHost(
                             onDismiss = { signInRequiredReason = null },
                         )
                     }
+                }
+            }
+        } else if (showAppChrome) {
+            Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                AppGraph(
+                    navController = navController,
+                    contentPadding = PaddingValues(0.dp),
+                    authenticated = authenticated,
+                    onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
+                    onRequireSignIn = { promptSignIn(it) },
+                    modifier = Modifier.fillMaxSize(),
+                )
+                WishlistOverlayHost()
+                GlobalNotificationHost()
+                signInRequiredReason?.let { reason ->
+                    SignInRequiredDialog(
+                        message = stringResource(reason.messageRes),
+                        onSignIn = { navigateToLogin() },
+                        onDismiss = { signInRequiredReason = null },
+                    )
                 }
             }
         } else {
@@ -458,15 +479,10 @@ private fun resolveActiveTab(hierarchyRoutes: List<String>): BottomNavTabId? {
     }
 }
 
-private fun shouldShowBottomNavBar(route: String?): Boolean {
-    if (route == null) return true
-    // Hide only on full-screen restaurant sub-flows; keep the bar on the detail page.
-    return when {
-        route.contains("/photos") -> false
-        route.contains("/menu") -> false
-        route.contains("/book") -> false
-        else -> true
-    }
+/** Restaurant detail and sub-flows (menu, photos, book) — full-screen, no tab bar. */
+private fun hidesMainTabNavigation(route: String?): Boolean {
+    if (route == null) return false
+    return route.startsWith("discover/restaurant/")
 }
 
 /** QR Pay (and other full-screen overlays) own the entire viewport. */

@@ -126,7 +126,7 @@ fun TierStatusModal(
                         )
                     }
                 }
-                HorizontalDivider(color = palette.border.copy(alpha = 0.5f))
+                HorizontalDivider(color = palette.border)
 
                 Column(
                     modifier = Modifier
@@ -222,7 +222,7 @@ private fun CurrentTierHeroCard() {
 private fun TierPerkCard(tier: TierKey, isCurrent: Boolean) {
     val palette = LocalRestaurantPalette.current
     val cardShape = RoundedCornerShape(16.dp)
-    val borderColor = if (isCurrent) palette.gold.copy(alpha = 0.40f) else palette.border.copy(alpha = 0.6f)
+    val borderColor = if (isCurrent) palette.gold.copy(alpha = 0.40f) else palette.border
     val bgColor = if (isCurrent) palette.gold.copy(alpha = 0.05f) else palette.cardSurface
 
     val nameRes = when (tier) {

@@ -211,7 +211,7 @@ fun RestaurantReviewsScreen(
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.statusBars)
             .graphicsLayer { translationX = slideProgress * screenWidthPx }
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         LazyColumn(
             state = listState,
@@ -409,7 +409,7 @@ private fun ReviewsStickyHeader(
         }
     }
 
-    HorizontalDivider(color = palette.borderSoft)
+    HorizontalDivider(color = palette.border)
 }
 
 @Composable
@@ -586,7 +586,7 @@ private fun ReviewsStatsExpandedContent(
         )
 
         HorizontalDivider(
-            color = palette.borderSoft,
+            color = palette.border,
             modifier = Modifier.padding(top = 24.dp),
         )
 
@@ -620,7 +620,7 @@ private fun ReviewsStatsExpandedContent(
                                 .weight(1f)
                                 .height(8.dp)
                                 .clip(RoundedCornerShape(percent = 50))
-                                .background(palette.borderSoft.copy(alpha = 0.7f)),
+                                .background(palette.border),
                         ) {
                             Box(
                                 modifier = Modifier
@@ -641,7 +641,7 @@ private fun ReviewsStatsExpandedContent(
                     .padding(horizontal = 8.dp)
                     .width(1.dp)
                     .height(160.dp),
-                color = palette.borderSoft,
+                color = palette.border,
             )
 
             Column(
@@ -658,14 +658,14 @@ private fun ReviewsStatsExpandedContent(
                         modifier = Modifier
                             .width(1.dp)
                             .height(72.dp)
-                            .background(palette.borderSoft),
+                            .background(palette.border),
                     )
                     SubRatingGridCell(
                         metric = subRatingMetrics[1],
                         modifier = Modifier.weight(1f),
                     )
                 }
-                HorizontalDivider(color = palette.borderSoft)
+                HorizontalDivider(color = palette.border)
                 Row(modifier = Modifier.fillMaxWidth()) {
                     SubRatingGridCell(
                         metric = subRatingMetrics[2],
@@ -675,7 +675,7 @@ private fun ReviewsStatsExpandedContent(
                         modifier = Modifier
                             .width(1.dp)
                             .height(72.dp)
-                            .background(palette.borderSoft),
+                            .background(palette.border),
                     )
                     SubRatingGridCell(
                         metric = subRatingMetrics[3],
@@ -992,7 +992,7 @@ private fun ReviewCard(
                     Icon(
                         Icons.Filled.Star,
                         contentDescription = null,
-                        tint = if (index < review.rating) StarAccent else palette.borderSoft,
+                        tint = if (index < review.rating) StarAccent else palette.border,
                         modifier = Modifier.size(14.dp),
                     )
                 }

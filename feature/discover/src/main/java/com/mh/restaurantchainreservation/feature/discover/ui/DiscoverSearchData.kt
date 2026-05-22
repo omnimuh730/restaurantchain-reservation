@@ -11,7 +11,7 @@ internal enum class WhereSelection {
     Anywhere,
     NearMe,
     NewYork,
-    Gangnam,
+    SanFrancisco,
     Soho,
     Custom,
 }
@@ -19,24 +19,23 @@ internal enum class WhereSelection {
 internal object DiscoverSearchData {
     val locationSuggestions: List<LocationSuggestionRow> = listOf(
         LocationSuggestionRow.Preset(WhereSelection.NewYork, "New York"),
-        LocationSuggestionRow.Preset(WhereSelection.Gangnam, "Gangnam Station"),
+        LocationSuggestionRow.Preset(WhereSelection.SanFrancisco, "San Francisco"),
         LocationSuggestionRow.Preset(WhereSelection.Soho, "SoHo / Downtown"),
-        LocationSuggestionRow.City("Paris, France"),
-        LocationSuggestionRow.City("Lisbon"),
-        LocationSuggestionRow.City("Barcelona"),
-        LocationSuggestionRow.City("Rome"),
-        LocationSuggestionRow.City("Madrid"),
-        LocationSuggestionRow.City("Florence"),
-        LocationSuggestionRow.City("London"),
-        LocationSuggestionRow.City("Vienna"),
-        LocationSuggestionRow.City("Porto"),
-        LocationSuggestionRow.City("Amsterdam"),
-        LocationSuggestionRow.City("Brussels"),
+        LocationSuggestionRow.City("Los Angeles, CA"),
+        LocationSuggestionRow.City("Chicago, IL"),
+        LocationSuggestionRow.City("Miami, FL"),
+        LocationSuggestionRow.City("Austin, TX"),
+        LocationSuggestionRow.City("Seattle, WA"),
+        LocationSuggestionRow.City("Boston, MA"),
+        LocationSuggestionRow.City("Denver, CO"),
+        LocationSuggestionRow.City("Nashville, TN"),
+        LocationSuggestionRow.City("Washington, D.C."),
+        LocationSuggestionRow.City("Las Vegas, NV"),
     )
 
     val foodSuggestions: List<FoodSuggestion> = listOf(
         FoodSuggestion("Trending Now", trending = true),
-        FoodSuggestion("Best K-BBQ", trending = true),
+        FoodSuggestion("Best BBQ", trending = true),
         FoodSuggestion("Hot in New York", trending = true),
         FoodSuggestion("Japanese", trending = false),
         FoodSuggestion("Italian", trending = false),
@@ -52,7 +51,7 @@ internal object DiscoverSearchData {
 
     val recentSearchLabels: List<String> = listOf(
         "Sakura Omakase",
-        "K-BBQ",
+        "BBQ",
         "Brunch near SoHo",
     )
 
@@ -111,7 +110,7 @@ internal fun whereLabel(where: WhereSelection, customText: String, nearMeName: S
     WhereSelection.Anywhere -> ""
     WhereSelection.NearMe -> nearMeName
     WhereSelection.NewYork -> "New York"
-    WhereSelection.Gangnam -> "Gangnam Station"
+    WhereSelection.SanFrancisco -> "San Francisco"
     WhereSelection.Soho -> "SoHo / Downtown"
     WhereSelection.Custom -> customText.trim()
 }

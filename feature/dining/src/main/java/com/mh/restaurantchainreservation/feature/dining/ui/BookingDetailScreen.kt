@@ -151,7 +151,7 @@ fun BookingDetailScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         Column(
             modifier = Modifier
@@ -699,7 +699,7 @@ private fun BookingHeaderSummaryCard(
             fontSize = 16.sp,
         )
     }
-    HorizontalDivider(color = palette.borderSoft)
+    HorizontalDivider(color = palette.border)
 }
 
 @Composable
@@ -720,7 +720,7 @@ private fun BookingDetailTopBar(
                 if (solid) palette.cardSurface.copy(alpha = 0.95f) else Color.Transparent,
             )
             .then(
-                if (solid) Modifier.border(1.dp, palette.borderSoft) else Modifier,
+                if (solid) Modifier.border(1.dp, palette.border) else Modifier,
             )
             .windowInsetsPadding(WindowInsets.statusBars),
     ) {
@@ -818,7 +818,7 @@ private fun BookingMapPreview(address: String) {
             .background(palette.mutedSurface),
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val road = palette.border.copy(alpha = 0.72f)
+            val road = palette.border
             repeat(5) { idx ->
                 val y = size.height * (0.18f + idx * 0.18f)
                 drawLine(

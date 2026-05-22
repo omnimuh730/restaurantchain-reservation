@@ -101,8 +101,8 @@ val MOCK_BOOKINGS: List<Booking> = listOf(
     ),
     Booking(
         id = "3",
-        restaurant = "Gangnam BBQ House",
-        cuisine = "Korean · BBQ",
+        restaurant = "Mission Smoke BBQ",
+        cuisine = "BBQ · Smokehouse",
         image = "https://images.unsplash.com/photo-1709433420612-8cad609df914?w=1080&h=720&fit=crop",
         date = "Sun, 20 Apr 2026",
         time = "12:30",
@@ -240,8 +240,8 @@ val MOCK_BOOKINGS: List<Booking> = listOf(
     ),
     Booking(
         id = "8",
-        restaurant = "Gangnam BBQ House",
-        cuisine = "Korean · BBQ",
+        restaurant = "Mission Smoke BBQ",
+        cuisine = "BBQ · Smokehouse",
         image = "https://images.unsplash.com/photo-1709433420612-8cad609df914?w=1080&h=720&fit=crop",
         date = "Fri, 14 Feb 2026",
         time = "19:00",

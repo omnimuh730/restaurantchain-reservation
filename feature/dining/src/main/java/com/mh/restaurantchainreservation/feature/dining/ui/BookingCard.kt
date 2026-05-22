@@ -220,7 +220,7 @@ fun BookingCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(palette.border.copy(alpha = 0.7f)),
+                .background(palette.border),
         )
 
         // Bottom row: status detail block + action row

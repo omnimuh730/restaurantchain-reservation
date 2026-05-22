@@ -37,7 +37,7 @@ private val ThumbOnOffset = TrackWidth - ThumbSize - ThumbOffOffset
 
 /**
  * Branded toggle replacing `androidx.compose.material3.Switch` across the app.
- * Track springs between palette.borderSoft (off) and palette.brand (on); the
+ * Track springs between palette.border (off) and palette.brand (on); the
  * thumb springs across with a small overshoot and reveals a check mark when on.
  */
 @Composable
@@ -54,7 +54,7 @@ fun RestaurantSwitch(
         targetValue = when {
             !enabled -> palette.mutedSurface
             checked -> palette.brand
-            else -> palette.borderSoft
+            else -> palette.border
         },
         animationSpec = spring(dampingRatio = 0.85f, stiffness = 320f),
         label = "switchTrackColor",

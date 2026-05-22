@@ -157,7 +157,7 @@ fun WishlistShareFriendsSheet(
                         )
                     }
                 }
-                HorizontalDivider(color = palette.borderSoft)
+                HorizontalDivider(color = palette.border)
                 WishlistShareFriends.forEach { friend ->
                     FriendShareRow(
                         friend = friend,
@@ -166,7 +166,7 @@ fun WishlistShareFriendsSheet(
                             triggerDismiss()
                         },
                     )
-                    HorizontalDivider(color = palette.borderSoft)
+                    HorizontalDivider(color = palette.border)
                 }
                 Row(
                     modifier = Modifier
@@ -216,7 +216,7 @@ private fun FriendShareRow(
                 .size(44.dp)
                 .clip(CircleShape)
                 .background(palette.mutedSurface)
-                .border(1.dp, palette.borderSoft, CircleShape),
+                .border(1.dp, palette.border, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Text(

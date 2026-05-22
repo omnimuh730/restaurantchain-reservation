@@ -113,6 +113,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavCo
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
+import com.mh.restaurantchainreservation.core.designsystem.tokens.BrandPink
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
@@ -645,7 +646,7 @@ private fun SearchResultsHeader(
                 modifier = Modifier
                     .width(1.dp)
                     .height(28.dp)
-                    .background(Color(0xFFDDDDDD)),
+                    .background(palette.border),
             )
             PlanSegmentButton(
                 icon = Icons.Outlined.AccessTime,
@@ -657,7 +658,7 @@ private fun SearchResultsHeader(
                 modifier = Modifier
                     .width(1.dp)
                     .height(28.dp)
-                    .background(Color(0xFFDDDDDD)),
+                    .background(palette.border),
             )
             PlanSegmentButton(
                 icon = Icons.Outlined.Groups,
@@ -675,12 +676,13 @@ private fun FilterChipButton(
     activeFilterCount: Int,
     onClick: () -> Unit,
 ) {
+    val palette = LocalRestaurantPalette.current
     Row(
         modifier = Modifier
             .height(36.dp)
             .clip(RoundedCornerShape(percent = 50))
             .background(Color.White)
-            .border(1.dp, Color(0xFFDDDDDD), RoundedCornerShape(percent = 50))
+            .border(1.dp, palette.border, RoundedCornerShape(percent = 50))
             .clickable(role = Role.Button, onClickLabel = "Filters", onClick = onClick)
             .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -694,7 +696,7 @@ private fun FilterChipButton(
                 modifier = Modifier
                     .size(18.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFFF385C)),
+                    .background(BrandPink.Primary),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -714,12 +716,13 @@ private fun AppliedFilterTag(
     label: String,
     onClick: () -> Unit,
 ) {
+    val palette = LocalRestaurantPalette.current
     Row(
         modifier = Modifier
             .height(36.dp)
             .clip(RoundedCornerShape(percent = 50))
             .background(Color.White)
-            .border(1.dp, Color(0xFFDDDDDD), RoundedCornerShape(percent = 50))
+            .border(1.dp, palette.border, RoundedCornerShape(percent = 50))
             .clickable(role = Role.Button, onClickLabel = "Remove $label", onClick = onClick)
             .padding(start = 14.dp, end = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -787,7 +790,7 @@ private fun RemoveFilterDialog(
                     textAlign = TextAlign.Center,
                 )
             }
-            HorizontalDivider(color = palette.borderSoft)
+            HorizontalDivider(color = palette.border)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1001,7 +1004,7 @@ private fun ResultsSheet(
             .shadow(12.dp, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
             .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
             .background(palette.cardSurface)
-            .border(1.dp, palette.borderSoft, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
+            .border(1.dp, palette.border, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
     ) {
         Column(Modifier.fillMaxSize()) {
             ResultsSheetDragHeader(
@@ -1387,7 +1390,7 @@ private fun SearchFiltersSheet(
                         .height(56.dp)
                         .then(
                             if (showPinnedTitleBorder) {
-                                Modifier.border(1.dp, palette.borderSoft)
+                                Modifier.border(1.dp, palette.border)
                             } else {
                                 Modifier
                             },
@@ -1439,7 +1442,7 @@ private fun SearchFiltersSheet(
                             },
                         )
                     }
-                    HorizontalDivider(color = palette.borderSoft)
+                    HorizontalDivider(color = palette.border)
                     FilterSection(title = "Recommended for you") {
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                             RecommendedFilterCard(
@@ -1465,7 +1468,7 @@ private fun SearchFiltersSheet(
                             )
                         }
                     }
-                    HorizontalDivider(color = palette.borderSoft)
+                    HorizontalDivider(color = palette.border)
                     FilterSection(title = "Cuisine") {
                         FlowPillsWrap(
                             labels = DiscoverSearchData.filterCuisineChips,
@@ -1473,7 +1476,7 @@ private fun SearchFiltersSheet(
                             onToggle = { onChange(filters.copy(cuisines = filters.cuisines.toggle(it))) },
                         )
                     }
-                    HorizontalDivider(color = palette.borderSoft)
+                    HorizontalDivider(color = palette.border)
                     FilterSection(
                         title = "Price range",
                         subtitle = "Average table price, includes fees",
@@ -1491,7 +1494,7 @@ private fun SearchFiltersSheet(
                             }
                         }
                     }
-                    HorizontalDivider(color = palette.borderSoft)
+                    HorizontalDivider(color = palette.border)
                     FilterSection(title = "Rating") {
                         FlowSingleSelectPills(
                             labels = DiscoverSearchData.ratingFilterOptions,
@@ -1499,7 +1502,7 @@ private fun SearchFiltersSheet(
                             onSelect = { onChange(filters.copy(rating = it)) },
                         )
                     }
-                    HorizontalDivider(color = palette.borderSoft)
+                    HorizontalDivider(color = palette.border)
                     FilterSection(title = "Distance") {
                         FlowSingleSelectPills(
                             labels = DiscoverSearchData.distanceFilterOptions,
@@ -1507,7 +1510,7 @@ private fun SearchFiltersSheet(
                             onSelect = { onChange(filters.copy(distance = it)) },
                         )
                     }
-                    HorizontalDivider(color = palette.borderSoft)
+                    HorizontalDivider(color = palette.border)
                     FilterSection(title = "Amenities") {
                         FlowPillsWrap(
                             labels = DiscoverSearchData.filterAmenityChips,
@@ -1515,7 +1518,7 @@ private fun SearchFiltersSheet(
                             onToggle = { onChange(filters.copy(amenities = filters.amenities.toggle(it))) },
                         )
                     }
-                    HorizontalDivider(color = palette.borderSoft)
+                    HorizontalDivider(color = palette.border)
                     FilterSection(title = "Seating") {
                         FlowPillsWrap(
                             labels = DiscoverSearchData.filterSeatingChips,
@@ -1523,7 +1526,7 @@ private fun SearchFiltersSheet(
                             onToggle = { onChange(filters.copy(seating = filters.seating.toggle(it))) },
                         )
                     }
-                    HorizontalDivider(color = palette.borderSoft)
+                    HorizontalDivider(color = palette.border)
                     FilterSection(title = "Occasion") {
                         FlowPillsWrap(
                             labels = DiscoverSearchData.filterOccasionChips,
@@ -1534,7 +1537,7 @@ private fun SearchFiltersSheet(
                     Spacer(Modifier.height(24.dp))
                 }
                 Column(modifier = Modifier.fillMaxWidth().background(palette.cardSurface)) {
-                    HorizontalDivider(color = palette.borderSoft)
+                    HorizontalDivider(color = palette.border)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

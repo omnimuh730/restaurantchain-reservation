@@ -123,8 +123,8 @@
     <string name="profile_wallet_usd_value">$300.45</string>
 
     <!-- Default location -->
-    <string name="profile_default_location_name">Gangnam Station</string>
-    <string name="profile_default_location_address">Gangnam-gu, Seoul</string>
+    <string name="profile_default_location_name">Union Square</string>
+    <string name="profile_default_location_address">San Francisco, CA</string>
 
     <!-- Avatar picker -->
     <string name="profile_avatar_picker_title">Choose photo</string>
@@ -582,10 +582,14 @@
 
     <!-- Show QR modal -->
     <string name="show_qr_title">Arrival QR</string>
-    <string name="show_qr_subtitle">Show this at the host stand.</string>
+    <string name="show_qr_your_code">Arrival QR</string>
+    <string name="show_qr_subtitle">Show this at the host stand when you arrive for your dinner reservation.</string>
     <string name="show_qr_close">Close QR code</string>
+    <string name="show_qr_secure">Present this code to check in at the restaurant.</string>
+    <string name="show_qr_copy">Copy Code</string>
+    <string name="show_qr_copied">Copied</string>
     <string name="show_qr_save">Save</string>
-    <string name="show_qr_share">Share</string>
+    <string name="show_qr_share">Share Code</string>
 
     <!-- Add booking code modal -->
     <string name="add_code_title">Add booking code</string>

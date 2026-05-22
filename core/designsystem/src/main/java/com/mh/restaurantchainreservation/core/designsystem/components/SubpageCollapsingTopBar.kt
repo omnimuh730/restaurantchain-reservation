@@ -66,8 +66,8 @@ fun SubpageCollapsingTopBar(
             },
             actions = actions,
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = palette.cardSurface,
-                scrolledContainerColor = palette.cardSurface,
+                containerColor = palette.pageBackground,
+                scrolledContainerColor = palette.pageBackground,
                 titleContentColor = palette.foreground,
                 actionIconContentColor = palette.foreground,
                 navigationIconContentColor = palette.foreground,

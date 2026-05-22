@@ -2,23 +2,29 @@ package com.mh.restaurantchainreservation.core.designsystem.tokens
 
 import androidx.compose.ui.graphics.Color
 
+/** Material [androidx.compose.material3.ColorScheme] bridge — sourced from [RestaurantColors]. */
 object RestaurantColorTokens {
-    val BrandPrimary = Color(0xFFFF385C)
-    val BrandPrimaryDark = Color(0xFFFF385C)
+    val BrandPrimary = RestaurantColors.Brand.primary
+    val BrandPrimaryDark = RestaurantColors.Brand.primary
 
-    val LightBackground = Color(0xFFFFFFFF)
-    val LightForeground = Color(0xFF222222)
-    val LightMutedForeground = Color(0xFF717171)
-    val LightSurface = Color(0xFFFFFFFF)
-    val LightSurfaceVariant = Color(0xFFF7F7F7)
-    val LightBorder = Color(0xFFDDDDDD)
-    val LightDestructive = Color(0xFFC13515)
+    val LightBackground = RestaurantColors.Surface.page
+    val LightForeground = RestaurantColors.Text.primary
+    val LightBodyForeground = RestaurantColors.Text.body
+    val LightMutedForeground = RestaurantColors.Text.secondary
+    val LightTertiaryForeground = RestaurantColors.Text.tertiary
+    val LightSurface = RestaurantColors.Surface.card
+    val LightSurfaceVariant = RestaurantColors.Surface.page
+    val LightBorder = RestaurantColors.Border.default
+    val LightDestructive = RestaurantColors.Semantic.destructive
 
-    val DarkBackground = Color(0xFF0E0E11)
-    val DarkForeground = Color(0xFFF8F8FA)
-    val DarkMutedForeground = Color(0xFFA1A1AA)
-    val DarkSurface = Color(0xFF18181B)
-    val DarkSurfaceVariant = Color(0xFF27272A)
-    val DarkBorder = Color(0xFF3F3F46)
-    val DarkDestructive = Color(0xFFF97373)
+    /** @deprecated Dark mode removed; aliases to light tokens for legacy call sites. */
+    val DarkBackground: Color get() = LightBackground
+    val DarkForeground: Color get() = LightForeground
+    val DarkBodyForeground: Color get() = LightBodyForeground
+    val DarkMutedForeground: Color get() = LightMutedForeground
+    val DarkTertiaryForeground: Color get() = LightTertiaryForeground
+    val DarkSurface: Color get() = LightSurface
+    val DarkSurfaceVariant: Color get() = LightSurfaceVariant
+    val DarkBorder: Color get() = LightBorder
+    val DarkDestructive: Color get() = LightDestructive
 }

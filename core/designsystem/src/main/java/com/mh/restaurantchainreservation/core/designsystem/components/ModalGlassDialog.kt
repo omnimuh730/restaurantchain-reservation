@@ -137,21 +137,14 @@ fun ModalGlassScrim(
     val (darkAlpha, lightAlpha, legacyVeilAlpha) = when (scrimStrength) {
         ModalGlassScrimStrength.Standard -> when {
             supportsBackdropBlur -> Triple(0.48f, 0.22f, 0.78f)
-            palette.isDark -> Triple(0.62f, 0.18f, 0.82f)
             else -> Triple(0.52f, 0.28f, 0.88f)
         }
         ModalGlassScrimStrength.Strong -> when {
             supportsBackdropBlur -> Triple(0.72f, 0.14f, 0.90f)
-            palette.isDark -> Triple(0.80f, 0.10f, 0.94f)
             else -> Triple(0.76f, 0.16f, 0.94f)
         }
         ModalGlassScrimStrength.FrostedGlass -> when {
-            supportsBackdropBlur -> if (palette.isDark) {
-                Triple(0.22f, 0.26f, 0.84f)
-            } else {
-                Triple(0.28f, 0.38f, 0.88f)
-            }
-            palette.isDark -> Triple(0.68f, 0.14f, 0.90f)
+            supportsBackdropBlur -> Triple(0.28f, 0.38f, 0.88f)
             else -> Triple(0.62f, 0.22f, 0.92f)
         }
     }

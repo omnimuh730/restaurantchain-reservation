@@ -165,7 +165,7 @@ fun HelpCenterPage(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface)
+            .background(palette.pageBackground)
             .statusBarsPadding(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -306,7 +306,7 @@ private fun HelpCenterHeader(title: String, subtitle: String, onBack: () -> Unit
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(palette.border.copy(alpha = 0.4f)),
+                .background(palette.border),
         )
     }
 }
@@ -586,7 +586,7 @@ private fun AllTopicsList(filtered: List<HelpSection>, query: String, onJump: (S
             } else {
                 filtered.forEachIndexed { i, section ->
                     if (i > 0) {
-                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border.copy(alpha = 0.7f)))
+                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border))
                     }
                     TopicRow(section = section, onClick = { onJump(section.id) })
                 }
@@ -688,7 +688,7 @@ private fun FaqList(
         ) {
             faqs.forEachIndexed { idx, faq ->
                 if (idx > 0) {
-                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border.copy(alpha = 0.7f)))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border))
                 }
                 FaqRow(
                     question = faq.question,
@@ -1028,7 +1028,7 @@ private fun HelpTopicView(
                 }
             }
 
-            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border.copy(alpha = 0.5f)))
+            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(palette.border))
             HelpfulnessRow()
         }
 

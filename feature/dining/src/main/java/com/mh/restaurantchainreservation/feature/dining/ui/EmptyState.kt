@@ -227,7 +227,7 @@ private fun DiningNoItemsOrDivider() {
     ) {
         HorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = palette.border.copy(alpha = 0.55f),
+            color = palette.border,
         )
         Text(
             text = stringResource(I18nR.string.dining_no_items_or),
@@ -238,7 +238,7 @@ private fun DiningNoItemsOrDivider() {
         )
         HorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = palette.border.copy(alpha = 0.55f),
+            color = palette.border,
         )
     }
 }

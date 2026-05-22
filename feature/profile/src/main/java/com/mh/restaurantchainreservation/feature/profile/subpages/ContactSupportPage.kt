@@ -313,7 +313,7 @@ private fun EmptyInboxCard() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .border(1.dp, palette.border.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+            .border(1.dp, palette.border, RoundedCornerShape(20.dp))
             .background(palette.mutedSurface)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -393,7 +393,7 @@ private fun SwipeableSessionRow(
                 .offset { IntOffset(swipeOffset.value.roundToInt(), 0) }
                 .clip(RoundedCornerShape(20.dp))
                 .background(palette.cardSurface)
-                .border(1.dp, palette.border.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
+                .border(1.dp, palette.border, RoundedCornerShape(20.dp))
                 .pointerInput(session.id) {
                     detectHorizontalDragGestures(
                         onHorizontalDrag = { _, dragAmount ->
@@ -448,7 +448,7 @@ private fun SwipeableSessionRow(
                     .size(44.dp)
                     .clip(CircleShape)
                     .background(palette.mutedSurface)
-                    .border(1.dp, palette.border.copy(alpha = 0.4f), CircleShape),
+                    .border(1.dp, palette.border, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 TonightLogoMark(
@@ -719,7 +719,7 @@ private fun SupportChatOverlay(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(palette.cardSurface)
+            .background(palette.pageBackground)
             .statusBarsPadding(),
     ) {
         ChatHeader(onClose = onClose)
@@ -834,7 +834,7 @@ private fun ChatHeader(onClose: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(1.dp)
-            .background(palette.border.copy(alpha = 0.3f)),
+            .background(palette.border),
     )
 }
 
@@ -893,7 +893,7 @@ private fun ChatBubble(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .border(1.dp, palette.border.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                        .border(1.dp, palette.border, RoundedCornerShape(16.dp))
                         .background(palette.cardSurface),
                 ) {
                     msg.options.forEachIndexed { i, opt ->
@@ -915,7 +915,7 @@ private fun ChatBubble(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(1.dp)
-                                    .background(palette.border.copy(alpha = 0.4f)),
+                                    .background(palette.border),
                             )
                         }
                     }
@@ -994,7 +994,7 @@ private fun ChatInputBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(palette.border.copy(alpha = 0.3f)),
+                .background(palette.border),
         )
         Row(
             modifier = Modifier

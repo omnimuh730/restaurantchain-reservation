@@ -64,12 +64,12 @@ import kotlin.math.hypot
 private enum class LocationMode { Search, Map }
 
 private val LocationChoices = listOf(
-    UserLocation("Gangnam Station", "Gangnam-gu, Seoul", 37.4980, 127.0276),
-    UserLocation("Garosugil", "Sinsa-dong, Gangnam-gu, Seoul", 37.5209, 127.0231),
-    UserLocation("Itaewon", "Itaewon-dong, Yongsan-gu, Seoul", 37.5345, 126.9946),
-    UserLocation("Hongdae", "Mapo-gu, Seoul", 37.5563, 126.9237),
-    UserLocation("Myeongdong", "Jung-gu, Seoul", 37.5636, 126.9869),
-    UserLocation("Seongsu Cafe Street", "Seongsu-dong, Seoul", 37.5446, 127.0557),
+    UserLocation("Union Square", "San Francisco, CA", 37.7879, -122.4075),
+    UserLocation("Hayes Valley", "San Francisco, CA", 37.7765, -122.4242),
+    UserLocation("Mission District", "San Francisco, CA", 37.7599, -122.4148),
+    UserLocation("SoHo", "New York, NY", 40.7233, -74.0030),
+    UserLocation("West Village", "New York, NY", 40.7358, -74.0036),
+    UserLocation("Venice Beach", "Los Angeles, CA", 33.9850, -118.4695),
 )
 
 @Composable
@@ -276,7 +276,7 @@ private fun PlaceRow(place: UserLocation, selected: Boolean, showDivider: Boolea
             }
         }
         if (showDivider) {
-            Box(Modifier.fillMaxWidth().height(1.dp).padding(start = 64.dp).background(palette.border.copy(alpha = 0.55f)))
+            Box(Modifier.fillMaxWidth().height(1.dp).padding(start = 64.dp).background(palette.border))
         }
     }
 }

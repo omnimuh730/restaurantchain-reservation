@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -121,6 +122,8 @@ fun CenterModalSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     cornerRadiusDp: Int = 32,
+    containerBrush: Brush? = null,
+    surface: CenterModalSheetSurface = CenterModalSheetSurface.Default,
     dismissOnBackPress: Boolean = true,
     dismissOnClickOutside: Boolean = true,
     content: @Composable () -> Unit,
@@ -168,17 +171,32 @@ fun CenterModalSheet(
             contentAlignment = Alignment.Center,
         ) {
             val shape = RoundedCornerShape(cornerRadiusDp.dp)
+            val animatedModifier = modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    this.alpha = alpha
+                }
             Column(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        this.alpha = alpha
-                    }
-                    .shadow(elevation = 18.dp, shape = shape, ambientColor = Color.Black.copy(alpha = 0.18f))
-                    .clip(shape)
-                    .background(palette.cardSurface)
+                modifier = when (surface) {
+                    CenterModalSheetSurface.PremiumPink -> animatedModifier
+                        .premiumPinkModalSurface(shape)
+                    CenterModalSheetSurface.Default -> animatedModifier
+                        .shadow(
+                            elevation = 18.dp,
+                            shape = shape,
+                            ambientColor = Color.Black.copy(alpha = 0.18f),
+                        )
+                        .clip(shape)
+                        .then(
+                            if (containerBrush != null) {
+                                Modifier.background(containerBrush)
+                            } else {
+                                Modifier.background(palette.cardSurface)
+                            },
+                        )
+                }
                     .clickable(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() },

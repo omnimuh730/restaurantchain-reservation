@@ -98,7 +98,7 @@ fun NewsListScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface)
+            .background(palette.pageBackground)
             .windowInsetsPadding(WindowInsets.statusBars),
     ) {
         NewsListHeader(
@@ -183,7 +183,7 @@ fun NewsDetailScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         Column(
             modifier = Modifier
@@ -333,7 +333,7 @@ fun NewsDetailScreen(
                 if (related.isNotEmpty()) {
                     HorizontalDivider(
                         modifier = Modifier.padding(top = 32.dp, bottom = 20.dp),
-                        color = palette.borderSoft,
+                        color = palette.border,
                     )
                     Text(
                         text = "More Stories",

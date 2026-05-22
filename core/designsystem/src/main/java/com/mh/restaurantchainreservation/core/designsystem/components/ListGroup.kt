@@ -19,17 +19,16 @@ import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantTextColor
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantTextRole
 
 @Immutable
 data class ListGroupItem(
@@ -122,22 +121,19 @@ private fun ListRow(
             }
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(
+            RestaurantText(
                 text = item.label,
-                color = palette.foreground,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-                fontWeight = FontWeight.Normal,
+                role = RestaurantTextRole.MenuRow,
+                color = RestaurantTextColor.Main,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             if (item.description != null) {
                 Spacer(Modifier.height(2.dp))
-                Text(
+                RestaurantText(
                     text = item.description,
-                    color = palette.mutedForeground,
-                    fontSize = 11.sp,
-                    lineHeight = 14.sp,
+                    role = RestaurantTextRole.Caption,
+                    color = RestaurantTextColor.Sub,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -153,7 +149,7 @@ private fun ListRow(
             Icon(
                 imageVector = Icons.Outlined.ChevronRight,
                 contentDescription = null,
-                tint = palette.mutedForeground,
+                tint = palette.foreground,
                 modifier = Modifier.size(18.dp),
             )
         }

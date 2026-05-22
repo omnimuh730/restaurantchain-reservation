@@ -141,7 +141,7 @@ fun DiscoverSearchModal(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface)
+            .background(palette.pageBackground)
             .windowInsetsPadding(WindowInsets.systemBars),
     ) {
         Row(
@@ -240,7 +240,7 @@ fun DiscoverSearchModal(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
-                        .background(Color(0xFFEBEBEB)),
+                        .background(palette.border),
                 )
                 Spacer(Modifier.height(12.dp))
             }
@@ -378,7 +378,7 @@ private fun SearchInputRow(
 ) {
     val palette = LocalRestaurantPalette.current
     val focusRequester = remember { FocusRequester() }
-    val border = if (focused) Color(0xFF222222) else Color(0xFFDDDDDD)
+    val border = if (focused) palette.foreground else palette.border
     Row(
         modifier = Modifier
             .fillMaxWidth()

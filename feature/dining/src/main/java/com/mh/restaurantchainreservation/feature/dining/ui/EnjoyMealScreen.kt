@@ -128,7 +128,7 @@ fun EnjoyMealScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         Row(
             modifier = Modifier

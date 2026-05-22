@@ -46,7 +46,7 @@ fun PlaceOfferChip(
         modifier = modifier
             .clip(PlaceOfferChipShape)
             .background(palette.cardSurface)
-            .border(width = 1.dp, color = palette.borderSoft, shape = PlaceOfferChipShape)
+            .border(width = 1.dp, color = palette.border, shape = PlaceOfferChipShape)
             .padding(
                 horizontal = PlaceOfferChipHorizontalPadding,
                 vertical = PlaceOfferChipVerticalPadding,

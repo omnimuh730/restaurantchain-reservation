@@ -115,6 +115,8 @@ import com.mh.restaurantchainreservation.core.designsystem.components.HeartButto
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuSeeAllCard
+import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuTile
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -139,8 +141,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 private val DiningNewsCardWidth = 260.dp
 private val DiningNewsHeroImageHeight = 128.dp
-/** Title (2 lines) + summary (2 lines) + author row + padding; keeps every Dining News card the same height. */
-private val DiningNewsTextBlockHeight = 118.dp
+/** Title (2 lines) + summary (2 lines) with trailing chevron + padding; fixed card height. */
+private val DiningNewsTextBlockHeight = 94.dp
 private val DiningNewsCardTotalHeight = DiningNewsHeroImageHeight + DiningNewsTextBlockHeight
 
 /** Fraction of the see-all stack area (width/height of [BoxWithConstraints]). */
@@ -191,11 +193,8 @@ private val SeeAllThumbnailSlideStart = ThumbnailLayer(
 )
 
 private val SeeAllThumbShape = RoundedCornerShape(12.dp)
-private val FoodTypeSeeAllThumbShape = RoundedCornerShape(8.dp)
-private const val FoodTypeSeeAllLabelFontScale = 1.18f
 /** Profile hub card shell for Dining News + restaurant “More” tiles. */
 private val MoreCardShape = HubSurfaceCardDefaults.QuickActionShape
-private val FoodTypeSeeAllCardShape = RoundedCornerShape(DiscoverPopularMenuTileCornerRadius)
 private val DiningNewsCardShape = MoreCardShape
 
 /** Restaurant cards shown per home rail before the More tile. */
@@ -267,7 +266,22 @@ private enum class ImageRailExploreMoreKind {
 
 /** Status bar + compact discover bar inner padding (8+44+8); matches [CompactDiscoverBar]. */
 private val CompactDiscoverBarInnerHeight = 60.dp
-private val QuickCategoryGridHorizontalPadding = 8.dp
+
+/** Airbnb-style discover home rhythm (48px sections, 24px horizontal inset, 12px card gaps). */
+private object DiscoverLayout {
+    val PageHorizontal = 24.dp
+    val SectionGap = 40.dp
+    val SheetTopPadding = 24.dp
+    val RailItemGap = 12.dp
+    val RestaurantRailItemGap = 12.dp
+    val SectionHeaderBottom = 12.dp
+    val QuickCategoryHorizontal = 16.dp
+    val QuickCategoryRowGap = 16.dp
+    val QuickCategoryIconLabelGap = 8.dp
+    val PriceListRowVertical = 12.dp
+    val HeroTextHorizontal = 24.dp
+    val StickyHeaderTopMin = 24.dp
+}
 
 /** "Restaurants by Price" row thumbnail — same width:height as other Discover restaurant heroes. */
 private val PriceListThumbnailWidth = 110.dp
@@ -354,7 +368,7 @@ fun DiscoverHomeScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         val density = LocalDensity.current
         val statusBarInsets = WindowInsets.statusBars
@@ -368,12 +382,12 @@ fun DiscoverHomeScreen(
                 if (headerItem != null) {
                     val offsetDp = with(density) { headerItem.offset.toDp() }
                     if (compact) {
-                        (compactBarTotalHeight - offsetDp).coerceIn(24.dp, compactBarTotalHeight)
+                        (compactBarTotalHeight - offsetDp).coerceIn(DiscoverLayout.StickyHeaderTopMin, compactBarTotalHeight)
                     } else {
-                        24.dp
+                        DiscoverLayout.StickyHeaderTopMin
                     }
                 } else {
-                    if (listState.firstVisibleItemIndex > 2) compactBarTotalHeight else 24.dp
+                    if (listState.firstVisibleItemIndex > 2) compactBarTotalHeight else DiscoverLayout.StickyHeaderTopMin
                 }
             }
         }
@@ -401,11 +415,11 @@ fun DiscoverHomeScreen(
                         .offset(y = (-32).dp)
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
-                        .background(palette.cardSurface)
-                        .padding(top = 18.dp, bottom = 0.dp),
+                        .background(palette.pageBackground)
+                        .padding(top = DiscoverLayout.SheetTopPadding, bottom = 0.dp),
                 ) {
                     QuickCategoryGrid(DiscoverData.QUICK_CATEGORIES, onOpenCategory)
-                    RailSpacer(28.dp)
+                    RailSpacer(DiscoverLayout.SectionGap)
                     ImageRailSection(
                         title = "Where to Eat?",
                         exploreMoreKind = ImageRailExploreMoreKind.WhereToEatPanorama,
@@ -421,7 +435,7 @@ fun DiscoverHomeScreen(
                             onClick = onOpenLocation,
                         )
                     }
-                    RailSpacer(28.dp)
+                    RailSpacer(DiscoverLayout.SectionGap)
                     ImageRailSection(
                         title = "Top Picks by Food Type",
                         exploreMoreKind = ImageRailExploreMoreKind.FoodTypeCollage,
@@ -437,34 +451,34 @@ fun DiscoverHomeScreen(
                             onClick = onOpenFood,
                         )
                     }
-                    RailSpacer(28.dp)
+                    RailSpacer(DiscoverLayout.SectionGap)
                     RestaurantRail(
                         title = "Monthly Best",
                         restaurants = DiscoverData.MONTHLY_BEST,
                         onOpenRestaurant = onOpenRestaurant,
                         onMore = { onOpenSection("monthly-best") },
                     )
-                    RailSpacer(28.dp)
+                    RailSpacer(DiscoverLayout.SectionGap)
                     RestaurantRail(
                         title = "Loved by Locals",
                         restaurants = DiscoverData.LOVED_BY_LOCALS,
                         onOpenRestaurant = onOpenRestaurant,
                         onMore = { onOpenSection("loved-by-locals") },
                     )
-                    RailSpacer(28.dp)
+                    RailSpacer(DiscoverLayout.SectionGap)
                     NewsRail(
                         news = news,
                         onOpenArticle = onOpenNewsArticle,
                         onMore = onOpenNewsList,
                     )
-                    RailSpacer(28.dp)
+                    RailSpacer(DiscoverLayout.SectionGap)
                     RestaurantRail(
                         title = "New This Week",
                         restaurants = rememberNewThisWeek(),
                         onOpenRestaurant = onOpenRestaurant,
                         onMore = { onOpenSection("new-this-week") },
                     )
-                    RailSpacer(28.dp)
+                    RailSpacer(DiscoverLayout.SectionGap)
                     RestaurantRail(
                         title = "Late Night Finds",
                         restaurants = rememberLateNight(),
@@ -477,7 +491,7 @@ fun DiscoverHomeScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(palette.cardSurface)
+                        .background(palette.pageBackground)
                         .padding(top = headerTopPadding),
                 ) {
                     RestaurantsByPriceHeaderAndTabs(
@@ -496,7 +510,10 @@ fun DiscoverHomeScreen(
                     onOpenRestaurant = {
                         onOpenRestaurant(resolveRestaurantNavigationId(selectedPriceTab, restaurant.id))
                     },
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 7.dp),
+                    modifier = Modifier.padding(
+                        horizontal = DiscoverLayout.PageHorizontal,
+                        vertical = DiscoverLayout.PriceListRowVertical,
+                    ),
                 )
             }
             if (priceSectionLoadingMore) {
@@ -585,7 +602,11 @@ private fun HeroBanner(
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(start = 20.dp, end = 20.dp, bottom = 88.dp)
+                        .padding(
+                            start = DiscoverLayout.HeroTextHorizontal,
+                            end = DiscoverLayout.HeroTextHorizontal,
+                            bottom = 88.dp,
+                        )
                         .clickable { onBannerClick(banner.id) },
                 ) {
                     Text(
@@ -624,10 +645,14 @@ private fun HeroBanner(
                 .align(Alignment.TopCenter)
                 .zIndex(2f)
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(start = 16.dp, top = 18.dp, end = 16.dp)
+                .padding(
+                    start = DiscoverLayout.PageHorizontal,
+                    top = 18.dp,
+                    end = DiscoverLayout.PageHorizontal,
+                )
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(DiscoverLayout.RailItemGap),
         ) {
             GlassSearchButton(
                 title = "Find a restaurant",
@@ -707,9 +732,14 @@ private fun CompactDiscoverBar(
             .hazeEffect(state = hazeState, style = HazeMaterials.thin())
             .border(width = 1.dp, color = discoverGlassBarEdgeColor(palette))
             .windowInsetsPadding(WindowInsets.statusBars)
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+            .padding(
+                start = DiscoverLayout.PageHorizontal,
+                end = DiscoverLayout.PageHorizontal,
+                top = 8.dp,
+                bottom = 8.dp,
+            ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(DiscoverLayout.RailItemGap),
     ) {
         GlassSearchButton(
             title = "Find a restaurant",
@@ -724,8 +754,8 @@ private fun CompactDiscoverBar(
     }
 }
 
-private fun discoverGlassBarEdgeColor(palette: RestaurantPalette): Color =
-    if (palette.isDark) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.42f)
+private fun discoverGlassBarEdgeColor(@Suppress("UNUSED_PARAMETER") palette: RestaurantPalette): Color =
+    Color.White.copy(alpha = 0.42f)
 
 private data class GlassPillLayers(
     val baseFill: Color,
@@ -739,26 +769,6 @@ private fun discoverGlassPillLayers(
     compact: Boolean,
     opaqueGlass: Boolean,
 ): GlassPillLayers {
-    if (palette.isDark) {
-        val strong = opaqueGlass && compact
-        val base = when {
-            strong -> palette.cardSurface.copy(alpha = 0.88f)
-            compact -> palette.cardSurface.copy(alpha = 0.60f)
-            else -> palette.cardSurface.copy(alpha = 0.42f)
-        }
-        val border = when {
-            strong -> 0.35f
-            compact -> 0.28f
-            else -> 0.26f
-        }
-        val icon = Color.White.copy(alpha = if (strong) 0.18f else 0.12f)
-        val grad = when {
-            strong -> 0.28f
-            compact -> 0.24f
-            else -> 0.20f
-        }
-        return GlassPillLayers(base, border, icon, grad)
-    }
     val strong = opaqueGlass && compact
     val baseAlpha = when {
         strong -> 0.52f
@@ -788,9 +798,10 @@ private fun discoverGlassPillLayers(
     )
 }
 
-private fun discoverGlassPillBorderColor(palette: RestaurantPalette, borderAlpha: Float): Color =
-    if (palette.isDark) Color.White.copy(alpha = (borderAlpha * 0.42f + 0.10f).coerceIn(0.12f, 0.36f))
-    else Color.White.copy(alpha = borderAlpha.coerceIn(0f, 1f))
+private fun discoverGlassPillBorderColor(
+    @Suppress("UNUSED_PARAMETER") palette: RestaurantPalette,
+    borderAlpha: Float,
+): Color = Color.White.copy(alpha = borderAlpha.coerceIn(0f, 1f))
 
 @Composable
 private fun GlassSearchButton(
@@ -909,8 +920,8 @@ private fun QuickCategoryGrid(categories: List<QuickCategory>, onClick: (String)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = QuickCategoryGridHorizontalPadding, vertical = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+            .padding(horizontal = DiscoverLayout.QuickCategoryHorizontal, vertical = DiscoverLayout.QuickCategoryIconLabelGap),
+        verticalArrangement = Arrangement.spacedBy(DiscoverLayout.QuickCategoryRowGap),
     ) {
         categories.chunked(4).forEach { row ->
             Row(
@@ -961,7 +972,7 @@ private fun QuickCategoryButton(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 10.dp),
+                    .padding(top = DiscoverLayout.QuickCategoryIconLabelGap),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -981,8 +992,8 @@ private fun ImageRailSection(
     SectionHeader(title = title)
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(horizontal = DiscoverLayout.PageHorizontal),
+        horizontalArrangement = Arrangement.spacedBy(DiscoverLayout.RailItemGap),
         verticalAlignment = rowVerticalAlignment,
     ) {
         item { content() }
@@ -1005,7 +1016,7 @@ private fun ImageRailSection(
 
 @Composable
 private fun CityRail(cities: List<City>, onClick: (String) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(DiscoverLayout.RailItemGap)) {
         cities.forEach { city ->
             WhereToEatCityTile(
                 title = city.label,
@@ -1019,7 +1030,7 @@ private fun CityRail(cities: List<City>, onClick: (String) -> Unit) {
 @Composable
 private fun FoodRail(foodTypes: List<FoodType>, onClick: (String) -> Unit) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(DiscoverLayout.RailItemGap),
         verticalAlignment = Alignment.Top,
     ) {
         foodTypes.forEach { food ->
@@ -1031,70 +1042,18 @@ private fun FoodRail(foodTypes: List<FoodType>, onClick: (String) -> Unit) {
     }
 }
 
-/** Image with bottom gradient + place count; food name below (like [AirbnbMiniCard] title). */
 @Composable
 private fun FoodTypeRailTile(
     food: FoodType,
     onClick: () -> Unit,
 ) {
-    val palette = LocalRestaurantPalette.current
     val placeCount = remember(food.id) { DiscoverData.byFoodType(food.id).size }
-    val shape = RoundedCornerShape(DiscoverPopularMenuTileCornerRadius)
-    PressableScale(
+    DiscoverMenuTile(
+        imageUrl = food.image,
+        title = food.label,
+        imageCaption = "$placeCount places",
         onClick = onClick,
-        modifier = Modifier.width(DiscoverPopularMenuTileSize),
-    ) {
-        Column {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .size(DiscoverPopularMenuTileSize)
-                    .discoverImageCardSurface(shape)
-                    .background(palette.mutedSurface),
-            ) {
-                AsyncImage(
-                    model = food.image,
-                    contentDescription = food.label,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colorStops = arrayOf(
-                                    0f to Color.Transparent,
-                                    0.42f to Color.Transparent,
-                                    0.68f to Color.Black.copy(alpha = 0.38f),
-                                    1f to Color.Black.copy(alpha = 0.82f),
-                                ),
-                            ),
-                        ),
-                )
-                Text(
-                    text = "$placeCount places",
-                    color = Color.White.copy(alpha = 0.92f),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal,
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(horizontal = 10.dp, vertical = 10.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Text(
-                text = food.label,
-                color = palette.foreground,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
+    )
 }
 
 @Composable
@@ -1185,8 +1144,8 @@ private fun RestaurantRail(
     SectionHeader(title = title)
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(horizontal = DiscoverLayout.PageHorizontal),
+        horizontalArrangement = Arrangement.spacedBy(DiscoverLayout.RestaurantRailItemGap),
         verticalAlignment = Alignment.Top,
     ) {
         restaurants.take(RestaurantRailVisibleCount).forEach { restaurant ->
@@ -1311,8 +1270,8 @@ private fun NewsRail(
     SectionHeader(title = "Dining News")
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(horizontal = DiscoverLayout.PageHorizontal),
+        horizontalArrangement = Arrangement.spacedBy(DiscoverLayout.RailItemGap),
         verticalAlignment = Alignment.Top,
     ) {
         news.forEachIndexed { index, newsItem ->
@@ -1399,43 +1358,27 @@ private fun NewsRail(
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                            Text(
-                                newsItem.summary,
-                                color = palette.mutedForeground,
-                                fontSize = 12.sp,
-                                lineHeight = 16.sp,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(top = 4.dp),
-                            )
                             Spacer(modifier = Modifier.weight(1f))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
+                                verticalAlignment = Alignment.Bottom,
                             ) {
-                                AsyncImage(
-                                    model = newsItem.authorAvatar,
-                                    contentDescription = newsItem.author,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .clip(CircleShape),
-                                )
                                 Text(
-                                    text = newsItem.author,
+                                    text = newsItem.summary,
                                     color = palette.mutedForeground,
-                                    fontSize = 11.sp,
-                                    maxLines = 1,
+                                    fontSize = 12.sp,
+                                    lineHeight = 16.sp,
+                                    maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
                                     modifier = Modifier
                                         .weight(1f)
-                                        .padding(horizontal = 8.dp),
+                                        .padding(end = 4.dp),
                                 )
                                 Icon(
                                     imageVector = Icons.Outlined.ChevronRight,
                                     contentDescription = null,
                                     tint = palette.mutedForeground,
-                                    modifier = Modifier.size(14.dp),
+                                    modifier = Modifier.size(16.dp),
                                 )
                             }
                         }
@@ -1890,14 +1833,9 @@ private fun FoodTypeSeeAllCard(
     previewImages: List<Any>,
     onClick: () -> Unit,
 ) {
-    StackedSeeAllCard(
-        width = DiscoverPopularMenuTileSize,
-        height = DiscoverPopularMenuTileSize,
+    DiscoverMenuSeeAllCard(
         previewImages = previewImages,
         onClick = onClick,
-        cardShape = FoodTypeSeeAllCardShape,
-        thumbCornerShape = FoodTypeSeeAllThumbShape,
-        footerFontScale = FoodTypeSeeAllLabelFontScale,
     )
 }
 
@@ -1935,7 +1873,7 @@ private fun PriceSectionLoadingMoreFooter() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 18.dp),
+            .padding(horizontal = DiscoverLayout.PageHorizontal, vertical = 18.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -2006,7 +1944,7 @@ private fun RestaurantsByPriceHeaderAndTabs(
 ) {
     val palette = LocalRestaurantPalette.current
     val tabs = listOf("$", "$$", "$$$", "$$$$")
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+    Column(modifier = Modifier.padding(horizontal = DiscoverLayout.PageHorizontal)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -2015,8 +1953,9 @@ private fun RestaurantsByPriceHeaderAndTabs(
             Text(
                 text = "Restaurants by Price",
                 color = palette.foreground,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                lineHeight = 26.sp,
+                fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.weight(1f),
             )
             Text(
@@ -2225,17 +2164,18 @@ private fun formatReviewCount(count: Int): String =
     count.toString().reversed().chunked(3).joinToString(",").reversed()
 
 @Composable
-private fun SectionHeader(title: String, horizontalPadding: Dp = 16.dp) {
+private fun SectionHeader(title: String, horizontalPadding: Dp = DiscoverLayout.PageHorizontal) {
     val palette = LocalRestaurantPalette.current
     Text(
         text = title,
         color = palette.foreground,
-        fontSize = 19.sp,
-        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
+        lineHeight = 26.sp,
+        fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = horizontalPadding, vertical = 0.dp)
-            .padding(bottom = 15.dp),
+            .padding(bottom = DiscoverLayout.SectionHeaderBottom),
     )
 }
 

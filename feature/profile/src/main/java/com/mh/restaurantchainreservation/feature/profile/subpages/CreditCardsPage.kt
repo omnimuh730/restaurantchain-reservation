@@ -79,6 +79,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
+import com.mh.restaurantchainreservation.core.designsystem.tokens.BrandPink
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageHeaderIconButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DeterministicQrCode
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationCenter
@@ -662,7 +663,7 @@ private fun CardActionsTabRow(
             Icons.Outlined.Settings to "Settings",
         )
     }
-    val stripBg = if (palette.isDark) palette.cardSurface else Color.White
+    val stripBg = palette.cardSurface
     val strokePx = with(density) { 1.dp.toPx() }
     val rowHeight = lerp(66f, 48f, collapse).dp
     Column(
@@ -673,7 +674,7 @@ private fun CardActionsTabRow(
             .drawBehind {
                 val y = size.height - strokePx * 0.5f
                 drawLine(
-                    color = palette.border.copy(alpha = 0.35f),
+                    color = palette.border,
                     start = Offset(0f, y),
                     end = Offset(size.width, y),
                     strokeWidth = strokePx,
@@ -1031,7 +1032,7 @@ private fun CardSettingsPanel(
                     .fillMaxWidth()
                     .height(52.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFFFF385C).copy(alpha = 0.10f))
+                    .background(BrandPink.Primary.copy(alpha = 0.10f))
                     .clickable(onClick = onRemove),
                 contentAlignment = Alignment.Center,
             ) {

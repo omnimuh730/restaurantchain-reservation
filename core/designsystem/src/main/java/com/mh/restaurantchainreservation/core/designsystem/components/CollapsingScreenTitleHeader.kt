@@ -101,8 +101,8 @@ object CollapsingTitleHeaderMetrics {
             else -> ((collapseProgress - 0.02f) / 0.96f).coerceIn(0f, 1f)
         }
 
-    /** Matches dining hub dividers — light gray at 35% when the title is stuck. */
-    const val stickyHeaderBorderAlphaMultiplier = 0.35f
+    /** Sticky header bottom rule uses full [RestaurantColors.Border.divider]; fade via [stickyHeaderBorderAlpha]. */
+    const val stickyHeaderBorderAlphaMultiplier = 1f
 
     /**
      * Top inset for the first lazy list/grid item so content stays aligned under a
@@ -203,11 +203,7 @@ fun CollapsingScreenTitleHeader(
     val titleTopCollapsed = (bodyHeight - titleBlockHeight) / 2f
     val titleOffsetY = titleTopExpanded + (titleTopCollapsed - titleTopExpanded) * collapseProgress
 
-    val headerBackground = if (palette.isDark) {
-        palette.cardSurface
-    } else {
-        Color.White
-    }
+    val headerBackground = palette.pageBackground
 
     Column(modifier = modifier.fillMaxWidth()) {
         Box(
@@ -320,11 +316,7 @@ fun CollapsingSubpageScreenHeader(
         startPad
     }
 
-    val headerBackground = if (palette.isDark) {
-        palette.cardSurface
-    } else {
-        Color.White
-    }
+    val headerBackground = palette.pageBackground
 
     Column(modifier = modifier.fillMaxWidth()) {
         Box(

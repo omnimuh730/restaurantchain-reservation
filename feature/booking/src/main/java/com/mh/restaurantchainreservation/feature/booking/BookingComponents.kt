@@ -49,7 +49,7 @@ internal fun BookingStepHeader(
         modifier = Modifier
             .fillMaxWidth()
             .background(palette.cardSurface.copy(alpha = 0.94f))
-            .border(width = 1.dp, color = palette.borderSoft)
+            .border(width = 1.dp, color = palette.border)
             .padding(horizontal = 20.dp, vertical = 16.dp),
     ) {
         Row(

@@ -85,8 +85,6 @@ import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantSwitch
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucideIcon
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucidePaths
-import com.mh.restaurantchainreservation.core.designsystem.theme.ThemePreference
-import com.mh.restaurantchainreservation.core.designsystem.theme.rememberThemeController
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.LocaleManager
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
@@ -109,8 +107,6 @@ private const val SettingsVolumeSliderTrackSquish = 0.42f
 fun SettingsPageFull(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val palette = LocalRestaurantPalette.current
     val context = LocalContext.current
-    val themeController = rememberThemeController(context.applicationContext)
-
     var orderUpdates by rememberSaveable { mutableStateOf(true) }
     var promotions by rememberSaveable { mutableStateOf(true) }
     var reservationReminders by rememberSaveable { mutableStateOf(true) }
@@ -142,13 +138,6 @@ fun SettingsPageFull(onBack: () -> Unit, modifier: Modifier = Modifier) {
         onBack = onBack,
         modifier = modifier,
     ) {
-        SettingsGroup(label = stringResource(I18nR.string.profile_settings_appearance)) {
-            ThemePickerRow(
-                selected = themeController.preference,
-                onSelect = { themeController.setPreference(it) },
-            )
-        }
-
         LanguageGroup(
             currentLocale = currentLocale,
             onSelect = { tag ->
@@ -326,11 +315,7 @@ private fun MusicVolumeControls(
     val volumeSliderColors = SliderDefaults.colors(
         thumbColor = Color.Transparent,
         activeTrackColor = palette.brand,
-        inactiveTrackColor = if (palette.isDark) {
-            palette.border.copy(alpha = 0.55f)
-        } else {
-            palette.foreground.copy(alpha = 0.12f)
-        },
+        inactiveTrackColor = palette.foreground.copy(alpha = 0.12f),
     )
 
     Row(
@@ -436,7 +421,7 @@ private fun DividerLine() {
         modifier = Modifier
             .fillMaxWidth()
             .height(1.dp)
-            .background(palette.border.copy(alpha = 0.6f)),
+            .background(palette.border),
     )
 }
 
@@ -500,73 +485,6 @@ private fun ToggleRow(
             checked = checked,
             onCheckedChange = onToggle,
         )
-    }
-}
-
-@Composable
-private fun ThemePickerRow(selected: ThemePreference, onSelect: (ThemePreference) -> Unit) {
-    val palette = LocalRestaurantPalette.current
-    Column(modifier = Modifier.padding(14.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(
-                modifier = Modifier.size(32.dp).clip(CircleShape).background(palette.mutedSurface),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Outlined.LightMode, null, tint = palette.foreground, modifier = Modifier.size(18.dp))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(stringResource(I18nR.string.settings_color_theme), color = palette.foreground, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                Text(stringResource(I18nR.string.settings_color_theme_desc), color = palette.mutedForeground, fontSize = 12.sp)
-            }
-        }
-        Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ThemeChip(
-                label = stringResource(I18nR.string.profile_settings_theme_light),
-                icon = Icons.Outlined.LightMode,
-                selected = selected == ThemePreference.Light,
-                onClick = { onSelect(ThemePreference.Light) },
-                modifier = Modifier.weight(1f),
-            )
-            ThemeChip(
-                label = stringResource(I18nR.string.profile_settings_theme_dark),
-                icon = Icons.Outlined.Bedtime,
-                selected = selected == ThemePreference.Dark,
-                onClick = { onSelect(ThemePreference.Dark) },
-                modifier = Modifier.weight(1f),
-            )
-            ThemeChip(
-                label = stringResource(I18nR.string.profile_settings_theme_system),
-                icon = Icons.Outlined.SettingsBrightness,
-                selected = selected == ThemePreference.System,
-                onClick = { onSelect(ThemePreference.System) },
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ThemeChip(
-    label: String,
-    icon: ImageVector,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val palette = LocalRestaurantPalette.current
-    val shape = RoundedCornerShape(12.dp)
-    Column(
-        modifier = modifier
-            .clip(shape)
-            .background(if (selected) palette.foreground else palette.mutedSurface)
-            .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(icon, null, tint = if (selected) palette.cardSurface else palette.foreground, modifier = Modifier.size(18.dp))
-        Spacer(Modifier.height(4.dp))
-        Text(label, color = if (selected) palette.cardSurface else palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 

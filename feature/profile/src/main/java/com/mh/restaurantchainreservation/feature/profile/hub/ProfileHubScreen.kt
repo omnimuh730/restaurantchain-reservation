@@ -56,6 +56,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -67,7 +68,10 @@ import com.mh.restaurantchainreservation.core.designsystem.components.hubSurface
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroup
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroupItem
 import com.mh.restaurantchainreservation.core.designsystem.components.ListGroupVariant
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantText
 import com.mh.restaurantchainreservation.core.designsystem.components.hubTitleCollapseProgress
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantTextColor
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantTextRole
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.LocaleManager
@@ -120,7 +124,7 @@ fun ProfileHubScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.cardSurface),
+            .background(palette.pageBackground),
     ) {
         val listState = rememberLazyListState()
         val density = LocalDensity.current
@@ -262,7 +266,7 @@ private fun ProfileHubCollapsingHeader(
                     .shadow(elevation = 4.dp, shape = CircleShape)
                     .clip(CircleShape)
                     .background(palette.cardSurface)
-                    .border(1.dp, palette.border.copy(alpha = 0.4f), CircleShape)
+                    .border(1.dp, palette.border, CircleShape)
                     .clickable(
                         role = Role.Button,
                         onClickLabel = stringResource(I18nR.string.profile_hub_notifications_aria),
@@ -407,31 +411,12 @@ private fun DailyRewardCard(onClick: () -> Unit) {
             )
         }
         Column(modifier = Modifier.weight(1f)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = stringResource(I18nR.string.profile_daily_reward_title),
-                    color = palette.foreground,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(palette.brand)
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                ) {
-                    Text(
-                        text = stringResource(I18nR.string.profile_daily_badge).uppercase(),
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.5.sp,
-                    )
-                }
-            }
+            Text(
+                text = stringResource(I18nR.string.profile_daily_reward_title),
+                color = palette.foreground,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+            )
             Spacer(Modifier.height(4.dp))
             Text(
                 text = stringResource(I18nR.string.profile_daily_reward_subtitle),
@@ -517,11 +502,9 @@ private fun AccountSettingsBlock(
     val freeLabel = stringResource(I18nR.string.profile_menu_free)
 
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-        Text(
+        RestaurantText(
             text = stringResource(I18nR.string.profile_account_settings),
-            color = palette.foreground,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
+            role = RestaurantTextRole.SectionTitle,
         )
         Spacer(Modifier.height(16.dp))
         ListGroup(
@@ -536,11 +519,12 @@ private fun AccountSettingsBlock(
                     description = locationAddress,
                     icon = { MenuIcon(Icons.Outlined.LocationOn) },
                     rightContent = {
-                        Text(
+                        RestaurantText(
                             text = locationName,
-                            color = palette.mutedForeground,
-                            fontSize = 14.sp,
+                            role = RestaurantTextRole.Body,
+                            color = RestaurantTextColor.Sub,
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     },
                     onClick = onLocationClick,
@@ -550,11 +534,10 @@ private fun AccountSettingsBlock(
                     label = stringResource(I18nR.string.profile_menu_subscription),
                     icon = { MenuIcon(Icons.Outlined.WorkspacePremium) },
                     rightContent = {
-                        Text(
+                        RestaurantText(
                             text = if (isPro) proLabel else freeLabel,
-                            color = if (isPro) palette.foreground else palette.mutedForeground,
-                            fontSize = 14.sp,
-                            fontWeight = if (isPro) FontWeight.SemiBold else FontWeight.Normal,
+                            role = RestaurantTextRole.Body,
+                            color = if (isPro) RestaurantTextColor.Main else RestaurantTextColor.Sub,
                         )
                     },
                     onClick = onSubscriptionClick,
@@ -586,7 +569,7 @@ private fun AccountSettingsBlock(
                 ListGroupItem(
                     id = "log-out",
                     label = stringResource(I18nR.string.profile_menu_log_out),
-                    icon = { MenuIcon(Icons.AutoMirrored.Outlined.Logout, tint = palette.destructive) },
+                    icon = { MenuIcon(Icons.AutoMirrored.Outlined.Logout) },
                     onClick = onLogoutClick,
                 ),
             ),
@@ -603,7 +586,7 @@ private fun MenuIcon(
     Icon(
         imageVector = icon,
         contentDescription = null,
-        tint = tint ?: palette.foreground.copy(alpha = 0.70f),
+        tint = tint ?: palette.foreground,
         modifier = Modifier.size(24.dp),
     )
 }
@@ -620,17 +603,16 @@ private fun VersionFooter() {
             .padding(bottom = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
+        RestaurantText(
             text = stringResource(I18nR.string.profile_version, APP_VERSION),
-            color = palette.mutedForeground.copy(alpha = 0.85f),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
+            role = RestaurantTextRole.BodySmall,
+            color = RestaurantTextColor.Sub,
         )
         Spacer(Modifier.height(2.dp))
-        Text(
+        RestaurantText(
             text = stringResource(I18nR.string.profile_last_released, formattedDate),
-            color = palette.mutedForeground.copy(alpha = 0.65f),
-            fontSize = 11.sp,
+            role = RestaurantTextRole.Micro,
+            color = RestaurantTextColor.Sub,
         )
     }
 }
