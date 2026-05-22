@@ -6,7 +6,7 @@ enum class GuestFavoriteLevel {
     None,
     /** Standard guest favorite — black laurel (`leaf`). */
     Normal,
-    /** Top-tier guest favorite — golden laurel (`goldenleaf`). */
+    /** Top-tier guest favorite — shown with black laurel on detail. */
     High,
 }
 
@@ -237,7 +237,6 @@ object DiscoverData {
             rating = 4.8, reviews = 3100, price = "$$$", distance = "1.5 mi",
             image = "https://images.unsplash.com/photo-1590189599125-67138c6509ef?w=400&h=300&fit=crop",
             area = "Mission District", tag = "Monthly Best",
-            guestFavoriteLevel = GuestFavoriteLevel.High,
         ),
         Restaurant(
             id = "m6", name = "Candlelit Terrace", cuisine = "Mediterranean",
@@ -328,7 +327,6 @@ object DiscoverData {
             rating = 4.8, reviews = 3100, price = "$$$", distance = "1.5 mi",
             image = "https://images.unsplash.com/photo-1590189599125-67138c6509ef?w=400&h=300&fit=crop",
             tag = "3.1M views",
-            guestFavoriteLevel = GuestFavoriteLevel.High,
         ),
     )
 

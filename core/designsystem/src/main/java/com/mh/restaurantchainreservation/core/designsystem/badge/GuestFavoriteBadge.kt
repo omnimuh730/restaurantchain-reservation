@@ -18,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -26,8 +25,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
 import com.mh.restaurantchainreservation.core.designsystem.R
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 
@@ -54,13 +51,6 @@ fun GuestFavoriteLaurel(
 ) {
     if (tier == GuestFavoriteLaurelTier.None) return
 
-    val context = LocalContext.current
-    val drawableId = when (tier) {
-        GuestFavoriteLaurelTier.High -> R.drawable.goldenleaf
-        GuestFavoriteLaurelTier.Normal -> R.drawable.leaf
-        GuestFavoriteLaurelTier.None -> return
-    }
-
     val laurelModifier = modifier
         .height(height)
         .width(height * (18f / 31f))
@@ -68,23 +58,12 @@ fun GuestFavoriteLaurel(
             scaleX = if (mirror) -1f else 1f
         }
 
-    if (tier == GuestFavoriteLaurelTier.High) {
-        Image(
-            painter = rememberAsyncImagePainter(
-                ImageRequest.Builder(context).data(drawableId).build(),
-            ),
-            contentDescription = null,
-            contentScale = ContentScale.Fit,
-            modifier = laurelModifier,
-        )
-    } else {
-        Image(
-            painter = painterResource(drawableId),
-            contentDescription = null,
-            contentScale = ContentScale.Fit,
-            modifier = laurelModifier,
-        )
-    }
+    Image(
+        painter = painterResource(R.drawable.leaf),
+        contentDescription = null,
+        contentScale = ContentScale.Fit,
+        modifier = laurelModifier,
+    )
 }
 
 @Composable
