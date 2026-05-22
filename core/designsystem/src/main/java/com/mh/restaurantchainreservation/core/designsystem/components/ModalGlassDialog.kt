@@ -82,7 +82,7 @@ fun ConfigureModalGlassDialogWindow(blurRadiusDp: Float = 16f) {
     DisposableEffect(view, blurRadiusDp) {
         val window = (view.parent as? DialogWindowProvider)?.window
         val previousDim = window?.attributes?.dimAmount
-        val previousBlurBehindRadius = window?.attributes?.blurBehindRadius
+        val previousBlurBehindRadius = if (supportsBackdropBlur) window?.attributes?.blurBehindRadius else null
         val previousStatusBarColor = window?.statusBarColor
         val previousNavBarColor = window?.navigationBarColor
         if (window != null) {
