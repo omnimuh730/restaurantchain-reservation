@@ -45,6 +45,7 @@ data class ReviewEntry(
     val stayLabel: String = "",
     /** When set, shown in the carousel as a decimal score (e.g. 4.5); otherwise `rating.0`. */
     val ratingScore: Double? = null,
+    val location: String = "",
 )
 
 data class MenuItem(
@@ -251,43 +252,42 @@ object RestaurantDetailData {
             name = "Margarida",
             publishedAtEpochMs = daysAgo(22),
             rating = 5,
+            location = "Lisbon, Portugal",
             text = "Comfortable. Quiet. Just like home. The staff were kind. Good communication. Fresh linens. Would return.",
         ),
         ReviewEntry(
             name = "Patrick",
             publishedAtEpochMs = daysAgo(18),
             rating = 5,
-            stayLabel = "Deluxe suite",
+            location = "Austin, Texas",
             text = "Great place to stay. However, the hosts forgot some of the furniture when we entered. Nice neighborhood. The bedroom is spacious. The sofa bed is comfortable. We didn't have any issues during the stay. Great value!",
         ),
         ReviewEntry(
             name = "Rachel",
-            publishedAtEpochMs = daysAgo(24),
+            publishedAtEpochMs = daysAgo(14),
             rating = 5,
-            ratingScore = 4.5,
-            stayLabel = "Premier King suite with balcony",
+            location = "Orlando, Florida",
             text = "Wow. Great. Worth it. Central, clean and stylish. Also liked the slides. The host was very communicative. Would stay here again. Easy check in.",
         ),
         ReviewEntry(
             name = "Chadae",
             publishedAtEpochMs = daysAgo(31),
             rating = 5,
-            stayLabel = "Premier king suite with balcony",
+            location = "Seattle, Washington",
             text = "Wow everything was exactly perfect the building the unit the valet and the host amazing Five star service. Short walk to everything.",
         ),
         ReviewEntry(
             name = "Daniel",
             publishedAtEpochMs = daysAgo(38),
             rating = 4,
-            ratingScore = 4.5,
-            stayLabel = "Studio with city view",
+            location = "Chicago, Illinois",
             text = "Check-in was smooth and the room matched the photos. A few small maintenance items but nothing that ruined the trip. Location made up for it — we walked everywhere.",
         ),
         ReviewEntry(
             name = "Aisha",
             publishedAtEpochMs = daysAgo(45),
             rating = 5,
-            stayLabel = "Penthouse dining room",
+            location = "San Francisco, California",
             text = "Stunning. Memorable. Every course surprised us. Service was warm without being intrusive. Book ahead.",
         ),
     )

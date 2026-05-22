@@ -182,13 +182,15 @@ fun WishlistRestaurantResultCard(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
                 )
-                com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
-                    text = restaurant.tag ?: "Guest favorite",
-                    fontSize = 12.sp,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(12.dp),
-                )
+                restaurant.tag?.takeIf { it.isNotBlank() }?.let { tag ->
+                    com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
+                        text = tag,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(12.dp),
+                    )
+                }
                 HeartButton(
                     active = saved,
                     onClick = onHeartTap,

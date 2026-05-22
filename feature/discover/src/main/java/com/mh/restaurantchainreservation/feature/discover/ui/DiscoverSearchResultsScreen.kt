@@ -1105,13 +1105,15 @@ private fun RestaurantResultCard(
                         .fillMaxSize()
                         .then(heroModifier),
                 )
-                com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
-                    text = restaurant.tag ?: "Guest favorite",
-                    fontSize = 12.sp,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(12.dp),
-                )
+                restaurant.tag?.takeIf { it.isNotBlank() }?.let { tag ->
+                    com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
+                        text = tag,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(12.dp),
+                    )
+                }
                 HeartButton(
                     active = saved,
                     onClick = { WishlistStore.onHeartTap(restaurant) },
@@ -1266,7 +1268,7 @@ private fun MapPreviewCard(
                     .then(heroModifier),
             )
             com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
-                text = if (index % 2 == 0) "Trophy pick" else "Guest favorite",
+                text = if (index % 2 == 0) "Trophy pick" else "Top rated",
                 fontSize = 11.sp,
                 textColor = palette.foreground,
                 modifier = Modifier.padding(8.dp),

@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -59,6 +60,8 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,7 +78,10 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -86,8 +92,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.badge.AnimatedGuestFavoriteCenterBadge
-import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteRatingLaurelRow
-import com.mh.restaurantchainreservation.core.designsystem.badge.guestFavoriteDescription
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuSeeAllCard
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuTile
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
@@ -101,12 +105,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private val SheetTopRadius = 34.dp
 private val HeaderSheetShape = RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius)
 private val HeroHeight = 288.dp
 private val DetailInfoHorizontalPadding = 24.dp
 private val DetailListBottomPadding = 148.dp
+/** Gap between the bottom of "Show all reviews" and the top of the sticky Reserve bar. */
+private val ReviewsScrollGapAboveBookingBar = 16.dp
+/** Booking bar row (padding + price + Reserve), excluding system nav inset handled on the bar. */
+private val BookingBarEstimatedHeight = 84.dp
 private val DetailStatsSideColumnWeight = 0.9f
 private val DetailStatsCenterColumnWeight = 1.75f
 private val DetailStatsDividerHeight = 36.dp
@@ -161,6 +170,22 @@ private fun interpolateLoaderKeyframes(
     return keyframes.last().second
 }
 
+/**
+ * Scrolls so the bottom edge of "Show all reviews" sits just above the sticky Reserve bar.
+ */
+private suspend fun LazyListState.scrollToReviewsShowAllButton(
+    showAllButtonBottomPx: Int,
+    bottomClearancePx: Int,
+) {
+    if (showAllButtonBottomPx <= 0) return
+    val layoutInfo = layoutInfo
+    if (layoutInfo.totalItemsCount == 0) return
+    val viewportHeight = layoutInfo.viewportSize.height
+    val targetOffset =
+        (showAllButtonBottomPx - (viewportHeight - bottomClearancePx)).coerceAtLeast(0)
+    animateScrollToItem(index = 0, scrollOffset = targetOffset)
+}
+
 private enum class DetailLoadPhase {
     Shell,
     Loading,
@@ -196,17 +221,22 @@ fun RestaurantDetailScreen(
 ) {
     val palette = LocalRestaurantPalette.current
     val restaurant = remember(restaurantId) {
-        com.mh.restaurantchainreservation.core.model.DiscoverData.findById(restaurantId)
-            ?: com.mh.restaurantchainreservation.core.model.DiscoverData.MONTHLY_BEST.first()
-                .withDerivedGuestFavoriteLevel()
+        (
+            com.mh.restaurantchainreservation.core.model.DiscoverData.findById(restaurantId)
+                ?: com.mh.restaurantchainreservation.core.model.DiscoverData.MONTHLY_BEST.first()
+            ).withDerivedGuestFavoriteLevel()
     }
     var loadPhase by remember(restaurantId) { mutableStateOf(DetailLoadPhase.Shell) }
     var loadedPayload by remember(restaurantId) { mutableStateOf<DetailLoadedPayload?>(null) }
     var saved by remember { mutableStateOf(false) }
     var showReviews by remember { mutableStateOf(false) }
+    var showHowReviewsWork by remember { mutableStateOf(false) }
     var showAmenities by remember { mutableStateOf(false) }
     var headerSolid by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    var detailPageCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var reviewsShowAllButtonBottomPx by remember { mutableIntStateOf(0) }
     val headerSolidDerived by remember {
         derivedStateOf {
             listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 48
@@ -218,6 +248,7 @@ fun RestaurantDetailScreen(
 
     val bodyReveal = remember { Animatable(0f) }
     val density = LocalDensity.current
+    val navigationBars = WindowInsets.navigationBars
     val bodySlidePx = remember(density) { with(density) { 28.dp.toPx() } }
 
     LaunchedEffect(restaurantId) {
@@ -277,7 +308,11 @@ fun RestaurantDetailScreen(
             // Hero + sheet must live in one item: LazyColumn clips each item, so a separate
             // "detail-sheet" item cannot draw its rounded top over the hero via negative offset.
             item(key = "detail-page") {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onGloballyPositioned { detailPageCoordinates = it },
+                ) {
                     HeroCarousel(
                         restaurantId = restaurant.id,
                         galleryImages = heroImages,
@@ -304,7 +339,20 @@ fun RestaurantDetailScreen(
                         if (contentReady && payload != null) {
                             RatingsSummaryRow(
                                 restaurant = restaurant,
-                                onOpenReviews = { showReviews = true },
+                                onScrollToReviews = {
+                                    coroutineScope.launch {
+                                        listState.scrollToReviewsShowAllButton(
+                                            showAllButtonBottomPx = reviewsShowAllButtonBottomPx,
+                                            bottomClearancePx = with(density) {
+                                                navigationBars.getBottom(this) +
+                                                    (
+                                                        BookingBarEstimatedHeight +
+                                                            ReviewsScrollGapAboveBookingBar
+                                                        ).roundToPx()
+                                            },
+                                        )
+                                    }
+                                },
                             )
                             Column(
                                 modifier = Modifier.graphicsLayer {
@@ -320,13 +368,16 @@ fun RestaurantDetailScreen(
                                     onShowAll = { showAmenities = true },
                                 )
                                 LocationSection(restaurant = restaurant, ext = payload.ext)
-                                if (restaurant.guestFavoriteLevel.isGuestFavorite()) {
-                                    GuestFavoriteSection(
-                                        restaurant = restaurant,
-                                        reviews = payload.topReviews,
-                                        onOpenReviews = { showReviews = true },
-                                    )
-                                }
+                                ReviewsPreviewSection(
+                                    restaurant = restaurant,
+                                    reviews = payload.topReviews,
+                                    onOpenReviews = { showReviews = true },
+                                    onShowHowReviewsWork = { showHowReviewsWork = true },
+                                    detailPageCoordinates = detailPageCoordinates,
+                                    onShowAllButtonBottomMeasured = { bottomPx ->
+                                        reviewsShowAllButtonBottomPx = bottomPx
+                                    },
+                                )
                                 CancellationPolicySection()
                                 PopularMenuSection(
                                     onShowMenu = onShowMenu,
@@ -363,6 +414,9 @@ fun RestaurantDetailScreen(
                 onBack = { showReviews = false },
                 modifier = Modifier.fillMaxSize(),
             )
+        }
+        if (showHowReviewsWork) {
+            HowReviewsWorkDialog(onClose = { showHowReviewsWork = false })
         }
         if (showAmenities) {
             RestaurantAmenitiesScreen(
@@ -621,16 +675,16 @@ private fun RestaurantDetailLoadingDots(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit) {
+private fun RatingsSummaryRow(restaurant: Restaurant, onScrollToReviews: () -> Unit) {
     val palette = LocalRestaurantPalette.current
-    val laurelTier = restaurant.guestFavoriteLevel.toLaurelTier()
-    val showBadge = restaurant.guestFavoriteLevel.isGuestFavorite()
+    val laurelTier = restaurant.guestFavoriteLevel.toDetailLaurelTier()
+    val showGuestFavorite = restaurant.guestFavoriteLevel.isGuestFavorite()
+    val sideWeight = if (showGuestFavorite) DetailStatsSideColumnWeight else 1f
 
-    val sideWeight = if (showBadge) DetailStatsSideColumnWeight else 1f
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onOpenReviews)
+            .clickable(onClick = onScrollToReviews)
             .padding(horizontal = DetailInfoHorizontalPadding)
             .padding(
                 top = DetailStatsRowVerticalPadding,
@@ -657,7 +711,7 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onOpenReviews: () -> Unit)
                 }
             }
         }
-        if (showBadge) {
+        if (showGuestFavorite) {
             RatingsSummaryDivider(
                 palette = palette,
                 modifier = Modifier.align(Alignment.CenterVertically),
@@ -838,42 +892,55 @@ private fun LocationSection(restaurant: Restaurant, ext: RestaurantExtendedData)
 }
 
 @Composable
-private fun GuestFavoriteSection(
+private fun ReviewsPreviewSection(
     restaurant: Restaurant,
     reviews: List<ReviewEntry>,
     onOpenReviews: () -> Unit,
+    onShowHowReviewsWork: () -> Unit,
+    detailPageCoordinates: LayoutCoordinates?,
+    onShowAllButtonBottomMeasured: (Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
+    if (reviews.isEmpty()) return
     val palette = LocalRestaurantPalette.current
-    Column(modifier = Modifier.padding(vertical = 24.dp)) {
+    val reviewCountLabel = NumberFormat.getIntegerInstance(Locale.US).format(restaurant.reviews)
+    Column(modifier = modifier.padding(top = 8.dp, bottom = 24.dp)) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = DetailInfoHorizontalPadding)
+                .padding(vertical = 20.dp)
+                .padding(bottom = 14.dp),
         ) {
-            GuestFavoriteRatingLaurelRow(
-                tier = restaurant.guestFavoriteLevel.toLaurelTier(),
-                ratingText = formatRating(restaurant.rating),
-                ratingFontSize = 52.sp,
-                laurelHeight = 56.dp,
-            )
-            Text(
-                text = "Guest favorite",
-                color = palette.foreground,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-            guestFavoriteDescription(restaurant.guestFavoriteLevel.toLaurelTier())?.let { description ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = null,
+                    tint = palette.foreground,
+                    modifier = Modifier.size(18.dp),
+                )
                 Text(
-                    text = description,
-                    color = palette.mutedForeground,
-                    fontSize = 15.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+                    text = String.format(Locale.US, "%.1f · %s reviews", restaurant.rating, reviewCountLabel),
+                    color = palette.foreground,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
                 )
             }
+            Text(
+                text = "How reviews work",
+                color = palette.foreground,
+                fontSize = 14.sp,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .clickable(onClick = onShowHowReviewsWork),
+            )
         }
-        DetailInsetDivider(modifier = Modifier.padding(top = 20.dp, bottom = 10.dp))
-        GuestReviewsCarousel(
+        DetailInsetDivider()
+        ReviewsCarousel(
             reviews = reviews,
             onShowMore = onOpenReviews,
             modifier = Modifier.padding(top = 20.dp),
@@ -886,7 +953,12 @@ private fun GuestFavoriteSection(
                 .height(48.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(palette.mutedSurface)
-                .clickable(onClick = onOpenReviews),
+                .clickable(onClick = onOpenReviews)
+                .onGloballyPositioned { coordinates ->
+                    val page = detailPageCoordinates ?: return@onGloballyPositioned
+                    val topLeft = page.localPositionOf(coordinates, Offset.Zero)
+                    onShowAllButtonBottomMeasured((topLeft.y + coordinates.size.height).toInt())
+                },
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -897,21 +969,21 @@ private fun GuestFavoriteSection(
             )
         }
     }
-    DetailInsetDivider(modifier = Modifier.padding(top = 8.dp))
+    DetailInsetDivider()
 }
 
-private val GuestReviewPreviewHeight = 200.dp
+private val ReviewPreviewHeight = 200.dp
 private val ReviewPreviewBodyLineHeight = 22.sp
 private val ReviewPreviewShowMoreRowHeight = 22.dp
 private val ReviewPreviewMaxBodyLines = 3
 private val ReviewCarouselDividerWidth = 1.dp
 private val ReviewCarouselContentPadding = 24.dp
-/** How much of the next card (avatar + text) peeks on the right while the active card is snapped. */
+/** How much of the next card peeks on the right while the active card is snapped. */
 private const val ReviewCarouselNextPeekFraction = 0.24f
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun GuestReviewsCarousel(
+private fun ReviewsCarousel(
     reviews: List<ReviewEntry>,
     onShowMore: () -> Unit,
     modifier: Modifier = Modifier,
@@ -935,7 +1007,7 @@ private fun GuestReviewsCarousel(
             contentPadding = PaddingValues(end = DetailInfoHorizontalPadding),
             beyondViewportPageCount = 1,
         ) { page ->
-            GuestReviewCarouselPage(
+            ReviewCarouselPage(
                 review = reviews[page],
                 index = page,
                 pageWidth = pageWidth,
@@ -946,7 +1018,7 @@ private fun GuestReviewsCarousel(
 }
 
 @Composable
-private fun GuestReviewCarouselPage(
+private fun ReviewCarouselPage(
     review: ReviewEntry,
     index: Int,
     pageWidth: Dp,
@@ -967,7 +1039,7 @@ private fun GuestReviewCarouselPage(
         if (index > 0) {
             ReviewPreviewColumnDivider()
         }
-        GuestReviewPreviewItem(
+        ReviewPreviewCard(
             review = review,
             cardWidth = contentWidth,
             onShowMore = onShowMore,
@@ -981,13 +1053,13 @@ private fun ReviewPreviewColumnDivider(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .width(ReviewCarouselDividerWidth)
-            .height(GuestReviewPreviewHeight)
+            .height(ReviewPreviewHeight)
             .background(palette.border),
     )
 }
 
 @Composable
-private fun GuestReviewPreviewItem(
+private fun ReviewPreviewCard(
     review: ReviewEntry,
     cardWidth: Dp,
     onShowMore: () -> Unit,
@@ -998,7 +1070,7 @@ private fun GuestReviewPreviewItem(
     Column(
         modifier = Modifier
             .width(cardWidth)
-            .height(GuestReviewPreviewHeight)
+            .height(ReviewPreviewHeight)
             .padding(horizontal = ReviewCarouselContentPadding),
     ) {
         Row(
@@ -1040,11 +1112,11 @@ private fun GuestReviewPreviewItem(
             modifier = Modifier.padding(top = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            repeat(5) { index ->
+            repeat(5) { starIndex ->
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = null,
-                    tint = if (index < filledStars) palette.foreground else palette.border,
+                    tint = if (starIndex < filledStars) palette.foreground else palette.border,
                     modifier = Modifier.size(12.dp),
                 )
             }

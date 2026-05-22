@@ -5,8 +5,8 @@ import com.mh.restaurantchainreservation.core.model.GuestFavoriteLevel
 
 fun GuestFavoriteLevel.isGuestFavorite(): Boolean = this != GuestFavoriteLevel.None
 
-fun GuestFavoriteLevel.toLaurelTier(): GuestFavoriteLaurelTier = when (this) {
+/** Detail ratings row uses the black laurel for every guest-favorite tier. */
+fun GuestFavoriteLevel.toDetailLaurelTier(): GuestFavoriteLaurelTier = when (this) {
     GuestFavoriteLevel.None -> GuestFavoriteLaurelTier.None
-    GuestFavoriteLevel.Normal -> GuestFavoriteLaurelTier.Normal
-    GuestFavoriteLevel.High -> GuestFavoriteLaurelTier.High
+    GuestFavoriteLevel.Normal, GuestFavoriteLevel.High -> GuestFavoriteLaurelTier.Normal
 }
