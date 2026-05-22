@@ -1,6 +1,10 @@
 package com.mh.restaurantchainreservation.feature.booking
 
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -87,6 +91,8 @@ private val FullscreenCaptionBottomPadding = 32.dp
 private const val FullscreenFrameParallaxFactor = 0.28f
 private const val FullscreenImageParallaxFactor = 1.0f
 private const val FullscreenImageOverscale = 1.12f
+private const val DoubleTapZoomScale = 2.5f
+private const val ZoomTransitionMillis = 280
 private val PhotoGridBottomNavClearance = 72.dp
 
 @Composable
@@ -271,7 +277,7 @@ fun RestaurantPhotoFullscreenViewer(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(RestaurantColors.Base.black),
+            .background(palette.pageBackground),
     ) {
         Box(
             modifier = Modifier
@@ -291,7 +297,7 @@ fun RestaurantPhotoFullscreenViewer(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(RestaurantColors.Base.black)
+                        .background(palette.pageBackground)
                         .graphicsLayer { clip = true },
                 ) {
                     FullscreenPhotoPage(
@@ -348,7 +354,7 @@ private fun FullscreenPhotoTopBar(
             )
             Text(
                 text = pageLabel,
-                color = palette.mutedForeground,
+                color = palette.foreground,
                 fontSize = 13.sp,
                 textAlign = TextAlign.Center,
             )
@@ -447,31 +453,63 @@ private fun ZoomableRoundedPhoto(
     onZoomed: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var scale by remember(imageUrl) { mutableFloatStateOf(1f) }
-    var offset by remember(imageUrl) { mutableStateOf(Offset.Zero) }
+    var targetScale by remember(imageUrl) { mutableFloatStateOf(1f) }
+    var targetOffset by remember(imageUrl) { mutableStateOf(Offset.Zero) }
+    var animateZoomTransition by remember(imageUrl) { mutableStateOf(false) }
     var containerSize by remember(imageUrl) { mutableStateOf(IntSize.Zero) }
     val shape = RoundedCornerShape(cornerRadius)
+    val zoomTransition = tween<Float>(
+        durationMillis = ZoomTransitionMillis,
+        easing = FastOutSlowInEasing,
+    )
+    val zoomAnimationSpec = if (animateZoomTransition) zoomTransition else snap()
+
+    val displayScale by animateFloatAsState(
+        targetValue = targetScale,
+        animationSpec = zoomAnimationSpec,
+        label = "photo-zoom-scale",
+    )
+    val displayOffsetX by animateFloatAsState(
+        targetValue = targetOffset.x,
+        animationSpec = zoomAnimationSpec,
+        label = "photo-zoom-offset-x",
+    )
+    val displayOffsetY by animateFloatAsState(
+        targetValue = targetOffset.y,
+        animationSpec = zoomAnimationSpec,
+        label = "photo-zoom-offset-y",
+    )
 
     fun applyZoomPan(pan: Offset, zoom: Float) {
-        val newScale = (scale * zoom).coerceIn(1f, 4f)
-        scale = newScale
+        animateZoomTransition = false
+        val newScale = (targetScale * zoom).coerceIn(1f, 4f)
+        targetScale = newScale
         val zoomed = newScale > 1.01f
         onZoomed(zoomed)
-        offset = if (zoomed) {
-            clampZoomPanOffset(offset + pan, newScale, containerSize)
+        targetOffset = if (zoomed) {
+            clampZoomPanOffset(targetOffset + pan, newScale, containerSize)
         } else {
             Offset.Zero
         }
     }
 
-    fun resetZoom() {
-        scale = 1f
-        offset = Offset.Zero
+    fun animateZoomIn() {
+        animateZoomTransition = true
+        targetScale = DoubleTapZoomScale
+        targetOffset = Offset.Zero
+        onZoomed(true)
+    }
+
+    fun animateZoomOut() {
+        animateZoomTransition = true
+        targetScale = 1f
+        targetOffset = Offset.Zero
         onZoomed(false)
     }
 
     val frameParallaxX = parallaxOffsetPx * FullscreenFrameParallaxFactor
     val imageParallaxX = parallaxOffsetPx * FullscreenImageParallaxFactor
+    val zoomedIn = targetScale > 1.01f
 
     Box(
         modifier = modifier,
@@ -481,7 +519,7 @@ private fun ZoomableRoundedPhoto(
             modifier = Modifier
                 .fillMaxWidth()
                 .onSizeChanged { containerSize = it }
-                .pointerInput(imageUrl, scale) {
+                .pointerInput(imageUrl, targetScale) {
                     awaitEachGesture {
                         var pastTouchSlop = false
                         val touchSlop = viewConfiguration.touchSlop
@@ -492,19 +530,19 @@ private fun ZoomableRoundedPhoto(
 
                             val zoomChange = event.calculateZoom()
                             val panChange = event.calculatePan()
-                            val zoomedIn = scale > 1.01f
+                            val zoomedInGesture = targetScale > 1.01f
                             val isPinch = zoomChange != 1f
 
                             if (!pastTouchSlop) {
                                 val zoomMotion = abs(1f - zoomChange)
-                                if (zoomMotion > 0f || panChange.getDistance() > touchSlop || zoomedIn) {
+                                if (zoomMotion > 0f || panChange.getDistance() > touchSlop || zoomedInGesture) {
                                     pastTouchSlop = true
                                 }
                             }
 
-                            if (pastTouchSlop && (isPinch || zoomedIn)) {
+                            if (pastTouchSlop && (isPinch || zoomedInGesture)) {
                                 applyZoomPan(
-                                    pan = if (zoomedIn) panChange else Offset.Zero,
+                                    pan = if (zoomedInGesture) panChange else Offset.Zero,
                                     zoom = zoomChange,
                                 )
                                 event.changes.forEach { if (it.pressed) it.consume() }
@@ -513,21 +551,20 @@ private fun ZoomableRoundedPhoto(
                     }
                 }
                 .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                    translationX = frameParallaxX + offset.x
-                    translationY = offset.y
+                    scaleX = displayScale
+                    scaleY = displayScale
+                    translationX = frameParallaxX + displayOffsetX
+                    translationY = displayOffsetY
                     // Clip drawing only on the child; keep hit bounds in sync with zoom/pan.
                     clip = false
                 }
-                .pointerInput(imageUrl, scale) {
+                .pointerInput(imageUrl, zoomedIn) {
                     detectTapGestures(
                         onDoubleTap = {
-                            if (scale > 1.01f) {
-                                resetZoom()
+                            if (zoomedIn) {
+                                animateZoomOut()
                             } else {
-                                scale = 2.5f
-                                onZoomed(true)
+                                animateZoomIn()
                             }
                         },
                     )
