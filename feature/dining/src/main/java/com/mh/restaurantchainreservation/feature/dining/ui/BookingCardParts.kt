@@ -22,6 +22,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Delete
@@ -41,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -106,6 +110,7 @@ fun StatusBadge(
     booking: Booking,
     checkedInIds: Set<String>?,
     modifier: Modifier = Modifier,
+    heroOverlay: Boolean = false,
 ) {
     val palette = LocalRestaurantPalette.current
     val isLive = booking.status == BookingStatus.Confirmed && isCurrentlyDining(booking, checkedInIds = checkedInIds)
@@ -114,9 +119,9 @@ fun StatusBadge(
     if (isLive) {
         Row(
             modifier = modifier
-                .height(28.dp)
+                .height(30.dp)
                 .clip(shape)
-                .background(palette.success)
+                .background(if (heroOverlay) palette.success else palette.success)
                 .padding(horizontal = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
@@ -125,36 +130,71 @@ fun StatusBadge(
             Text(
                 text = stringResource(I18nR.string.booking_status_now),
                 color = RestaurantColors.Base.white,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.ExtraBold,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
             )
         }
         return
     }
 
     val visual = statusVisualFor(palette, booking.status)
+    val badgeBackground = if (heroOverlay) {
+        lerp(RestaurantColors.Base.white, visual.color, 0.14f)
+    } else {
+        visual.container
+    }
+    val badgeBorder = if (heroOverlay) {
+        visual.color.copy(alpha = 0.22f)
+    } else {
+        visual.color.copy(alpha = 0.18f)
+    }
     Row(
         modifier = modifier
-            .height(28.dp)
+            .height(30.dp)
             .clip(shape)
-            .background(visual.container)
+            .background(badgeBackground)
+            .border(1.dp, badgeBorder, shape)
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
     ) {
-        Icon(
-            imageVector = visual.icon,
-            contentDescription = null,
-            tint = visual.color,
-            modifier = Modifier.size(14.dp),
-        )
+        if (heroOverlay) {
+            Icon(
+                imageVector = visual.icon,
+                contentDescription = null,
+                tint = visual.color,
+                modifier = Modifier.size(14.dp),
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(16.dp)
+                    .clip(CircleShape)
+                    .background(visual.color),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = statusBadgeGlyph(visual.icon),
+                    contentDescription = null,
+                    tint = RestaurantColors.Base.white,
+                    modifier = Modifier.size(10.dp),
+                )
+            }
+        }
         Text(
             text = stringResource(visual.labelRes),
             color = visual.color,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.ExtraBold,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
         )
     }
+}
+
+private fun statusBadgeGlyph(icon: ImageVector): ImageVector = when (icon) {
+    Icons.Outlined.CheckCircle -> Icons.Filled.Check
+    Icons.Outlined.Cancel -> Icons.Filled.Close
+    Icons.Outlined.Warning -> Icons.Filled.Warning
+    else -> icon
 }
 
 @Composable

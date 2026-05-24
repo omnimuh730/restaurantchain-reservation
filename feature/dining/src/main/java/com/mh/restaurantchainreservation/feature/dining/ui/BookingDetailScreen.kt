@@ -1,15 +1,9 @@
 package com.mh.restaurantchainreservation.feature.dining.ui
 
-import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
-import android.content.ClipData
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +19,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -34,64 +29,81 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.AccessTime
-import androidx.compose.material.icons.outlined.Call
-import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Cancel
+import androidx.compose.material.icons.outlined.Celebration
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Group
-import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.Navigation
-import androidx.compose.material.icons.outlined.QrCode
-import androidx.compose.material.icons.outlined.Receipt
-import androidx.compose.material.icons.outlined.RestaurantMenu
-import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.PersonAdd
+import androidx.compose.material.icons.outlined.Phone
+import androidx.compose.material.icons.outlined.QrCode
+import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.outlined.Receipt
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.TableRestaurant
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavContentBottomPadding
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
+import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantLocationMap
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.core.model.DiscoverData
 import com.mh.restaurantchainreservation.core.model.Restaurant
+import com.mh.restaurantchainreservation.core.model.WishlistStore
+import com.mh.restaurantchainreservation.core.model.mapCoordinate
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
 import com.mh.restaurantchainreservation.feature.dining.data.BookingStatus
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.mh.restaurantchainreservation.feature.dining.data.displayCuisineLabels
+import com.mh.restaurantchainreservation.feature.dining.data.displaySeatingLabels
 
 private val SheetTopRadius = 34.dp
+private val HeaderSheetShape = RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius)
 private val HeroHeight = 288.dp
+private val DetailInfoHorizontalPadding = 24.dp
+private val DetailSheetTopPadding = 28.dp
+private val DetailSectionVerticalPadding = 24.dp
+private val DetailSectionTitleSpacing = 20.dp
+private val HeroOverlayBottomPadding = 20.dp
+private val SectionSpacing = HubSurfaceCardDefaults.SectionSpacing
+private val ReservationIconSize = 40.dp
+private val ReservationIconGap = 14.dp
+private val ReservationPink = RestaurantColors.Dining.pink
+private val ReservationPinkSoft = RestaurantColors.Dining.pinkSoft
 
 private val GalleryExtras = listOf(
     "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=1200&h=800&fit=crop",
@@ -105,12 +117,29 @@ private fun galleryImagesFor(booking: Booking): List<String> {
     return listOf(primary) + GalleryExtras
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
+private fun Modifier.detailSheetTopRoundedBackground(color: Color): Modifier = drawBehind {
+    val topRadius = SheetTopRadius.toPx()
+    val path = Path().apply {
+        addRoundRect(
+            RoundRect(
+                rect = Rect(0f, 0f, size.width, size.height),
+                topLeft = CornerRadius(topRadius, topRadius),
+                topRight = CornerRadius(topRadius, topRadius),
+                bottomRight = CornerRadius.Zero,
+                bottomLeft = CornerRadius.Zero,
+            ),
+        )
+    }
+    drawPath(path, color = color)
+}
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BookingDetailScreen(
     booking: Booking,
     onBack: () -> Unit,
     onManage: () -> Unit,
+    onCancel: () -> Unit = onManage,
     onScanQR: () -> Unit,
     onShowQR: () -> Unit,
     onInvite: () -> Unit,
@@ -119,19 +148,7 @@ fun BookingDetailScreen(
     onDeleteRequest: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val clipboard = LocalClipboard.current
-    val scope = rememberCoroutineScope()
     val scroll = rememberScrollState()
-
-    var saved by remember { mutableStateOf(false) }
-    var copied by remember { mutableStateOf(false) }
-
-    LaunchedEffect(copied) {
-        if (copied) {
-            delay(1400L)
-            copied = false
-        }
-    }
 
     val isScheduled = booking.status == BookingStatus.Confirmed
     val isPending = booking.status == BookingStatus.Pending
@@ -140,493 +157,192 @@ fun BookingDetailScreen(
     val isCompleted = booking.status == BookingStatus.Completed
 
     val restaurant = remember(booking.id) { DiscoverData.findById(booking.id) }
+    val wishlistRestaurant = remember(booking.id, restaurant) { restaurantForBooking(booking, restaurant) }
+    val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
+    val saved = wishlistRestaurant.id in savedIds
     val galleryImages = remember(booking.id, booking.image) { galleryImagesFor(booking) }
-    var headerSolid by remember { mutableStateOf(false) }
-    val headerSolidDerived by remember {
-        derivedStateOf { scroll.value > 48 }
-    }
-    LaunchedEffect(headerSolidDerived) {
-        headerSolid = headerSolidDerived
-    }
+    val headerSolidDerived by remember { derivedStateOf { scroll.value > 48 } }
+    val navBottomPadding = LocalNavContentBottomPadding.current
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(palette.pageBackground),
+            .background(palette.pageBackground)
+            .trackBottomNavScroll(),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(scroll)
-                .trackBottomNavScroll(),
+                .verticalScroll(scroll),
         ) {
-            BookingHeroCarousel(
-                galleryImages = galleryImages,
-                restaurantName = booking.restaurant,
-            )
-            BookingHeaderSummaryCard(
-                booking = booking,
-                restaurant = restaurant,
-            )
-            Column(
-                modifier = Modifier.padding(horizontal = 16.dp),
-            ) {
-                StatusBadge(booking = booking, checkedInIds = null, modifier = Modifier)
-                Spacer(Modifier.height(16.dp))
-
-            // 3-tile info row
-            val parts = booking.date.split(",")
-            val day = parts.firstOrNull()?.trim() ?: booking.date
-            val date = if (parts.size > 1) parts.drop(1).joinToString(",").trim() else booking.date
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                InfoTile(
-                    icon = Icons.Outlined.Group,
-                    label = stringResource(I18nR.string.detail_party),
-                    value = "${booking.guests} ${if (booking.guests == 1) "guest" else "guests"}",
-                    modifier = Modifier.weight(1f),
+            Column(modifier = Modifier.fillMaxWidth()) {
+                BookingHeroCarousel(
+                    booking = booking,
+                    galleryImages = galleryImages,
+                    restaurant = restaurant,
                 )
-                InfoTile(
-                    icon = Icons.Outlined.AccessTime,
-                    label = day,
-                    value = date,
-                    modifier = Modifier.weight(1f),
-                )
-                InfoTile(
-                    icon = Icons.Outlined.AccessTime,
-                    label = booking.seating,
-                    value = booking.time,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-
-            // Confirmation strip + actions for confirmed bookings
-            if (isScheduled) {
-                Spacer(Modifier.height(16.dp))
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(24.dp))
-                        .border(1.dp, palette.brand.copy(alpha = 0.18f), RoundedCornerShape(24.dp))
-                        .background(palette.brand.copy(alpha = 0.06f))
-                        .padding(14.dp),
+                        .offset(y = -SheetTopRadius)
+                        .detailSheetTopRoundedBackground(palette.pageBackground)
+                        .clip(HeaderSheetShape)
+                        .padding(horizontal = DetailInfoHorizontalPadding),
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                    Spacer(Modifier.height(DetailSheetTopPadding))
+
+                    ReservationSection(
+                        booking = booking,
+                        showQuickActions = isScheduled,
+                        onShowQR = onShowQR,
+                        onInvite = onInvite,
+                        onScanQR = onScanQR,
+                    )
+
+                if (isPending) {
+                    Spacer(Modifier.height(SectionSpacing))
+                    StatusInfoBlock(
+                        title = stringResource(I18nR.string.detail_pending_title),
+                        description = stringResource(I18nR.string.detail_pending_desc),
+                        accent = palette.warning,
+                        container = palette.warning.copy(alpha = 0.10f),
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(I18nR.string.booking_confirmation_label).uppercase(),
-                                color = palette.brand,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                            )
-                            Text(
-                                text = booking.confirmationNo,
-                                color = palette.foreground,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                maxLines = 1,
-                            )
-                        }
-                        val copyAlpha by animateFloatAsState(targetValue = if (copied) 0f else 1f, label = "copy_alpha")
-                        val checkAlpha by animateFloatAsState(targetValue = if (copied) 1f else 0f, label = "check_alpha")
-                        val checkScale by animateFloatAsState(
-                            targetValue = if (copied) 1f else 0.4f,
-                            animationSpec = spring(stiffness = 380f, dampingRatio = 0.55f),
-                            label = "check_scale",
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(palette.cardSurface)
-                                .clickable {
-                                    scope.launch {
-                                        clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("Confirmation Code", booking.confirmationNo)))
-                                        copied = true
-                                    }
-                                },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                Icons.Outlined.ContentCopy,
-                                null,
-                                tint = palette.mutedForeground,
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .graphicsLayer { alpha = copyAlpha },
-                            )
-                            Icon(
-                                Icons.Filled.Check,
-                                null,
-                                tint = palette.brand,
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .graphicsLayer {
-                                        alpha = checkAlpha
-                                        scaleX = checkScale
-                                        scaleY = checkScale
-                                    },
-                            )
-                        }
-                    }
-                    Spacer(Modifier.height(12.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        DetailActionButton(
-                            text = stringResource(I18nR.string.detail_show_qr),
-                            icon = Icons.Outlined.QrCode,
-                            primary = true,
-                            onClick = onShowQR,
-                            modifier = Modifier.weight(1f),
-                        )
-                        DetailActionButton(
-                            text = stringResource(I18nR.string.manage_title),
-                            icon = null,
-                            primary = false,
-                            onClick = onManage,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        DetailActionButton(
-                            text = stringResource(I18nR.string.scan_step_scan),
-                            icon = Icons.Outlined.QrCode,
-                            primary = false,
-                            onClick = onScanQR,
-                            modifier = Modifier.weight(1f),
-                        )
-                        DetailActionButton(
-                            text = stringResource(I18nR.string.detail_invite),
-                            icon = Icons.Outlined.PersonAdd,
-                            primary = false,
-                            onClick = onInvite,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                }
-            }
-
-            // Pending block
-            if (isPending) {
-                Spacer(Modifier.height(16.dp))
-                StatusInfoBlock(
-                    title = stringResource(I18nR.string.detail_pending_title),
-                    description = stringResource(I18nR.string.detail_pending_desc),
-                    accent = palette.warning,
-                    container = palette.warning.copy(alpha = 0.10f),
-                ) {
-                    Text(
-                        text = stringResource(I18nR.string.detail_request_code).uppercase(),
-                        color = palette.mutedForeground,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                    Text(
-                        text = booking.confirmationNo,
-                        color = palette.foreground,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                }
-            }
-
-            // Rejected block with actions
-            if (isRejected) {
-                Spacer(Modifier.height(16.dp))
-                StatusInfoBlock(
-                    title = stringResource(I18nR.string.detail_rejected_title),
-                    description = stringResource(I18nR.string.detail_rejected_desc),
-                    accent = palette.destructive,
-                    container = palette.destructive.copy(alpha = 0.10f),
-                ) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        DetailActionButton(
-                            text = "Request again",
-                            icon = Icons.Outlined.Refresh,
-                            primary = true,
-                            onClick = onBookAgain,
-                            modifier = Modifier.weight(1f),
-                        )
-                        DetailActionButton(
-                            text = "Delete",
-                            icon = null,
-                            primary = false,
-                            destructive = true,
-                            onClick = onDeleteRequest,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                }
-            }
-
-            // Restaurant action rows
-            Spacer(Modifier.height(20.dp))
-            Text(
-                text = stringResource(I18nR.string.detail_section_restaurant),
-                color = palette.foreground,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(start = 4.dp),
-            )
-            Spacer(Modifier.height(10.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                DetailActionRow(
-                    icon = Icons.Outlined.RestaurantMenu,
-                    title = stringResource(I18nR.string.detail_action_browse_menu),
-                    subtitle = stringResource(I18nR.string.detail_action_browse_menu_desc),
-                    tone = ActionRowTone.Primary,
-                    onClick = { /* could open menu modal */ },
-                )
-                DetailActionRow(
-                    icon = Icons.Outlined.Navigation,
-                    title = stringResource(I18nR.string.detail_action_directions),
-                    subtitle = booking.address,
-                    tone = ActionRowTone.Default,
-                    onClick = {},
-                )
-                DetailActionRow(
-                    icon = Icons.Outlined.Call,
-                    title = stringResource(I18nR.string.detail_action_call),
-                    subtitle = booking.phone,
-                    tone = ActionRowTone.Default,
-                    onClick = {},
-                )
-            }
-
-            // Details (occasion + special request)
-            if (booking.occasion != null || booking.specialRequest != null) {
-                Spacer(Modifier.height(20.dp))
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(24.dp))
-                        .border(1.dp, palette.border, RoundedCornerShape(24.dp))
-                        .background(palette.cardSurface)
-                        .padding(16.dp),
-                ) {
-                    Text(
-                        text = stringResource(I18nR.string.detail_section_details),
-                        color = palette.foreground,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                    if (booking.occasion != null) {
-                        Spacer(Modifier.height(10.dp))
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                            val occasions = listOf(
-                                stringResource(I18nR.string.detail_occasion_birthday),
-                                stringResource(I18nR.string.detail_occasion_anniversary),
-                                stringResource(I18nR.string.detail_occasion_date),
-                                stringResource(I18nR.string.detail_occasion_special),
-                            )
-                            occasions.forEach { occ ->
-                                val selected = booking.occasion.equals(occ, ignoreCase = true)
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(percent = 50))
-                                        .background(if (selected) palette.brand.copy(alpha = 0.08f) else Color.Transparent)
-                                        .border(1.dp, if (selected) palette.brand else palette.border, RoundedCornerShape(percent = 50))
-                                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                                ) {
-                                    Text(
-                                        text = occ,
-                                        color = if (selected) palette.brand else palette.mutedForeground,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    if (booking.specialRequest != null) {
-                        Spacer(Modifier.height(10.dp))
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(palette.mutedSurface.copy(alpha = 0.7f))
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                        ) {
-                            Text(
-                                text = booking.specialRequest,
-                                color = palette.mutedForeground,
-                                fontSize = 14.sp,
-                                lineHeight = 19.sp,
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Location
-            Spacer(Modifier.height(20.dp))
-            Text(
-                text = stringResource(I18nR.string.detail_section_location),
-                color = palette.foreground,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(start = 4.dp),
-            )
-            Spacer(Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.padding(start = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Icon(Icons.Outlined.LocationOn, null, tint = palette.brand, modifier = Modifier.size(16.dp))
-                Text(
-                    text = booking.address,
-                    color = palette.mutedForeground,
-                    fontSize = 14.sp,
-                    lineHeight = 19.sp,
-                )
-            }
-            Spacer(Modifier.height(10.dp))
-            BookingMapPreview(address = booking.address)
-
-            // Dining points
-            Spacer(Modifier.height(20.dp))
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .border(1.dp, palette.border, RoundedCornerShape(24.dp))
-                    .background(palette.cardSurface)
-                    .padding(16.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = stringResource(I18nR.string.detail_dining_points), color = palette.mutedForeground, fontSize = 12.sp)
                         Text(
-                            text = when {
-                                booking.diningPoints <= 0 -> stringResource(I18nR.string.detail_dining_points_none)
-                                isCompleted -> stringResource(I18nR.string.detail_dining_points_earned, booking.diningPoints)
-                                else -> stringResource(I18nR.string.detail_dining_points_pending, booking.diningPoints)
-                            },
+                            text = stringResource(I18nR.string.detail_request_code).uppercase(),
+                            color = palette.mutedForeground,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                        )
+                        Text(
+                            text = booking.confirmationNo,
                             color = palette.foreground,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.ExtraBold,
                         )
                     }
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(palette.warning.copy(alpha = 0.10f)),
-                        contentAlignment = Alignment.Center,
+                }
+
+                if (isRejected) {
+                    Spacer(Modifier.height(SectionSpacing))
+                    StatusInfoBlock(
+                        title = stringResource(I18nR.string.detail_rejected_title),
+                        description = stringResource(I18nR.string.detail_rejected_desc),
+                        accent = palette.destructive,
+                        container = palette.destructive.copy(alpha = 0.10f),
                     ) {
-                        Icon(Icons.Filled.Star, null, tint = palette.warning, modifier = Modifier.size(20.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            DetailActionButton(
+                                text = stringResource(I18nR.string.booking_action_request_again),
+                                icon = Icons.Outlined.Refresh,
+                                primary = true,
+                                onClick = onBookAgain,
+                                modifier = Modifier.weight(1f),
+                            )
+                            DetailActionButton(
+                                text = stringResource(I18nR.string.booking_action_delete),
+                                icon = null,
+                                primary = false,
+                                destructive = true,
+                                onClick = onDeleteRequest,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
                     }
                 }
-                if (isCompleted && booking.rating != null) {
-                    Spacer(Modifier.height(10.dp))
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(percent = 50))
-                            .background(palette.mutedSurface.copy(alpha = 0.7f))
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Icon(Icons.Filled.Star, null, tint = palette.warning, modifier = Modifier.size(16.dp))
-                        Text(text = "${booking.rating}", color = palette.foreground, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
-                        Text(text = stringResource(I18nR.string.detail_your_rating), color = palette.mutedForeground, fontSize = 13.sp)
-                    }
+
+                BookingDetailInsetDivider()
+                RestaurantInfoSection(booking = booking, restaurant = restaurant)
+
+                if (isScheduled) {
+                    Spacer(Modifier.height(SectionSpacing))
+                    ReservationManagementActions(
+                        onModify = onManage,
+                        onCancel = onCancel,
+                    )
                 }
-            }
 
-            // Trailing actions
-            if (isCancelled) {
-                Spacer(Modifier.height(20.dp))
-                DetailActionButton(
-                    text = stringResource(I18nR.string.detail_book_again),
-                    icon = Icons.Outlined.Refresh,
-                    primary = true,
-                    onClick = onBookAgain,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-
-            if (isCompleted) {
-                Spacer(Modifier.height(20.dp))
-                if (booking.receipt != null) {
+                if (isCancelled) {
+                    Spacer(Modifier.height(SectionSpacing))
                     DetailActionButton(
-                        text = stringResource(I18nR.string.detail_view_receipt),
-                        icon = Icons.Outlined.Receipt,
-                        primary = false,
-                        onClick = onViewReceipt,
+                        text = stringResource(I18nR.string.detail_book_again),
+                        icon = Icons.Outlined.Refresh,
+                        primary = true,
+                        onClick = onBookAgain,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    Spacer(Modifier.height(8.dp))
                 }
-                DetailActionButton(
-                    text = stringResource(I18nR.string.detail_book_again),
-                    icon = Icons.Outlined.Refresh,
-                    primary = true,
-                    onClick = onBookAgain,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
 
-            if (isScheduled) {
-                Spacer(Modifier.height(20.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(palette.mutedSurface.copy(alpha = 0.7f))
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Icon(Icons.Filled.Star, null, tint = palette.brand, modifier = Modifier.size(16.dp))
-                    Text(
-                        text = stringResource(I18nR.string.detail_share_hint),
-                        color = palette.mutedForeground,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp,
+                if (isCompleted) {
+                    Spacer(Modifier.height(SectionSpacing))
+                    if (booking.receipt != null) {
+                        DetailActionButton(
+                            text = stringResource(I18nR.string.detail_view_receipt),
+                            icon = Icons.Outlined.Receipt,
+                            primary = false,
+                            onClick = onViewReceipt,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    DetailActionButton(
+                        text = stringResource(I18nR.string.detail_book_again),
+                        icon = Icons.Outlined.Refresh,
+                        primary = true,
+                        onClick = onBookAgain,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
-            }
 
-            Spacer(Modifier.height(40.dp))
+                Spacer(Modifier.height(40.dp + navBottomPadding))
+                }
             }
         }
 
         BookingDetailTopBar(
             restaurantName = booking.restaurant,
-            solid = headerSolid,
+            solid = headerSolidDerived,
             saved = saved,
             onBack = onBack,
             onShare = onInvite,
-            onToggleSave = { saved = !saved },
+            onToggleSave = { WishlistStore.onHeartTap(wishlistRestaurant) },
         )
     }
+}
+
+private fun restaurantForBooking(booking: Booking, restaurant: Restaurant?): Restaurant {
+    if (restaurant != null) return restaurant
+    return Restaurant(
+        id = booking.id,
+        name = booking.restaurant,
+        cuisine = booking.cuisine,
+        rating = booking.rating ?: 4.5,
+        reviews = 0,
+        price = "$$",
+        distance = "",
+        image = booking.image,
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BookingHeroCarousel(
+    booking: Booking,
     galleryImages: List<String>,
-    restaurantName: String,
+    restaurant: Restaurant?,
 ) {
+    val palette = LocalRestaurantPalette.current
     val pagerState = rememberPagerState(pageCount = { galleryImages.size })
+    val hostName = restaurantHostName(booking, restaurant)
+    val heroOverlayBottom = SheetTopRadius + HeroOverlayBottomPadding
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(HeroHeight),
+            .height(HeroHeight)
+            .background(palette.mutedSurface),
     ) {
         HorizontalPager(
             state = pagerState,
@@ -634,73 +350,638 @@ private fun BookingHeroCarousel(
         ) { page ->
             AsyncImage(
                 model = galleryImages[page],
-                contentDescription = restaurantName,
+                contentDescription = booking.restaurant,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
         }
+
         Box(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 48.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(RestaurantColors.Base.black.copy(alpha = 0.6f))
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(196.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.28f),
+                            Color.Black.copy(alpha = 0.68f),
+                        ),
+                    ),
+                ),
+        )
+
+        if (galleryImages.size > 1) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 20.dp, bottom = 48.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(RestaurantColors.Base.black.copy(alpha = 0.6f))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+            ) {
+                Text(
+                    text = "${pagerState.currentPage + 1} / ${galleryImages.size}",
+                    color = RestaurantColors.Base.white,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .padding(
+                    start = DetailInfoHorizontalPadding,
+                    end = DetailInfoHorizontalPadding,
+                    bottom = heroOverlayBottom,
+                ),
         ) {
             Text(
-                text = "${pagerState.currentPage + 1} / ${galleryImages.size}",
+                text = booking.restaurant,
                 color = RestaurantColors.Base.white,
-                fontSize = 13.sp,
+                fontSize = 32.sp,
+                lineHeight = 38.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 10.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Person,
+                    contentDescription = null,
+                    tint = ReservationPink,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = stringResource(I18nR.string.detail_hosted_by, hostName),
+                    color = RestaurantColors.Base.white.copy(alpha = 0.92f),
+                    fontSize = 16.sp,
+                    lineHeight = 22.sp,
+                    fontWeight = FontWeight.Normal,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+private fun restaurantHostName(booking: Booking, restaurant: Restaurant?): String {
+    if (booking.restaurant.contains("Sakura", ignoreCase = true)) return "Chef Tanaka"
+    if (booking.restaurant.contains("Le Petit", ignoreCase = true)) return "Chef Laurent"
+    if (booking.restaurant.contains("Bella Napoli", ignoreCase = true)) return "Marco Rossi"
+    return restaurant?.area?.takeIf { it.isNotBlank() }
+        ?: booking.restaurant.split(" ").firstOrNull()
+        ?: booking.restaurant
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ReservationSection(
+    booking: Booking,
+    showQuickActions: Boolean,
+    onShowQR: () -> Unit,
+    onInvite: () -> Unit,
+    onScanQR: () -> Unit,
+) {
+    val palette = LocalRestaurantPalette.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = DetailSectionVerticalPadding),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(I18nR.string.detail_your_reservation),
+                color = palette.foreground,
+                fontSize = 32.sp,
+                lineHeight = 38.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+            )
+            StatusBadge(booking = booking, checkedInIds = null)
+        }
+        if (showQuickActions) {
+            Spacer(Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                ShareActionTile(
+                    label = stringResource(I18nR.string.detail_show_qr),
+                    icon = Icons.Outlined.QrCode,
+                    onClick = onShowQR,
+                    modifier = Modifier.weight(1f),
+                )
+                ShareActionTile(
+                    label = stringResource(I18nR.string.detail_invite_guests),
+                    icon = Icons.Outlined.PersonAdd,
+                    onClick = onInvite,
+                    modifier = Modifier.weight(1f),
+                )
+                ShareActionTile(
+                    label = stringResource(I18nR.string.scan_step_scan),
+                    icon = Icons.Outlined.QrCodeScanner,
+                    onClick = onScanQR,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Spacer(Modifier.height(DetailSectionVerticalPadding))
+            BookingDetailInsetDivider()
+            Spacer(Modifier.height(DetailSectionVerticalPadding))
+        } else {
+            Spacer(Modifier.height(28.dp))
+        }
+        ReservationDetailsContent(booking = booking)
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ReservationDetailsContent(booking: Booking) {
+    val reservationDate = remember(booking.date) {
+        booking.date.split(",").joinToString(",") { part -> part.trim() }
+    }
+    val contactName = booking.contactName?.takeIf { it.isNotBlank() }
+        ?: stringResource(I18nR.string.detail_reservation_guest)
+    val occasionValue = booking.occasion?.let { resolveOccasionLabel(it) }
+        ?: stringResource(I18nR.string.detail_reservation_occasion_none)
+    val seatingLabels = remember(booking.id, booking.seating, booking.seatingLabels) {
+        booking.displaySeatingLabels()
+    }
+    val cuisineLabels = remember(booking.id, booking.cuisine, booking.cuisineLabels) {
+        booking.displayCuisineLabels()
+    }
+    val preferenceLabels = remember(
+        booking.id,
+        seatingLabels,
+        cuisineLabels,
+        booking.vibeLabels,
+        booking.amenityLabels,
+    ) {
+        buildList {
+            addAll(seatingLabels)
+            addAll(cuisineLabels)
+            addAll(booking.vibeLabels)
+            addAll(booking.amenityLabels)
+        }.distinct()
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(bottom = DetailSectionVerticalPadding)) {
+            BookingDetailSectionTitle(
+                text = stringResource(I18nR.string.detail_booking_details),
+            )
+            Spacer(Modifier.height(DetailSectionTitleSpacing))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                ReservationInfoRow(
+                    icon = Icons.Outlined.CalendarMonth,
+                    value = reservationDate,
+                    modifier = Modifier.weight(1f),
+                )
+                ReservationInfoRow(
+                    icon = Icons.Outlined.AccessTime,
+                    value = booking.time,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Spacer(Modifier.height(18.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                ReservationInfoRow(
+                    icon = Icons.Outlined.Group,
+                    value = stringResource(I18nR.string.detail_table_for, booking.guests),
+                    modifier = Modifier.weight(1f),
+                )
+                ReservationInfoRow(
+                    icon = Icons.Outlined.Celebration,
+                    value = occasionValue,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Spacer(Modifier.height(20.dp))
+            ReservationContactRow(
+                name = contactName,
+                phone = booking.phone,
+            )
+        }
+
+        val showPreferencesSection = preferenceLabels.isNotEmpty() || booking.specialRequest != null
+        if (showPreferencesSection) {
+            BookingDetailInsetDivider()
+            Column(
+                modifier = Modifier.padding(
+                    top = DetailSectionVerticalPadding,
+                    bottom = DetailSectionVerticalPadding,
+                ),
+            ) {
+                BookingDetailSectionTitle(
+                    text = stringResource(I18nR.string.detail_reservation_preferences),
+                )
+                Spacer(Modifier.height(DetailSectionTitleSpacing))
+                if (preferenceLabels.isNotEmpty()) {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        preferenceLabels.forEach { label ->
+                            ReservationPreferenceChip(label = label)
+                        }
+                    }
+                }
+                booking.specialRequest?.let { request ->
+                    if (preferenceLabels.isNotEmpty()) {
+                        Spacer(Modifier.height(16.dp))
+                    }
+                    ReservationSpecialRequestBubble(text = request)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReservationInfoRow(
+    icon: ImageVector,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ReservationEventCircleIcon(imageVector = icon)
+        Spacer(Modifier.width(ReservationIconGap))
+        Text(
+            text = value,
+            color = palette.foreground,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Normal,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun ReservationContactRow(
+    name: String,
+    phone: String,
+) {
+    val palette = LocalRestaurantPalette.current
+    val initials = remember(name) { contactInitials(name) }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(ReservationIconSize)
+                .clip(CircleShape)
+                .background(ReservationPinkSoft),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = initials,
+                color = ReservationPink,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Spacer(Modifier.width(ReservationIconGap))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = name,
+                color = palette.foreground,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Row(
+                modifier = Modifier.padding(top = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Phone,
+                    contentDescription = null,
+                    tint = palette.mutedForeground,
+                    modifier = Modifier.size(15.dp),
+                )
+                Text(
+                    text = phone,
+                    color = palette.mutedForeground,
+                    fontSize = 15.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+private fun contactInitials(name: String): String =
+    name.trim()
+        .split(Regex("\\s+"))
+        .mapNotNull { part -> part.firstOrNull()?.uppercaseChar()?.toString() }
+        .take(2)
+        .joinToString("")
+        .ifBlank { "?" }
+
+@Composable
+private fun ReservationSpecialRequestBubble(text: String) {
+    val palette = LocalRestaurantPalette.current
+    Text(
+        text = text,
+        color = palette.foreground,
+        fontSize = 15.sp,
+        lineHeight = 22.sp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(palette.mutedSurface.copy(alpha = 0.75f))
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+    )
+}
+
+@Composable
+private fun ReservationPreferenceChip(label: String) {
+    val palette = LocalRestaurantPalette.current
+    val shape = RoundedCornerShape(percent = 50)
+    Text(
+        text = label,
+        color = palette.foreground,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Normal,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier
+            .clip(shape)
+            .background(palette.cardSurface)
+            .border(1.dp, palette.border, shape)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+    )
+}
+
+@Composable
+private fun ReservationManagementActions(
+    onModify: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val cancelTint = RestaurantColors.Text.primary
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        BookingOutlinedAction(
+            label = stringResource(I18nR.string.detail_modify_booking),
+            icon = Icons.Outlined.Edit,
+            tint = ReservationPink,
+            onClick = onModify,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        BookingOutlinedAction(
+            label = stringResource(I18nR.string.detail_cancel_booking),
+            icon = Icons.Outlined.Cancel,
+            tint = cancelTint,
+            onClick = onCancel,
+            modifier = Modifier.fillMaxWidth(),
+            muted = true,
+        )
+    }
+}
+
+@Composable
+private fun BookingOutlinedAction(
+    label: String,
+    icon: ImageVector,
+    tint: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    muted: Boolean = false,
+) {
+    val palette = LocalRestaurantPalette.current
+    val shape = RoundedCornerShape(12.dp)
+    val borderColor = if (muted) {
+        palette.border.copy(alpha = 0.45f)
+    } else {
+        palette.border.copy(alpha = 0.65f)
+    }
+    val background = if (muted) palette.mutedSurface.copy(alpha = 0.35f) else palette.cardSurface
+    Row(
+        modifier = modifier
+            .height(48.dp)
+            .clip(shape)
+            .border(1.dp, borderColor, shape)
+            .background(background)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Icon(icon, null, tint = tint, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = label,
+            color = tint,
+            fontSize = 16.sp,
+            fontWeight = if (muted) FontWeight.Medium else FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun ShareActionTile(
+    label: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    val shape = RoundedCornerShape(12.dp)
+    Column(
+        modifier = modifier
+            .height(88.dp)
+            .clip(shape)
+            .background(palette.mutedSurface.copy(alpha = 0.55f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(icon, null, tint = palette.foreground, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = label,
+            color = palette.foreground,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun BookingDetailSectionTitle(text: String) {
+    val palette = LocalRestaurantPalette.current
+    Text(
+        text = text,
+        color = palette.foreground,
+        fontSize = 22.sp,
+        fontWeight = FontWeight.Bold,
+    )
+}
+
+@Composable
+private fun BookingDetailInsetDivider(modifier: Modifier = Modifier) {
+    val palette = LocalRestaurantPalette.current
+    HorizontalDivider(
+        color = palette.border,
+        modifier = modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun RestaurantInfoSection(
+    booking: Booking,
+    restaurant: Restaurant?,
+) {
+    val resolved = remember(booking.id, restaurant) { restaurantForBooking(booking, restaurant) }
+    val (lat, lng) = remember(resolved.id) { resolved.mapCoordinate() }
+    val locationLine = remember(resolved.area, booking.address) {
+        listOfNotNull(
+            resolved.area?.takeIf { it.isNotBlank() },
+            booking.address.takeIf { it.isNotBlank() },
+        ).joinToString(", ").ifBlank { booking.address }
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = DetailSectionVerticalPadding),
+    ) {
+        BookingDetailSectionTitle(
+            text = stringResource(I18nR.string.detail_section_restaurant_info),
+        )
+        RestaurantLocationMap(
+            latitude = lat,
+            longitude = lng,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+                .padding(top = 16.dp),
+        )
+        BookingDetailInfoRow(
+            icon = Icons.Outlined.Place,
+            title = stringResource(I18nR.string.detail_section_location),
+            subtitle = locationLine,
+            modifier = Modifier.padding(top = 20.dp),
+        )
+        BookingDetailInfoRow(
+            icon = Icons.Outlined.Phone,
+            title = stringResource(I18nR.string.detail_reservation_contact),
+            subtitle = booking.phone,
+            modifier = Modifier.padding(top = 20.dp),
+        )
+    }
+}
+
+@Composable
+private fun BookingDetailInfoRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = palette.foreground,
+            modifier = Modifier.size(22.dp),
+        )
+        Column {
+            Text(
+                text = title,
+                color = palette.foreground,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = subtitle,
+                color = palette.mutedForeground,
+                fontSize = 15.sp,
+                lineHeight = 22.sp,
+                modifier = Modifier.padding(top = 4.dp),
             )
         }
     }
 }
 
 @Composable
-private fun BookingHeaderSummaryCard(
-    booking: Booking,
-    restaurant: Restaurant?,
+private fun ReservationEventCircleIcon(
+    imageVector: ImageVector,
+    modifier: Modifier = Modifier,
+    size: androidx.compose.ui.unit.Dp = ReservationIconSize,
 ) {
-    val palette = LocalRestaurantPalette.current
-    val subtitle = if (restaurant != null) {
-        "${restaurant.cuisine} restaurant in ${restaurant.distance} area"
-    } else {
-        booking.cuisine
-    }
-    val metaLine = if (restaurant != null) {
-        "${restaurant.price} · ${booking.date} · ${booking.time}"
-    } else {
-        "${booking.date} · ${booking.time}"
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .offset(y = (-24).dp)
-            .clip(RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius))
-            .background(palette.cardSurface)
-            .padding(horizontal = 24.dp, vertical = 24.dp),
+    Box(
+        modifier = modifier.size(size),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = booking.restaurant,
-            color = palette.foreground,
-            fontSize = 32.sp,
-            lineHeight = 38.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = subtitle,
-            color = palette.mutedForeground,
-            fontSize = 16.sp,
-            modifier = Modifier.padding(top = 6.dp),
-        )
-        Text(
-            text = metaLine,
-            color = palette.mutedForeground,
-            fontSize = 16.sp,
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(CircleShape)
+                .background(ReservationPinkSoft),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = imageVector,
+                contentDescription = null,
+                tint = ReservationPink,
+                modifier = Modifier.size(size * 0.46f),
+            )
+        }
     }
-    HorizontalDivider(color = palette.border)
+}
+
+@Composable
+private fun resolveOccasionLabel(occasion: String): String = when (occasion.lowercase()) {
+    "birthday" -> stringResource(I18nR.string.detail_occasion_birthday)
+    "anniversary" -> stringResource(I18nR.string.detail_occasion_anniversary)
+    "date" -> stringResource(I18nR.string.detail_occasion_date)
+    "special" -> stringResource(I18nR.string.detail_occasion_special)
+    "celebration" -> stringResource(I18nR.string.detail_occasion_celebration)
+    else -> occasion
 }
 
 @Composable
@@ -718,7 +999,7 @@ private fun BookingDetailTopBar(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                if (solid) palette.cardSurface.copy(alpha = 0.95f) else Color.Transparent,
+                if (solid) palette.pageBackground.copy(alpha = 0.95f) else Color.Transparent,
             )
             .then(
                 if (solid) Modifier.border(1.dp, palette.border) else Modifier,
@@ -761,27 +1042,18 @@ private fun BookingDetailTopBar(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 GlassCircleButton(onClick = onShare, background = buttonBg) {
                     Icon(
-                        Icons.Filled.Share,
+                        Icons.Outlined.PersonAdd,
                         stringResource(I18nR.string.detail_header_share),
                         tint = palette.foreground,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(20.dp),
                     )
                 }
                 GlassCircleButton(onClick = onToggleSave, background = buttonBg) {
-                    val heartScale by animateFloatAsState(
-                        targetValue = if (saved) 1.2f else 1f,
-                        animationSpec = spring(stiffness = 380f, dampingRatio = 0.45f),
-                        label = "heart_scale",
-                    )
                     HeartDrawableIcon(
                         active = saved,
                         contentDescription = stringResource(
                             if (saved) I18nR.string.detail_unsave else I18nR.string.detail_save,
                         ),
-                        modifier = Modifier.graphicsLayer {
-                            scaleX = heartScale
-                            scaleY = heartScale
-                        },
                         iconHeight = 20.dp,
                     )
                 }
@@ -794,157 +1066,24 @@ private fun BookingDetailTopBar(
 private fun GlassCircleButton(
     onClick: () -> Unit,
     background: Color,
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(40.dp)
+            .shadow(
+                elevation = 4.dp,
+                shape = CircleShape,
+                ambientColor = RestaurantColors.Base.black.copy(alpha = 0.12f),
+                spotColor = RestaurantColors.Base.black.copy(alpha = 0.10f),
+            )
             .clip(CircleShape)
             .background(background)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         content()
-    }
-}
-
-@Composable
-private fun BookingMapPreview(address: String) {
-    val palette = LocalRestaurantPalette.current
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(180.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .background(palette.mutedSurface),
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val road = palette.border
-            repeat(5) { idx ->
-                val y = size.height * (0.18f + idx * 0.18f)
-                drawLine(
-                    color = road,
-                    start = Offset(0f, y),
-                    end = Offset(size.width, y + if (idx % 2 == 0) 38f else -30f),
-                    strokeWidth = 18f,
-                )
-            }
-            repeat(4) { idx ->
-                val x = size.width * (0.18f + idx * 0.24f)
-                drawLine(
-                    color = road.copy(alpha = 0.56f),
-                    start = Offset(x, 0f),
-                    end = Offset(x - 54f, size.height),
-                    strokeWidth = 12f,
-                )
-            }
-            drawCircle(
-                color = palette.brand.copy(alpha = 0.14f),
-                radius = 42f,
-                center = Offset(size.width * 0.56f, size.height * 0.45f),
-            )
-        }
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(56.dp)
-                .clip(CircleShape)
-                .background(palette.cardSurface)
-                .border(1.dp, palette.border, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(palette.brand),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Outlined.LocationOn, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(22.dp))
-            }
-        }
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(12.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(palette.cardSurface.copy(alpha = 0.94f))
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Icon(Icons.Outlined.Navigation, null, tint = palette.brand, modifier = Modifier.size(16.dp))
-            Text(address, color = palette.foreground, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        }
-    }
-}
-
-@Composable
-private fun InfoTile(icon: ImageVector, label: String, value: String, modifier: Modifier = Modifier) {
-    val palette = LocalRestaurantPalette.current
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
-            .border(1.dp, palette.border, RoundedCornerShape(20.dp))
-            .background(palette.cardSurface)
-            .padding(12.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(palette.brand.copy(alpha = 0.10f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, null, tint = palette.brand, modifier = Modifier.size(16.dp))
-        }
-        Spacer(Modifier.height(6.dp))
-        Text(text = label, color = palette.mutedForeground, fontSize = 11.sp, maxLines = 1)
-        Text(text = value, color = palette.foreground, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
-    }
-}
-
-private enum class ActionRowTone { Default, Primary, Danger }
-
-@Composable
-private fun DetailActionRow(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    tone: ActionRowTone,
-    onClick: () -> Unit,
-) {
-    val palette = LocalRestaurantPalette.current
-    val (bg, fg) = when (tone) {
-        ActionRowTone.Primary -> palette.brand.copy(alpha = 0.10f) to palette.brand
-        ActionRowTone.Danger -> palette.destructive.copy(alpha = 0.10f) to palette.destructive
-        else -> palette.mutedSurface to palette.foreground
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .border(1.dp, palette.border, RoundedCornerShape(20.dp))
-            .background(palette.cardSurface)
-            .clickable(onClick = onClick)
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(bg),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, null, tint = fg, modifier = Modifier.size(18.dp))
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = palette.foreground, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
-            Text(text = subtitle, color = palette.mutedForeground, fontSize = 12.sp, maxLines = 1)
-        }
-        Icon(Icons.Filled.ChevronRight, null, tint = palette.mutedForeground, modifier = Modifier.size(18.dp))
     }
 }
 
@@ -960,10 +1099,8 @@ private fun StatusInfoBlock(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .border(1.dp, accent.copy(alpha = 0.20f), RoundedCornerShape(24.dp))
-            .background(container)
-            .padding(16.dp),
+            .hubSurfaceCard(palette = palette)
+            .padding(HubSurfaceCardDefaults.ContentPadding),
     ) {
         Text(text = title, color = accent, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
         Text(text = description, color = palette.mutedForeground, fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 4.dp))

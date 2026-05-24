@@ -1,13 +1,11 @@
-package com.mh.restaurantchainreservation.feature.booking
+package com.mh.restaurantchainreservation.core.designsystem.components
 
-import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,11 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import kotlin.math.PI
 import kotlin.math.floor
 import kotlin.math.ln
@@ -36,7 +34,7 @@ private const val TILE_SIZE = 256.0
 private const val DETAIL_MAP_ZOOM = 15.0
 
 @Composable
-internal fun RestaurantDetailLocationMap(
+fun RestaurantLocationMap(
     latitude: Double,
     longitude: Double,
     modifier: Modifier = Modifier,

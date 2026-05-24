@@ -111,6 +111,14 @@ object DiningStore {
         )
     }
 
+    fun openModify(bookingId: String) {
+        _modal.value = _modal.value.copy(
+            showManage = false,
+            showModify = true,
+            modifyBookingId = bookingId,
+        )
+    }
+
     fun closeModify() {
         _modal.value = _modal.value.copy(showModify = false, modifyBookingId = null)
     }
@@ -121,6 +129,14 @@ object DiningStore {
             showManage = false,
             showCancel = true,
             cancelBookingId = current.manageBookingId,
+        )
+    }
+
+    fun openCancel(bookingId: String) {
+        _modal.value = _modal.value.copy(
+            showManage = false,
+            showCancel = true,
+            cancelBookingId = bookingId,
         )
     }
 

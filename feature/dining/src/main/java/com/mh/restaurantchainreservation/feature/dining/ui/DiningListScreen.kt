@@ -1,8 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,16 +17,11 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CalendarToday
-import androidx.compose.material.icons.outlined.Cancel
-import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -61,20 +54,6 @@ private const val LIST_HERO_KEY = "dining_hero"
 private const val LIST_SECTION_GAP_KEY = "dining_section_gap"
 private const val LIST_TABS_KEY = "dining_tabs"
 private const val LIST_TAB_CONTENT_KEY = "dining_tab_content"
-
-/** Lazy list index of [LIST_TABS_KEY] (spacer, hero, gap, tabs, content). */
-private const val DINING_TABS_ITEM_INDEX = 3
-
-/** Transparent strip between collapsed header border and pinned tab card. */
-private val DiningTabBarPinnedGapBelowHeader = 10.dp
-
-private val DiningTabBarListSlotHeight = DiningTabBarHeight
-
-/** Horizontal inset for the tab card in the list (matches [LazyColumn] content padding). */
-private val DiningTabBarScrollHorizontalPadding = 16.dp
-
-/** Tighter inset when pinned so the tab card reads slightly wider. */
-private val DiningTabBarPinnedHorizontalPadding = 8.dp
 
 @Composable
 fun DiningListScreen(
@@ -124,22 +103,10 @@ fun DiningListScreen(
                 .coerceAtLeast(1f)
         }
         val statusBarTopDp = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
-        val collapsedHeaderBottomDp =
-            statusBarTopDp + CollapsingTitleHeaderMetrics.collapsedBodyHeight
-        val pinnedTabBarTopDp = collapsedHeaderBottomDp + DiningTabBarPinnedGapBelowHeader
-        val pinnedTabBarTopPx = remember(density, pinnedTabBarTopDp) {
-            with(density) { pinnedTabBarTopDp.roundToPx() }
-        }
 
         val collapseProgress by remember {
             derivedStateOf { listState.collapseProgress(collapseRangePx) }
         }
-        val tabBarOverlayTopPx by remember {
-            derivedStateOf { listState.tabBarOverlayTopPx(pinnedTabBarTopPx) }
-        }
-        val overlayTopPx = tabBarOverlayTopPx
-        val tabBarOverlayTopDp = overlayTopPx?.let { with(density) { it.toDp() } }
-        val isTabBarPinned = overlayTopPx != null && overlayTopPx <= pinnedTabBarTopPx
 
         LazyColumn(
             state = listState,
@@ -185,17 +152,11 @@ fun DiningListScreen(
             }
 
             item(key = LIST_TABS_KEY) {
-                Column {
-                    if (tabBarOverlayTopPx == null) {
-                        DiningTabBar(
-                            selected = currentTab,
-                            counts = tabCounts,
-                            onSelect = { currentTab = it },
-                        )
-                    } else {
-                        Spacer(Modifier.height(DiningTabBarListSlotHeight))
-                    }
-                }
+                DiningTabBar(
+                    selected = currentTab,
+                    counts = tabCounts,
+                    onSelect = { currentTab = it },
+                )
             }
 
             item(key = LIST_TAB_CONTENT_KEY) {
@@ -277,30 +238,6 @@ fun DiningListScreen(
             }
         }
 
-        tabBarOverlayTopDp?.let { topDp ->
-            val tabBarHorizontalPadding by animateDpAsState(
-                targetValue = if (isTabBarPinned) {
-                    DiningTabBarPinnedHorizontalPadding
-                } else {
-                    DiningTabBarScrollHorizontalPadding
-                },
-                animationSpec = spring(stiffness = 380f, dampingRatio = 0.82f),
-                label = "tab_bar_horizontal_padding",
-            )
-            DiningTabBar(
-                selected = currentTab,
-                counts = tabCounts,
-                onSelect = { currentTab = it },
-                pinned = isTabBarPinned,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .zIndex(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = tabBarHorizontalPadding)
-                    .offset(y = topDp),
-            )
-        }
-
         CollapsingScreenTitleHeader(
             title = stringResource(I18nR.string.dining_page_title),
             collapseProgress = collapseProgress,
@@ -317,19 +254,6 @@ private fun LazyListState.collapseProgress(collapseRangePx: Float): Float =
     } else {
         1f
     }
-
-/**
- * Screen Y offset for the floating tab card while it tracks scroll, clamped at [pinnedTopPx].
- * Returns null before the tab row has entered the overlay range (in-list placement only).
- */
-private fun LazyListState.tabBarOverlayTopPx(pinnedTopPx: Int): Int? {
-    val tabsItem = layoutInfo.visibleItemsInfo.find { it.key == LIST_TABS_KEY }
-    return when {
-        tabsItem != null -> maxOf(tabsItem.offset, pinnedTopPx)
-        firstVisibleItemIndex > DINING_TABS_ITEM_INDEX -> pinnedTopPx
-        else -> null
-    }
-}
 
 @Composable
 private fun TabContent(

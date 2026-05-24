@@ -65,7 +65,8 @@ fun DiningDetailScreen(
         BookingDetailScreen(
             booking = booking,
             onBack = onBack,
-            onManage = { DiningStore.openManage(booking.id) },
+            onManage = { DiningStore.openModify(booking.id) },
+            onCancel = { DiningStore.openCancel(booking.id) },
             onScanQR = { DiningStore.openScan(booking.id) },
             onShowQR = { DiningStore.openShowQR(booking.id) },
             onInvite = { DiningStore.openInvite(booking.id) },

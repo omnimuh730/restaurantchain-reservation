@@ -62,7 +62,25 @@ data class Booking(
     val seating: String,
     val confirmationNo: String,
     val receipt: Receipt? = null,
+    val contactName: String? = null,
+    val seatingLabels: List<String> = emptyList(),
+    val cuisineLabels: List<String> = emptyList(),
+    val vibeLabels: List<String> = emptyList(),
+    val amenityLabels: List<String> = emptyList(),
 )
+
+fun Booking.displaySeatingLabels(): List<String> =
+    seatingLabels.ifEmpty {
+        seating
+            .takeIf { it.isNotBlank() && !it.equals("Any", ignoreCase = true) }
+            ?.let { listOf(it) }
+            ?: emptyList()
+    }
+
+fun Booking.displayCuisineLabels(): List<String> =
+    cuisineLabels.ifEmpty {
+        cuisine.split("·", ",").map { it.trim() }.filter { it.isNotBlank() }
+    }
 
 fun fmtR(n: Double): String {
     if (n == n.toLong().toDouble()) return n.toLong().toString()
