@@ -95,6 +95,7 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.badge.AnimatedGuestFavoriteCenterBadge
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailCollapsingMetrics
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingHeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingIconButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingToolbar
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroScrollOverlay
@@ -107,7 +108,6 @@ import com.mh.restaurantchainreservation.core.designsystem.components.rememberDe
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailHeroScrollOffsetPx
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuSeeAllCard
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuTile
-import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
 import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantLocationMap
 import com.mh.restaurantchainreservation.core.designsystem.components.ShareWithContactsSheet
 import com.mh.restaurantchainreservation.core.model.SharedContentStore
@@ -430,15 +430,14 @@ fun RestaurantDetailScreen(
                 plateAlpha = plateAlpha,
                 contentDescription = "Share",
             ) {
-                Icon(Icons.Default.Share, null, tint = palette.foreground, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Share, null, tint = palette.foreground, modifier = Modifier.size(17.dp))
             }
-            DetailFloatingIconButton(
-                onClick = { WishlistStore.onHeartTap(restaurant) },
+            DetailFloatingHeartButton(
+                active = saved,
                 plateAlpha = plateAlpha,
+                onClick = { WishlistStore.onHeartTap(restaurant) },
                 contentDescription = "Save",
-            ) {
-                HeartDrawableIcon(active = saved, contentDescription = null, iconHeight = 20.dp)
-            }
+            )
         }
 
         if (showShareSheet) {

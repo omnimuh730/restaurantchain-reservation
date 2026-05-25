@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -176,8 +178,14 @@ object DetailCollapsingMetrics {
         return smoothstep(t)
     }
 
-    fun floatingButtonPlateAlpha(collapseProgress: Float): Float =
-        (1f - collapseProgress * 1.35f).coerceIn(0f, 1f)
+    /** Icon plates stay full over the hero; fade out in sync with the header bottom border. */
+    fun floatingButtonPlateAlpha(
+        collapseProgress: Float,
+        sheetMeetsHeaderProgress: Float,
+    ): Float {
+        val border = headerBorderAlpha(collapseProgress, sheetMeetsHeaderProgress)
+        return (1f - border).coerceIn(0f, 1f)
+    }
 
     fun morphingSheetCornerRadius(collapseProgress: Float): Dp =
         lerp(sheetTopRadius, 0.dp, collapseProgress.coerceIn(0f, 1f))
@@ -326,7 +334,10 @@ fun DetailFloatingToolbar(
     actions: @Composable RowScope.(plateAlpha: Float) -> Unit = {},
 ) {
     val palette = LocalRestaurantPalette.current
-    val plateAlpha = DetailCollapsingMetrics.floatingButtonPlateAlpha(collapseProgress)
+    val plateAlpha = DetailCollapsingMetrics.floatingButtonPlateAlpha(
+        collapseProgress = collapseProgress,
+        sheetMeetsHeaderProgress = transitionThresholds.sheetMeetsHeader,
+    )
     val headerBackgroundAlpha = DetailCollapsingMetrics.headerBackgroundAlpha(
         collapseProgress = collapseProgress,
         sheetMeetsHeaderProgress = transitionThresholds.sheetMeetsHeader,
@@ -382,7 +393,7 @@ fun DetailFloatingToolbar(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = null,
                     tint = palette.foreground,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(DetailToolbarIconSize),
                 )
             }
             Box(
@@ -410,6 +421,30 @@ fun DetailFloatingToolbar(
     }
 }
 
+private val DetailFloatingPlateSize = 32.dp
+private val DetailToolbarIconSize = 18.dp
+
+/** Soft frosted grey chip over hero photos — not pure white (Airbnb-style). */
+private fun detailFloatingPlateColor(plateAlpha: Float): Color {
+    if (plateAlpha <= 0f) return Color.Transparent
+    return Color(0xFFE9E9E9).copy(alpha = (0.90f * plateAlpha).coerceIn(0f, 1f))
+}
+
+private fun Modifier.detailFloatingPlateContainer(plateAlpha: Float): Modifier {
+    val showPlate = plateAlpha > 0.04f
+    return this
+        .size(DetailFloatingPlateSize)
+        .then(
+            if (showPlate) {
+                Modifier
+                    .clip(CircleShape)
+                    .background(detailFloatingPlateColor(plateAlpha))
+            } else {
+                Modifier
+            },
+        )
+}
+
 @Composable
 fun DetailFloatingIconButton(
     onClick: () -> Unit,
@@ -418,24 +453,36 @@ fun DetailFloatingIconButton(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    val palette = LocalRestaurantPalette.current
-    val showPlate = plateAlpha > 0.04f
-    val plateColor = RestaurantColors.Base.white.copy(alpha = plateAlpha)
     Box(
         modifier = modifier
-            .size(40.dp)
-            .then(
-                if (showPlate) {
-                    Modifier
-                        .clip(CircleShape)
-                        .background(plateColor)
-                } else {
-                    Modifier
-                },
-            )
+            .detailFloatingPlateContainer(plateAlpha)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         content()
+    }
+}
+
+@Composable
+fun DetailFloatingHeartButton(
+    active: Boolean,
+    plateAlpha: Float,
+    onClick: () -> Unit,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    Box(
+        modifier = modifier
+            .detailFloatingPlateContainer(plateAlpha.coerceIn(0f, 1f))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = if (active) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(DetailToolbarIconSize),
+            tint = if (active) RestaurantColors.Semantic.heart else palette.foreground,
+        )
     }
 }

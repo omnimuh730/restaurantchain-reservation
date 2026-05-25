@@ -76,6 +76,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailCollapsingMetrics
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingHeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingIconButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingToolbar
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroScrollOverlay
@@ -85,7 +86,6 @@ import com.mh.restaurantchainreservation.core.designsystem.components.detailMorp
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailCollapseProgress
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailTransitionThresholds
 import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavContentBottomPadding
-import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantLocationMap
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
@@ -354,22 +354,17 @@ fun BookingDetailScreen(
                     Icons.Outlined.PersonAdd,
                     contentDescription = null,
                     tint = palette.foreground,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(17.dp),
                 )
             }
-            DetailFloatingIconButton(
-                onClick = { WishlistStore.onHeartTap(wishlistRestaurant) },
+            DetailFloatingHeartButton(
+                active = saved,
                 plateAlpha = plateAlpha,
+                onClick = { WishlistStore.onHeartTap(wishlistRestaurant) },
                 contentDescription = stringResource(
                     if (saved) I18nR.string.detail_unsave else I18nR.string.detail_save,
                 ),
-            ) {
-                HeartDrawableIcon(
-                    active = saved,
-                    contentDescription = null,
-                    iconHeight = 20.dp,
-                )
-            }
+            )
         }
     }
 }
