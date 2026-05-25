@@ -55,6 +55,7 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPale
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
 import com.mh.restaurantchainreservation.feature.dining.data.BookingStatus
+import com.mh.restaurantchainreservation.feature.dining.data.isGuestInviteBooking
 import com.mh.restaurantchainreservation.feature.dining.data.isCurrentlyDining
 
 /* ----------------------------- StatusBadge ----------------------------- */
@@ -282,6 +283,7 @@ fun DetailPill(
 fun PrimaryAction(
     booking: Booking,
     isLiveDining: Boolean,
+    canViewReceipt: Boolean = !booking.isGuestInviteBooking(),
     onOpenLive: (() -> Unit)?,
     onManage: (() -> Unit)?,
     onScanQR: (() -> Unit)?,
@@ -306,12 +308,17 @@ fun PrimaryAction(
                 variant = ChipVariant.Primary,
                 modifier = modifier,
             )
-        booking.status == BookingStatus.Completed && booking.receipt != null ->
+        booking.status == BookingStatus.Completed && booking.receipt != null && canViewReceipt ->
             ChipButton(
                 text = stringResource(I18nR.string.booking_action_receipt),
                 icon = Icons.Outlined.Receipt,
                 onClick = { onViewReceipt?.invoke() },
                 variant = ChipVariant.Outline,
+                modifier = modifier,
+            )
+        booking.status == BookingStatus.Completed ->
+            BookAgainChipButton(
+                onClick = { (onBookAgain ?: onManage)?.invoke() },
                 modifier = modifier,
             )
         booking.status == BookingStatus.Pending && onOpenLive != null ->
@@ -331,14 +338,25 @@ fun PrimaryAction(
                 modifier = modifier,
             )
         else ->
-            ChipButton(
-                text = stringResource(I18nR.string.booking_action_book_again),
-                icon = Icons.Outlined.Refresh,
+            BookAgainChipButton(
                 onClick = { (onBookAgain ?: onManage)?.invoke() },
-                variant = ChipVariant.Primary,
                 modifier = modifier,
             )
     }
+}
+
+@Composable
+fun BookAgainChipButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ChipButton(
+        text = stringResource(I18nR.string.booking_action_book_again),
+        icon = Icons.Outlined.Refresh,
+        onClick = onClick,
+        variant = ChipVariant.Primary,
+        modifier = modifier,
+    )
 }
 
 enum class ChipVariant { Primary, Outline, BrandOutline, Destructive }

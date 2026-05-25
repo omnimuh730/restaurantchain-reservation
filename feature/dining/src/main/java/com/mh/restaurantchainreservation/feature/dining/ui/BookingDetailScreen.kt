@@ -88,6 +88,7 @@ import com.mh.restaurantchainreservation.core.model.WishlistStore
 import com.mh.restaurantchainreservation.core.model.mapCoordinate
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
 import com.mh.restaurantchainreservation.feature.dining.data.BookingStatus
+import com.mh.restaurantchainreservation.feature.dining.data.isGuestInviteBooking
 import com.mh.restaurantchainreservation.feature.dining.data.displayCuisineLabels
 import com.mh.restaurantchainreservation.feature.dining.data.displaySeatingLabels
 
@@ -277,7 +278,7 @@ fun BookingDetailScreen(
 
                 if (isCompleted) {
                     Spacer(Modifier.height(SectionSpacing))
-                    if (booking.receipt != null) {
+                    if (booking.receipt != null && !booking.isGuestInviteBooking()) {
                         DetailActionButton(
                             text = stringResource(I18nR.string.detail_view_receipt),
                             icon = Icons.Outlined.Receipt,

@@ -69,6 +69,10 @@ data class Booking(
     val amenityLabels: List<String> = emptyList(),
 )
 
+/** True when this booking was added via a host's invite code (`-G` suffix), not created by the user. */
+fun Booking.isGuestInviteBooking(): Boolean =
+    confirmationNo.endsWith("-G", ignoreCase = true)
+
 fun Booking.displaySeatingLabels(): List<String> =
     seatingLabels.ifEmpty {
         seating

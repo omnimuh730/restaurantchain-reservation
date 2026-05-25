@@ -22,7 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Chair
+import androidx.compose.material.icons.outlined.Celebration
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Group
@@ -62,6 +62,7 @@ import com.mh.restaurantchainreservation.feature.dining.data.Booking
 import com.mh.restaurantchainreservation.feature.dining.data.BookingStatus
 import com.mh.restaurantchainreservation.feature.dining.data.compactDate
 import com.mh.restaurantchainreservation.feature.dining.data.fmtR
+import com.mh.restaurantchainreservation.feature.dining.data.isGuestInviteBooking
 import com.mh.restaurantchainreservation.feature.dining.data.isCurrentlyDining
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -88,7 +89,9 @@ fun BookingCard(
     val isVisited = booking.status == BookingStatus.Completed
     val isCancelled = booking.status == BookingStatus.Cancelled || booking.status == BookingStatus.NoShow
     val isLive = isScheduled && isCurrentlyDining(booking, checkedInIds = checkedInIds)
-    val receiptTotal = booking.receipt?.let { "$%.2f".format(it.total) }
+    val isGuestInvite = booking.isGuestInviteBooking()
+    val canViewReceipt = !isGuestInvite
+    val receiptTotal = if (canViewReceipt) booking.receipt?.let { "$%.2f".format(it.total) } else null
     val cardShape = HubSurfaceCardDefaults.Shape
 
     Column(
@@ -207,8 +210,8 @@ fun BookingCard(
                             modifier = Modifier.weight(1f),
                         )
                         DetailPill(
-                            icon = Icons.Outlined.Chair,
-                            label = booking.seating,
+                            icon = Icons.Outlined.Celebration,
+                            label = resolveBookingOccasionLabel(booking.occasion),
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -239,6 +242,7 @@ fun BookingCard(
                     rating = booking.rating,
                     paid = receiptTotal,
                     points = booking.diningPoints,
+                    showPaid = canViewReceipt,
                 )
                 isPending -> StatusInfoBlock(
                     title = stringResource(I18nR.string.booking_waiting_title),
@@ -263,6 +267,7 @@ fun BookingCard(
                 PrimaryAction(
                     booking = booking,
                     isLiveDining = isLive,
+                    canViewReceipt = canViewReceipt,
                     onOpenLive = onTap,
                     onManage = onManage,
                     onScanQR = onScanQR,
@@ -288,13 +293,8 @@ fun BookingCard(
                         onClick = { onShowQR?.invoke() },
                     )
                 }
-                if (isVisited) {
-                    ChipButton(
-                        text = stringResource(I18nR.string.booking_action_book_again),
-                        icon = null,
-                        onClick = { onBookAgain?.invoke() },
-                        variant = ChipVariant.Outline,
-                    )
+                if (isVisited && canViewReceipt) {
+                    BookAgainChipButton(onClick = { onBookAgain?.invoke() })
                 }
                 if (isRejected && onDeleteRequest != null) {
                     ChipButton(
@@ -412,10 +412,25 @@ private fun ConfirmationStrip(
 }
 
 @Composable
+private fun resolveBookingOccasionLabel(occasion: String?): String {
+    val raw = occasion?.takeIf { it.isNotBlank() }
+        ?: return stringResource(I18nR.string.detail_occasion_special)
+    return when (raw.lowercase()) {
+        "birthday" -> stringResource(I18nR.string.detail_occasion_birthday)
+        "anniversary" -> stringResource(I18nR.string.detail_occasion_anniversary)
+        "date" -> stringResource(I18nR.string.detail_occasion_date)
+        "special" -> stringResource(I18nR.string.detail_occasion_special)
+        "celebration" -> stringResource(I18nR.string.detail_occasion_celebration)
+        else -> raw
+    }
+}
+
+@Composable
 private fun VisitedStatsRow(
     rating: Double?,
     paid: String?,
     points: Int,
+    showPaid: Boolean,
 ) {
     val palette = LocalRestaurantPalette.current
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -441,17 +456,19 @@ private fun VisitedStatsRow(
                 )
             }
         }
-        VisitedStatCell(
-            label = stringResource(I18nR.string.booking_paid_label),
-            modifier = Modifier.weight(1f),
-        ) {
-            Text(
-                text = paid ?: "--",
-                color = palette.foreground,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 1,
-            )
+        if (showPaid) {
+            VisitedStatCell(
+                label = stringResource(I18nR.string.booking_paid_label),
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(
+                    text = paid ?: "--",
+                    color = palette.foreground,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                )
+            }
         }
         VisitedStatCell(
             label = stringResource(I18nR.string.booking_points_label),
