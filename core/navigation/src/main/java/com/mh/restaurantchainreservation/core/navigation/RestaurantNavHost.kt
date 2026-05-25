@@ -95,6 +95,7 @@ import com.mh.restaurantchainreservation.feature.dining.DiningDetailScreen
 import com.mh.restaurantchainreservation.feature.dining.DiningEnjoyScreen
 import com.mh.restaurantchainreservation.feature.dining.DiningHomeScreen
 import com.mh.restaurantchainreservation.feature.dining.DiningRoutes
+import com.mh.restaurantchainreservation.feature.dining.data.DiningStore
 import com.mh.restaurantchainreservation.feature.discover.DiscoverRoutes
 import com.mh.restaurantchainreservation.feature.discover.ui.AllPromotionsScreen
 import com.mh.restaurantchainreservation.feature.discover.ui.CategoryResultsScreen
@@ -802,11 +803,26 @@ private fun AppGraph(
             }
             composable(
                 route = BookingRoutes.BookTable,
-                arguments = listOf(navArgument("restaurantId") { type = NavType.StringType }),
+                arguments = listOf(
+                    navArgument("restaurantId") { type = NavType.StringType },
+                    navArgument("modifyBookingId") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                ),
             ) { entry ->
                 val id = entry.arguments?.getString("restaurantId").orEmpty()
+                val modifyBookingId = entry.arguments?.getString("modifyBookingId").orEmpty()
+                    .takeIf { it.isNotBlank() }
+                LaunchedEffect(Unit) { DiningStore.init(context) }
+                val restaurant = remember(id) {
+                    DiscoverData.findById(id) ?: DiscoverData.MONTHLY_BEST.first()
+                }
+                val existingBooking = modifyBookingId?.let { bookingId -> DiningStore.bookingById(bookingId) }
+                val initialState = existingBooking?.let { BookingTablePrefill.fromBooking(it) }
                 BookTableScreen(
                     restaurantId = id,
+                    initialState = initialState,
                     onBack = { navController.popBackStack() },
                     onNavigateToDining = {
                         navController.navigate(DiningRoutes.Home) {
@@ -816,6 +832,20 @@ private fun AppGraph(
                     },
                     onNavigateToDiscover = {
                         navController.navigateToDiscoverHome()
+                    },
+                    onBookingCompleted = { confirmationNo, result ->
+                        DiningStore.upsertBookingFront(
+                            BookingTablePrefill.createPendingBooking(
+                                confirmationNo = confirmationNo,
+                                restaurant = restaurant,
+                                result = result,
+                            ),
+                        )
+                    },
+                    onBookingUpdated = existingBooking?.let { booking ->
+                        { result ->
+                            DiningStore.updateBooking(BookingTablePrefill.applyResult(booking, result))
+                        }
                     },
                 )
             }
@@ -833,6 +863,9 @@ private fun AppGraph(
                     bookingId = bookingId,
                     onBack = { navController.popBackStack() },
                     onOpenEnjoy = { id -> navController.navigate(DiningRoutes.enjoy(id)) },
+                    onModifyBooking = { id ->
+                        navController.navigate(BookingRoutes.bookTable(id, modifyBookingId = id))
+                    },
                 )
             }
             composable(DiningRoutes.Enjoy) { entry ->

@@ -1,12 +1,6 @@
 package com.mh.restaurantchainreservation.feature.dining.ui
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,28 +14,35 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import kotlinx.coroutines.launch
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingScreenTitleHeader
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
+import com.mh.restaurantchainreservation.core.designsystem.components.hubTitleCollapseProgress
+import com.mh.restaurantchainreservation.core.designsystem.components.surfaceBottomEdgeShadow
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.pageCanvasBackground
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
@@ -54,7 +55,11 @@ private const val LIST_HERO_KEY = "dining_hero"
 private const val LIST_SECTION_GAP_KEY = "dining_section_gap"
 private const val LIST_TABS_KEY = "dining_tabs"
 private const val LIST_TAB_CONTENT_KEY = "dining_tab_content"
+private val DiningListHorizontalPadding = 16.dp
+private val DiningTabsTopInset = 16.dp
+private val DiningTabsSectionGap = 40.dp
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DiningListScreen(
     onOpenDetail: (String) -> Unit,
@@ -69,6 +74,32 @@ fun DiningListScreen(
     val checkedInIds by DiningStore.checkedInIds.collectAsState()
 
     var currentTab by rememberSaveable { mutableStateOf(DiningTabId.Upcoming) }
+    val tabIds = remember { DiningTabs.map { it.id } }
+    val coroutineScope = rememberCoroutineScope()
+    val pagerState = rememberPagerState(
+        initialPage = tabIds.indexOf(currentTab).coerceAtLeast(0),
+        pageCount = { tabIds.size },
+    )
+    var isProgrammaticTabChange by remember { mutableStateOf(false) }
+
+    LaunchedEffect(currentTab) {
+        val page = tabIds.indexOf(currentTab).coerceAtLeast(0)
+        if (pagerState.currentPage != page) {
+            isProgrammaticTabChange = true
+            pagerState.animateScrollToPage(page)
+            isProgrammaticTabChange = false
+        }
+    }
+
+    LaunchedEffect(tabIds) {
+        snapshotFlow { pagerState.settledPage }.collect { page ->
+            if (isProgrammaticTabChange) return@collect
+            val tab = tabIds[page]
+            if (currentTab != tab) {
+                currentTab = tab
+            }
+        }
+    }
 
     val upcoming = remember(bookings) {
         bookings.filter { it.status == BookingStatus.Pending || it.status == BookingStatus.Confirmed }
@@ -83,7 +114,6 @@ fun DiningListScreen(
             DiningTabId.Upcoming to upcoming.size,
             DiningTabId.Visited to visited.size,
             DiningTabId.Cancel to cancelled.size,
-            DiningTabId.EmptyPreview to 0,
         )
     }
     val nextBooking = approved.firstOrNull()
@@ -103,10 +133,37 @@ fun DiningListScreen(
                 .coerceAtLeast(1f)
         }
         val statusBarTopDp = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+        val collapsedHeaderTotal = statusBarTopDp + CollapsingTitleHeaderMetrics.collapsedBodyHeight
 
         val collapseProgress by remember {
-            derivedStateOf { listState.collapseProgress(collapseRangePx) }
+            derivedStateOf { listState.hubTitleCollapseProgress(collapseRangePx) }
         }
+
+        val diningTabsStickyTopPadding by remember(density, collapsedHeaderTotal) {
+            derivedStateOf {
+                val tabHeader = listState.layoutInfo.visibleItemsInfo
+                    .firstOrNull { it.key == LIST_TABS_KEY }
+                if (tabHeader != null) {
+                    val offsetDp = with(density) { tabHeader.offset.toDp() }
+                    (collapsedHeaderTotal - offsetDp).coerceIn(0.dp, collapsedHeaderTotal)
+                } else {
+                    collapsedHeaderTotal
+                }
+            }
+        }
+
+        val isTabsPinnedUnderHeader by remember(density) {
+            derivedStateOf {
+                val tabHeader = listState.layoutInfo.visibleItemsInfo
+                    .firstOrNull { it.key == LIST_TABS_KEY }
+                when {
+                    tabHeader == null -> true
+                    else -> with(density) { tabHeader.offset.toDp() } <= 1.dp
+                }
+            }
+        }
+
+        val diningTabsContentTopPadding = if (isTabsPinnedUnderHeader) 0.dp else DiningTabsTopInset
 
         LazyColumn(
             state = listState,
@@ -115,7 +172,7 @@ fun DiningListScreen(
                 .pageCanvasBackground()
                 .trackBottomNavScroll()
                 .zIndex(0f),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 48.dp),
+            contentPadding = PaddingValues(bottom = 48.dp),
         ) {
             item(key = LIST_TOP_SPACER_KEY) {
                 Spacer(
@@ -126,7 +183,10 @@ fun DiningListScreen(
             }
 
             item(key = LIST_HERO_KEY) {
-                Column(verticalArrangement = Arrangement.spacedBy(HubSurfaceCardDefaults.SectionSpacing)) {
+                Column(
+                    modifier = Modifier.padding(horizontal = DiningListHorizontalPadding),
+                    verticalArrangement = Arrangement.spacedBy(HubSurfaceCardDefaults.SectionSpacing),
+                ) {
                     DiningStaggerItem(indexInGroup = 0) {
                         if (nextBooking != null) {
                             NextUpCard(
@@ -148,92 +208,64 @@ fun DiningListScreen(
             }
 
             item(key = LIST_SECTION_GAP_KEY) {
-                Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(DiningTabsSectionGap))
             }
 
-            item(key = LIST_TABS_KEY) {
-                DiningTabBar(
-                    selected = currentTab,
-                    counts = tabCounts,
-                    onSelect = { currentTab = it },
-                )
+            stickyHeader(key = LIST_TABS_KEY) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(palette.pageBackground)
+                        .padding(top = diningTabsStickyTopPadding + diningTabsContentTopPadding)
+                        .then(
+                            if (isTabsPinnedUnderHeader) {
+                                Modifier.surfaceBottomEdgeShadow()
+                            } else {
+                                Modifier
+                            },
+                        )
+                        .zIndex(1f),
+                ) {
+                    DiningTabBar(
+                        selected = currentTab,
+                        counts = tabCounts,
+                        pinnedUnderHeader = isTabsPinnedUnderHeader,
+                        modifier = Modifier.padding(horizontal = DiningListHorizontalPadding),
+                        onSelect = { tab ->
+                            currentTab = tab
+                            coroutineScope.launch {
+                                val page = tabIds.indexOf(tab).coerceAtLeast(0)
+                                if (pagerState.currentPage != page) {
+                                    isProgrammaticTabChange = true
+                                    pagerState.animateScrollToPage(page)
+                                    isProgrammaticTabChange = false
+                                }
+                            }
+                        },
+                    )
+                }
             }
 
             item(key = LIST_TAB_CONTENT_KEY) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(HubSurfaceCardDefaults.SectionSpacing),
-                    modifier = Modifier.padding(top = HubSurfaceCardDefaults.SectionSpacing),
-                ) {
-                    AnimatedContent(
-                        targetState = currentTab,
-                        transitionSpec = {
-                            (slideInVertically(animationSpec = tween(220)) { it / 6 } + fadeIn(animationSpec = tween(220)))
-                                .togetherWith(
-                                    slideOutVertically(animationSpec = tween(220)) { -it / 6 } +
-                                        fadeOut(animationSpec = tween(220)),
-                                )
-                        },
-                        label = "dining_tab_content",
-                    ) { tab ->
-                        when (tab) {
-                            DiningTabId.Upcoming -> TabContent(
-                                items = upcoming,
-                                onExploreRestaurants = onExploreRestaurants,
-                                onAddBooking = { DiningStore.openAddCode() },
-                                renderItem = { booking ->
-                                    BookingCard(
-                                        booking = booking,
-                                        checkedInIds = checkedInIds,
-                                        onTap = { onOpenDetail(booking.id) },
-                                        onManage = if (booking.status == BookingStatus.Confirmed) {
-                                            { DiningStore.openManage(booking.id) }
-                                        } else null,
-                                        onScanQR = if (booking.status == BookingStatus.Confirmed) {
-                                            { DiningStore.openScan(booking.id) }
-                                        } else null,
-                                        onShowQR = if (booking.status == BookingStatus.Confirmed) {
-                                            { DiningStore.openShowQR(booking.id) }
-                                        } else null,
-                                        onInvite = if (booking.status == BookingStatus.Confirmed) {
-                                            { DiningStore.openInvite(booking.id) }
-                                        } else null,
-                                        onBookAgain = { onOpenDetail(booking.id) },
-                                    )
-                                },
-                            )
-                            DiningTabId.Visited -> TabContent(
-                                items = visited,
-                                onExploreRestaurants = onExploreRestaurants,
-                                onAddBooking = { DiningStore.openAddCode() },
-                                renderItem = { booking ->
-                                    BookingCard(
-                                        booking = booking,
-                                        onTap = { onOpenDetail(booking.id) },
-                                        onBookAgain = { onOpenDetail(booking.id) },
-                                        onViewReceipt = { DiningStore.openReceipt(booking.id) },
-                                    )
-                                },
-                            )
-                            DiningTabId.Cancel -> TabContent(
-                                items = cancelled,
-                                onExploreRestaurants = onExploreRestaurants,
-                                onAddBooking = { DiningStore.openAddCode() },
-                                renderItem = { booking ->
-                                    BookingCard(
-                                        booking = booking,
-                                        onTap = { onOpenDetail(booking.id) },
-                                        onBookAgain = { onOpenDetail(booking.id) },
-                                    )
-                                },
-                            )
-                            DiningTabId.EmptyPreview -> TabContent(
-                                items = emptyList(),
-                                onExploreRestaurants = onExploreRestaurants,
-                                onAddBooking = { DiningStore.openAddCode() },
-                                renderItem = {},
-                            )
-                        }
-                    }
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = HubSurfaceCardDefaults.SectionSpacing)
+                        .graphicsLayer { clip = false },
+                    beyondViewportPageCount = 1,
+                    verticalAlignment = Alignment.Top,
+                ) { page ->
+                    val tab = tabIds[page]
+                    DiningTabPageContent(
+                        tab = tab,
+                        upcoming = upcoming,
+                        visited = visited,
+                        cancelled = cancelled,
+                        checkedInIds = checkedInIds,
+                        onExploreRestaurants = onExploreRestaurants,
+                        onOpenDetail = onOpenDetail,
+                    )
                 }
             }
         }
@@ -248,12 +280,69 @@ fun DiningListScreen(
     }
 }
 
-private fun LazyListState.collapseProgress(collapseRangePx: Float): Float =
-    if (firstVisibleItemIndex == 0) {
-        (firstVisibleItemScrollOffset / collapseRangePx).coerceIn(0f, 1f)
-    } else {
-        1f
+@Composable
+private fun DiningTabPageContent(
+    tab: DiningTabId,
+    upcoming: List<Booking>,
+    visited: List<Booking>,
+    cancelled: List<Booking>,
+    checkedInIds: Set<String>,
+    onExploreRestaurants: () -> Unit,
+    onOpenDetail: (String) -> Unit,
+) {
+    when (tab) {
+        DiningTabId.Upcoming -> TabContent(
+            items = upcoming,
+            onExploreRestaurants = onExploreRestaurants,
+            onAddBooking = { DiningStore.openAddCode() },
+            renderItem = { booking ->
+                BookingCard(
+                    booking = booking,
+                    checkedInIds = checkedInIds,
+                    onTap = { onOpenDetail(booking.id) },
+                    onManage = if (booking.status == BookingStatus.Confirmed) {
+                        { DiningStore.openManage(booking.id) }
+                    } else null,
+                    onScanQR = if (booking.status == BookingStatus.Confirmed) {
+                        { DiningStore.openScan(booking.id) }
+                    } else null,
+                    onShowQR = if (booking.status == BookingStatus.Confirmed) {
+                        { DiningStore.openShowQR(booking.id) }
+                    } else null,
+                    onInvite = if (booking.status == BookingStatus.Confirmed) {
+                        { DiningStore.openInvite(booking.id) }
+                    } else null,
+                    onBookAgain = { onOpenDetail(booking.id) },
+                )
+            },
+        )
+        DiningTabId.Visited -> TabContent(
+            items = visited,
+            onExploreRestaurants = onExploreRestaurants,
+            onAddBooking = { DiningStore.openAddCode() },
+            renderItem = { booking ->
+                BookingCard(
+                    booking = booking,
+                    onTap = { onOpenDetail(booking.id) },
+                    onBookAgain = { onOpenDetail(booking.id) },
+                    onViewReceipt = { DiningStore.openReceipt(booking.id) },
+                )
+            },
+        )
+        DiningTabId.Cancel -> TabContent(
+            items = cancelled,
+            onExploreRestaurants = onExploreRestaurants,
+            onAddBooking = { DiningStore.openAddCode() },
+            renderItem = { booking ->
+                BookingCard(
+                    booking = booking,
+                    onTap = { onOpenDetail(booking.id) },
+                    onBookAgain = { onOpenDetail(booking.id) },
+                )
+            },
+        )
     }
+}
 
 @Composable
 private fun TabContent(
@@ -266,11 +355,14 @@ private fun TabContent(
         DiningNoItemsCard(
             onExploreRestaurants = onExploreRestaurants,
             onAddBooking = onAddBooking,
+            modifier = Modifier.padding(horizontal = DiningListHorizontalPadding),
         )
     } else {
         Column(
             verticalArrangement = Arrangement.spacedBy(HubSurfaceCardDefaults.SectionSpacing),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = DiningListHorizontalPadding),
         ) {
             items.forEachIndexed { index, booking ->
                 DiningStaggerItem(indexInGroup = index) {

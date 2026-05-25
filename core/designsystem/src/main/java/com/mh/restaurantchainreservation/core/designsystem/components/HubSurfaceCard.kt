@@ -15,6 +15,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantDimensions
@@ -128,3 +129,27 @@ fun Modifier.surfaceTopEdgeShadow(
         size = Size(size.width, shadowPx),
     )
 }
+
+/**
+ * Soft downward shadow for fixed headers (sticky tab bars) — mirror of [surfaceTopEdgeShadow],
+ * drawn below the surface across full width.
+ */
+fun Modifier.surfaceBottomEdgeShadow(
+    height: Dp = 8.dp,
+    ambientAlpha: Float = HubSurfaceCardDefaults.ShadowAmbientAlpha * 0.5f,
+    spotAlpha: Float = HubSurfaceCardDefaults.ShadowSpotAlpha * 0.22f,
+): Modifier = graphicsLayer { clip = false }
+    .drawBehind {
+        val shadowPx = height.toPx()
+        if (shadowPx <= 0f) return@drawBehind
+        val blend = Brush.verticalGradient(
+            0f to Color.Transparent,
+            0.45f to RestaurantColors.Base.black.copy(alpha = ambientAlpha.coerceIn(0f, 1f)),
+            1f to RestaurantColors.Base.black.copy(alpha = spotAlpha.coerceIn(0f, 1f)),
+        )
+        drawRect(
+            brush = blend,
+            topLeft = Offset(0f, size.height),
+            size = Size(size.width, shadowPx),
+        )
+    }

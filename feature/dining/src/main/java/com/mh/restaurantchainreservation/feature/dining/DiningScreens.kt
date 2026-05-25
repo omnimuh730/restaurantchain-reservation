@@ -54,6 +54,7 @@ fun DiningDetailScreen(
     bookingId: String,
     onBack: () -> Unit,
     onOpenEnjoy: (String) -> Unit,
+    onModifyBooking: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -65,7 +66,7 @@ fun DiningDetailScreen(
         BookingDetailScreen(
             booking = booking,
             onBack = onBack,
-            onManage = { DiningStore.openModify(booking.id) },
+            onManage = { onModifyBooking(booking.id) },
             onCancel = { DiningStore.openCancel(booking.id) },
             onScanQR = { DiningStore.openScan(booking.id) },
             onShowQR = { DiningStore.openShowQR(booking.id) },

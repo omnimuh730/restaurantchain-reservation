@@ -7,6 +7,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -35,3 +39,17 @@ fun CenteredMaterialDragHandle(modifier: Modifier = Modifier) {
         BottomSheetDefaults.DragHandle()
     }
 }
+
+/**
+ * Prevents sheet drag/dismiss gestures from starting on modal body content.
+ * The drag handle remains the only area that can resize or dismiss the sheet.
+ */
+fun Modifier.blockModalSheetBodyDrag(): Modifier = nestedScroll(
+    object : NestedScrollConnection {
+        override fun onPostScroll(
+            consumed: Offset,
+            available: Offset,
+            source: NestedScrollSource,
+        ): Offset = available
+    },
+)

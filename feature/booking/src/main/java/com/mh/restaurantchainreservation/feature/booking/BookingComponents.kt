@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +45,8 @@ internal fun BookingStepHeader(
     stepIndex: Int,
     title: String,
     onBack: () -> Unit,
+    onStepSelect: ((Int) -> Unit)? = null,
+    maxSelectableStepIndex: Int = stepIndex,
 ) {
     val palette = LocalRestaurantPalette.current
     Column(
@@ -117,6 +120,13 @@ internal fun BookingStepHeader(
                         .clip(RoundedCornerShape(999.dp))
                         .background(
                             if (index <= stepIndex) palette.brand else palette.border,
+                        )
+                        .then(
+                            if (onStepSelect != null && index <= maxSelectableStepIndex) {
+                                Modifier.clickable { onStepSelect(index) }
+                            } else {
+                                Modifier
+                            },
                         ),
                 )
             }
