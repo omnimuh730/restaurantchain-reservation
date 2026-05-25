@@ -25,6 +25,15 @@ object DiningStore {
     val invitedMap: StateFlow<Map<String, Set<String>>> = _invitedMap.asStateFlow()
 
     /** Bottom-sheet / dialog state — matches React `useState` flags inside DiningPage. */
+    enum class AddBookingMethod { Code, Scan }
+
+    enum class AddBookingFlowStep { ChooseMethod, EnterCode, ScanQr, Review, Success }
+
+    data class AddBookingFlowState(
+        val step: AddBookingFlowStep,
+        val method: AddBookingMethod? = null,
+    )
+
     data class ModalState(
         val showManage: Boolean = false,
         val manageBookingId: String? = null,
@@ -36,6 +45,7 @@ object DiningStore {
         val inviteBookingId: String? = null,
         val receiptBookingId: String? = null,
         val addCodeOpen: Boolean = false,
+        val addBookingFlow: AddBookingFlowState? = null,
         val scanBookingId: String? = null,
         val scanInitialStep: ScanStep = ScanStep.Scan,
     )
@@ -169,11 +179,39 @@ object DiningStore {
     }
 
     fun openAddCode() {
-        _modal.value = _modal.value.copy(addCodeOpen = true)
+        openAddBookingPicker()
     }
 
     fun closeAddCode() {
-        _modal.value = _modal.value.copy(addCodeOpen = false)
+        closeAddBookingFlow()
+    }
+
+    fun openAddBookingPicker() {
+        _modal.value = _modal.value.copy(
+            addCodeOpen = false,
+            addBookingFlow = AddBookingFlowState(
+                step = AddBookingFlowStep.ChooseMethod,
+            ),
+        )
+    }
+
+    fun closeAddBookingFlow() {
+        _modal.value = _modal.value.copy(addBookingFlow = null, addCodeOpen = false)
+    }
+
+    fun confirmAddBooking(source: Booking): Booking {
+        val existing = _bookings.value.firstOrNull {
+            it.confirmationNo.equals(source.confirmationNo, ignoreCase = true)
+        }
+        if (existing != null) return existing
+        val newBooking = source.copy(
+            id = "added-${System.currentTimeMillis()}",
+            status = BookingStatus.Confirmed,
+        )
+        upsertBookingFront(newBooking)
+        return _bookings.value.firstOrNull {
+            it.confirmationNo.equals(source.confirmationNo, ignoreCase = true)
+        } ?: newBooking
     }
 
     fun openScan(bookingId: String, step: ScanStep = ScanStep.Scan) {

@@ -81,6 +81,7 @@ fun BookingCard(
     onDeleteRequest: (() -> Unit)? = null,
     onViewReceipt: (() -> Unit)? = null,
     invitedCount: Int = 0,
+    showActions: Boolean = true,
 ) {
     val palette = LocalRestaurantPalette.current
     val isScheduled = booking.status == BookingStatus.Confirmed
@@ -97,7 +98,11 @@ fun BookingCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .hubSurfaceCard(palette = palette, shape = cardShape, onClick = onTap)
+            .hubSurfaceCard(
+                palette = palette,
+                shape = cardShape,
+                onClick = if (showActions) onTap else null,
+            )
             .let { base ->
                 if (isLive) {
                     base.then(Modifier.border(2.dp, palette.success.copy(alpha = 0.15f), cardShape))
@@ -259,6 +264,7 @@ fun BookingCard(
                 isCancelled -> CancelledAddressRow(address = booking.address)
             }
 
+            if (showActions) {
             // Action row
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -304,6 +310,7 @@ fun BookingCard(
                         variant = ChipVariant.Destructive,
                     )
                 }
+            }
             }
         }
     }

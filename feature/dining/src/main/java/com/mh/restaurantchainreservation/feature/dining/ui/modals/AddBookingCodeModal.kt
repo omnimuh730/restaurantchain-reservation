@@ -24,12 +24,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +51,8 @@ import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
 import com.mh.restaurantchainreservation.feature.dining.data.BookingStatus
 import com.mh.restaurantchainreservation.feature.dining.ui.BookingCard
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun AddBookingCodeModal(
@@ -65,39 +69,52 @@ fun AddBookingCodeModal(
     var added by remember { mutableStateOf<Booking?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var done by remember { mutableStateOf(false) }
+    var loading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     val notFoundMsg = stringResource(I18nR.string.add_code_error_not_found)
     val notActiveMsg = stringResource(I18nR.string.add_code_error_not_active)
 
     fun verify() {
+        if (loading) return
         val normalized = code.trim().uppercase()
-        val match = bookings.firstOrNull { it.confirmationNo.equals(normalized, ignoreCase = true) }
-        if (match == null) {
-            error = notFoundMsg
-            candidate = null
-            added = null
-            return
-        }
-        if (match.status != BookingStatus.Confirmed) {
-            error = notActiveMsg
-            candidate = null
-            added = null
-            return
-        }
-        val existingInvite = bookings.firstOrNull {
-            it.confirmationNo.equals("${match.confirmationNo}-G", ignoreCase = true)
-        }
-        val verifiedBooking = if (match.confirmationNo.endsWith("-G")) match
-        else existingInvite ?: match.copy(
-            id = "invite-${match.id}-${System.currentTimeMillis()}",
-            confirmationNo = "${match.confirmationNo}-G",
-            specialRequest = "Shared invitation from ${match.confirmationNo}",
-        )
+        if (normalized.isEmpty()) return
+
+        loading = true
         error = null
-        candidate = match
-        added = verifiedBooking
-        if (existingInvite == null && !match.confirmationNo.endsWith("-G")) onAdded(verifiedBooking)
-        done = true
+        scope.launch {
+            delay(1200L) // Simulate network/server latency
+            val match = bookings.firstOrNull { it.confirmationNo.equals(normalized, ignoreCase = true) }
+            if (match == null) {
+                error = notFoundMsg
+                candidate = null
+                added = null
+                loading = false
+                return@launch
+            }
+            if (match.status != BookingStatus.Confirmed) {
+                error = notActiveMsg
+                candidate = null
+                added = null
+                loading = false
+                return@launch
+            }
+            val existingInvite = bookings.firstOrNull {
+                it.confirmationNo.equals("${match.confirmationNo}-G", ignoreCase = true)
+            }
+            val verifiedBooking = if (match.confirmationNo.endsWith("-G")) match
+            else existingInvite ?: match.copy(
+                id = "invite-${match.id}-${System.currentTimeMillis()}",
+                confirmationNo = "${match.confirmationNo}-G",
+                specialRequest = "Shared invitation from ${match.confirmationNo}",
+            )
+            error = null
+            candidate = match
+            added = verifiedBooking
+            if (existingInvite == null && !match.confirmationNo.endsWith("-G")) onAdded(verifiedBooking)
+            loading = false
+            done = true
+        }
     }
 
     BottomModalSheet(onDismiss = onDismiss) {
@@ -240,6 +257,7 @@ fun AddBookingCodeModal(
                             SmallChipButton(
                                 text = stringResource(I18nR.string.add_code_verify),
                                 primary = true,
+                                loading = loading,
                                 onClick = ::verify,
                                 modifier = Modifier.width(96.dp),
                             )
@@ -349,6 +367,7 @@ private fun SmallChipButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
+    loading: Boolean = false,
 ) {
     val palette = LocalRestaurantPalette.current
     val shape = RoundedCornerShape(percent = 50)
@@ -360,19 +379,32 @@ private fun SmallChipButton(
             .clip(shape)
             .let { if (!primary) it.border(1.dp, palette.border, shape) else it }
             .background(container)
-            .clickable(onClick = onClick),
+            .clickable(enabled = !loading, onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
-        if (icon != null) {
-            Icon(imageVector = icon, contentDescription = null, tint = content, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.size(8.dp))
+        if (loading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                color = content,
+                strokeWidth = 2.5.dp,
+            )
+        } else {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = content,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.size(8.dp))
+            }
+            Text(
+                text = text,
+                color = content,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.ExtraBold,
+            )
         }
-        Text(
-            text = text,
-            color = content,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.ExtraBold,
-        )
     }
 }

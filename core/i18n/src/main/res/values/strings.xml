@@ -454,6 +454,10 @@
     <string name="dining_discover_prompt">Time to discover a new favorite spot.</string>
     <string name="dining_places_visited">Places visited</string>
     <string name="dining_total_bookings">Total bookings</string>
+    <string name="dining_discover_tonight">Discover Tonight</string>
+    <string name="dining_discover_view_all">View all</string>
+    <string name="dining_discover_trending">TRENDING</string>
+    <string name="dining_discover_explore">Explore</string>
     <string name="dining_add_by_code">Add by booking code</string>
     <string name="dining_tab_list_aria">Dining booking status</string>
 
@@ -644,6 +648,32 @@
     <string name="add_code_verified_subtitle">%1$s is now a scheduled invitation.</string>
     <string name="add_code_error_not_found">We couldn\'t find that booking code. Check the letters and numbers.</string>
     <string name="add_code_error_not_active">Only active confirmed reservations can be joined by code.</string>
+
+    <!-- Add booking flow (My Dining header) -->
+    <string name="add_dinner_button">+ Add Dinner</string>
+    <string name="add_booking_method_title">Add dinner</string>
+    <string name="add_booking_step_method">Method</string>
+    <string name="add_booking_step_verify">Verify</string>
+    <string name="add_booking_step_review">Review</string>
+    <string name="add_booking_step_done">Done</string>
+    <string name="add_booking_method_subtitle">Choose how you want to add a reservation to My Dining.</string>
+    <string name="add_booking_with_code">Add with Code</string>
+    <string name="add_booking_with_code_desc">Enter a confirmation code</string>
+    <string name="add_booking_scan_qr">Scan QR</string>
+    <string name="add_booking_scan_qr_desc">Scan the restaurant\'s arrival QR code.</string>
+    <string name="add_booking_code_screen_title">Add with Code</string>
+    <string name="add_booking_code_prompt">Enter a confirmation code</string>
+    <string name="add_booking_scan_screen_title">Scan QR Code</string>
+    <string name="add_booking_scan_prompt">Position the QR code within the frame</string>
+    <string name="add_booking_review_title">Review Reservation</string>
+    <string name="add_booking_success_title">Booking Added</string>
+    <string name="add_booking_success_message">Your booking has been added successfully!</string>
+    <string name="add_booking_continue">Continue</string>
+    <string name="add_booking_looking_up">Finding your booking…</string>
+    <string name="add_booking_add">Add Booking</string>
+    <string name="add_booking_view">View My Bookings</string>
+    <string name="add_booking_guests">%1$d guests</string>
+    <string name="add_booking_qr_scan_content_desc">Scan QR code</string>
 
     <!-- Update local data modal (post-login) -->
     <string name="update_data_title">Update local data?</string>

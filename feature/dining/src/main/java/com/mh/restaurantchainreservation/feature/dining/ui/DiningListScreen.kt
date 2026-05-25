@@ -205,6 +205,12 @@ fun DiningListScreen(
                             totalBookings = upcoming.size + visited.size + cancelled.size,
                         )
                     }
+                    DiningStaggerItem(indexInGroup = 2) {
+                        DiningDiscoverTonightSection(
+                            onViewAll = onExploreRestaurants,
+                            onExplore = { onExploreRestaurants() },
+                        )
+                    }
                 }
             }
 
@@ -270,6 +276,11 @@ fun DiningListScreen(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .zIndex(2f),
+            trailing = {
+                DiningAddDinnerHeaderButton(
+                    onClick = { DiningStore.openAddBookingPicker() },
+                )
+            },
         )
     }
 }
@@ -288,7 +299,7 @@ private fun DiningTabPageContent(
         DiningTabId.Upcoming -> TabContent(
             items = upcoming,
             onExploreRestaurants = onExploreRestaurants,
-            onAddBooking = { DiningStore.openAddCode() },
+            onAddBooking = { DiningStore.openAddBookingPicker() },
             renderItem = { booking ->
                 BookingCard(
                     booking = booking,
@@ -313,7 +324,7 @@ private fun DiningTabPageContent(
         DiningTabId.Visited -> TabContent(
             items = visited,
             onExploreRestaurants = onExploreRestaurants,
-            onAddBooking = { DiningStore.openAddCode() },
+            onAddBooking = { DiningStore.openAddBookingPicker() },
             renderItem = { booking ->
                 BookingCard(
                     booking = booking,
@@ -326,7 +337,7 @@ private fun DiningTabPageContent(
         DiningTabId.Cancel -> TabContent(
             items = cancelled,
             onExploreRestaurants = onExploreRestaurants,
-            onAddBooking = { DiningStore.openAddCode() },
+            onAddBooking = { DiningStore.openAddBookingPicker() },
             renderItem = { booking ->
                 BookingCard(
                     booking = booking,

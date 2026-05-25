@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.mh.restaurantchainreservation.feature.dining.data.DiningStore
-import com.mh.restaurantchainreservation.feature.dining.ui.modals.AddBookingCodeModal
+import com.mh.restaurantchainreservation.feature.dining.ui.addbooking.AddBookingFlowHost
 import com.mh.restaurantchainreservation.feature.dining.ui.modals.CancelConfirmModal
 import com.mh.restaurantchainreservation.feature.dining.ui.modals.InviteFriendsSheet
 import com.mh.restaurantchainreservation.feature.dining.ui.modals.ManageSheet
@@ -90,14 +90,10 @@ fun DiningModalsHost(
         )
     }
 
-    if (modal.addCodeOpen) {
-        AddBookingCodeModal(
-            bookings = bookings,
-            checkedInIds = checkedInIds,
-            onDismiss = { DiningStore.closeAddCode() },
-            onAdded = { booking -> DiningStore.upsertBookingFront(booking) },
-            onView = { booking ->
-                DiningStore.closeAddCode()
+    if (modal.addBookingFlow != null) {
+        AddBookingFlowHost(
+            onDismiss = { DiningStore.closeAddBookingFlow() },
+            onViewBookings = { booking ->
                 onOpenBookingDetail?.invoke(booking.id)
             },
         )
