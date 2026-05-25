@@ -94,6 +94,17 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.badge.AnimatedGuestFavoriteCenterBadge
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailCollapsingMetrics
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingIconButton
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingToolbar
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroScrollOverlay
+import com.mh.restaurantchainreservation.core.designsystem.components.collapsingHeaderListScroll
+import com.mh.restaurantchainreservation.core.designsystem.components.detailHeroParallax
+import com.mh.restaurantchainreservation.core.designsystem.components.detailMorphingSheetBackground
+import com.mh.restaurantchainreservation.core.designsystem.components.detailMorphingSheetShape
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberCollapsingHeaderScrollState
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailCollapseProgress
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailHeroScrollOffsetPx
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuSeeAllCard
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuTile
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
@@ -240,22 +251,18 @@ fun RestaurantDetailScreen(
     var showHowReviewsWork by remember { mutableStateOf(false) }
     var showAmenities by remember { mutableStateOf(false) }
     var showShareSheet by remember { mutableStateOf(false) }
-    var headerSolid by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     var detailPageCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     var reviewsShowAllButtonBottomPx by remember { mutableIntStateOf(0) }
-    val headerSolidDerived by remember {
-        derivedStateOf {
-            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 48
-        }
-    }
-    androidx.compose.runtime.LaunchedEffect(headerSolidDerived) {
-        headerSolid = headerSolidDerived
-    }
-
     val bodyReveal = remember { Animatable(0f) }
     val density = LocalDensity.current
+    val collapseRangePx = remember(density) { DetailCollapsingMetrics.heroScrollRangePx(density) }
+    val headerScroll = rememberCollapsingHeaderScrollState(collapseRangePx)
+    headerScroll.BindListResetOnShortContent(listState)
+    val collapseProgress = rememberDetailCollapseProgress(listState, collapseRangePx)
+    val heroScrollOffsetPx = rememberDetailHeroScrollOffsetPx(listState, collapseRangePx)
+    val sheetShape = detailMorphingSheetShape(collapseProgress)
     val navigationBars = WindowInsets.navigationBars
     val bodySlidePx = remember(density) { with(density) { 28.dp.toPx() } }
 
@@ -310,7 +317,9 @@ fun RestaurantDetailScreen(
     ) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .collapsingHeaderListScroll(headerScroll, listState),
             contentPadding = PaddingValues(bottom = DetailListBottomPadding),
         ) {
             // Hero + sheet must live in one item: LazyColumn clips each item, so a separate
@@ -321,23 +330,31 @@ fun RestaurantDetailScreen(
                         .fillMaxWidth()
                         .onGloballyPositioned { detailPageCoordinates = it },
                 ) {
-                    HeroCarousel(
-                        restaurantId = restaurant.id,
-                        galleryImages = heroImages,
-                        restaurantName = restaurant.name,
-                        showPageIndicator = contentReady && heroImages.size > 1,
-                        onOpenFullscreen = {
-                            if (contentReady) {
-                                onOpenPhotoGrid(RestaurantPhotoGallerySource.Gallery)
-                            }
-                        },
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(HeroHeight)
+                            .detailHeroParallax(heroScrollOffsetPx),
+                    ) {
+                        HeroCarousel(
+                            restaurantId = restaurant.id,
+                            galleryImages = heroImages,
+                            restaurantName = restaurant.name,
+                            showPageIndicator = contentReady && heroImages.size > 1,
+                            onOpenFullscreen = {
+                                if (contentReady) {
+                                    onOpenPhotoGrid(RestaurantPhotoGallerySource.Gallery)
+                                }
+                            },
+                        )
+                        DetailHeroScrollOverlay(collapseProgress = collapseProgress)
+                    }
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .offset(y = -SheetTopRadius)
-                            .detailSheetTopRoundedBackground(palette.pageBackground)
-                            .clip(HeaderSheetShape),
+                            .detailMorphingSheetBackground(palette.pageBackground, collapseProgress)
+                            .clip(sheetShape),
                     ) {
                         HeaderSummaryCard(
                             restaurant = restaurant,
@@ -400,17 +417,29 @@ fun RestaurantDetailScreen(
             }
         }
 
-        DetailTopBar(
-            restaurantName = restaurant.name,
-            solid = headerSolid,
-            saved = saved,
+        DetailFloatingToolbar(
+            title = restaurant.name,
+            collapseProgress = collapseProgress,
             onBack = onBack,
-            onShare = { showShareSheet = true },
-            onToggleSave = { WishlistStore.onHeartTap(restaurant) },
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .zIndex(2f),
-        )
+        ) { plateAlpha ->
+            DetailFloatingIconButton(
+                onClick = { showShareSheet = true },
+                plateAlpha = plateAlpha,
+                contentDescription = "Share",
+            ) {
+                Icon(Icons.Default.Share, null, tint = palette.foreground, modifier = Modifier.size(18.dp))
+            }
+            DetailFloatingIconButton(
+                onClick = { WishlistStore.onHeartTap(restaurant) },
+                plateAlpha = plateAlpha,
+                contentDescription = "Save",
+            ) {
+                HeartDrawableIcon(active = saved, contentDescription = null, iconHeight = 20.dp)
+            }
+        }
 
         if (showShareSheet) {
             val cuisineLine = if (restaurant.cuisine.isNotBlank()) {
@@ -453,85 +482,6 @@ fun RestaurantDetailScreen(
             )
         }
 
-    }
-}
-
-@Composable
-private fun DetailTopBar(
-    restaurantName: String,
-    solid: Boolean,
-    saved: Boolean,
-    onBack: () -> Unit,
-    onShare: () -> Unit,
-    onToggleSave: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val palette = LocalRestaurantPalette.current
-    val buttonBg = if (solid) palette.mutedSurface else RestaurantColors.Base.white
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(if (solid) palette.pageBackground else Color.Transparent)
-            .then(
-                if (solid) Modifier.border(1.dp, palette.border) else Modifier,
-            )
-            .windowInsetsPadding(WindowInsets.statusBars),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            GlassCircleButton(onClick = onBack, background = buttonBg) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = palette.foreground, modifier = Modifier.size(20.dp))
-            }
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 12.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (solid) {
-                    Text(
-                        text = restaurantName,
-                        color = palette.foreground,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                GlassCircleButton(onClick = onShare, background = buttonBg) {
-                    Icon(Icons.Default.Share, "Share", tint = palette.foreground, modifier = Modifier.size(18.dp))
-                }
-                GlassCircleButton(onClick = onToggleSave, background = buttonBg) {
-                    HeartDrawableIcon(active = saved, contentDescription = "Save", iconHeight = 20.dp)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun GlassCircleButton(
-    onClick: () -> Unit,
-    background: Color,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(background)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        content()
     }
 }
 
