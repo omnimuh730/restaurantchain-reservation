@@ -4,13 +4,12 @@ package com.mh.restaurantchainreservation.feature.discover.ui
 
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -43,6 +42,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -75,8 +75,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
@@ -84,7 +86,13 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -121,6 +129,9 @@ import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMe
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuTile
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailHeroPullMotion
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroPullScaleMax
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroMaxPullFraction
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.pageCanvasBackground
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
@@ -139,7 +150,11 @@ import com.mh.restaurantchainreservation.core.model.NewsData
 import com.mh.restaurantchainreservation.feature.discover.R
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.math.min
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 private val DiningNewsCardWidth = 260.dp
@@ -425,12 +440,38 @@ fun DiscoverHomeScreen(
             }
         }
 
+        val discoverBannerHeightPx = remember(density) { with(density) { DiscoverBannerHeight.toPx() } }
+        val discoverBannerMaxPullPx = remember(discoverBannerHeightPx) {
+            discoverBannerHeightPx * DetailHeroMaxPullFraction
+        }
+        val discoverBannerScope = rememberCoroutineScope()
+        val discoverBannerMotion = rememberDetailHeroPullMotion(discoverBannerScope)
+        val discoverBannerScrollOffsetPx by remember(listState, discoverBannerHeightPx) {
+            derivedStateOf {
+                if (listState.firstVisibleItemIndex == 0) {
+                    listState.firstVisibleItemScrollOffset.toFloat()
+                } else {
+                    discoverBannerHeightPx
+                }
+            }
+        }
+        val discoverBannerPullPx by discoverBannerMotion.pullDistancePx
+        val discoverBannerPullProgress = (discoverBannerPullPx / discoverBannerMaxPullPx).coerceIn(0f, 1f)
+
         LazyColumn(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .pageCanvasBackground()
                 .trackBottomNavScroll()
+                .nestedScroll(
+                    discoverBannerMotion.nestedScrollConnection(
+                        maxPullPx = discoverBannerMaxPullPx,
+                        isAtTop = {
+                            listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
+                        }
+                    ),
+                )
                 .hazeSource(state = hazeState),
             contentPadding = PaddingValues(bottom = 16.dp),
         ) {
@@ -441,12 +482,15 @@ fun DiscoverHomeScreen(
                     onOpenMap = onOpenMap,
                     onViewAll = { onOpenSection("banners") },
                     onBannerClick = { bannerId -> onOpenSection(bannerId) },
+                    bannerScrollOffsetPx = discoverBannerScrollOffsetPx,
+                    pullProgress = discoverBannerPullProgress,
+                    pullDistancePx = discoverBannerPullPx,
                 )
             }
             item {
                 Column(
                     modifier = Modifier
-                        .offset(y = (-32).dp)
+                        .offset(y = -DiscoverSheetTopOverlap)
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                         .background(palette.pageBackground)
@@ -583,6 +627,10 @@ fun DiscoverHomeScreen(
     }
 }
 
+private val DiscoverBannerHeight = 360.dp
+private val DiscoverSheetTopOverlap = 32.dp
+
+/** Pull-to-stretch + scroll parallax for Discover hero banner photos. */
 @Composable
 private fun HeroBanner(
     banners: List<Banner>,
@@ -590,8 +638,12 @@ private fun HeroBanner(
     onOpenMap: () -> Unit,
     onViewAll: () -> Unit,
     onBannerClick: (String) -> Unit,
+    bannerScrollOffsetPx: Float,
+    pullProgress: Float,
+    pullDistancePx: Float,
 ) {
     val palette = LocalRestaurantPalette.current
+    val density = LocalDensity.current
     val pagerState = rememberPagerState(pageCount = { banners.size })
 
     LaunchedEffect(pagerState, banners.size) {
@@ -601,10 +653,12 @@ private fun HeroBanner(
         }
     }
 
+    val pullDistanceDp = with(density) { pullDistancePx.toDp() }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(360.dp),
+            .height(DiscoverBannerHeight + pullDistanceDp),
     ) {
         HorizontalPager(
             state = pagerState,
@@ -612,14 +666,27 @@ private fun HeroBanner(
         ) { page ->
             val banner = banners[page]
             Box(modifier = Modifier.fillMaxSize()) {
-                AsyncImage(
-                    model = banner.image,
-                    contentDescription = banner.title,
-                    contentScale = ContentScale.Crop,
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .clickable { onBannerClick(banner.id) },
-                )
+                        .clipToBounds(),
+                ) {
+                    AsyncImage(
+                        model = banner.image,
+                        contentDescription = banner.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                translationY = bannerScrollOffsetPx * 0.40f
+                                val scale = 1f + pullProgress * DetailHeroPullScaleMax
+                                scaleX = scale
+                                scaleY = scale
+                                transformOrigin = TransformOrigin(0.5f, 0f)
+                            }
+                            .clickable { onBannerClick(banner.id) },
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .matchParentSize()

@@ -64,8 +64,10 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -80,11 +82,14 @@ import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloa
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingIconButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingToolbar
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroScrollOverlay
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroPullScaleMax
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroMaxPullFraction
 import com.mh.restaurantchainreservation.core.designsystem.components.detailHeroParallax
 import com.mh.restaurantchainreservation.core.designsystem.components.detailMorphingSheetBackground
 import com.mh.restaurantchainreservation.core.designsystem.components.detailMorphingSheetShape
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailCollapseProgress
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailTransitionThresholds
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailHeroPullMotion
 import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavContentBottomPadding
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantLocationMap
@@ -186,28 +191,42 @@ fun BookingDetailScreen(
     val heroScrollOffsetPx = scroll.value
     val navBottomPadding = LocalNavContentBottomPadding.current
 
+    val pullMotion = rememberDetailHeroPullMotion()
+    val pullDistancePx by pullMotion.pullDistancePx
+    val maxPullPx = remember(density) { with(density) { HeroHeight.toPx() * DetailHeroMaxPullFraction } }
+    val pullProgress = (pullDistancePx / maxPullPx).coerceIn(0f, 1f)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(palette.pageBackground)
             .trackBottomNavScroll(),
     ) {
+        val pullDistanceDp = with(density) { pullDistancePx.toDp() }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .nestedScroll(
+                    pullMotion.nestedScrollConnection(
+                        maxPullPx = maxPullPx,
+                        isAtTop = { scroll.value == 0 },
+                    ),
+                )
                 .verticalScroll(scroll),
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(HeroHeight)
+                        .height(HeroHeight + pullDistanceDp)
                         .detailHeroParallax(heroScrollOffsetPx),
                 ) {
                     BookingHeroCarousel(
                         booking = booking,
                         galleryImages = galleryImages,
                         restaurant = restaurant,
+                        pullProgress = pullProgress,
                     )
                     DetailHeroScrollOverlay(
                         collapseProgress = collapseProgress,
@@ -389,17 +408,14 @@ private fun BookingHeroCarousel(
     booking: Booking,
     galleryImages: List<String>,
     restaurant: Restaurant?,
+    pullProgress: Float,
 ) {
-    val palette = LocalRestaurantPalette.current
     val pagerState = rememberPagerState(pageCount = { galleryImages.size })
     val hostName = restaurantHostName(booking, restaurant)
     val heroOverlayBottom = SheetTopRadius + HeroOverlayBottomPadding
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(HeroHeight)
-            .background(palette.mutedSurface),
+        modifier = Modifier.fillMaxSize(),
     ) {
         HorizontalPager(
             state = pagerState,
@@ -409,7 +425,14 @@ private fun BookingHeroCarousel(
                 model = galleryImages[page],
                 contentDescription = booking.restaurant,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        val scale = 1f + pullProgress * DetailHeroPullScaleMax
+                        scaleX = scale
+                        scaleY = scale
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0f)
+                    },
             )
         }
 

@@ -1,5 +1,8 @@
 package com.mh.restaurantchainreservation.core.designsystem.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,13 +29,17 @@ import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
@@ -40,17 +47,24 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
+import kotlin.math.min
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 /** Shared metrics for restaurant / booking detail collapsing-hero screens. */
 object DetailCollapsingMetrics {
@@ -178,20 +192,104 @@ object DetailCollapsingMetrics {
         return smoothstep(t)
     }
 
-    /** Icon plates stay full over the hero; fade out in sync with the header bottom border. */
-    fun floatingButtonPlateAlpha(
-        collapseProgress: Float,
-        sheetMeetsHeaderProgress: Float,
-    ): Float {
-        val border = headerBorderAlpha(collapseProgress, sheetMeetsHeaderProgress)
-        return (1f - border).coerceIn(0f, 1f)
-    }
+    fun floatingButtonPlateAlpha(collapseProgress: Float): Float =
+        (1f - collapseProgress * 1.35f).coerceIn(0f, 1f)
 
     fun morphingSheetCornerRadius(collapseProgress: Float): Dp =
         lerp(sheetTopRadius, 0.dp, collapseProgress.coerceIn(0f, 1f))
 
     /** Counter-scroll parallax so the hero lingers briefly while the sheet rises. */
     fun heroParallaxTranslationY(scrollOffsetPx: Int): Float = scrollOffsetPx * 0.42f
+}
+
+const val DetailHeroPullScaleMax = 0.04f
+const val DetailHeroMaxPullFraction = 0.15f
+val DetailHeroPullReleaseSpring = spring<Float>(
+    dampingRatio = 0.85f,
+    stiffness = 380f,
+)
+
+/**
+ * Shared pull-to-stretch motion logic for restaurant and booking details.
+ * Binds to a [NestedScrollConnection] and drives [pullDistancePx].
+ */
+class DetailHeroPullMotion {
+    val pullDistancePx = mutableFloatStateOf(0f)
+    private var scope: CoroutineScope? = null
+    private var releaseJob: Job? = null
+
+    fun bind(scope: CoroutineScope) {
+        this.scope = scope
+    }
+
+    private fun setPullDistance(value: Float, maxPullPx: Float) {
+        releaseJob?.cancel()
+        releaseJob = null
+        pullDistancePx.floatValue = value.coerceIn(0f, maxPullPx)
+    }
+
+    private fun animateRelease() {
+        val current = pullDistancePx.floatValue
+        if (current <= 0f) return
+        val s = scope ?: return
+        releaseJob?.cancel()
+        releaseJob = s.launch {
+            animate(
+                initialValue = current,
+                targetValue = 0f,
+                animationSpec = DetailHeroPullReleaseSpring,
+            ) { value, _ ->
+                pullDistancePx.floatValue = value
+            }
+            pullDistancePx.floatValue = 0f
+            releaseJob = null
+        }
+    }
+
+    fun nestedScrollConnection(
+        maxPullPx: Float,
+        isAtTop: () -> Boolean,
+    ): NestedScrollConnection = object : NestedScrollConnection {
+        override fun onPostScroll(
+            consumed: Offset,
+            available: Offset,
+            source: NestedScrollSource,
+        ): Offset {
+            if (available.y <= 0f) return Offset.Zero
+            if (!isAtTop()) return Offset.Zero
+
+            val room = maxPullPx - pullDistancePx.floatValue
+            if (room <= 0f) return Offset.Zero
+            val pull = min(available.y, room)
+            setPullDistance(pullDistancePx.floatValue + pull, maxPullPx)
+            return Offset(0f, pull)
+        }
+
+        override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+            if (!isAtTop()) {
+                if (pullDistancePx.floatValue > 0f) animateRelease()
+                return Offset.Zero
+            }
+            if (available.y >= 0f || pullDistancePx.floatValue <= 0f) return Offset.Zero
+            val release = min(-available.y, pullDistancePx.floatValue)
+            setPullDistance(pullDistancePx.floatValue - release, maxPullPx)
+            return Offset(0f, -release)
+        }
+
+        override suspend fun onPreFling(available: Velocity): Velocity {
+            if (pullDistancePx.floatValue > 0f) animateRelease()
+            return available
+        }
+    }
+}
+
+@Composable
+fun rememberDetailHeroPullMotion(
+    scope: CoroutineScope = rememberCoroutineScope(),
+): DetailHeroPullMotion {
+    val motion = remember { DetailHeroPullMotion() }
+    SideEffect { motion.bind(scope) }
+    return motion
 }
 
 data class DetailTransitionThresholds(
@@ -334,10 +432,7 @@ fun DetailFloatingToolbar(
     actions: @Composable RowScope.(plateAlpha: Float) -> Unit = {},
 ) {
     val palette = LocalRestaurantPalette.current
-    val plateAlpha = DetailCollapsingMetrics.floatingButtonPlateAlpha(
-        collapseProgress = collapseProgress,
-        sheetMeetsHeaderProgress = transitionThresholds.sheetMeetsHeader,
-    )
+    val plateAlpha = DetailCollapsingMetrics.floatingButtonPlateAlpha(collapseProgress)
     val headerBackgroundAlpha = DetailCollapsingMetrics.headerBackgroundAlpha(
         collapseProgress = collapseProgress,
         sheetMeetsHeaderProgress = transitionThresholds.sheetMeetsHeader,
@@ -421,6 +516,25 @@ fun DetailFloatingToolbar(
     }
 }
 
+@Composable
+fun DetailFloatingIconButton(
+    onClick: () -> Unit,
+    plateAlpha: Float,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val plateColor = detailFloatingPlateColor(plateAlpha)
+    Box(
+        modifier = modifier
+            .detailFloatingPlateContainer(plateAlpha)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
+    }
+}
+
 private val DetailFloatingPlateSize = 32.dp
 private val DetailToolbarIconSize = 18.dp
 
@@ -445,24 +559,10 @@ private fun Modifier.detailFloatingPlateContainer(plateAlpha: Float): Modifier {
         )
 }
 
-@Composable
-fun DetailFloatingIconButton(
-    onClick: () -> Unit,
-    plateAlpha: Float,
-    contentDescription: String,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        modifier = modifier
-            .detailFloatingPlateContainer(plateAlpha)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        content()
-    }
-}
-
+/**
+ * Detail-toolbar wishlist control: white circular plate + black outline heart at rest;
+ * after scroll collapse only the heart outline (or red fill when saved) remains.
+ */
 @Composable
 fun DetailFloatingHeartButton(
     active: Boolean,
@@ -474,7 +574,7 @@ fun DetailFloatingHeartButton(
     val palette = LocalRestaurantPalette.current
     Box(
         modifier = modifier
-            .detailFloatingPlateContainer(plateAlpha.coerceIn(0f, 1f))
+            .detailFloatingPlateContainer(plateAlpha)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
