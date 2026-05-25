@@ -39,6 +39,7 @@ fun ManageSheet(
     onDismiss: () -> Unit,
     onModify: () -> Unit,
     onCancel: () -> Unit,
+    showModify: Boolean = true,
 ) {
     val palette = LocalRestaurantPalette.current
 
@@ -60,13 +61,15 @@ fun ManageSheet(
             )
             Spacer(Modifier.height(10.dp))
 
-            ManageActionRow(
-                icon = Icons.Outlined.Edit,
-                title = stringResource(I18nR.string.manage_modify),
-                desc = stringResource(I18nR.string.manage_modify_desc),
-                tone = ManageTone.Primary,
-                onClick = onModify,
-            )
+            if (showModify) {
+                ManageActionRow(
+                    icon = Icons.Outlined.Edit,
+                    title = stringResource(I18nR.string.manage_modify),
+                    desc = stringResource(I18nR.string.manage_modify_desc),
+                    tone = ManageTone.Primary,
+                    onClick = onModify,
+                )
+            }
             ManageActionRow(
                 icon = Icons.Outlined.Delete,
                 title = stringResource(I18nR.string.manage_cancel),

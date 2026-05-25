@@ -13,7 +13,7 @@ import com.mh.restaurantchainreservation.feature.dining.ui.addbooking.AddBooking
 import com.mh.restaurantchainreservation.feature.dining.ui.modals.CancelConfirmModal
 import com.mh.restaurantchainreservation.feature.dining.ui.modals.InviteFriendsSheet
 import com.mh.restaurantchainreservation.feature.dining.ui.modals.ManageSheet
-import com.mh.restaurantchainreservation.feature.dining.ui.modals.ModifyModal
+import com.mh.restaurantchainreservation.feature.dining.data.isGuestInviteBooking
 import com.mh.restaurantchainreservation.feature.dining.ui.modals.OrderReceiptModal
 import com.mh.restaurantchainreservation.feature.dining.ui.modals.ShowQRModal
 import com.mh.restaurantchainreservation.feature.dining.ui.scanqr.ScanQRFlowScreen
@@ -26,6 +26,7 @@ import com.mh.restaurantchainreservation.feature.dining.ui.scanqr.ScanQRFlowScre
 fun DiningModalsHost(
     onOpenBookingDetail: ((bookingId: String) -> Unit)? = null,
     onBookAgain: ((bookingId: String) -> Unit)? = null,
+    onModifyBooking: ((bookingId: String) -> Unit)? = null,
 ) {
     val modal by DiningStore.modal.collectAsState()
     val bookings by DiningStore.bookings.collectAsState()
@@ -33,7 +34,6 @@ fun DiningModalsHost(
     val invitedMap by DiningStore.invitedMap.collectAsState()
 
     val manageBooking = DiningStore.bookingById(modal.manageBookingId)
-    val modifyBooking = DiningStore.bookingById(modal.modifyBookingId)
     val cancelBooking = DiningStore.bookingById(modal.cancelBookingId)
     val showQrBooking = DiningStore.bookingById(modal.showQrBookingId)
     val inviteBooking = DiningStore.bookingById(modal.inviteBookingId)
@@ -43,16 +43,13 @@ fun DiningModalsHost(
     if (modal.showManage && manageBooking != null) {
         ManageSheet(
             onDismiss = { DiningStore.closeManage() },
-            onModify = { DiningStore.openModify() },
+            showModify = !manageBooking.isGuestInviteBooking(),
+            onModify = {
+                val bookingId = manageBooking.id
+                DiningStore.closeManage()
+                onModifyBooking?.invoke(bookingId)
+            },
             onCancel = { DiningStore.openCancelConfirm() },
-        )
-    }
-
-    if (modal.showModify && modifyBooking != null) {
-        ModifyModal(
-            booking = modifyBooking,
-            onDismiss = { DiningStore.closeModify() },
-            onSave = { updated -> DiningStore.updateBooking(updated) },
         )
     }
 

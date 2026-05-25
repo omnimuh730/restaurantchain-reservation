@@ -262,6 +262,7 @@ fun BookingDetailScreen(
                     ReservationManagementActions(
                         onModify = onManage,
                         onCancel = onCancel,
+                        showModify = !booking.isGuestInviteBooking(),
                     )
                 }
 
@@ -749,19 +750,22 @@ private fun ReservationPreferenceChip(label: String) {
 private fun ReservationManagementActions(
     onModify: () -> Unit,
     onCancel: () -> Unit,
+    showModify: Boolean = true,
 ) {
     val cancelTint = RestaurantColors.Text.primary
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        BookingOutlinedAction(
-            label = stringResource(I18nR.string.detail_modify_booking),
-            icon = Icons.Outlined.Edit,
-            tint = ReservationPink,
-            onClick = onModify,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        if (showModify) {
+            BookingOutlinedAction(
+                label = stringResource(I18nR.string.detail_modify_booking),
+                icon = Icons.Outlined.Edit,
+                tint = ReservationPink,
+                onClick = onModify,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         BookingOutlinedAction(
             label = stringResource(I18nR.string.detail_cancel_booking),
             icon = Icons.Outlined.Cancel,

@@ -32,6 +32,7 @@ object DiningRoutes {
 @Composable
 fun DiningHomeScreen(
     onOpenDetail: (String) -> Unit,
+    onModifyBooking: (String) -> Unit,
     onExploreRestaurants: () -> Unit,
     onDiscoverViewAll: () -> Unit,
     onDiscoverBannerClick: (String) -> Unit,
@@ -49,6 +50,7 @@ fun DiningHomeScreen(
         )
         DiningModalsHost(
             onOpenBookingDetail = onOpenDetail,
+            onModifyBooking = onModifyBooking,
         )
     }
 }
@@ -84,6 +86,7 @@ fun DiningDetailScreen(
         )
         DiningModalsHost(
             onOpenBookingDetail = { /* already on detail */ },
+            onModifyBooking = onModifyBooking,
         )
     }
 }
