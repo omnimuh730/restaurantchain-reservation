@@ -132,7 +132,7 @@ internal fun DiscoverSearchMapSurface(
 
     BoxWithConstraints(
         modifier = modifier
-            .padding(top = topInset, bottom = bottomInset)
+            .padding(top = topInset)
             .clip(RectangleShape)
             .background(RestaurantColors.Map.canvas)
             .pointerInput(onZoomChange) {
@@ -157,6 +157,7 @@ internal fun DiscoverSearchMapSurface(
         val density = LocalDensity.current
         val widthPx = with(density) { maxWidth.toPx() }
         val heightPx = with(density) { maxHeight.toPx() }
+        val bottomInsetPx = with(density) { bottomInset.toPx() }
         if (widthPx <= 0f || heightPx <= 0f) return@BoxWithConstraints
 
         val mapZoom = zoom.toDouble()
@@ -164,8 +165,15 @@ internal fun DiscoverSearchMapSurface(
         val tileScale = 2.0.pow(mapZoom - tileZoom).toFloat()
         val tileSizePx = (TILE_SIZE * tileScale).toFloat()
 
-        val topLeft = remember(latitude, longitude, mapZoom, widthPx, heightPx) {
-            topLeftWorldPixel(latitude, longitude, mapZoom, widthPx, heightPx)
+        val topLeft = remember(latitude, longitude, mapZoom, widthPx, heightPx, bottomInsetPx) {
+            topLeftWorldPixel(
+                latitude = latitude,
+                longitude = longitude,
+                mapZoom = mapZoom,
+                widthPx = widthPx,
+                heightPx = heightPx,
+                bottomInsetPx = bottomInsetPx,
+            )
         }
 
         val startTileX = floor(topLeft.x / (TILE_SIZE * tileScale)).toInt()
@@ -313,11 +321,14 @@ private fun topLeftWorldPixel(
     mapZoom: Double,
     widthPx: Float,
     heightPx: Float,
+    bottomInsetPx: Float = 0f,
 ): Offset {
     val centerWorld = latLngToWorldPixel(latitude, longitude, mapZoom)
+    // Center the map in the region above the results sheet, while tiles still draw behind it.
+    val visibleCenterYOffset = bottomInsetPx / 2f
     return Offset(
         x = centerWorld.x - widthPx / 2f,
-        y = centerWorld.y - heightPx / 2f,
+        y = centerWorld.y - heightPx / 2f + visibleCenterYOffset,
     )
 }
 

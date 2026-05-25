@@ -196,7 +196,7 @@ fun CollapsingScreenTitleHeader(
     val titleBlockHeight = with(density) { titleLineHeightSp.sp.toDp() }
     val trailingContentHeight = m.collapsedTrailingContentHeight
 
-    val trailingTopCollapsed = (bodyHeight - trailingContentHeight) / 2f
+    val trailingTopCollapsed = (bodyHeight - m.trailingSlotSize) / 2f
     val trailingOffsetY = m.trailingTopExpanded + (trailingTopCollapsed - m.trailingTopExpanded) * collapseProgress
 
     val titleTopExpanded = m.trailingTopExpanded + m.trailingSlotSize + m.titleGapBelowTrailing

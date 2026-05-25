@@ -58,8 +58,8 @@ fun CreditCardsHubSection(
 ) {
     val palette = LocalRestaurantPalette.current
     val storeCards by ProfileWalletStore.cards.collectAsState()
-    val totalKrw = storeCards.sumOf { it.krwBalance.toLong() }
-    val totalUsd = storeCards.sumOf { it.usdBalance }
+    val totalKrw = ProfileWalletStore.creditCardsTotalKrwLong()
+    val totalUsd = ProfileWalletStore.creditCardsTotalUsd()
     val subtitle = remember(totalKrw, totalUsd) {
         "Total · ${formatKrwHub(totalKrw)} · ${formatUsdHub(totalUsd)}"
     }

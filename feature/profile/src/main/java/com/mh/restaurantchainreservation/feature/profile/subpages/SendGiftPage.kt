@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationCenter
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.feature.profile.data.ProfileWalletStore
+import kotlin.math.roundToLong
 import com.mh.restaurantchainreservation.feature.profile.data.WalletMutationResult
 import com.mh.restaurantchainreservation.feature.profile.hub.formatKrwHub
 import com.mh.restaurantchainreservation.feature.profile.hub.formatUsdHub
@@ -67,9 +68,10 @@ fun SendGiftPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var recipient by rememberSaveable { mutableStateOf("") }
     val activeAmount = amountAsNumber(amountStr)
 
-    val storeCards by ProfileWalletStore.cards.collectAsState()
-    val availableKrw = storeCards.sumOf { it.krwBalance.toLong() }
-    val availableUsd = storeCards.sumOf { it.usdBalance }
+    val walletKrw by ProfileWalletStore.walletKrw.collectAsState()
+    val walletUsd by ProfileWalletStore.walletUsd.collectAsState()
+    val availableKrw = walletKrw.roundToLong()
+    val availableUsd = walletUsd
     val availableLabel = if (currency == Currency.KRW) {
         formatKrwHub(availableKrw)
     } else {

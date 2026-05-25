@@ -106,6 +106,7 @@ fun ProfileHubScreen(
     onOpenTopUp: () -> Unit = {},
     onOpenSendGift: () -> Unit = {},
     onOpenCards: () -> Unit = {},
+    onAddNewCard: () -> Unit = onOpenCards,
     onOpenHistory: () -> Unit = {},
     onOpenRefer: () -> Unit = {},
     onLogout: () -> Unit = {},
@@ -183,7 +184,7 @@ fun ProfileHubScreen(
                 CreditCardsHubSection(
                     onManageCards = onOpenCards,
                     onOpenCardInfo = onOpenCards,
-                    onAddNewCard = onOpenCards,
+                    onAddNewCard = onAddNewCard,
                 )
             }
             item(key = "quick_actions") {

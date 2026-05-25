@@ -30,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -40,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
+import com.mh.restaurantchainreservation.core.designsystem.components.PressableContentScale
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -69,15 +69,19 @@ fun RestaurantListCard(
     val animatedContent = LocalAnimatedContentScope.current
     val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
     val titleModifier = rememberRestaurantSharedTitleModifier(restaurant.id, shared, animatedContent)
+    val hasTimeSlots = !timeSlots.isNullOrEmpty()
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(palette.cardSurface)
-            .border(1.dp, palette.border, RoundedCornerShape(20.dp)),
+            .background(palette.cardSurface),
     ) {
+        PressableContentScale(
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
         Column(
-            modifier = Modifier.clickable(onClick = onClick),
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Box(
                 modifier = Modifier
@@ -113,7 +117,14 @@ fun RestaurantListCard(
                     )
                 }
             }
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(
+                modifier = Modifier.padding(
+                    start = 14.dp,
+                    end = 14.dp,
+                    top = 14.dp,
+                    bottom = if (hasTimeSlots) 4.dp else 14.dp,
+                ),
+            ) {
                 Text(
                     text = restaurant.name,
                     color = palette.foreground,
@@ -160,14 +171,14 @@ fun RestaurantListCard(
                 )
             }
         }
-        val slots = timeSlots
-        if (!slots.isNullOrEmpty()) {
+        }
+        if (hasTimeSlots) {
             TimeSlotRow(
-                slots = slots,
+                slots = timeSlots,
                 onSlotClick = { slot ->
                     if (slot.available) onClick()
                 },
-                modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 14.dp, top = 2.dp),
+                modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 14.dp),
             )
         }
     }

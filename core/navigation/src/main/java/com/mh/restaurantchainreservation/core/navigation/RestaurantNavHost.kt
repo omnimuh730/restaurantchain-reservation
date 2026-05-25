@@ -484,7 +484,11 @@ private fun resolveActiveTab(hierarchyRoutes: List<String>): BottomNavTabId? {
         } -> BottomNavTabId.Discover
         hierarchyRoutes.any { it == WishlistRoutes.Home } -> BottomNavTabId.Wishlist
         hierarchyRoutes.any { it == DiningRoutes.Home || it == DiningRoutes.Detail || it == DiningRoutes.Enjoy } -> BottomNavTabId.Dining
-        hierarchyRoutes.any { route -> route == ProfileRoutes.Home || route in ProfileRoutes.AllProfileSubRoutes } -> BottomNavTabId.Profile
+        hierarchyRoutes.any { route ->
+            route == ProfileRoutes.Home ||
+                route in ProfileRoutes.AllProfileSubRoutes ||
+                route.startsWith(ProfileRoutes.CardsBase)
+        } -> BottomNavTabId.Profile
         else -> null
     }
 }
@@ -517,7 +521,8 @@ private fun requiresAuthRoute(route: String?): Boolean {
         route == DiningRoutes.Detail ||
         route == DiningRoutes.Enjoy ||
         route == ProfileRoutes.Home ||
-        route in ProfileRoutes.AllProfileSubRoutes
+        route in ProfileRoutes.AllProfileSubRoutes ||
+        route.startsWith(ProfileRoutes.CardsBase)
 }
 
 private fun signInReasonForTab(tab: BottomNavTabId): SignInRequiredReason = when (tab) {
@@ -533,7 +538,9 @@ private fun signInReasonForRoute(route: String): SignInRequiredReason = when {
     route == BookingRoutes.BookTable -> SignInRequiredReason.Booking
     route == DiningRoutes.Home || route == DiningRoutes.Detail || route == DiningRoutes.Enjoy ->
         SignInRequiredReason.Dining
-    route == ProfileRoutes.Home || route in ProfileRoutes.AllProfileSubRoutes ->
+    route == ProfileRoutes.Home ||
+        route in ProfileRoutes.AllProfileSubRoutes ||
+        route.startsWith(ProfileRoutes.CardsBase) ->
         SignInRequiredReason.Profile
     else -> SignInRequiredReason.Generic
 }
@@ -900,7 +907,10 @@ private fun AppGraph(
                     onOpenContactSupport = { navController.navigate(ProfileRoutes.ContactSupport) },
                     onOpenTopUp = { navController.navigate(ProfileRoutes.TopUp) },
                     onOpenSendGift = { navController.navigate(ProfileRoutes.SendGift) },
-                    onOpenCards = { navController.navigate(ProfileRoutes.Cards) },
+                    onOpenCards = { navController.navigate(ProfileRoutes.CardsBase) },
+                    onAddNewCard = {
+                        navController.navigate("${ProfileRoutes.CardsBase}?openChooseTheme=true")
+                    },
                     onOpenHistory = { navController.navigate(ProfileRoutes.History) },
                     onOpenRefer = { navController.navigate(ProfileRoutes.Refer) },
                     onLogout = {
@@ -927,8 +937,47 @@ private fun AppGraph(
             profileSubComposable(ProfileRoutes.SendGift) {
                 SendGiftScreen(onBack = { navController.popBackStack() })
             }
-            profileSubComposable(ProfileRoutes.Cards) {
-                CreditCardsScreen(onBack = { navController.popBackStack() })
+            composable(
+                route = ProfileRoutes.Cards,
+                arguments = listOf(
+                    navArgument("openChooseTheme") {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    },
+                ),
+                enterTransition = {
+                    slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(280, easing = FastOutSlowInEasing),
+                    ) + fadeIn(tween(220))
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(220, easing = FastOutSlowInEasing),
+                        targetOffset = { it / 4 },
+                    ) + fadeOut(tween(180))
+                },
+                popEnterTransition = {
+                    slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(220, easing = FastOutSlowInEasing),
+                        initialOffset = { it / 4 },
+                    ) + fadeIn(tween(180))
+                },
+                popExitTransition = {
+                    slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(280, easing = FastOutSlowInEasing),
+                    ) + fadeOut(tween(220))
+                },
+            ) { backStackEntry ->
+                val openChooseTheme =
+                    backStackEntry.arguments?.getBoolean("openChooseTheme") ?: false
+                CreditCardsScreen(
+                    onBack = { navController.popBackStack() },
+                    openChooseThemeOnLaunch = openChooseTheme,
+                )
             }
             profileSubComposable(ProfileRoutes.History) {
                 HistoryScreen(onBack = { navController.popBackStack() })

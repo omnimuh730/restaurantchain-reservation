@@ -74,6 +74,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalBottomSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.feature.profile.data.ProfileWalletStore
+import com.mh.restaurantchainreservation.feature.profile.hub.formatKrwHub
+import com.mh.restaurantchainreservation.feature.profile.hub.formatUsdHub
+import kotlin.math.roundToLong
 import com.mh.restaurantchainreservation.feature.profile.hub.HubCardPattern
 import com.mh.restaurantchainreservation.feature.profile.hub.HubCardThemeId
 import com.mh.restaurantchainreservation.feature.profile.hub.HubThemedCardBackground
@@ -485,7 +489,17 @@ internal fun ChooseCardThemeBottomSheet(
                 val passcodesReady =
                     cardPasscode.length >= CardPasscodeMinDigits &&
                         cardPasscode == cardPasscodeConfirm
-                val proceedEnabled = !isLast || passcodesReady
+                val fundKrw = initialKrwText.filter { it.isDigit() }.toLongOrNull()?.toDouble() ?: 0.0
+                val fundUsd = initialUsdText.replace(",", "").toDoubleOrNull() ?: 0.0
+                val walletKrw = ProfileWalletStore.totalKrwLong().toDouble()
+                val walletUsd = ProfileWalletStore.totalUsd()
+                val hasSufficientWallet = fundKrw <= walletKrw && fundUsd <= walletUsd
+                val isFundingStep = step == 1
+                val proceedEnabled = when {
+                    isLast -> passcodesReady && hasSufficientWallet
+                    isFundingStep -> hasSufficientWallet
+                    else -> true
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -759,6 +773,49 @@ private fun OpenCardFundingStep(
             fontWeight = FontWeight.Medium,
         )
         Spacer(Modifier.height(20.dp))
+        val walletKrw = ProfileWalletStore.totalKrwLong().toDouble()
+        val walletUsd = ProfileWalletStore.totalUsd()
+        val fundKrw = initialKrwText.filter { it.isDigit() }.toLongOrNull()?.toDouble() ?: 0.0
+        val fundUsd = initialUsdText.replace(",", "").toDoubleOrNull() ?: 0.0
+        val afterKrw = (walletKrw - fundKrw).coerceAtLeast(0.0)
+        val afterUsd = (walletUsd - fundUsd).coerceAtLeast(0.0)
+        val insufficient = fundKrw > walletKrw || fundUsd > walletUsd
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(palette.mutedSurface)
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                text = "Wallet balance",
+                color = palette.mutedForeground,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = "Current · ${formatKrwHub(walletKrw.roundToLong())} · ${formatUsdHub(walletUsd)}",
+                color = palette.foreground,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = "After opening · ${formatKrwHub(afterKrw.roundToLong())} · ${formatUsdHub(afterUsd)}",
+                color = if (insufficient) palette.destructive else palette.mutedForeground,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            if (insufficient) {
+                Text(
+                    text = "Insufficient wallet balance for this opening amount.",
+                    color = palette.destructive,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                )
+            }
+        }
+        Spacer(Modifier.height(16.dp))
         Text(
             text = "Opening currency",
             color = palette.mutedForeground,

@@ -24,7 +24,8 @@ object ProfileRoutes {
     const val Notifications = "profile/notifications"
     const val TopUp = "profile/topup"
     const val SendGift = "profile/send-gift"
-    const val Cards = "profile/cards"
+    const val Cards = "profile/cards?openChooseTheme={openChooseTheme}"
+    const val CardsBase = "profile/cards"
     const val History = "profile/history"
     const val Refer = "profile/refer"
     const val Friends = "profile/friends"
@@ -34,7 +35,7 @@ object ProfileRoutes {
     const val ContactSupport = "profile/contact-support"
 
     val AllProfileSubRoutes: List<String> = listOf(
-        Settings, Edit, Notifications, TopUp, SendGift, Cards, History,
+        Settings, Edit, Notifications, TopUp, SendGift, CardsBase, History,
         Refer, Friends, Location, Subscription, Help, ContactSupport,
     )
 }
@@ -51,6 +52,7 @@ fun ProfileHomeScreen(
     onOpenTopUp: () -> Unit = {},
     onOpenSendGift: () -> Unit = {},
     onOpenCards: () -> Unit = {},
+    onAddNewCard: () -> Unit = onOpenCards,
     onOpenHistory: () -> Unit = {},
     onOpenRefer: () -> Unit = {},
     onLogout: () -> Unit = {},
@@ -67,6 +69,7 @@ fun ProfileHomeScreen(
         onOpenTopUp = onOpenTopUp,
         onOpenSendGift = onOpenSendGift,
         onOpenCards = onOpenCards,
+        onAddNewCard = onAddNewCard,
         onOpenHistory = onOpenHistory,
         onOpenRefer = onOpenRefer,
         onLogout = onLogout,
@@ -100,8 +103,16 @@ fun SendGiftScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun CreditCardsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
-    CreditCardsPage(onBack = onBack, modifier = modifier)
+fun CreditCardsScreen(
+    onBack: () -> Unit,
+    openChooseThemeOnLaunch: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    CreditCardsPage(
+        onBack = onBack,
+        openChooseThemeOnLaunch = openChooseThemeOnLaunch,
+        modifier = modifier,
+    )
 }
 
 @Composable

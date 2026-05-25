@@ -9,7 +9,11 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,10 +29,15 @@ import androidx.compose.material.icons.outlined.Backspace
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -91,6 +100,7 @@ fun MoneyKeypad(
     currency: QrCurrency,
     onDigit: (String) -> Unit,
     onBackspace: () -> Unit,
+    onClear: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val rows = when (currency) {
@@ -98,13 +108,13 @@ fun MoneyKeypad(
             listOf("1", "2", "3"),
             listOf("4", "5", "6"),
             listOf("7", "8", "9"),
-            listOf(".", "0", "back"),
+            listOf("clear", ".", "0", "back"),
         )
         QrCurrency.KRW -> listOf(
             listOf("1", "2", "3"),
             listOf("4", "5", "6"),
             listOf("7", "8", "9"),
-            listOf("", "0", "back"),
+            listOf("clear", "0", "back"),
         )
     }
 
@@ -122,7 +132,7 @@ fun MoneyKeypad(
                         key = key,
                         onClick = {
                             when (key) {
-                                "" -> Unit
+                                "clear" -> onClear()
                                 "back" -> onBackspace()
                                 else -> onDigit(key)
                             }
@@ -139,18 +149,53 @@ fun MoneyKeypad(
 private fun KeypadButton(key: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val palette = LocalRestaurantPalette.current
     val shape = RoundedCornerShape(18.dp)
-    val isEmpty = key.isBlank()
+    val isClear = key == "clear"
+    val isBackspace = key == "back"
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.94f else 1f,
+        animationSpec = spring(stiffness = 520f, dampingRatio = 0.72f),
+        label = "qr_keypad_scale",
+    )
     Box(
         modifier = modifier
             .height(58.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(shape)
-            .background(if (isEmpty) Color.Transparent else palette.cardSurface)
-            .let { if (!isEmpty) it.clickable(onClick = onClick) else it },
+            .background(
+                when {
+                    isClear -> if (pressed) palette.brand.copy(alpha = 0.16f) else palette.brand.copy(alpha = 0.07f)
+                    isBackspace -> if (pressed) palette.mutedSurface else palette.cardSurface
+                    pressed -> palette.brand.copy(alpha = 0.10f)
+                    else -> palette.cardSurface
+                },
+            )
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+            )
+            .then(
+                if (isClear) {
+                    Modifier.semantics { contentDescription = "Clear amount" }
+                } else {
+                    Modifier
+                },
+            ),
         contentAlignment = Alignment.Center,
     ) {
-        when (key) {
-            "" -> Unit
-            "back" -> Icon(
+        when {
+            isClear -> Text(
+                text = "C",
+                color = palette.brand,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            isBackspace -> Icon(
                 imageVector = Icons.Outlined.Backspace,
                 contentDescription = "Backspace",
                 tint = palette.mutedForeground,

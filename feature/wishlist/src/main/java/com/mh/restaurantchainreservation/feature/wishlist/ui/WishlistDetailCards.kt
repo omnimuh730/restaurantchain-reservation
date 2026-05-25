@@ -3,7 +3,6 @@ package com.mh.restaurantchainreservation.feature.wishlist.ui
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,6 +36,7 @@ import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
+import com.mh.restaurantchainreservation.core.designsystem.components.PressableContentScale
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.WishlistStore
@@ -62,11 +61,12 @@ fun RecentlyViewedGridItem(
     val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
     val saved = restaurant.id in savedIds
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(enabled = !editing, onClick = onOpen),
+    PressableContentScale(
+        onClick = onOpen,
+        enabled = !editing,
+        modifier = modifier.fillMaxWidth(),
     ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -144,6 +144,7 @@ fun RecentlyViewedGridItem(
             )
         }
     }
+    }
 }
 
 /**
@@ -163,12 +164,11 @@ fun WishlistRestaurantResultCard(
         WishlistStore.isSaved(restaurant.id)
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+    PressableContentScale(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
     ) {
-        Column {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
