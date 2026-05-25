@@ -28,10 +28,12 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,7 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mh.restaurantchainreservation.core.designsystem.components.BottomModalSheet
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalBottomSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
@@ -94,15 +96,12 @@ fun OrderReceiptModal(
     val configuration = LocalConfiguration.current
     val sheetMaxHeight = (configuration.screenHeightDp * ReceiptSheetHeightFraction).dp
 
-    BottomModalSheet(
-        onDismiss = onDismiss,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
+    RestaurantModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(sheetMaxHeight)
-                .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
+                .navigationBarsPadding(),
         ) {
             Text(
                 text = stringResource(I18nR.string.receipt_title),
@@ -112,33 +111,39 @@ fun OrderReceiptModal(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
+            Spacer(Modifier.height(10.dp))
 
-            Spacer(Modifier.height(16.dp))
-
-            if (receipt == null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(palette.mutedSurface.copy(alpha = 0.5f))
-                        .padding(vertical = 36.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = stringResource(I18nR.string.receipt_none),
-                        color = palette.mutedForeground,
-                        fontSize = 15.sp,
-                        textAlign = TextAlign.Center,
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 20.dp),
+            ) {
+                if (receipt == null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(palette.mutedSurface.copy(alpha = 0.5f))
+                            .padding(vertical = 36.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(I18nR.string.receipt_none),
+                            color = palette.mutedForeground,
+                            fontSize = 15.sp,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                } else {
+                    ReceiptCard(
+                        booking = booking,
+                        receipt = receipt,
+                        priceFmt = priceFmt,
+                        modifier = Modifier.weight(1f),
                     )
                 }
-            } else {
-                ReceiptCard(
-                    booking = booking,
-                    receipt = receipt,
-                    priceFmt = priceFmt,
-                    modifier = Modifier.weight(1f),
-                )
             }
         }
     }

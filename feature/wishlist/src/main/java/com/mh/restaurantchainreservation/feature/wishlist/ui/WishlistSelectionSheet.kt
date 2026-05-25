@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -39,12 +40,8 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -65,9 +62,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalBottomSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.WishlistCollection
@@ -77,11 +76,27 @@ import kotlinx.coroutines.launch
 
 private enum class SheetView { Select, Create }
 
+/** Matches [com.mh.restaurantchainreservation.feature.dining.ui.modals.OrderReceiptModal] header. */
+@Composable
+private fun WishlistModalTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    Text(
+        text = text,
+        color = palette.foreground,
+        fontSize = 18.sp,
+        fontWeight = FontWeight.ExtraBold,
+        textAlign = TextAlign.Center,
+        modifier = modifier.fillMaxWidth(),
+    )
+}
+
 /**
- * Airbnb-style "Save to wishlist" sheet. Uses [ModalBottomSheet] like [PlanPickerSheet] so the
- * sheet background extends edge-to-edge over the system navigation bar.
+ * "Save to wishlist" sheet — uses [RestaurantModalBottomSheet] for the same rising
+ * dialog treatment as the order receipt modal.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WishlistSelectionSheet(
     restaurant: Restaurant,
@@ -93,25 +108,9 @@ fun WishlistSelectionSheet(
     }
     var view by remember { mutableStateOf(SheetView.Select) }
     var savingCollectionId by remember { mutableStateOf<String?>(null) }
-
-    val palette = LocalRestaurantPalette.current
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
-    val hideSheet: () -> Unit = {
-        scope.launch {
-            sheetState.hide()
-        }
-    }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = palette.cardSurface,
-        contentColor = palette.foreground,
-        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-        dragHandle = null,
-    ) {
+    RestaurantModalBottomSheet(onDismissRequest = onDismiss) {
         SheetSurface(
             view = view,
             collections = selectableCollections,
@@ -123,15 +122,14 @@ fun WishlistSelectionSheet(
                 scope.launch {
                     delay(280)
                     WishlistStore.saveTo(collectionId, restaurant)
-                    sheetState.hide()
+                    onDismiss()
                 }
             },
             onCreateNew = { view = SheetView.Create },
             onBackToSelect = { view = SheetView.Select },
-            onClose = hideSheet,
             onSubmitCreate = { name ->
                 if (WishlistStore.createCollectionAndSave(name, restaurant)) {
-                    scope.launch { sheetState.hide() }
+                    onDismiss()
                 }
             },
         )
@@ -147,28 +145,13 @@ private fun SheetSurface(
     onTapCover: (String) -> Unit,
     onCreateNew: () -> Unit,
     onBackToSelect: () -> Unit,
-    onClose: () -> Unit,
     onSubmitCreate: (String) -> Unit,
 ) {
-    val palette = LocalRestaurantPalette.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 28.dp),
+            .navigationBarsPadding(),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(width = 36.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(palette.mutedForeground.copy(alpha = 0.45f)),
-            )
-        }
         AnimatedContent(
             targetState = view,
             label = "wishlist-sheet-view",
@@ -182,19 +165,26 @@ private fun SheetSurface(
                 }
             },
         ) { targetView ->
-            when (targetView) {
-                SheetView.Select -> SelectView(
-                    collections = collections,
-                    restaurant = restaurant,
-                    savingCollectionId = savingCollectionId,
-                    onTapCover = onTapCover,
-                    onCreateNew = onCreateNew,
-                    onClose = onClose,
-                )
-                SheetView.Create -> CreateView(
-                    onBack = onBackToSelect,
-                    onSubmit = onSubmitCreate,
-                )
+            Column(modifier = Modifier.fillMaxWidth()) {
+                when (targetView) {
+                    SheetView.Select -> {
+                        WishlistModalTitle(text = "Save to wishlist")
+                        Spacer(Modifier.height(10.dp))
+                        SelectView(
+                            collections = collections,
+                            restaurant = restaurant,
+                            savingCollectionId = savingCollectionId,
+                            onTapCover = onTapCover,
+                            onCreateNew = onCreateNew,
+                        )
+                    }
+                    SheetView.Create -> {
+                        CreateView(
+                            onBack = onBackToSelect,
+                            onSubmit = onSubmitCreate,
+                        )
+                    }
+                }
             }
         }
     }
@@ -207,45 +197,19 @@ private fun SelectView(
     savingCollectionId: String?,
     onTapCover: (String) -> Unit,
     onCreateNew: () -> Unit,
-    onClose: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "Save to wishlist",
-                color = palette.foreground,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .clickable { onClose() },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Close,
-                    contentDescription = "Close",
-                    tint = palette.foreground,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-        }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
+    ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 480.dp)
-                .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(vertical = 4.dp),
+                .heightIn(max = 480.dp),
+            contentPadding = PaddingValues(top = 6.dp, bottom = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -262,7 +226,7 @@ private fun SelectView(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(vertical = 4.dp),
         ) {
             Row(
                 modifier = Modifier
@@ -440,12 +404,10 @@ private fun CreateView(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 14.dp),
+            modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
             Box(
@@ -463,14 +425,9 @@ private fun CreateView(
                     modifier = Modifier.size(20.dp),
                 )
             }
-            Text(
-                text = "Create wishlist",
-                color = palette.foreground,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
+            WishlistModalTitle(text = "Create wishlist")
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(10.dp))
         val borderColor = if (name.isNotEmpty()) palette.foreground else palette.border
         Box(
             modifier = Modifier
