@@ -2,9 +2,11 @@ package com.mh.restaurantchainreservation.feature.dining.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,10 +14,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,17 +31,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.mh.restaurantchainreservation.core.designsystem.components.TabSelectionBounceBox
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceBottomUnderlineShadow
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -50,9 +58,8 @@ val DiningTabBarHeight = 50.dp
 
 private val DiningTabBarTopPadding = 4.dp
 private val DiningTabUnderlineShadowHeight = 1.dp
-private val DiningTabActiveIndicatorHeight = 4.dp
-private val DiningTabLabelToIndicatorGap = 6.dp
-private val DiningTabActiveIndicatorWidthFraction = 0.52f
+private val DiningTabActiveIndicatorHeight = 3.dp
+private val DiningTabLabelToIndicatorGap = 10.dp
 
 internal data class DiningTabSpec(
     val id: DiningTabId,
@@ -83,40 +90,46 @@ fun DiningTabBar(
         modifier = modifier
             .fillMaxWidth()
             .padding(top = DiningTabBarTopPadding)
-            .then(
-                if (!pinnedUnderHeader) {
-                    Modifier.drawBehind {
-                        val y = size.height - strokePx * 0.5f
-                        drawLine(
-                            color = palette.border,
-                            start = Offset(0f, y),
-                            end = Offset(size.width, y),
-                            strokeWidth = strokePx,
-                        )
-                    }
-                } else {
-                    Modifier
-                },
-            ),
+            .graphicsLayer { clip = false },
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(scrollState)
-                .height(DiningTabBarHeight),
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalAlignment = Alignment.Bottom,
+                .height(DiningTabBarHeight)
+                .then(
+                    if (!pinnedUnderHeader) {
+                        Modifier.drawBehind {
+                            val y = size.height - strokePx * 0.5f
+                            drawLine(
+                                color = palette.border,
+                                start = Offset(0f, y),
+                                end = Offset(size.width, y),
+                                strokeWidth = strokePx,
+                            )
+                        }
+                    } else {
+                        Modifier
+                    },
+                ),
         ) {
-            DiningTabs.forEach { spec ->
-                val active = spec.id == selected
-                val count = counts[spec.id] ?: 0
-                DiningTabItem(
-                    icon = spec.icon,
-                    label = stringResource(spec.labelRes),
-                    count = count,
-                    active = active,
-                    onClick = { onSelect(spec.id) },
-                )
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .horizontalScroll(scrollState),
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                verticalAlignment = Alignment.Bottom,
+            ) {
+                DiningTabs.forEach { spec ->
+                    val active = spec.id == selected
+                    val count = counts[spec.id] ?: 0
+                    DiningTabItem(
+                        icon = spec.icon,
+                        label = stringResource(spec.labelRes),
+                        count = count,
+                        active = active,
+                        onClick = { onSelect(spec.id) },
+                    )
+                }
             }
         }
         if (pinnedUnderHeader) {
@@ -140,66 +153,79 @@ private fun DiningTabItem(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
+    val interactionSource = remember { MutableInteractionSource() }
     val contentColor by animateColorAsState(
         targetValue = if (active) palette.brand else palette.mutedForeground,
         animationSpec = spring(stiffness = 520f, dampingRatio = 0.85f),
         label = "dining_tab_content",
     )
 
-    Column(
+    val indicatorScale by animateFloatAsState(
+        targetValue = if (active) 1f else 0f,
+        animationSpec = spring(stiffness = 500f, dampingRatio = 0.8f),
+        label = "dining_tab_indicator_scale",
+    )
+
+    Box(
         modifier = modifier
-            .clickable(onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .height(DiningTabBarHeight)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                role = Role.Tab,
+                onClick = onClick,
+            ),
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 2.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            TabSelectionBounceBox(
-                isActive = active,
-                modifier = Modifier,
+            Row(
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                TabSelectionBounceBox(
+                    isActive = active,
+                    modifier = Modifier,
                 ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = contentColor,
-                        modifier = Modifier.size(16.dp),
-                    )
-                    Text(
-                        text = label,
-                        color = contentColor,
-                        fontSize = 14.sp,
-                        fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
-                        maxLines = 1,
-                    )
-                    DiningTabCountBadge(
-                        count = count,
-                        active = active,
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = contentColor,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(
+                            text = label,
+                            color = contentColor,
+                            fontSize = 14.sp,
+                            fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+                            maxLines = 1,
+                        )
+                        DiningTabCountBadge(
+                            count = count,
+                            active = active,
+                        )
+                    }
                 }
             }
-        }
-        Spacer(Modifier.height(DiningTabLabelToIndicatorGap))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(DiningTabActiveIndicatorHeight),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (active) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(DiningTabActiveIndicatorWidthFraction)
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(palette.brand),
-                )
-            }
+            Spacer(Modifier.height(DiningTabLabelToIndicatorGap))
+            Box(
+                modifier = Modifier
+                    .width(70.dp)
+                    .height(DiningTabActiveIndicatorHeight)
+                    .graphicsLayer {
+                        scaleX = indicatorScale
+                        alpha = indicatorScale
+                    }
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(palette.brand),
+            )
         }
     }
 }

@@ -57,6 +57,8 @@ private const val LIST_TAB_CONTENT_KEY = "dining_tab_content"
 private val DiningListHorizontalPadding = 16.dp
 private val DiningTabsTopInset = 0.dp
 private val DiningTabsSectionGap = 20.dp
+private val DiningListBottomPadding = 32.dp
+private val DiningListScrollEndPadding = 64.dp
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -171,7 +173,7 @@ fun DiningListScreen(
                 .pageCanvasBackground()
                 .trackBottomNavScroll()
                 .zIndex(0f),
-            contentPadding = PaddingValues(bottom = 48.dp),
+            contentPadding = PaddingValues(bottom = DiningListScrollEndPadding),
         ) {
             item(key = LIST_TOP_SPACER_KEY) {
                 Spacer(
@@ -347,14 +349,17 @@ private fun TabContent(
         DiningNoItemsCard(
             onExploreRestaurants = onExploreRestaurants,
             onAddBooking = onAddBooking,
-            modifier = Modifier.padding(horizontal = DiningListHorizontalPadding),
+            modifier = Modifier
+                .padding(horizontal = DiningListHorizontalPadding)
+                .padding(bottom = DiningListBottomPadding),
         )
     } else {
         Column(
             verticalArrangement = Arrangement.spacedBy(HubSurfaceCardDefaults.SectionSpacing),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = DiningListHorizontalPadding),
+                .padding(horizontal = DiningListHorizontalPadding)
+                .padding(bottom = DiningListBottomPadding),
         ) {
             items.forEachIndexed { index, booking ->
                 DiningStaggerItem(indexInGroup = index) {
