@@ -56,6 +56,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -90,6 +91,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.badge.AnimatedGuestFavoriteCenterBadge
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuSeeAllCard
@@ -101,6 +103,7 @@ import com.mh.restaurantchainreservation.core.model.SharedContentStore
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.model.Restaurant
+import com.mh.restaurantchainreservation.core.model.WishlistStore
 import com.mh.restaurantchainreservation.core.model.withDerivedGuestFavoriteLevel
 import java.text.NumberFormat
 import java.util.Locale
@@ -231,7 +234,8 @@ fun RestaurantDetailScreen(
     }
     var loadPhase by remember(restaurantId) { mutableStateOf(DetailLoadPhase.Shell) }
     var loadedPayload by remember(restaurantId) { mutableStateOf<DetailLoadedPayload?>(null) }
-    var saved by remember { mutableStateOf(false) }
+    val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
+    val saved = restaurant.id in savedIds
     var showReviews by remember { mutableStateOf(false) }
     var showHowReviewsWork by remember { mutableStateOf(false) }
     var showAmenities by remember { mutableStateOf(false) }
@@ -402,7 +406,10 @@ fun RestaurantDetailScreen(
             saved = saved,
             onBack = onBack,
             onShare = { showShareSheet = true },
-            onToggleSave = { saved = !saved },
+            onToggleSave = { WishlistStore.onHeartTap(restaurant) },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(2f),
         )
 
         if (showShareSheet) {
@@ -457,15 +464,14 @@ private fun DetailTopBar(
     onBack: () -> Unit,
     onShare: () -> Unit,
     onToggleSave: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val buttonBg = RestaurantColors.Base.white
+    val buttonBg = if (solid) palette.mutedSurface else RestaurantColors.Base.white
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .background(
-                if (solid) palette.pageBackground.copy(alpha = 0.95f) else Color.Transparent,
-            )
+            .background(if (solid) palette.pageBackground else Color.Transparent)
             .then(
                 if (solid) Modifier.border(1.dp, palette.border) else Modifier,
             )

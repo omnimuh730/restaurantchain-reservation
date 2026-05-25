@@ -72,6 +72,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavContentBottomPadding
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
@@ -310,6 +311,9 @@ fun BookingDetailScreen(
             onBack = onBack,
             onShare = onInvite,
             onToggleSave = { WishlistStore.onHeartTap(wishlistRestaurant) },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(2f),
         )
     }
 }
@@ -997,15 +1001,14 @@ private fun BookingDetailTopBar(
     onBack: () -> Unit,
     onShare: () -> Unit,
     onToggleSave: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val buttonBg = RestaurantColors.Base.white
+    val buttonBg = if (solid) palette.mutedSurface else RestaurantColors.Base.white
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .background(
-                if (solid) palette.pageBackground.copy(alpha = 0.95f) else Color.Transparent,
-            )
+            .background(if (solid) palette.pageBackground else Color.Transparent)
             .then(
                 if (solid) Modifier.border(1.dp, palette.border) else Modifier,
             )
