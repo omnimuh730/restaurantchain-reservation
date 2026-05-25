@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -265,8 +267,7 @@ fun BookTableScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(screenBackground)
-            .windowInsetsPadding(WindowInsets.statusBars),
+            .background(screenBackground),
     ) {
         if (showHeader) {
             BookingStepHeader(
@@ -274,6 +275,7 @@ fun BookTableScreen(
                 stepIndex = stepIndex,
                 title = headerTitle,
                 onBack = ::goBack,
+                onClose = onBack,
                 onStepSelect = if (canNavigateLaterally) {
                     { index ->
                         if (index <= maxVisitedStepIndex) {
@@ -351,6 +353,13 @@ fun BookTableScreen(
                         totalAmount = totalAmount,
                     )
                 }
+            }
+
+            if (!showHeader) {
+                BookingFlowCloseButton(
+                    onClose = onBack,
+                    modifier = Modifier.align(Alignment.TopEnd),
+                )
             }
         }
 
@@ -519,6 +528,31 @@ private fun BookingFlowStepContent(
             totalAmount = totalAmount,
         )
         else -> Unit
+    }
+}
+
+@Composable
+private fun BookingFlowCloseButton(
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    Box(
+        modifier = modifier
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .padding(top = 8.dp, end = 20.dp)
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(palette.mutedSurface)
+            .clickable(onClick = onClose),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            Icons.Filled.Close,
+            contentDescription = "Close",
+            tint = palette.foreground,
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
 
