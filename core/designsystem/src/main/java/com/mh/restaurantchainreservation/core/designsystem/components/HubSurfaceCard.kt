@@ -14,8 +14,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantDimensions
@@ -38,6 +38,8 @@ object HubSurfaceCardDefaults {
 
     /** Matches Discover “Explore more” rail card (ambient + spot). */
     val ShadowElevation = 12.dp
+    /** Sticky bars / tab underlines — same tokens as [ShadowElevation], slightly smaller. */
+    val UnderlineShadowElevation = 8.dp
     val ShadowAmbientAlpha: Float get() = RestaurantColors.Shadow.HubAmbientAlpha
     val ShadowSpotAlpha: Float get() = RestaurantColors.Shadow.HubSpotAlpha
 
@@ -131,25 +133,17 @@ fun Modifier.surfaceTopEdgeShadow(
 }
 
 /**
- * Soft downward shadow for fixed headers (sticky tab bars) — mirror of [surfaceTopEdgeShadow],
- * drawn below the surface across full width.
+ * Full-width underline shadow using the same ambient/spot as [hubSurfaceShadow], at
+ * [HubSurfaceCardDefaults.UnderlineShadowElevation]. Attach to a thin bottom edge (e.g. 1.dp tall).
  */
-fun Modifier.surfaceBottomEdgeShadow(
-    height: Dp = 8.dp,
-    ambientAlpha: Float = HubSurfaceCardDefaults.ShadowAmbientAlpha * 0.5f,
-    spotAlpha: Float = HubSurfaceCardDefaults.ShadowSpotAlpha * 0.22f,
-): Modifier = graphicsLayer { clip = false }
-    .drawBehind {
-        val shadowPx = height.toPx()
-        if (shadowPx <= 0f) return@drawBehind
-        val blend = Brush.verticalGradient(
-            0f to Color.Transparent,
-            0.45f to RestaurantColors.Base.black.copy(alpha = ambientAlpha.coerceIn(0f, 1f)),
-            1f to RestaurantColors.Base.black.copy(alpha = spotAlpha.coerceIn(0f, 1f)),
-        )
-        drawRect(
-            brush = blend,
-            topLeft = Offset(0f, size.height),
-            size = Size(size.width, shadowPx),
-        )
-    }
+fun Modifier.hubSurfaceBottomUnderlineShadow(
+    elevation: Dp = HubSurfaceCardDefaults.UnderlineShadowElevation,
+    ambientAlpha: Float = HubSurfaceCardDefaults.ShadowAmbientAlpha,
+    spotAlpha: Float = HubSurfaceCardDefaults.ShadowSpotAlpha,
+): Modifier = shadow(
+    elevation = elevation,
+    shape = RectangleShape,
+    clip = false,
+    ambientColor = RestaurantColors.Base.black.copy(alpha = ambientAlpha),
+    spotColor = RestaurantColors.Base.black.copy(alpha = spotAlpha),
+)

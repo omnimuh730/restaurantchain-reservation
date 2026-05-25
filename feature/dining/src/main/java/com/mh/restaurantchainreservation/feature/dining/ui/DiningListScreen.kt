@@ -42,7 +42,6 @@ import com.mh.restaurantchainreservation.core.designsystem.components.trackBotto
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.components.hubTitleCollapseProgress
-import com.mh.restaurantchainreservation.core.designsystem.components.surfaceBottomEdgeShadow
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.pageCanvasBackground
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
@@ -56,8 +55,8 @@ private const val LIST_SECTION_GAP_KEY = "dining_section_gap"
 private const val LIST_TABS_KEY = "dining_tabs"
 private const val LIST_TAB_CONTENT_KEY = "dining_tab_content"
 private val DiningListHorizontalPadding = 16.dp
-private val DiningTabsTopInset = 16.dp
-private val DiningTabsSectionGap = 40.dp
+private val DiningTabsTopInset = 0.dp
+private val DiningTabsSectionGap = 20.dp
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -217,13 +216,6 @@ fun DiningListScreen(
                         .fillMaxWidth()
                         .background(palette.pageBackground)
                         .padding(top = diningTabsStickyTopPadding + diningTabsContentTopPadding)
-                        .then(
-                            if (isTabsPinnedUnderHeader) {
-                                Modifier.surfaceBottomEdgeShadow()
-                            } else {
-                                Modifier
-                            },
-                        )
                         .zIndex(1f),
                 ) {
                     DiningTabBar(

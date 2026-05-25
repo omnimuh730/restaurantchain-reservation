@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,13 +39,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.components.TabSelectionBounceBox
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceBottomUnderlineShadow
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 
 enum class DiningTabId { Upcoming, Visited, Cancel }
 
-/** Total height of [DiningTabBar] including divider. */
-val DiningTabBarHeight = 52.dp
+/** Tab row height inside [DiningTabBar] (excluding underline / shadow). */
+val DiningTabBarHeight = 50.dp
+
+private val DiningTabBarTopPadding = 4.dp
+private val DiningTabUnderlineShadowHeight = 1.dp
+private val DiningTabActiveIndicatorHeight = 4.dp
+private val DiningTabLabelToIndicatorGap = 6.dp
+private val DiningTabActiveIndicatorWidthFraction = 0.52f
 
 internal data class DiningTabSpec(
     val id: DiningTabId,
@@ -74,6 +82,7 @@ fun DiningTabBar(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .padding(top = DiningTabBarTopPadding)
             .then(
                 if (!pinnedUnderHeader) {
                     Modifier.drawBehind {
@@ -96,7 +105,7 @@ fun DiningTabBar(
                 .horizontalScroll(scrollState)
                 .height(DiningTabBarHeight),
             horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalAlignment = Alignment.Top,
+            verticalAlignment = Alignment.Bottom,
         ) {
             DiningTabs.forEach { spec ->
                 val active = spec.id == selected
@@ -109,6 +118,14 @@ fun DiningTabBar(
                     onClick = { onSelect(spec.id) },
                 )
             }
+        }
+        if (pinnedUnderHeader) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(DiningTabUnderlineShadowHeight)
+                    .hubSurfaceBottomUnderlineShadow(),
+            )
         }
     }
 }
@@ -131,12 +148,11 @@ private fun DiningTabItem(
 
     Column(
         modifier = modifier
-            .clickable(onClick = onClick)
-            .padding(top = 4.dp),
+            .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 2.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 2.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
@@ -168,16 +184,17 @@ private fun DiningTabItem(
                 }
             }
         }
+        Spacer(Modifier.height(DiningTabLabelToIndicatorGap))
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(4.dp),
+                .height(DiningTabActiveIndicatorHeight),
             contentAlignment = Alignment.Center,
         ) {
             if (active) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.72f)
+                        .fillMaxWidth(DiningTabActiveIndicatorWidthFraction)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(999.dp))
                         .background(palette.brand),
