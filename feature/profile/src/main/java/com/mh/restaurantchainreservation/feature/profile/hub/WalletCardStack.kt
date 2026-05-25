@@ -44,6 +44,7 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestauran
 import com.mh.restaurantchainreservation.feature.profile.data.ProfileWalletStore
 import com.mh.restaurantchainreservation.feature.profile.hub.formatKrwHub
 import com.mh.restaurantchainreservation.feature.profile.hub.formatUsdHub
+import kotlin.math.roundToLong
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 
 private val WalletDecorCircleSize = 176.dp
@@ -57,10 +58,12 @@ fun WalletCardStack(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val cards by ProfileWalletStore.cards.collectAsState()
-    val totalKrw = cards.sumOf { it.krwBalance.toLong() }
-    val totalUsd = cards.sumOf { it.usdBalance }
-    val primaryLastFour = cards.firstOrNull()?.lastFour ?: "0000"
+    val walletKrw by ProfileWalletStore.walletKrw.collectAsState()
+    val walletUsd by ProfileWalletStore.walletUsd.collectAsState()
+    val totalKrw = walletKrw.roundToLong()
+    val totalUsd = walletUsd
+    val walletLastFour = ProfileWalletStore.walletAccountLastFour()
+    val walletHolder = ProfileWalletStore.walletHolder()
     val cardShape = HubSurfaceCardDefaults.QuickActionShape
     val masked = stringResource(I18nR.string.profile_wallet_masked)
 
@@ -176,7 +179,7 @@ fun WalletCardStack(
             ) {
                 Text(
                     text = if (showBalance) {
-                        "•••• •••• •••• $primaryLastFour · ${cards.firstOrNull()?.holder?.uppercase().orEmpty()}"
+                        "•••• •••• •••• $walletLastFour · ${walletHolder.uppercase()}"
                     } else {
                         masked
                     },

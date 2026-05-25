@@ -29,6 +29,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Place
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,6 +49,7 @@ import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
+import com.mh.restaurantchainreservation.core.designsystem.components.PressableContentScale
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.City
@@ -109,6 +111,7 @@ fun WhereToEatAreaListScreen(
                 )
             }
         }
+        HorizontalDivider(color = palette.border)
         if (cities.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -155,13 +158,15 @@ private fun WhereToEatAreaCard(
         restaurants.any { it.id in savedIds }
     }
 
+    PressableContentScale(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(palette.cardSurface)
-            .border(1.dp, palette.border, RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick),
+            .background(palette.cardSurface),
     ) {
         Box(
             modifier = Modifier
@@ -254,6 +259,7 @@ private fun WhereToEatAreaCard(
                 )
             }
         }
+    }
     }
 }
 
@@ -348,6 +354,7 @@ fun FoodTypeCuisineListScreen(
                 )
             }
         }
+        HorizontalDivider(color = palette.border)
         if (foodTypes.isEmpty()) {
             Box(
                 modifier = Modifier

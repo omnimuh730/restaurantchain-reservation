@@ -5,10 +5,14 @@ import com.mh.restaurantchainreservation.feature.profile.hub.HubCardThemeId
 import com.mh.restaurantchainreservation.feature.profile.hub.hubCardThemeSpec
 
 /**
- * Single mock schema for credit cards across Profile hub, wallet strip, and Credit cards page.
+ * Mock schema for the main wallet account and virtual credit cards across Profile.
  */
 internal object MockProfileCreditCards {
     const val HOLDER = "Alex Chen"
+    const val WALLET_ACCOUNT_LAST_FOUR = "4242"
+
+    const val DEFAULT_WALLET_KRW = 820_000.0
+    const val DEFAULT_WALLET_USD = 216.45
 
     internal data class CardDef(
         val id: String,
@@ -25,17 +29,8 @@ internal object MockProfileCreditCards {
         val krwBalanceLong: Long get() = krwBalance.toLong()
     }
 
+    /** Virtual credit cards only — the main wallet is not included here. */
     val cards: List<CardDef> = listOf(
-        CardDef(
-            id = "card-main",
-            nickname = "Tonight Black",
-            number = "4890123456784242",
-            expiry = "08/29",
-            themeId = HubCardThemeId.Rose,
-            pattern = hubCardThemeSpec(HubCardThemeId.Rose).pattern,
-            krwBalance = 820_000.0,
-            usdBalance = 216.45,
-        ),
         CardDef(
             id = "card-travel",
             nickname = "Travel Card",
@@ -47,11 +42,4 @@ internal object MockProfileCreditCards {
             usdBalance = 84.0,
         ),
     )
-
-    fun totalKrwLong(): Long = cards.sumOf { it.krwBalanceLong }
-
-    fun totalUsd(): Double = cards.sumOf { it.usdBalance }
-
-    /** Primary (first) card last four for wallet / masked lines. */
-    fun primaryLastFour(): String = cards.first().lastFour
 }

@@ -42,12 +42,18 @@ sealed class WalletMutationResult {
 }
 
 /**
- * Profile wallet + credit cards: balances, top-up, withdraw, send, gift, and ledger.
+ * Profile wallet + credit cards: main wallet balances, virtual cards, top-up, withdraw, send, gift, and ledger.
  */
 object ProfileWalletStore {
     private const val PrefsName = "profile_wallet_prefs"
     private const val CardsKey = "wallet_cards_v1"
 
+    private val _walletKrw = MutableStateFlow(0.0)
+    private val _walletUsd = MutableStateFlow(0.0)
+    val walletKrw: StateFlow<Double> = _walletKrw.asStateFlow()
+    val walletUsd: StateFlow<Double> = _walletUsd.asStateFlow()
+
+    /** Virtual credit cards only — excludes the main wallet account. */
     private val _cards = MutableStateFlow<List<WalletCardRecord>>(emptyList())
     val cards: StateFlow<List<WalletCardRecord>> = _cards.asStateFlow()
 
@@ -61,6 +67,8 @@ object ProfileWalletStore {
         prefsLoaded = true
         val prefs = context.applicationContext.getSharedPreferences(PrefsName, Context.MODE_PRIVATE)
         val stored = prefs.getString(CardsKey, null)
+        _walletKrw.value = MockProfileCreditCards.DEFAULT_WALLET_KRW
+        _walletUsd.value = MockProfileCreditCards.DEFAULT_WALLET_USD
         _cards.value = if (stored != null) {
             decodeCards(stored) ?: defaultCards()
         } else {
@@ -71,11 +79,19 @@ object ProfileWalletStore {
         }
     }
 
-    fun totalKrwLong(): Long = _cards.value.sumOf { it.krwBalance.roundToLong() }
+    fun walletAccountLastFour(): String = MockProfileCreditCards.WALLET_ACCOUNT_LAST_FOUR
 
-    fun totalUsd(): Double = _cards.value.sumOf { it.usdBalance }
+    fun walletHolder(): String = MockProfileCreditCards.HOLDER
 
-    fun primaryCard(): WalletCardRecord? = _cards.value.firstOrNull()
+    /** Main wallet domestic balance (KRW). */
+    fun totalKrwLong(): Long = _walletKrw.value.roundToLong()
+
+    /** Main wallet foreign balance (USD). */
+    fun totalUsd(): Double = _walletUsd.value
+
+    fun creditCardsTotalKrwLong(): Long = _cards.value.sumOf { it.krwBalance.roundToLong() }
+
+    fun creditCardsTotalUsd(): Double = _cards.value.sumOf { it.usdBalance }
 
     fun cardById(id: String): WalletCardRecord? = _cards.value.firstOrNull { it.id == id }
 
@@ -92,12 +108,10 @@ object ProfileWalletStore {
         Currency.USD -> card.usdBalance
     }
 
-    /** Account top-up (Profile → Top up): credits primary card. */
+    /** Account top-up (Profile → Top up): credits the main wallet. */
     fun topUpWallet(currency: Currency, amount: Double): WalletMutationResult {
         if (amount <= 0.0) return WalletMutationResult.Error("Enter an amount greater than zero.")
-        val primary = primaryCard() ?: return WalletMutationResult.Error("No card on file.")
-        return adjustCardBalance(
-            cardId = primary.id,
+        return adjustWalletBalance(
             currency = currency,
             delta = amount,
             ledgerLabel = if (currency == Currency.KRW) "Wallet top up · Domestic" else "Wallet top up · Foreign",
@@ -136,13 +150,11 @@ object ProfileWalletStore {
         )
     }
 
-    /** Gift from wallet (primary card). */
+    /** Gift from the main wallet. */
     fun sendGift(currency: Currency, amount: Double, recipient: String): WalletMutationResult {
         val to = recipient.trim()
         if (to.isEmpty()) return WalletMutationResult.Error("Enter a recipient username.")
-        val primary = primaryCard() ?: return WalletMutationResult.Error("No card on file.")
-        return adjustCardBalance(
-            cardId = primary.id,
+        return adjustWalletBalance(
             currency = currency,
             delta = -amount,
             ledgerLabel = "Gift to $to",
@@ -160,18 +172,145 @@ object ProfileWalletStore {
         persistCards()
     }
 
+    /**
+     * Opens a new card funded from the main wallet.
+     * Deducts [initialKrw] / [initialUsd] from wallet balances before adding [record].
+     */
+    fun createCardWithFunding(
+        record: WalletCardRecord,
+        initialKrw: Double,
+        initialUsd: Double,
+    ): WalletMutationResult {
+        val krw = initialKrw.coerceAtLeast(0.0)
+        val usd = initialUsd.coerceAtLeast(0.0)
+        if (krw <= 0.0 && usd <= 0.0) {
+            addCard(record.copy(krwBalance = 0.0, usdBalance = 0.0))
+            return WalletMutationResult.Success("Card opened.")
+        }
+        if (krw > _walletKrw.value) {
+            return WalletMutationResult.Error("Insufficient wallet balance (KRW).")
+        }
+        if (usd > _walletUsd.value) {
+            return WalletMutationResult.Error("Insufficient wallet balance (USD).")
+        }
+        val funded = record.copy(krwBalance = krw, usdBalance = usd)
+        if (krw > 0.0) {
+            _walletKrw.value = (_walletKrw.value - krw).coerceAtLeast(0.0)
+            appendLedger(
+                cardId = null,
+                label = "Fund new card · ${funded.nickname}",
+                amountDisplay = "-${formatLedgerKrw(krw)}",
+                positive = false,
+            )
+        }
+        if (usd > 0.0) {
+            _walletUsd.value = (_walletUsd.value - usd).coerceAtLeast(0.0)
+            appendLedger(
+                cardId = null,
+                label = "Fund new card · ${funded.nickname}",
+                amountDisplay = "-${formatLedgerUsd(usd)}",
+                positive = false,
+            )
+        }
+        _cards.value = _cards.value + funded
+        appendLedger(
+            cardId = funded.id,
+            label = "Card opened",
+            amountDisplay = "—",
+            positive = true,
+        )
+        persistCards()
+        return WalletMutationResult.Success("Card opened.")
+    }
+
+    private fun formatLedgerKrw(value: Double): String = "W" + "%,.0f".format(value)
+
+    private fun formatLedgerUsd(value: Double): String = "$" + "%,.2f".format(value)
+
     fun updateCard(record: WalletCardRecord) {
         _cards.value = _cards.value.map { if (it.id == record.id) record else it }
         persistCards()
     }
 
     fun removeCard(cardId: String): WalletMutationResult {
-        if (_cards.value.size <= 1) {
-            return WalletMutationResult.Error("Keep at least one card on file.")
-        }
+        val closing = cardById(cardId) ?: return WalletMutationResult.Error("Card not found.")
+        val returnKrw = closing.krwBalance
+        val returnUsd = closing.usdBalance
         _cards.value = _cards.value.filter { it.id != cardId }
+        if (returnKrw > 0.0) {
+            _walletKrw.value += returnKrw
+            appendLedger(
+                cardId = closing.id,
+                label = "Closed card · moved to wallet",
+                amountDisplay = "-${formatLedgerKrw(returnKrw)}",
+                positive = false,
+            )
+            appendLedger(
+                cardId = null,
+                label = "From closed ${closing.nickname}",
+                amountDisplay = "+${formatLedgerKrw(returnKrw)}",
+                positive = true,
+            )
+        }
+        if (returnUsd > 0.0) {
+            _walletUsd.value += returnUsd
+            appendLedger(
+                cardId = closing.id,
+                label = "Closed card · moved to wallet",
+                amountDisplay = "-${formatLedgerUsd(returnUsd)}",
+                positive = false,
+            )
+            appendLedger(
+                cardId = null,
+                label = "From closed ${closing.nickname}",
+                amountDisplay = "+${formatLedgerUsd(returnUsd)}",
+                positive = true,
+            )
+        }
+        if (returnKrw <= 0.0 && returnUsd <= 0.0) {
+            appendLedger(
+                cardId = closing.id,
+                label = "Card closed",
+                amountDisplay = "—",
+                positive = true,
+            )
+        }
         persistCards()
-        return WalletMutationResult.Success("Card removed.")
+        return WalletMutationResult.Success("Card closed. Remaining balance moved to your wallet.")
+    }
+
+    private fun adjustWalletBalance(
+        currency: Currency,
+        delta: Double,
+        ledgerLabel: String,
+    ): WalletMutationResult {
+        if (delta == 0.0) return WalletMutationResult.Error("Enter an amount greater than zero.")
+        when (currency) {
+            Currency.KRW -> {
+                if (delta < 0 && _walletKrw.value + delta < 0) {
+                    return WalletMutationResult.Error("Insufficient domestic (KRW) balance.")
+                }
+                _walletKrw.value = (_walletKrw.value + delta).coerceAtLeast(0.0)
+            }
+            Currency.USD -> {
+                if (delta < 0 && _walletUsd.value + delta < 0) {
+                    return WalletMutationResult.Error("Insufficient foreign (USD) balance.")
+                }
+                _walletUsd.value = (_walletUsd.value + delta).coerceAtLeast(0.0)
+            }
+        }
+        val signed = formatSignedAmount(delta, currency)
+        appendLedger(
+            cardId = null,
+            label = ledgerLabel,
+            amountDisplay = signed,
+            positive = delta > 0,
+        )
+        val verb = if (delta > 0) "added to" else "deducted from"
+        val pocket = if (currency == Currency.KRW) "domestic" else "foreign"
+        return WalletMutationResult.Success(
+            "${formatAbsAmount(kotlin.math.abs(delta), currency)} $verb your $pocket balance.",
+        )
     }
 
     private fun adjustCardBalance(
@@ -207,10 +346,7 @@ object ProfileWalletStore {
             amountDisplay = signed,
             positive = delta > 0,
         )
-        val verb = when {
-            delta > 0 -> "added to"
-            else -> "deducted from"
-        }
+        val verb = if (delta > 0) "added to" else "deducted from"
         val pocket = if (currency == Currency.KRW) "domestic" else "foreign"
         return WalletMutationResult.Success(
             "${formatAbsAmount(kotlin.math.abs(delta), currency)} $verb your $pocket balance.",
@@ -253,13 +389,15 @@ object ProfileWalletStore {
         }
 
     private fun seedLedger(cards: List<WalletCardRecord>): List<WalletLedgerEntry> {
-        val main = cards.firstOrNull() ?: return emptyList()
-        return listOf(
-            WalletLedgerEntry("seed-1", main.id, "Coffee & brunch", "-$24.80", false),
-            WalletLedgerEntry("seed-2", main.id, "Card top up", "+₩50,000", true),
-            WalletLedgerEntry("seed-3", cards.getOrNull(1)?.id, "Sent to Travel Card", "-$12.00", false),
-            WalletLedgerEntry("seed-4", main.id, "Dining reward", "+$4.25", true),
-        )
+        val travel = cards.firstOrNull()
+        return buildList {
+            add(WalletLedgerEntry("seed-1", null, "Coffee & brunch", "-$24.80", false))
+            add(WalletLedgerEntry("seed-2", null, "Wallet top up", "+₩50,000", true))
+            if (travel != null) {
+                add(WalletLedgerEntry("seed-3", travel.id, "Sent to Travel Card", "-$12.00", false))
+            }
+            add(WalletLedgerEntry("seed-4", null, "Dining reward", "+$4.25", true))
+        }
     }
 
     private fun decodeCards(raw: String): List<WalletCardRecord>? {

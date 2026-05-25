@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -236,6 +237,7 @@ private fun ListScaffold(
                     )
                 }
             }
+            HorizontalDivider(color = palette.border)
 
             DateStripRow(
                 days = dateStripDays,
@@ -244,14 +246,14 @@ private fun ListScaffold(
                 dateFormat = dateFormat,
                 onSelectDay = { selectedDay = it },
                 onPickDateClick = { showDatePicker = true },
-                modifier = Modifier.padding(bottom = 12.dp),
+                modifier = Modifier.padding(vertical = 10.dp),
             )
 
             TimeRangeRow(
                 options = defaultTimeRanges,
                 selectedId = selectedTimeRangeId,
                 onSelect = { selectedTimeRangeId = it },
-                modifier = Modifier.padding(bottom = 14.dp),
+                modifier = Modifier.padding(bottom = 6.dp),
             )
 
             if (restaurants.isEmpty()) {
@@ -271,7 +273,7 @@ private fun ListScaffold(
                 val selectedDayMillis = selectedDay.timeInMillis
                 LazyColumn(
                     modifier = Modifier.fillMaxSize().trackBottomNavScroll(),
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 32.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     items(restaurants, key = { it.id }) { item ->

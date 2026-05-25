@@ -165,7 +165,15 @@ private fun QrPayHeader(
         modifier = Modifier
             .fillMaxWidth()
             .background(palette.cardSurface)
-            .border(width = 1.dp, color = palette.border)
+            .drawBehind {
+                val stroke = 1.dp.toPx()
+                drawLine(
+                    color = palette.border,
+                    start = Offset(0f, size.height - stroke / 2f),
+                    end = Offset(size.width, size.height - stroke / 2f),
+                    strokeWidth = stroke,
+                )
+            }
             .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -451,6 +459,7 @@ private fun PayView(
             currency = currency,
             onDigit = { raw = appendDigit(raw, it, currency) },
             onBackspace = { raw = backspaceDigit(raw) },
+            onClear = { raw = "0" },
         )
         Spacer(Modifier.height(8.dp))
         SlideToPayButton(

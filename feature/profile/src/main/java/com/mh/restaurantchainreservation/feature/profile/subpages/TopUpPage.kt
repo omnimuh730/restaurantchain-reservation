@@ -129,9 +129,10 @@ fun TopUpPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var errorMsg by rememberSaveable { mutableStateOf<String?>(null) }
     var balanceBeforeTopUp by rememberSaveable { mutableStateOf(0.0) }
 
-    val storeCards by ProfileWalletStore.cards.collectAsState()
-    val domesticBalance = remember(storeCards) { ProfileWalletStore.totalKrwLong() }
-    val foreignBalance = remember(storeCards) { ProfileWalletStore.totalUsd() }
+    val walletKrw by ProfileWalletStore.walletKrw.collectAsState()
+    val walletUsd by ProfileWalletStore.walletUsd.collectAsState()
+    val domesticBalance = walletKrw.roundToLong()
+    val foreignBalance = walletUsd
 
     val provider = Providers.firstOrNull { it.id == providerId }
     val activeAmount = amountAsNumber(amountStr)

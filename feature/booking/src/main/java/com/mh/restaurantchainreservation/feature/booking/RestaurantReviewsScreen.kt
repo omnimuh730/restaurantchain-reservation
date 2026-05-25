@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -182,12 +183,6 @@ fun RestaurantReviewsScreen(
         reviewLimit = InitialReviewCount
     }
 
-    LaunchedEffect(searchOpen) {
-        if (searchOpen) {
-            listState.animateScrollToItem(0)
-        }
-    }
-
     val density = LocalDensity.current
     val phase2RangePx = with(density) { Phase2HeaderWhiteTransitionRange.toPx() }
     val compactHeaderSlidePx = with(density) { CompactHeaderEnterSlideDp.toPx() }
@@ -195,23 +190,18 @@ fun RestaurantReviewsScreen(
     var topBarHeightPx by remember { mutableIntStateOf(0) }
 
     val headerTransition by remember(
-        searchOpen,
         listState,
         statsSectionHeightPx,
         topBarHeightPx,
         phase2RangePx,
     ) {
         derivedStateOf {
-            if (searchOpen) {
-                ReviewsHeaderTransition(phase2Progress = 1f, showCompactHeader = true)
-            } else {
-                computeReviewsHeaderTransition(
-                    listState = listState,
-                    statsSectionHeightPx = statsSectionHeightPx,
-                    topBarHeightPx = topBarHeightPx,
-                    phase2RangePx = phase2RangePx,
-                )
-            }
+            computeReviewsHeaderTransition(
+                listState = listState,
+                statsSectionHeightPx = statsSectionHeightPx,
+                topBarHeightPx = topBarHeightPx,
+                phase2RangePx = phase2RangePx,
+            )
         }
     }
     val phase2Progress = headerTransition.phase2Progress
@@ -471,7 +461,7 @@ private fun computeReviewsHeaderTransition(
     val showCompactHeader =
         phase2Progress >= 1f &&
             when (val toolbar = toolbarItem) {
-                null -> listState.firstVisibleItemIndex > 0
+                null -> true
                 else -> toolbar.offset + toolbar.size <= headerBottomPx
             }
 
@@ -496,10 +486,10 @@ private fun ReviewsTopActionBar(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
+    val borderAlpha = CollapsingTitleHeaderMetrics.stickyHeaderBorderAlpha(phase2Progress)
 
     Column(
-        modifier = modifier
-            .background(surfaceColor),
+        modifier = modifier.background(surfaceColor),
     ) {
         Box(
             Modifier
@@ -510,7 +500,8 @@ private fun ReviewsTopActionBar(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = surfaceColor,
-            shadowElevation = if (phase2Progress >= 1f) 2.dp else 0.dp,
+            shadowElevation = 0.dp,
+            tonalElevation = 0.dp,
         ) {
             ReviewsHeaderActionRow(
                 surfaceColor = surfaceColor,
@@ -524,10 +515,11 @@ private fun ReviewsTopActionBar(
                 onBack = onBack,
             )
         }
-        if (phase2Progress > 0f) {
+        if (borderAlpha > 0.004f) {
             HorizontalDivider(
-                modifier = Modifier.alpha(phase2Progress),
-                color = palette.border,
+                color = palette.border.copy(
+                    alpha = CollapsingTitleHeaderMetrics.stickyHeaderBorderAlphaMultiplier * borderAlpha,
+                ),
             )
         }
     }
@@ -779,7 +771,9 @@ private fun ReviewsStatsExpandedContent(
 
         HorizontalDivider(
             color = palette.border,
-            modifier = Modifier.padding(top = 20.dp),
+            modifier = Modifier
+                .padding(top = 20.dp)
+                .alpha(sectionDividerAlpha),
         )
 
         Row(

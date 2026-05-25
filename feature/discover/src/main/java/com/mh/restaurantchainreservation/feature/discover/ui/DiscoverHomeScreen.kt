@@ -78,6 +78,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -327,8 +328,11 @@ fun DiscoverHomeScreen(
         mutableStateOf(restaurantsForPriceTab(selectedPriceTab).take(5))
     }
     var priceSectionLoadingMore by remember { mutableStateOf(false) }
-    LaunchedEffect(selectedPriceTab) {
+    LaunchedEffect(selectedPriceTab, compact) {
         priceSectionLoadingMore = false
+        if (compact && listState.firstVisibleItemIndex >= 2) {
+            listState.scrollToItem(index = 2, scrollOffset = 0)
+        }
     }
     LaunchedEffect(listState, priceSectionRestaurants.size, selectedPriceTab, priceTabBasePool) {
         snapshotFlow {
@@ -377,20 +381,47 @@ fun DiscoverHomeScreen(
         val compactBarTotalHeight = remember(density, statusBarInsets) {
             with(density) { statusBarInsets.getTop(this).toDp() } + CompactDiscoverBarInnerHeight
         }
+        var priceHeaderDocked by remember { mutableStateOf(false) }
+        val priceHeaderUndockThresholdPx = remember(density) {
+            with(density) { 12.dp.toPx().toInt() }
+        }
 
         val headerTopPadding by remember(density, compactBarTotalHeight, compact) {
             derivedStateOf {
-                val headerItem = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == "restaurants-by-price-header" }
-                if (headerItem != null) {
-                    val offsetDp = with(density) { headerItem.offset.toDp() }
-                    if (compact) {
-                        (compactBarTotalHeight - offsetDp).coerceIn(DiscoverLayout.StickyHeaderTopMin, compactBarTotalHeight)
-                    } else {
-                        DiscoverLayout.StickyHeaderTopMin
-                    }
-                } else {
-                    if (listState.firstVisibleItemIndex > 2) compactBarTotalHeight else DiscoverLayout.StickyHeaderTopMin
+                val headerItem = listState.layoutInfo.visibleItemsInfo.firstOrNull {
+                    it.key == "restaurants-by-price-header"
                 }
+                val inPriceSection = listState.firstVisibleItemIndex >= 2
+                when {
+                    compact && inPriceSection && (priceHeaderDocked || headerItem == null) ->
+                        compactBarTotalHeight
+                    headerItem != null -> {
+                        val offsetDp = with(density) { headerItem.offset.toDp() }
+                        if (compact) {
+                            (compactBarTotalHeight - offsetDp).coerceIn(
+                                DiscoverLayout.StickyHeaderTopMin,
+                                compactBarTotalHeight,
+                            )
+                        } else {
+                            DiscoverLayout.StickyHeaderTopMin
+                        }
+                    }
+                    inPriceSection && compact -> compactBarTotalHeight
+                    else -> DiscoverLayout.StickyHeaderTopMin
+                }
+            }
+        }
+
+        SideEffect {
+            val headerItem = listState.layoutInfo.visibleItemsInfo.firstOrNull {
+                it.key == "restaurants-by-price-header"
+            }
+            val inPriceSection = listState.firstVisibleItemIndex >= 2
+            priceHeaderDocked = when {
+                !compact || !inPriceSection -> false
+                headerItem != null && headerItem.offset <= 0 -> true
+                headerItem != null && headerItem.offset > priceHeaderUndockThresholdPx -> false
+                else -> priceHeaderDocked
             }
         }
 

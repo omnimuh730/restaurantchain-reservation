@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.windowInsetsTopHeight
@@ -78,6 +79,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -102,6 +104,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.window.Dialog
@@ -110,6 +113,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.window.DialogProperties
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.components.LocalBottomNavScrollBehavior
 import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavContentBottomPadding
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
@@ -117,6 +121,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.HeartButto
 import com.mh.restaurantchainreservation.core.designsystem.tokens.BrandPink
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.components.PressableContentScale
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleModifier
 import com.mh.restaurantchainreservation.core.model.DiscoverData
@@ -145,23 +150,18 @@ private val ResultsSheetListRevealThreshold = 20.dp
 /** Minimum touch target for the sheet split-handle drag zone. */
 private val ResultsSheetDragHandleHeight = 56.dp
 
+/** Top corner radius when the sheet floats over the map (morphs to 0 when docked under search chrome). */
+private val ResultsSheetTopCornerRadius = 28.dp
+
+/** Elevation when the sheet floats over the map (fades out when docked). */
+private val ResultsSheetFloatingShadow = 12.dp
+
 /** Map top inset: search/plan chrome only (filter row overlays the map below). */
 private val SearchResultsMapTopInset = SearchResultsChromeHeight
 
 private fun fullSheetTopClearance(statusBarTop: Dp): Dp =
     statusBarTop +
         SearchResultsChromeHeight
-
-private fun ResultSheetState.sheetHeightDp(
-    maxHeight: Dp,
-    statusBarTop: Dp,
-    peekHeight: Dp,
-): Dp =
-    when (this) {
-        ResultSheetState.Peek -> peekHeight
-        ResultSheetState.Half -> maxHeight * 0.48f
-        ResultSheetState.Full -> maxHeight - fullSheetTopClearance(statusBarTop)
-    }
 
 private fun sheetStateFromHeightPx(
     rawPx: Float,
@@ -178,6 +178,20 @@ private fun sheetStateFromHeightPx(
     }
 }
 
+/** 0 = floating sheet; 1 = docked flush under search/plan chrome (Airbnb-style). */
+private fun sheetDockProgress(heightPx: Float, anchors: SheetHeightAnchorsPx): Float {
+    val start = anchors.halfPx
+    val end = anchors.fullPx
+    if (end <= start + 1f) {
+        return if (heightPx >= end - 2f) 1f else 0f
+    }
+    return when {
+        heightPx <= start -> 0f
+        heightPx >= end -> 1f
+        else -> ((heightPx - start) / (end - start)).coerceIn(0f, 1f)
+    }
+}
+
 @Composable
 fun DiscoverSearchResultsScreen(
     query: String,
@@ -189,8 +203,9 @@ fun DiscoverSearchResultsScreen(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    var sheetState by remember { mutableStateOf(ResultSheetState.Half) }
-    var activeMarker by remember { mutableIntStateOf(0) }
+    var sheetState by rememberSaveable { mutableStateOf(ResultSheetState.Half) }
+    var savedSheetHeightPx by rememberSaveable { mutableFloatStateOf(-1f) }
+    var activeMarker by rememberSaveable { mutableIntStateOf(0) }
     var filtersOpen by remember { mutableStateOf(false) }
     var filters by remember { mutableStateOf(SearchFilterState()) }
     var draftFilters by remember { mutableStateOf(SearchFilterState()) }
@@ -233,16 +248,16 @@ fun DiscoverSearchResultsScreen(
     }
 
     val navContentBottomPadding = LocalNavContentBottomPadding.current
-    // Keep sheet/map above the bottom nav when host padding drops (e.g. navigating to detail).
-    var sheetAboveNavPadding by remember { mutableStateOf(navContentBottomPadding) }
-    SideEffect {
-        if (navContentBottomPadding > 0.dp) {
-            sheetAboveNavPadding = navContentBottomPadding
-        }
+    val bottomNavScrollBehavior = LocalBottomNavScrollBehavior.current
+    var peakNavBottomPadding by remember { mutableStateOf(0.dp) }
+
+    LaunchedEffect(Unit) {
+        bottomNavScrollBehavior?.show()
     }
-    // Host already reserves space above the bar; re-apply only when that padding is removed mid-transition.
-    val sheetBottomOffset =
-        if (navContentBottomPadding > 0.dp) 0.dp else sheetAboveNavPadding
+
+    SideEffect {
+        peakNavBottomPadding = maxOf(peakNavBottomPadding, navContentBottomPadding)
+    }
 
     BoxWithConstraints(
         modifier = modifier
@@ -262,33 +277,73 @@ fun DiscoverSearchResultsScreen(
         val fullTopClearancePx = remember(density, fullTopClearance) {
             with(density) { fullTopClearance.toPx() }
         }
-        val sheetAnchorsState = remember { mutableStateOf<SheetHeightAnchorsPx?>(null) }
         val layoutHeightPx = with(density) { maxHeight.toPx() }
-        if (sheetAnchorsState.value == null && layoutHeightPx > peekPx) {
-            sheetAnchorsState.value = SheetHeightAnchorsPx(
+        val navHeightCompensationPx = with(density) {
+            (peakNavBottomPadding - navContentBottomPadding).coerceAtLeast(0.dp).toPx()
+        }
+        val effectiveLayoutHeightPx = layoutHeightPx + navHeightCompensationPx
+        val sheetAnchors = remember(effectiveLayoutHeightPx, fullTopClearancePx, peekPx) {
+            if (effectiveLayoutHeightPx <= peekPx) return@remember null
+            SheetHeightAnchorsPx(
                 peekPx = peekPx,
-                halfPx = layoutHeightPx * 0.48f,
-                fullPx = (layoutHeightPx - fullTopClearancePx).coerceAtLeast(peekPx),
+                halfPx = effectiveLayoutHeightPx * 0.48f,
+                fullPx = (effectiveLayoutHeightPx - fullTopClearancePx).coerceAtLeast(peekPx),
             )
         }
-        val sheetAnchors = sheetAnchorsState.value
         if (sheetAnchors == null) {
             return@BoxWithConstraints
         }
-        val halfPx = sheetAnchors.halfPx
-        val fullPx = sheetAnchors.fullPx
-        val sheetHeightAnim = remember { Animatable(sheetAnchors.halfPx) }
+        val sheetHeightAnim = remember { Animatable(0f) }
+        var sheetHeightRestored by remember { mutableStateOf(false) }
         var dragSheetHeightPx by remember { mutableFloatStateOf(sheetAnchors.halfPx) }
         var isDraggingSheet by remember { mutableStateOf(false) }
-        var mapZoomUserOverride by remember { mutableStateOf(false) }
-        var mapZoom by remember { mutableFloatStateOf(mapZoomForSheetProgress(0.5f)) }
+        var mapZoomUserOverride by rememberSaveable { mutableStateOf(false) }
+        var mapZoom by rememberSaveable { mutableFloatStateOf(mapZoomForSheetProgress(0.5f)) }
         var mapRecenterSignal by remember { mutableIntStateOf(0) }
         val scope = rememberCoroutineScope()
+
+        LaunchedEffect(sheetAnchors) {
+            if (!sheetHeightRestored) {
+                val restoredHeight = if (savedSheetHeightPx >= 0f) {
+                    savedSheetHeightPx.coerceIn(sheetAnchors.peekPx, sheetAnchors.fullPx)
+                } else {
+                    when (sheetState) {
+                        ResultSheetState.Peek -> sheetAnchors.peekPx
+                        ResultSheetState.Half -> sheetAnchors.halfPx
+                        ResultSheetState.Full -> sheetAnchors.fullPx
+                    }
+                }
+                sheetHeightAnim.snapTo(restoredHeight)
+                dragSheetHeightPx = restoredHeight
+                sheetState = sheetStateFromHeightPx(
+                    restoredHeight,
+                    sheetAnchors.peekPx,
+                    sheetAnchors.halfPx,
+                    sheetAnchors.fullPx,
+                )
+                sheetHeightRestored = true
+            } else {
+                val clamped = sheetHeightAnim.value.coerceIn(sheetAnchors.peekPx, sheetAnchors.fullPx)
+                if (clamped != sheetHeightAnim.value) {
+                    sheetHeightAnim.snapTo(clamped)
+                    dragSheetHeightPx = clamped
+                    sheetState = sheetStateFromHeightPx(
+                        clamped,
+                        sheetAnchors.peekPx,
+                        sheetAnchors.halfPx,
+                        sheetAnchors.fullPx,
+                    )
+                }
+            }
+        }
 
         val listRevealThresholdPx = remember(density) {
             with(density) { ResultsSheetListRevealThreshold.toPx() }
         }
         val displayedSheetHeightPx = if (isDraggingSheet) dragSheetHeightPx else sheetHeightAnim.value
+        val sheetDockProgress = remember(displayedSheetHeightPx, sheetAnchors) {
+            sheetDockProgress(displayedSheetHeightPx, sheetAnchors)
+        }
         val showSheetListContent = remember(displayedSheetHeightPx, sheetAnchors, listRevealThresholdPx) {
             displayedSheetHeightPx > sheetAnchors.peekPx + listRevealThresholdPx
         }
@@ -309,6 +364,9 @@ fun DiscoverSearchResultsScreen(
         SideEffect {
             if (!mapZoomUserOverride || isDraggingSheet) {
                 mapZoom = sheetLinkedZoom
+            }
+            if (sheetHeightRestored && !isDraggingSheet) {
+                savedSheetHeightPx = sheetHeightAnim.value
             }
         }
 
@@ -348,15 +406,6 @@ fun DiscoverSearchResultsScreen(
             onOpenRestaurant(id)
         }
 
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .windowInsetsTopHeight(WindowInsets.statusBars)
-                .background(MaterialTheme.colorScheme.background)
-                .zIndex(29f),
-        )
-
         DiscoverSearchMapSurface(
             restaurants = filtered,
             activeMarker = activeMarker,
@@ -393,12 +442,11 @@ fun DiscoverSearchResultsScreen(
                 restaurants = filtered,
                 activeIndex = activeMarker.coerceIn(0, filtered.lastIndex),
                 onChangeIndex = { activeMarker = it },
-                peekBottomPadding = peekHeight + 8.dp + sheetBottomOffset,
+                peekBottomPadding = peekHeight + 8.dp,
                 onOpenRestaurant = openRestaurant,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(bottom = sheetBottomOffset)
                     .zIndex(5f),
             )
         }
@@ -449,6 +497,7 @@ fun DiscoverSearchResultsScreen(
             query = query,
             sheetState = sheetState,
             sheetHeight = sheetHeightDp,
+            sheetDockProgress = sheetDockProgress,
             showListContent = showSheetListContent,
             mapFabRevealProgress = mapFabRevealProgress,
             onSheetDragStart = {
@@ -482,7 +531,6 @@ fun DiscoverSearchResultsScreen(
             onOpenRestaurant = openRestaurant,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = sheetBottomOffset)
                 .zIndex(25f),
         )
 
@@ -490,6 +538,7 @@ fun DiscoverSearchResultsScreen(
             query = query,
             plan = plan,
             planSummary = liveSummary,
+            sheetDockProgress = sheetDockProgress,
             onBack = onBack,
             onOpenSearch = onOpenSearch,
             onOpenPlanPicker = { column ->
@@ -575,21 +624,27 @@ private fun SearchResultsHeader(
     query: String,
     plan: SearchPlanState,
     planSummary: String,
+    sheetDockProgress: Float,
     onBack: () -> Unit,
     onOpenSearch: () -> Unit,
     onOpenPlanPicker: (PlanPickerColumn) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
+    val docked = sheetDockProgress.coerceIn(0f, 1f)
+    val headerSurfaceAlpha = 0.97f + (0.03f * docked)
+
+    val headerSurfaceColor = palette.cardSurface.copy(alpha = headerSurfaceAlpha)
 
     Column(
         modifier = modifier
-            .windowInsetsPadding(WindowInsets.statusBars),
+            .fillMaxWidth()
+            .background(headerSurfaceColor),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(palette.cardSurface.copy(alpha = 0.97f))
+                .statusBarsPadding()
                 .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -884,16 +939,22 @@ private fun MapSheetDismissScrim(
 @Composable
 private fun ResultsSheetDragHeader(
     resultsLabel: String,
+    dockProgress: Float,
     onDragStart: () -> Unit,
     onDrag: (Float) -> Unit,
     onDragEnd: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
     val dragState = rememberDraggableState { delta -> onDrag(delta) }
+    val docked = dockProgress.coerceIn(0f, 1f)
+    val handleAlpha = (1f - docked * 1.35f).coerceIn(0f, 1f)
+    val handleTopPad = lerp(10.dp, 0.dp, docked)
+    val handleBottomPad = lerp(8.dp, 0.dp, docked)
+    val labelTopPad = lerp(0.dp, 2.dp, docked)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = ResultsSheetDragHandleHeight)
+            .heightIn(min = lerp(ResultsSheetDragHandleHeight, 44.dp, docked))
             .draggable(
                 state = dragState,
                 orientation = Orientation.Vertical,
@@ -905,7 +966,8 @@ private fun ResultsSheetDragHeader(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 10.dp, bottom = 8.dp),
+                .padding(top = handleTopPad, bottom = handleBottomPad)
+                .graphicsLayer { alpha = handleAlpha },
             contentAlignment = Alignment.Center,
         ) {
             Box(
@@ -922,7 +984,7 @@ private fun ResultsSheetDragHeader(
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp),
+                .padding(top = labelTopPad, bottom = 12.dp),
             textAlign = TextAlign.Center,
         )
     }
@@ -934,6 +996,7 @@ private fun ResultsSheet(
     query: String,
     sheetState: ResultSheetState,
     sheetHeight: Dp,
+    sheetDockProgress: Float,
     showListContent: Boolean,
     mapFabRevealProgress: Float,
     isDraggingSheet: Boolean,
@@ -945,6 +1008,11 @@ private fun ResultsSheet(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
+    val docked = sheetDockProgress.coerceIn(0f, 1f)
+    val topCornerRadius = lerp(ResultsSheetTopCornerRadius, 0.dp, docked)
+    val sheetShadow = lerp(ResultsSheetFloatingShadow, 0.dp, docked)
+    val sheetBorderAlpha = (1f - docked).coerceIn(0f, 1f)
+    val topShape = RoundedCornerShape(topStart = topCornerRadius, topEnd = topCornerRadius)
     val mapFabAlpha = mapFabRevealProgress.coerceIn(0f, 1f)
     val showMapFabForList = mapFabAlpha > 0.35f && showListContent && restaurants.isNotEmpty()
     val resultsLabel = if (restaurants.isEmpty()) "No restaurants found" else "Over 1,000 results"
@@ -1003,14 +1071,31 @@ private fun ResultsSheet(
         modifier = modifier
             .fillMaxWidth()
             .height(sheetHeight)
-            .shadow(12.dp, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-            .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+            .then(
+                if (sheetShadow > 0.5.dp) {
+                    Modifier.shadow(sheetShadow, topShape)
+                } else {
+                    Modifier
+                },
+            )
+            .clip(topShape)
             .background(palette.cardSurface)
-            .border(1.dp, palette.border, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
+            .then(
+                if (sheetBorderAlpha > 0.01f) {
+                    Modifier.border(
+                        width = 1.dp,
+                        color = palette.border.copy(alpha = sheetBorderAlpha),
+                        shape = topShape,
+                    )
+                } else {
+                    Modifier
+                },
+            ),
     ) {
         Column(Modifier.fillMaxSize()) {
             ResultsSheetDragHeader(
                 resultsLabel = resultsLabel,
+                dockProgress = docked,
                 onDragStart = {
                     listForwardingSheetDrag = false
                     onSheetDragStart()
@@ -1084,10 +1169,9 @@ private fun RestaurantResultCard(
     val animatedContent = LocalAnimatedContentScope.current
     val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
     val titleModifier = rememberRestaurantSharedTitleModifier(restaurant.id, shared, animatedContent)
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onOpen),
+    PressableContentScale(
+        onClick = onOpen,
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Column {
             Box(
@@ -1209,16 +1293,10 @@ private fun MapPreviewCarousel(
             beyondViewportPageCount = 1,
         ) { page ->
             val restaurant = restaurants[page]
-            val selected = page == activeIndex
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(22.dp))
-                    .border(
-                        width = if (selected) 2.dp else 1.dp,
-                        color = if (selected) RestaurantColors.Text.primary else palette.border,
-                        shape = RoundedCornerShape(22.dp),
-                    ),
+                    .clip(RoundedCornerShape(22.dp)),
             ) {
                 MapPreviewCard(
                     restaurant = restaurant,
@@ -1245,14 +1323,17 @@ private fun MapPreviewCard(
     val animatedContent = LocalAnimatedContentScope.current
     val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
     val titleModifier = rememberRestaurantSharedTitleModifier(restaurant.id, shared, animatedContent)
-    Row(
+    PressableContentScale(
+        onClick = onOpen,
         modifier = modifier
             .fillMaxWidth()
             .height(136.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(palette.cardSurface)
-            .clickable(onClick = onOpen),
+            .background(palette.cardSurface),
     ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+        ) {
         Box(
             modifier = Modifier
                 .fillMaxHeight()
@@ -1313,6 +1394,7 @@ private fun MapPreviewCard(
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
             )
+        }
         }
     }
 }
@@ -1446,7 +1528,7 @@ private fun SearchFiltersSheet(
                             },
                         )
                     }
-                    HorizontalDivider(color = palette.border)
+                    FilterSectionDivider()
                     FilterSection(title = "Recommended for you") {
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                             RecommendedFilterCard(
@@ -1472,7 +1554,7 @@ private fun SearchFiltersSheet(
                             )
                         }
                     }
-                    HorizontalDivider(color = palette.border)
+                    FilterSectionDivider()
                     FilterSection(title = "Cuisine") {
                         FlowPillsWrap(
                             labels = DiscoverSearchData.filterCuisineChips,
@@ -1480,7 +1562,7 @@ private fun SearchFiltersSheet(
                             onToggle = { onChange(filters.copy(cuisines = filters.cuisines.toggle(it))) },
                         )
                     }
-                    HorizontalDivider(color = palette.border)
+                    FilterSectionDivider()
                     FilterSection(
                         title = "Price range",
                         subtitle = "Average table price, includes fees",
@@ -1498,7 +1580,7 @@ private fun SearchFiltersSheet(
                             }
                         }
                     }
-                    HorizontalDivider(color = palette.border)
+                    FilterSectionDivider()
                     FilterSection(title = "Rating") {
                         FlowSingleSelectPills(
                             labels = DiscoverSearchData.ratingFilterOptions,
@@ -1506,7 +1588,7 @@ private fun SearchFiltersSheet(
                             onSelect = { onChange(filters.copy(rating = it)) },
                         )
                     }
-                    HorizontalDivider(color = palette.border)
+                    FilterSectionDivider()
                     FilterSection(title = "Distance") {
                         FlowSingleSelectPills(
                             labels = DiscoverSearchData.distanceFilterOptions,
@@ -1514,7 +1596,7 @@ private fun SearchFiltersSheet(
                             onSelect = { onChange(filters.copy(distance = it)) },
                         )
                     }
-                    HorizontalDivider(color = palette.border)
+                    FilterSectionDivider()
                     FilterSection(title = "Amenities") {
                         FlowPillsWrap(
                             labels = DiscoverSearchData.filterAmenityChips,
@@ -1522,7 +1604,7 @@ private fun SearchFiltersSheet(
                             onToggle = { onChange(filters.copy(amenities = filters.amenities.toggle(it))) },
                         )
                     }
-                    HorizontalDivider(color = palette.border)
+                    FilterSectionDivider()
                     FilterSection(title = "Seating") {
                         FlowPillsWrap(
                             labels = DiscoverSearchData.filterSeatingChips,
@@ -1530,7 +1612,7 @@ private fun SearchFiltersSheet(
                             onToggle = { onChange(filters.copy(seating = filters.seating.toggle(it))) },
                         )
                     }
-                    HorizontalDivider(color = palette.border)
+                    FilterSectionDivider()
                     FilterSection(title = "Occasion") {
                         FlowPillsWrap(
                             labels = DiscoverSearchData.filterOccasionChips,
@@ -1583,6 +1665,15 @@ private fun SearchFiltersSheet(
             }
         }
     }
+}
+
+@Composable
+private fun FilterSectionDivider() {
+    val palette = LocalRestaurantPalette.current
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 22.dp),
+        color = palette.border,
+    )
 }
 
 @Composable

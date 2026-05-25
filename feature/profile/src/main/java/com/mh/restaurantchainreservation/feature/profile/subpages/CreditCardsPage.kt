@@ -82,6 +82,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.BrandPink
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageHeaderIconButton
+import com.mh.restaurantchainreservation.core.designsystem.components.PressableContentScale
 import com.mh.restaurantchainreservation.core.designsystem.components.DeterministicQrCode
 import com.mh.restaurantchainreservation.core.designsystem.components.GlobalNotificationCenter
 import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalBottomSheet
@@ -169,7 +170,11 @@ private fun ProfileCreditCard.toWalletCardRecord(): WalletCardRecord = WalletCar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun CreditCardsPage(
+    onBack: () -> Unit,
+    openChooseThemeOnLaunch: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
     val palette = LocalRestaurantPalette.current
     val storeCards by ProfileWalletStore.cards.collectAsState()
     val cards = remember(storeCards) { storeCards.map { it.toProfileCreditCard() } }
@@ -181,6 +186,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var pendingPickPattern by remember { mutableStateOf(hubCardThemeSpec(HubCardThemeId.Rose).pattern) }
     var pendingNewCardNumber by remember { mutableStateOf("") }
     var pendingNewCardNickname by remember { mutableStateOf("Tonight Rose") }
+    var showCloseCardConfirm by remember { mutableStateOf(false) }
 
     val activeCard = if (activeIndex < cards.size) cards.getOrNull(activeIndex.coerceIn(0, cards.lastIndex.coerceAtLeast(0))) else null
 
@@ -201,8 +207,8 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
         cardActionsSheetOpen = true
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        val openChooseNewCardTheme = {
+    val openChooseNewCardTheme = remember {
+        {
             val index = cards.size + 1
             pendingPickTheme = HubCardThemeId.Rose
             pendingPickPattern = hubCardThemeSpec(HubCardThemeId.Rose).pattern
@@ -210,6 +216,15 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
             pendingNewCardNickname = "Tonight ${HubCardThemeId.Rose.name}"
             showChooseCardThemeSheet = true
         }
+    }
+
+    LaunchedEffect(openChooseThemeOnLaunch) {
+        if (openChooseThemeOnLaunch) {
+            openChooseNewCardTheme()
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
         SubpageScaffold(
             title = "Credit cards",
             onBack = onBack,
@@ -218,7 +233,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
             headerActions = { progress ->
                 CollapsingSubpageHeaderIconButton(
                     collapseProgress = progress,
-                    onClick = openChooseNewCardTheme,
+                    onClick = { openChooseNewCardTheme() },
                     contentDescription = "Add new card",
                     imageVector = Icons.Outlined.Add,
                 )
@@ -232,7 +247,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     activeIndex = page
                     openCardActionsSheet(CARD_ACTION_TAB_SETTINGS)
                 },
-                onAddNewCard = openChooseNewCardTheme,
+                onAddNewCard = { openChooseNewCardTheme() },
                 fullWidthPagerWithCenterGutters = true,
             )
             Spacer(Modifier.height(20.dp))
@@ -287,24 +302,77 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
             onPatternSelected = { pendingPickPattern = it },
             onConfirm = { funding ->
                 val index = cards.size + 1
-                ProfileWalletStore.addCard(
-                    WalletCardRecord(
-                        id = "card-$index",
-                        nickname = pendingNewCardNickname,
-                        holder = MockProfileCreditCards.HOLDER,
-                        number = pendingNewCardNumber,
-                        expiry = "12/${29 + index}",
-                        themeId = pendingPickTheme,
-                        pattern = pendingPickPattern,
-                        krwBalance = funding.initialKrw,
-                        usdBalance = funding.initialUsd,
-                    ),
+                val record = WalletCardRecord(
+                    id = "card-$index",
+                    nickname = pendingNewCardNickname,
+                    holder = MockProfileCreditCards.HOLDER,
+                    number = pendingNewCardNumber,
+                    expiry = "12/${29 + index}",
+                    themeId = pendingPickTheme,
+                    pattern = pendingPickPattern,
+                    krwBalance = 0.0,
+                    usdBalance = 0.0,
                 )
-                activeIndex = cards.size
-                showChooseCardThemeSheet = false
-                GlobalNotificationCenter.success("Card created", "Your new Tonight card is ready.")
+                when (
+                    val result = ProfileWalletStore.createCardWithFunding(
+                        record = record,
+                        initialKrw = funding.initialKrw,
+                        initialUsd = funding.initialUsd,
+                    )
+                ) {
+                    is WalletMutationResult.Success -> {
+                        activeIndex = cards.size
+                        showChooseCardThemeSheet = false
+                        GlobalNotificationCenter.success("Card created", result.message)
+                    }
+                    is WalletMutationResult.Error ->
+                        GlobalNotificationCenter.info("Unable to open card", result.message)
+                }
             },
         )
+
+        if (showCloseCardConfirm && activeCard != null) {
+            val cardToClose = activeCard
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showCloseCardConfirm = false },
+                title = {
+                    Text("Close card?", color = palette.foreground, fontWeight = FontWeight.Bold)
+                },
+                text = {
+                    Text(
+                        "Any remaining balance will be moved back to your wallet before \"${cardToClose.nickname}\" is removed.",
+                        color = palette.mutedForeground,
+                        fontSize = 14.sp,
+                    )
+                },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(
+                        onClick = {
+                            showCloseCardConfirm = false
+                            when (val result = ProfileWalletStore.removeCard(cardToClose.id)) {
+                                is WalletMutationResult.Success -> {
+                                    activeIndex = min(activeIndex, (cards.size - 2).coerceAtLeast(0))
+                                    dismissCardActionsSheet()
+                                    GlobalNotificationCenter.warning(
+                                        "Card closed",
+                                        "${cardToClose.nickname} was removed.",
+                                    )
+                                }
+                                is WalletMutationResult.Error ->
+                                    GlobalNotificationCenter.info("Unable to remove", result.message)
+                            }
+                        },
+                    ) {
+                        Text("Close card", color = palette.brand, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { showCloseCardConfirm = false }) {
+                        Text("Cancel", color = palette.foreground)
+                    }
+                },
+            )
+        }
 
         if (cardActionsSheetOpen) {
             activeCard?.let { card ->
@@ -410,7 +478,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                             CARD_ACTION_TAB_SETTINGS -> {
                                 CardSettingsPanel(
                                     card = card,
-                                    canRemove = cards.size > 1,
+                                    canRemove = true,
                                     onToggleFrozen = {
                                         replaceActive(card.copy(frozen = !card.frozen))
                                         GlobalNotificationCenter.info(
@@ -425,20 +493,7 @@ fun CreditCardsPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                                             if (card.externalUse) "External use disabled." else "External use enabled.",
                                         )
                                     },
-                                    onRemove = {
-                                        when (val result = ProfileWalletStore.removeCard(card.id)) {
-                                            is WalletMutationResult.Success -> {
-                                                activeIndex = min(activeIndex, (cards.size - 2).coerceAtLeast(0))
-                                                dismissCardActionsSheet()
-                                                GlobalNotificationCenter.warning(
-                                                    "Card closed",
-                                                    "${card.nickname} was removed.",
-                                                )
-                                            }
-                                            is WalletMutationResult.Error ->
-                                                GlobalNotificationCenter.info("Unable to remove", result.message)
-                                        }
-                                    },
+                                    onRemove = { showCloseCardConfirm = true },
                                 )
                             }
                         }
@@ -893,10 +948,13 @@ private fun TransactionsCard(card: ProfileCreditCard) {
 @Composable
 private fun CardListRow(card: ProfileCreditCard, selected: Boolean, onClick: () -> Unit) {
     val palette = LocalRestaurantPalette.current
+    PressableContentScale(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .hubCardClickable(onClick = onClick)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -926,6 +984,7 @@ private fun CardListRow(card: ProfileCreditCard, selected: Boolean, onClick: () 
         if (selected) {
             Text("Selected", color = palette.brand, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
+    }
     }
 }
 

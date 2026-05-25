@@ -82,6 +82,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingScreenTitleHeader
+import com.mh.restaurantchainreservation.core.designsystem.components.PressableContentScale
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageHeaderIconButton
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageScreenHeader
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
@@ -414,11 +415,11 @@ private fun CollectionCard(
     onDelete: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+    PressableContentScale(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
     ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -459,6 +460,7 @@ private fun CollectionCard(
             fontSize = 13.sp,
             maxLines = 1,
         )
+        }
     }
 }
 
@@ -1129,11 +1131,11 @@ private fun SharedFolderCard(
     onClick: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+    PressableContentScale(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
     ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1185,6 +1187,7 @@ private fun SharedFolderCard(
             fontSize = 13.sp,
             maxLines = 1,
         )
+    }
     }
 }
 

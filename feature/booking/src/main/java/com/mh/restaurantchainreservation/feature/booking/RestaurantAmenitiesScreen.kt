@@ -4,23 +4,22 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.AcUnit
 import androidx.compose.material.icons.outlined.Cake
@@ -52,10 +51,10 @@ import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material.icons.outlined.WineBar
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,7 +68,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingSubpageScreenHeader
+import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
+import com.mh.restaurantchainreservation.core.designsystem.components.collapsingHeaderListScroll
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberCollapsingHeaderScrollState
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.tokens.pageCanvasBackground
 import com.mh.restaurantchainreservation.core.model.Restaurant
 
 @Composable
@@ -95,68 +100,91 @@ fun RestaurantAmenitiesScreen(
         label = "amenitiesSlide",
     )
 
-    LazyColumn(
+    val listState = rememberLazyListState()
+    val density = LocalDensity.current
+    val headerExpandedHeight = CollapsingTitleHeaderMetrics.subpageExpandedBodyHeight(hasSubtitle = true)
+    val collapseRangePx = remember(density, headerExpandedHeight) {
+        with(density) {
+            (headerExpandedHeight - CollapsingTitleHeaderMetrics.collapsedBodyHeight).toPx()
+        }.coerceAtLeast(1f)
+    }
+    val headerScroll = rememberCollapsingHeaderScrollState(collapseRangePx)
+    headerScroll.BindListResetOnShortContent(listState)
+    val statusBarTopDp = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+    val collapseProgress by remember {
+        derivedStateOf { headerScroll.collapseProgress(listState) }
+    }
+    val topContentInset by remember {
+        derivedStateOf {
+            CollapsingTitleHeaderMetrics.collapsingTopContentInset(
+                collapseProgress = collapseProgress,
+                expandedBodyHeight = headerExpandedHeight,
+                statusBarTopDp = statusBarTopDp,
+                firstVisibleItemIndex = listState.firstVisibleItemIndex,
+                firstVisibleItemScrollOffset = listState.firstVisibleItemScrollOffset,
+            )
+        }
+    }
+
+    Box(
         modifier = modifier
             .fillMaxSize()
             .graphicsLayer { translationX = slideProgress * screenWidthPx }
             .background(palette.pageBackground),
-        contentPadding = PaddingValues(bottom = 48.dp),
     ) {
-        item(key = "amenities-header") {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.statusBars)
-                    .padding(horizontal = 8.dp),
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                        contentDescription = "Back",
-                        tint = palette.foreground,
-                        modifier = Modifier.size(24.dp),
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .pageCanvasBackground()
+                .collapsingHeaderListScroll(headerScroll, listState),
+            contentPadding = PaddingValues(bottom = 48.dp),
+        ) {
+            item(key = "amenities_top_inset") {
+                Spacer(Modifier.height(topContentInset))
+            }
+
+            if (chipCategories.isNotEmpty()) {
+                item(key = "place-offer-chips") {
+                    PlaceOfferChipsContent(
+                        categories = chipCategories,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                     )
                 }
-                Text(
-                    text = "What this place offers",
-                    color = palette.foreground,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-                Spacer(Modifier.height(8.dp))
+            }
+
+            listCategories.forEach { category ->
+                item(key = "category-${category.title}") {
+                    Text(
+                        text = category.title,
+                        color = palette.foreground,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
+                    )
+                }
+                itemsIndexed(
+                    items = category.items,
+                    key = { _, item -> "${category.title}-${item.label}" },
+                ) { index, item ->
+                    AmenityListRow(
+                        item = item,
+                        showDivider = index < category.items.lastIndex,
+                    )
+                }
             }
         }
 
-        if (chipCategories.isNotEmpty()) {
-            item(key = "place-offer-chips") {
-                PlaceOfferChipsContent(
-                    categories = chipCategories,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                )
-            }
-        }
-
-        listCategories.forEach { category ->
-            item(key = "category-${category.title}") {
-                Text(
-                    text = category.title,
-                    color = palette.foreground,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
-                )
-            }
-            itemsIndexed(
-                items = category.items,
-                key = { _, item -> "${category.title}-${item.label}" },
-            ) { index, item ->
-                AmenityListRow(
-                    item = item,
-                    showDivider = index < category.items.lastIndex,
-                )
-            }
-        }
+        CollapsingSubpageScreenHeader(
+            title = "What this place offers",
+            collapseProgress = collapseProgress,
+            onBack = onBack,
+            backContentDescription = "Back",
+            subtitle = restaurant.name,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(2f),
+        )
     }
 }
 
