@@ -455,9 +455,10 @@
     <string name="dining_places_visited">Places visited</string>
     <string name="dining_total_bookings">Total bookings</string>
     <string name="dining_discover_tonight">Discover Tonight</string>
+    <string name="dining_discover_subtitle">Curated experiences for your evening</string>
     <string name="dining_discover_view_all">View all</string>
-    <string name="dining_discover_trending">TRENDING</string>
-    <string name="dining_discover_explore">Explore</string>
+    <string name="dining_discover_trending_now">TRENDING NOW</string>
+    <string name="dining_discover_explore_places">Explore Places</string>
     <string name="dining_add_by_code">Add by booking code</string>
     <string name="dining_tab_list_aria">Dining booking status</string>
 

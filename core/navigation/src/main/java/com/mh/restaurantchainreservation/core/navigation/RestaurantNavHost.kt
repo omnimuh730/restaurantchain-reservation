@@ -855,6 +855,12 @@ private fun AppGraph(
                     onExploreRestaurants = {
                         navController.navigateToTab(DiscoverRoutes.Home)
                     },
+                    onDiscoverViewAll = {
+                        navController.navigate(DiscoverRoutes.AllPromotions)
+                    },
+                    onDiscoverBannerClick = { bannerId ->
+                        navController.navigate(DiscoverRoutes.section(bannerId))
+                    },
                 )
             }
             composable(DiningRoutes.Detail) { entry ->

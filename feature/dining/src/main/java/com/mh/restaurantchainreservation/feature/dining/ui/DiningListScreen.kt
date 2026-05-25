@@ -65,6 +65,8 @@ private val DiningListScrollEndPadding = 64.dp
 fun DiningListScreen(
     onOpenDetail: (String) -> Unit,
     onExploreRestaurants: () -> Unit,
+    onDiscoverViewAll: () -> Unit,
+    onDiscoverBannerClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -207,8 +209,8 @@ fun DiningListScreen(
                     }
                     DiningStaggerItem(indexInGroup = 2) {
                         DiningDiscoverTonightSection(
-                            onViewAll = onExploreRestaurants,
-                            onExplore = { onExploreRestaurants() },
+                            onViewAll = onDiscoverViewAll,
+                            onBannerClick = onDiscoverBannerClick,
                         )
                     }
                 }

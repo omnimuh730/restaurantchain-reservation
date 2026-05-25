@@ -33,6 +33,8 @@ object DiningRoutes {
 fun DiningHomeScreen(
     onOpenDetail: (String) -> Unit,
     onExploreRestaurants: () -> Unit,
+    onDiscoverViewAll: () -> Unit,
+    onDiscoverBannerClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -42,6 +44,8 @@ fun DiningHomeScreen(
         DiningListScreen(
             onOpenDetail = onOpenDetail,
             onExploreRestaurants = onExploreRestaurants,
+            onDiscoverViewAll = onDiscoverViewAll,
+            onDiscoverBannerClick = onDiscoverBannerClick,
         )
         DiningModalsHost(
             onOpenBookingDetail = onOpenDetail,
