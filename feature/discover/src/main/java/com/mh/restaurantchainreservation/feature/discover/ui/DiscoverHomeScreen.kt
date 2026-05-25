@@ -175,38 +175,38 @@ private data class ThumbnailLayer(
 
 private val SeeAllThumbnailBack = ThumbnailLayer(
     layerName = "Back (Top-Left Image)",
-    topPercent = 17f,
-    leftPercent = 26.5f,
-    widthPercent = 33.5f,
-    heightPercent = 31.0f,
+    topPercent = 15f,
+    leftPercent = 22f,
+    widthPercent = 42f,
+    heightPercent = 40.0f,
     zIndex = 1f,
 )
 
 private val SeeAllThumbnailMiddle = ThumbnailLayer(
     layerName = "Middle (Right Image)",
-    topPercent = 25.0f,
-    leftPercent = 46.5f,
-    widthPercent = 37.0f,
-    heightPercent = 36.5f,
+    topPercent = 22f,
+    leftPercent = 39f,
+    widthPercent = 44f,
+    heightPercent = 42.0f,
     zIndex = 2f,
 )
 
 private val SeeAllThumbnailFront = ThumbnailLayer(
     layerName = "Front (Bottom-Left Image)",
-    topPercent = 31.5f,
-    leftPercent = 20.0f,
-    widthPercent = 36.0f,
-    heightPercent = 38.5f,
+    topPercent = 32f,
+    leftPercent = 17f,
+    widthPercent = 46f,
+    heightPercent = 44.0f,
     zIndex = 3f,
 )
 
 /** Overlapping cluster at animation start (ordered slide-out). */
 private val SeeAllThumbnailSlideStart = ThumbnailLayer(
     layerName = "Slide start",
-    topPercent = 30.5f,
-    leftPercent = 36f,
-    widthPercent = 28f,
-    heightPercent = 28f,
+    topPercent = 30.0f,
+    leftPercent = 33f,
+    widthPercent = 34f,
+    heightPercent = 34f,
     zIndex = 0f,
 )
 
@@ -1842,8 +1842,8 @@ private fun moreCardFooterMetrics(
     val scale = (minOf(cardWidth.value, cardHeight.value) / reference).coerceIn(0.72f, 1.12f)
     return MoreCardFooterMetrics(
         fontSize = (13f * scale * fontScale).sp,
-        offsetY = (-10f * scale).dp,
-        bottomPadding = (6f * scale).dp,
+        offsetY = (2f * scale).dp,
+        bottomPadding = (10f * scale).dp,
     )
 }
 
