@@ -203,7 +203,7 @@ object DetailCollapsingMetrics {
 }
 
 const val DetailHeroPullScaleMax = 0.04f
-const val DetailHeroMaxPullFraction = 0.15f
+const val DetailHeroMaxPullFraction = 0.12f
 val DetailHeroPullReleaseSpring = spring<Float>(
     dampingRatio = 0.85f,
     stiffness = 380f,

@@ -1148,11 +1148,11 @@ private fun FoodTypeRailTile(
     food: FoodType,
     onClick: () -> Unit,
 ) {
-    val placeCount = remember(food.id) { DiscoverData.byFoodType(food.id).size }
     DiscoverMenuTile(
         imageUrl = food.image,
         title = food.label,
-        imageCaption = "$placeCount places",
+        imageCaption = "",
+        showImageCaption = false,
         onClick = onClick,
     )
 }
