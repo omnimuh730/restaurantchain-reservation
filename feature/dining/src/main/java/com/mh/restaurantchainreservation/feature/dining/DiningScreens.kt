@@ -32,7 +32,10 @@ object DiningRoutes {
 @Composable
 fun DiningHomeScreen(
     onOpenDetail: (String) -> Unit,
+    onModifyBooking: (String) -> Unit,
     onExploreRestaurants: () -> Unit,
+    onDiscoverViewAll: () -> Unit,
+    onDiscoverBannerClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -42,9 +45,12 @@ fun DiningHomeScreen(
         DiningListScreen(
             onOpenDetail = onOpenDetail,
             onExploreRestaurants = onExploreRestaurants,
+            onDiscoverViewAll = onDiscoverViewAll,
+            onDiscoverBannerClick = onDiscoverBannerClick,
         )
         DiningModalsHost(
             onOpenBookingDetail = onOpenDetail,
+            onModifyBooking = onModifyBooking,
         )
     }
 }
@@ -54,6 +60,7 @@ fun DiningDetailScreen(
     bookingId: String,
     onBack: () -> Unit,
     onOpenEnjoy: (String) -> Unit,
+    onModifyBooking: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -65,7 +72,8 @@ fun DiningDetailScreen(
         BookingDetailScreen(
             booking = booking,
             onBack = onBack,
-            onManage = { DiningStore.openManage(booking.id) },
+            onManage = { onModifyBooking(booking.id) },
+            onCancel = { DiningStore.openCancel(booking.id) },
             onScanQR = { DiningStore.openScan(booking.id) },
             onShowQR = { DiningStore.openShowQR(booking.id) },
             onInvite = { DiningStore.openInvite(booking.id) },
@@ -78,6 +86,7 @@ fun DiningDetailScreen(
         )
         DiningModalsHost(
             onOpenBookingDetail = { /* already on detail */ },
+            onModifyBooking = onModifyBooking,
         )
     }
 }

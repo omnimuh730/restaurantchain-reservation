@@ -16,12 +16,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +49,9 @@ internal fun BookingStepHeader(
     stepIndex: Int,
     title: String,
     onBack: () -> Unit,
+    onClose: () -> Unit,
+    onStepSelect: ((Int) -> Unit)? = null,
+    maxSelectableStepIndex: Int = stepIndex,
 ) {
     val palette = LocalRestaurantPalette.current
     Column(
@@ -51,6 +59,7 @@ internal fun BookingStepHeader(
             .fillMaxWidth()
             .background(palette.cardSurface.copy(alpha = 0.94f))
             .border(width = 1.dp, color = palette.border)
+            .windowInsetsPadding(WindowInsets.statusBars)
             .padding(horizontal = 20.dp, vertical = 16.dp),
     ) {
         Row(
@@ -103,6 +112,22 @@ internal fun BookingStepHeader(
                     .background(palette.brand.copy(alpha = 0.1f))
                     .padding(horizontal = 12.dp, vertical = 6.dp),
             )
+            Spacer(Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(palette.mutedSurface)
+                    .clickable(onClick = onClose),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = "Close",
+                    tint = palette.foreground,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
         Spacer(Modifier.height(16.dp))
         Row(
@@ -117,6 +142,13 @@ internal fun BookingStepHeader(
                         .clip(RoundedCornerShape(999.dp))
                         .background(
                             if (index <= stepIndex) palette.brand else palette.border,
+                        )
+                        .then(
+                            if (onStepSelect != null && index <= maxSelectableStepIndex) {
+                                Modifier.clickable { onStepSelect(index) }
+                            } else {
+                                Modifier
+                            },
                         ),
                 )
             }

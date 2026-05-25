@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ModalBottomSheet
@@ -43,13 +43,16 @@ fun DsBottomSheet(
     ModalBottomSheet(
         modifier = modifier,
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false),
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = containerColor,
-        dragHandle = { BottomSheetDefaults.DragHandle() },
+        contentColor = palette.foreground,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = { CenteredMaterialDragHandle() },
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .blockModalSheetBodyDrag()
                 .then(
                     if (wrapContentHeight) {
                         Modifier.wrapContentHeight()

@@ -51,6 +51,11 @@ val MOCK_BOOKINGS: List<Booking> = listOf(
         occasion = "Date",
         seating = "Counter",
         confirmationNo = "RQ-2026-0502N",
+        contactName = "Mia Park",
+        seatingLabels = listOf("Counter"),
+        cuisineLabels = listOf("Japanese", "Seafood"),
+        vibeLabels = listOf("Date night", "Quiet / intimate"),
+        amenityLabels = listOf("Waiting space"),
     ),
     Booking(
         id = "10",
@@ -83,6 +88,11 @@ val MOCK_BOOKINGS: List<Booking> = listOf(
         occasion = "Anniversary",
         seating = "Indoor",
         confirmationNo = "CT-2026-0418A",
+        contactName = "Alison Kim",
+        seatingLabels = listOf("Dining hall", "Window seat"),
+        cuisineLabels = listOf("Japanese", "Seafood"),
+        vibeLabels = listOf("Romantic", "Date night"),
+        amenityLabels = listOf("Parking", "Valet"),
     ),
     Booking(
         id = "2",
@@ -98,6 +108,11 @@ val MOCK_BOOKINGS: List<Booking> = listOf(
         diningPoints = 200,
         seating = "Terrace",
         confirmationNo = "CT-2026-0422B",
+        contactName = "James Chen",
+        seatingLabels = listOf("Terrace", "Private room"),
+        cuisineLabels = listOf("French", "Wine pairing"),
+        vibeLabels = listOf("Celebration", "Casual dining"),
+        amenityLabels = listOf("Sommelier", "Flower deco"),
     ),
     Booking(
         id = "3",
@@ -113,6 +128,10 @@ val MOCK_BOOKINGS: List<Booking> = listOf(
         diningPoints = 80,
         seating = "Any",
         confirmationNo = "CT-2026-0420W",
+        contactName = "Sam Rivera",
+        cuisineLabels = listOf("Grilled beef", "Steakhouse"),
+        vibeLabels = listOf("Casual dining", "Family-friendly"),
+        amenityLabels = listOf("Parking", "Kids welcome"),
     ),
     Booking(
         id = "4",
@@ -135,8 +154,14 @@ val MOCK_BOOKINGS: List<Booking> = listOf(
         address = "101 Main St, San Francisco, CA 94102",
         phone = "(415) 555-0345",
         diningPoints = 120,
+        occasion = "Anniversary",
         seating = "Indoor",
         confirmationNo = "CT-2026-0328C",
+        contactName = "Elena Rossi",
+        seatingLabels = listOf("Dining hall", "Booth"),
+        cuisineLabels = listOf("Italian"),
+        vibeLabels = listOf("Romantic", "Celebration"),
+        amenityLabels = listOf("Wine pairing", "Birthday setup"),
         receipt = Receipt(
             items = longReceiptItems,
             subtotal = longReceiptTotal,
@@ -170,6 +195,11 @@ val MOCK_BOOKINGS: List<Booking> = listOf(
         diningPoints = 100,
         seating = "Outdoor",
         confirmationNo = "CT-2026-0319D",
+        contactName = "David Wu",
+        seatingLabels = listOf("Terrace"),
+        cuisineLabels = listOf("Seafood"),
+        vibeLabels = listOf("Celebration", "Late night"),
+        amenityLabels = listOf("Valet", "Accessible"),
         receipt = Receipt(
             items = listOf(
                 ReceiptItem("Oyster Sampler (12 pc)", 1, 42.0, "🦪"),
@@ -184,6 +214,37 @@ val MOCK_BOOKINGS: List<Booking> = listOf(
             paymentMethod = "Tonight Wallet",
             paidAt = "Wed, 19 Mar 2026 · 20:35",
         ),
+    ),
+    Booking(
+        id = "5-guest",
+        restaurant = "Ocean Pearl",
+        cuisine = "Seafood · Raw Bar",
+        image = "https://images.unsplash.com/photo-1761314037182-8ea3363cf3a3?w=1080&h=720&fit=crop",
+        date = "Wed, 19 Mar 2026",
+        time = "19:00",
+        guests = 3,
+        status = BookingStatus.Completed,
+        rating = 4.6,
+        feedback = MealFeedback(
+            taste = 5,
+            ambience = 4,
+            service = 5,
+            value = 4,
+            comment = "Joined friends for oysters and champagne — great evening.",
+            tags = listOf("Great food", "Will return"),
+        ),
+        address = "555 Pier St, San Francisco, CA 94133",
+        phone = "(415) 555-0488",
+        diningPoints = 50,
+        specialRequest = "Shared invitation from CT-2026-0319D",
+        occasion = "Celebration",
+        seating = "Outdoor",
+        confirmationNo = "CT-2026-0319D-G",
+        contactName = "David Wu",
+        seatingLabels = listOf("Terrace"),
+        cuisineLabels = listOf("Seafood"),
+        vibeLabels = listOf("Celebration", "Late night"),
+        amenityLabels = listOf("Valet", "Accessible"),
     ),
     Booking(
         id = "6",
@@ -254,6 +315,59 @@ val MOCK_BOOKINGS: List<Booking> = listOf(
         confirmationNo = "CT-2026-0214G",
     ),
 )
+
+/** Confirmed reservations joinable by code/QR that are not pre-loaded in My Dining. */
+val ADDABLE_BOOKING_CATALOG: List<Booking> = listOf(
+    Booking(
+        id = "catalog-harbor",
+        restaurant = "Harbor Kitchen",
+        cuisine = "American · Seafood",
+        image = "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1080&h=720&fit=crop",
+        date = "Wed, 6 May 2026",
+        time = "18:30",
+        guests = 3,
+        status = BookingStatus.Confirmed,
+        address = "55 Pier 39, San Francisco, CA 94133",
+        phone = "(415) 555-0142",
+        diningPoints = 120,
+        occasion = "Birthday",
+        seating = "Window",
+        confirmationNo = "CT-2026-0506H",
+        contactName = "Jordan Lee",
+        seatingLabels = listOf("Window"),
+        cuisineLabels = listOf("American", "Seafood"),
+    ),
+    Booking(
+        id = "catalog-bella",
+        restaurant = "Bella Napoli",
+        cuisine = "Italian · Pasta",
+        image = "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1080&h=720&fit=crop",
+        date = "Fri, 28 Mar 2026",
+        time = "21:48",
+        guests = 2,
+        status = BookingStatus.Confirmed,
+        address = "101 Main St, San Francisco, CA 94102",
+        phone = "(415) 555-0177",
+        diningPoints = 90,
+        occasion = "Date",
+        seating = "Indoor",
+        confirmationNo = "CT-2026-0328B",
+        contactName = "Sam Rivera",
+        seatingLabels = listOf("Indoor"),
+        cuisineLabels = listOf("Italian"),
+    ),
+)
+
+fun lookupJoinableBooking(code: String): Booking? {
+    val normalized = code.trim().uppercase()
+    if (normalized.isEmpty()) return null
+    return (MOCK_BOOKINGS + ADDABLE_BOOKING_CATALOG).firstOrNull {
+        it.confirmationNo.equals(normalized, ignoreCase = true)
+    }
+}
+
+/** Default booking resolved when simulating an add-booking QR scan. */
+val DEFAULT_ADD_BOOKING_QR_TARGET: Booking = ADDABLE_BOOKING_CATALOG.first()
 
 private val months = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 

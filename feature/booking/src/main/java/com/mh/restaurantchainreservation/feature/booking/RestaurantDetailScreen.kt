@@ -95,6 +95,7 @@ import com.mh.restaurantchainreservation.core.designsystem.badge.AnimatedGuestFa
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuSeeAllCard
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuTile
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantLocationMap
 import com.mh.restaurantchainreservation.core.designsystem.components.ShareWithContactsSheet
 import com.mh.restaurantchainreservation.core.model.SharedContentStore
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -799,7 +800,7 @@ private fun RatingsSummaryDivider(
 private fun AboutSection(ext: RestaurantExtendedData) {
     val palette = LocalRestaurantPalette.current
     Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)) {
-        Text("About this place", color = palette.foreground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Text("About this place", color = palette.foreground, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Text(
             text = "${ext.description} Experience the best of our cuisine at this location.",
             color = palette.foreground.copy(alpha = 0.9f),
@@ -859,7 +860,7 @@ private fun AmenitiesSection(
         RestaurantAmenitiesData.placeOfferChipCategories(ext)
     }
     Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)) {
-        Text("What this place offers", color = palette.foreground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Text("What this place offers", color = palette.foreground, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(20.dp))
         PlaceOfferChipsContent(categories = chipCategories)
         Box(
@@ -886,8 +887,8 @@ private fun LocationSection(restaurant: Restaurant, ext: RestaurantExtendedData)
         listOfNotNull(restaurant.area, ext.address).joinToString(", ")
     }
     Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)) {
-        Text("Where you'll be", color = palette.foreground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-        RestaurantDetailLocationMap(
+        Text("Where you'll be", color = palette.foreground, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        RestaurantLocationMap(
             latitude = lat,
             longitude = lng,
             modifier = Modifier
@@ -1187,7 +1188,7 @@ private fun ReviewPreviewCard(
 private fun CancellationPolicySection() {
     val palette = LocalRestaurantPalette.current
     Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)) {
-        Text("Cancellation policy", color = palette.foreground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Text("Cancellation policy", color = palette.foreground, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Text(
             "Free cancellation up to 24 hours before your reservation. Late cancellations may include a partial fee depending on booking size and timing.",
             color = palette.foreground,

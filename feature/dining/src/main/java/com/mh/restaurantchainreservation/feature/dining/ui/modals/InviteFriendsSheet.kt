@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -52,11 +53,14 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mh.restaurantchainreservation.core.designsystem.components.BottomModalSheet
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalBottomSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 import com.mh.restaurantchainreservation.feature.dining.data.Booking
 import kotlinx.coroutines.delay
 import kotlin.math.abs
@@ -81,8 +85,8 @@ private val SAMPLE_FRIENDS = listOf(
 private enum class InviteTab { NotInvited, Invited }
 
 /**
- * Centered modal — search + segmented tabs (Not invited / Invited) + scrollable
- * friend list with tap-to-toggle. Mirrors React `shared/InviteFriends.tsx`.
+ * Rising bottom sheet — search + segmented tabs (Not invited / Invited) + scrollable
+ * friend list with tap-to-toggle.
  */
 @Composable
 fun InviteFriendsSheet(
@@ -117,43 +121,30 @@ fun InviteFriendsSheet(
         matches.partition { selected.value.contains(it.id).not() }
     }
 
-    BottomModalSheet(onDismiss = onDismiss) {
-        Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 20.dp)) {
-            // Header with icon + title + subtitle
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+    RestaurantModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
+        ) {
+            Text(
+                text = stringResource(I18nR.string.invite_title),
+                color = palette.foreground,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(palette.brand.copy(alpha = 0.10f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.PersonAdd,
-                        contentDescription = null,
-                        tint = palette.brand,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Invite friends",
-                        color = palette.foreground,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                    Text(
-                        text = "${booking.restaurant} · ${booking.date} · ${booking.time}",
-                        color = palette.mutedForeground,
-                        fontSize = 13.sp,
-                        maxLines = 2,
-                    )
-                }
-            }
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "${booking.restaurant} · ${booking.date} · ${booking.time}",
+                color = palette.mutedForeground,
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                modifier = Modifier.fillMaxWidth(),
+            )
 
             if (sent) {
                 Spacer(Modifier.height(20.dp))
@@ -161,7 +152,7 @@ fun InviteFriendsSheet(
                 return@Column
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(10.dp))
 
             // Search
             SearchField(value = query, onChange = { query = it })

@@ -14,6 +14,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -37,6 +38,8 @@ object HubSurfaceCardDefaults {
 
     /** Matches Discover “Explore more” rail card (ambient + spot). */
     val ShadowElevation = 12.dp
+    /** Sticky bars / tab underlines — same tokens as [ShadowElevation], slightly smaller. */
+    val UnderlineShadowElevation = 8.dp
     val ShadowAmbientAlpha: Float get() = RestaurantColors.Shadow.HubAmbientAlpha
     val ShadowSpotAlpha: Float get() = RestaurantColors.Shadow.HubSpotAlpha
 
@@ -128,3 +131,19 @@ fun Modifier.surfaceTopEdgeShadow(
         size = Size(size.width, shadowPx),
     )
 }
+
+/**
+ * Full-width underline shadow using the same ambient/spot as [hubSurfaceShadow], at
+ * [HubSurfaceCardDefaults.UnderlineShadowElevation]. Attach to a thin bottom edge (e.g. 1.dp tall).
+ */
+fun Modifier.hubSurfaceBottomUnderlineShadow(
+    elevation: Dp = HubSurfaceCardDefaults.UnderlineShadowElevation,
+    ambientAlpha: Float = HubSurfaceCardDefaults.ShadowAmbientAlpha,
+    spotAlpha: Float = HubSurfaceCardDefaults.ShadowSpotAlpha,
+): Modifier = shadow(
+    elevation = elevation,
+    shape = RectangleShape,
+    clip = false,
+    ambientColor = RestaurantColors.Base.black.copy(alpha = ambientAlpha),
+    spotColor = RestaurantColors.Base.black.copy(alpha = spotAlpha),
+)

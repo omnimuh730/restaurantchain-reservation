@@ -1,6 +1,7 @@
 package com.mh.restaurantchainreservation.feature.profile.subpages
 
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
@@ -737,12 +738,17 @@ private fun CardActionTabCell(
     val iconSlot = (24f * (1f - collapse)).coerceAtLeast(0f).dp
     val gapAfterIcon = (4f * (1f - collapse)).coerceAtLeast(0f).dp
     val iconAlpha = 1f - collapse
-    val labelColor = when {
+    val targetLabelColor = when {
         muted -> palette.mutedForeground.copy(alpha = 0.42f)
         selected -> palette.brand
         else -> RestaurantColors.Base.black
     }
-    val labelWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+    val labelColor by animateColorAsState(
+        targetValue = targetLabelColor,
+        animationSpec = spring(stiffness = 520f, dampingRatio = 0.85f),
+        label = "card_action_tab_color",
+    )
+    val labelWeight = if (selected) FontWeight.Bold else FontWeight.Medium
     val labelToIndicatorGap = lerp(6f, 3f, collapse).dp
     Box(
         modifier = modifier

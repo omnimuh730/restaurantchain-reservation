@@ -92,7 +92,7 @@ internal fun BookingDateStep(
             .padding(horizontal = 20.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        BookingCard {
+        Column {
             BookingSectionTitle(
                 icon = Icons.Outlined.Group,
                 title = "Party size",
@@ -302,7 +302,7 @@ internal fun BookingDetailsStep(
             .padding(horizontal = 20.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        BookingCard {
+        Column {
             BookingSectionTitle(
                 icon = Icons.Outlined.AutoAwesome,
                 title = "Contact",

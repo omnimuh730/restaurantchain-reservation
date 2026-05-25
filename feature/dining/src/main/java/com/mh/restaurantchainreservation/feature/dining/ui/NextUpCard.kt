@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -106,8 +105,6 @@ private data class ReservationScaledSpec(
     val rightColumnWeight: Float,
     val imageRadius: Dp,
     val imageBaseHeight: Dp,
-    val stripWidth: Dp,
-    val stripDotSize: Dp,
     val titleTopMargin: Dp,
     val titleLetterSpacing: TextUnit,
     val nameLineWidth: Dp,
@@ -150,8 +147,6 @@ private fun scaledSpec(cardWidth: Dp): ReservationScaledSpec {
         rightColumnWeight = DesignRightColumn,
         imageRadius = sd(24f),
         imageBaseHeight = sd(438f),
-        stripWidth = sd(42f),
-        stripDotSize = sd(10f),
         titleTopMargin = sd(24f),
         titleLetterSpacing = ss(1f),
         nameLineWidth = sd(72f),
@@ -294,10 +289,6 @@ private fun RestaurantImageWithStrip(
     modifier: Modifier = Modifier,
 ) {
     val imageShape = RoundedCornerShape(spec.imageRadius)
-    val stripShape = RoundedCornerShape(
-        topStart = spec.imageRadius,
-        bottomStart = spec.imageRadius,
-    )
 
     Box(
         modifier = modifier
@@ -313,42 +304,6 @@ private fun RestaurantImageWithStrip(
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
-        PinkAccentStrip(
-            dotSize = spec.stripDotSize,
-            modifier = Modifier
-                .width(spec.stripWidth)
-                .fillMaxHeight()
-                .align(Alignment.CenterStart)
-                .clip(stripShape),
-        )
-    }
-}
-
-@Composable
-private fun PinkAccentStrip(
-    dotSize: Dp,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier.background(Pink),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(vertical = 18.dp),
-            verticalArrangement = Arrangement.SpaceEvenly,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            repeat(7) {
-                Box(
-                    modifier = Modifier
-                        .size(dotSize)
-                        .clip(CircleShape)
-                        .background(RestaurantColors.Base.white.copy(alpha = 0.28f)),
-                )
-            }
-        }
     }
 }
 

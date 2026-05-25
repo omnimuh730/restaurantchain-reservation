@@ -1,21 +1,29 @@
 package com.mh.restaurantchainreservation.core.designsystem.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,7 +33,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.outlined.IosShare
 import androidx.compose.material.icons.outlined.PersonAdd
 import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.Search
@@ -36,16 +43,24 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -53,12 +68,30 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColo
 import com.mh.restaurantchainreservation.core.model.ShareContact
 import com.mh.restaurantchainreservation.core.model.ShareContacts
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private enum class ShareContactTab { Available, Selected }
 
+private val ShareContactTabBarHeight = 50.dp
+private val ShareContactTabTopPadding = 4.dp
+private val ShareContactTabActiveIndicatorHeight = 3.dp
+private val ShareContactTabLabelToIndicatorGap = 10.dp
+
+private data class ShareContactTabSpec(
+    val tab: ShareContactTab,
+    val icon: ImageVector,
+    val label: String,
+)
+
+private val ShareContactTabs = listOf(
+    ShareContactTabSpec(ShareContactTab.Available, Icons.Outlined.PersonAdd, "Contacts"),
+    ShareContactTabSpec(ShareContactTab.Selected, Icons.Filled.Check, "Selected"),
+)
+
 /**
  * Contact-picker bottom sheet for in-app sharing (no system link chooser).
- * Layout and interaction mirror [InviteFriendsSheet] in the dining feature.
+ * Uses [RestaurantModalBottomSheet] for the same rising dialog treatment as
+ * order receipt, wishlist, and credit-card modals.
  */
 @Composable
 fun ShareWithContactsSheet(
@@ -67,7 +100,6 @@ fun ShareWithContactsSheet(
     onShare: (Set<String>) -> Unit,
     modifier: Modifier = Modifier,
     title: String = "Share with friends",
-    headerIcon: ImageVector = Icons.Outlined.IosShare,
     contacts: List<ShareContact> = ShareContacts.all,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -76,6 +108,31 @@ fun ShareWithContactsSheet(
     var selected by remember { mutableStateOf(emptySet<String>()) }
     var sent by remember { mutableStateOf(false) }
     var sentCount by remember { mutableStateOf(0) }
+    val coroutineScope = rememberCoroutineScope()
+    var isProgrammaticTabChange by remember { mutableStateOf(false) }
+    val pagerState = rememberPagerState(
+        initialPage = ShareContactTabs.indexOfFirst { it.tab == tab }.coerceAtLeast(0),
+        pageCount = { ShareContactTabs.size },
+    )
+
+    LaunchedEffect(tab) {
+        val page = ShareContactTabs.indexOfFirst { it.tab == tab }.coerceAtLeast(0)
+        if (pagerState.currentPage != page) {
+            isProgrammaticTabChange = true
+            pagerState.animateScrollToPage(page)
+            isProgrammaticTabChange = false
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { pagerState.settledPage }.collect { page ->
+            if (isProgrammaticTabChange) return@collect
+            val nextTab = ShareContactTabs[page].tab
+            if (tab != nextTab) {
+                tab = nextTab
+            }
+        }
+    }
 
     LaunchedEffect(sent) {
         if (sent) {
@@ -90,41 +147,31 @@ fun ShareWithContactsSheet(
         matches.partition { it.id !in selected }
     }
 
-    BottomModalSheet(onDismiss = onDismiss, modifier = modifier) {
-        Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 20.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+    RestaurantModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
+        ) {
+            Text(
+                text = title,
+                color = palette.foreground,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(palette.brand.copy(alpha = 0.10f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = headerIcon,
-                        contentDescription = null,
-                        tint = palette.brand,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = title,
-                        color = palette.foreground,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                    Text(
-                        text = subtitle,
-                        color = palette.mutedForeground,
-                        fontSize = 13.sp,
-                        maxLines = 2,
-                    )
-                }
+            )
+            if (subtitle.isNotBlank()) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = subtitle,
+                    color = palette.mutedForeground,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
 
             if (sent) {
@@ -133,61 +180,49 @@ fun ShareWithContactsSheet(
                 return@Column
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(10.dp))
             ShareSearchField(value = query, onChange = { query = it })
             Spacer(Modifier.height(12.dp))
-            ShareSegmentedTabs(
-                tab = tab,
-                onChange = { tab = it },
+            ShareContactTabBar(
+                selected = tab,
                 availableCount = available.size,
                 selectedCount = selectedList.size,
+                onSelect = { newTab ->
+                    tab = newTab
+                    coroutineScope.launch {
+                        val page = ShareContactTabs.indexOfFirst { it.tab == newTab }.coerceAtLeast(0)
+                        if (pagerState.currentPage != page) {
+                            isProgrammaticTabChange = true
+                            pagerState.animateScrollToPage(page)
+                            isProgrammaticTabChange = false
+                        }
+                    }
+                },
             )
             Spacer(Modifier.height(12.dp))
 
-            val visibleList = if (tab == ShareContactTab.Available) available else selectedList
-            Row(
+            HorizontalPager(
+                state = pagerState,
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = if (tab == ShareContactTab.Selected) "Selected contacts" else "Available contacts",
-                    color = palette.foreground,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.ExtraBold,
+                verticalAlignment = Alignment.Top,
+                beyondViewportPageCount = 1,
+            ) { page ->
+                val pageTab = ShareContactTabs[page].tab
+                val visibleList = if (pageTab == ShareContactTab.Available) available else selectedList
+                ShareContactTabPage(
+                    tab = pageTab,
+                    query = query,
+                    selectedCount = selected.size,
+                    contacts = visibleList,
+                    selectedIds = selected,
+                    onToggleContact = { contactId ->
+                        selected = if (contactId in selected) {
+                            selected - contactId
+                        } else {
+                            selected + contactId
+                        }
+                    },
                 )
-                Text(
-                    text = "${selected.size} selected",
-                    color = palette.mutedForeground,
-                    fontSize = 12.sp,
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 0.dp, max = 320.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                if (visibleList.isEmpty()) {
-                    ShareEmptyContactsState(query = query, tab = tab)
-                } else {
-                    visibleList.forEach { contact ->
-                        ShareContactRow(
-                            contact = contact,
-                            isSelected = contact.id in selected,
-                            onToggle = {
-                                selected = if (contact.id in selected) {
-                                    selected - contact.id
-                                } else {
-                                    selected + contact.id
-                                }
-                            },
-                        )
-                    }
-                }
             }
 
             Spacer(Modifier.height(16.dp))
@@ -258,91 +293,218 @@ private fun ShareSearchField(value: String, onChange: (String) -> Unit) {
 }
 
 @Composable
-private fun ShareSegmentedTabs(
-    tab: ShareContactTab,
-    onChange: (ShareContactTab) -> Unit,
+private fun ShareContactTabBar(
+    selected: ShareContactTab,
     availableCount: Int,
     selectedCount: Int,
+    onSelect: (ShareContactTab) -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val shape = RoundedCornerShape(percent = 50)
-    Row(
+    val density = LocalDensity.current
+    val strokePx = with(density) { 1.dp.toPx() }
+    val counts = mapOf(
+        ShareContactTab.Available to availableCount,
+        ShareContactTab.Selected to selectedCount,
+    )
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(40.dp)
-            .clip(shape)
-            .background(palette.mutedSurface.copy(alpha = 0.65f))
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+            .padding(top = ShareContactTabTopPadding)
+            .graphicsLayer { clip = false },
     ) {
-        ShareTabPill(
-            modifier = Modifier.weight(1f),
-            label = "Contacts",
-            count = availableCount,
-            active = tab == ShareContactTab.Available,
-            icon = Icons.Outlined.PersonAdd,
-            onClick = { onChange(ShareContactTab.Available) },
-        )
-        ShareTabPill(
-            modifier = Modifier.weight(1f),
-            label = "Selected",
-            count = selectedCount,
-            active = tab == ShareContactTab.Selected,
-            icon = Icons.Filled.Check,
-            onClick = { onChange(ShareContactTab.Selected) },
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ShareContactTabBarHeight)
+                .drawBehind {
+                    val y = size.height - strokePx * 0.5f
+                    drawLine(
+                        color = palette.border,
+                        start = Offset(0f, y),
+                        end = Offset(size.width, y),
+                        strokeWidth = strokePx,
+                    )
+                },
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.Bottom,
+            ) {
+                ShareContactTabs.forEach { spec ->
+                    ShareContactTabItem(
+                        modifier = Modifier.weight(1f),
+                        icon = spec.icon,
+                        label = spec.label,
+                        count = counts[spec.tab] ?: 0,
+                        active = spec.tab == selected,
+                        onClick = { onSelect(spec.tab) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShareContactTabItem(
+    icon: ImageVector,
+    label: String,
+    count: Int,
+    active: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalRestaurantPalette.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val contentColor by animateColorAsState(
+        targetValue = if (active) palette.brand else palette.mutedForeground,
+        animationSpec = spring(stiffness = 520f, dampingRatio = 0.85f),
+        label = "share_tab_content",
+    )
+    val indicatorScale by animateFloatAsState(
+        targetValue = if (active) 1f else 0f,
+        animationSpec = spring(stiffness = 500f, dampingRatio = 0.8f),
+        label = "share_tab_indicator_scale",
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                role = Role.Tab,
+                onClick = onClick,
+            ),
+    ) {
+        Column(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                TabSelectionBounceBox(isActive = active) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = contentColor,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(
+                            text = label,
+                            color = contentColor,
+                            fontSize = 14.sp,
+                            fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+                            maxLines = 1,
+                        )
+                        ShareContactTabCountBadge(
+                            count = count,
+                            active = active,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(ShareContactTabLabelToIndicatorGap))
+            Box(
+                modifier = Modifier
+                    .width(70.dp)
+                    .height(ShareContactTabActiveIndicatorHeight)
+                    .graphicsLayer {
+                        scaleX = indicatorScale
+                        alpha = indicatorScale
+                    }
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(palette.brand),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ShareContactTabCountBadge(
+    count: Int,
+    active: Boolean,
+) {
+    val palette = LocalRestaurantPalette.current
+    val background = if (active) palette.brand.copy(alpha = 0.12f) else palette.mutedSurface
+    val textColor = if (active) palette.brand else palette.mutedForeground
+
+    Box(
+        modifier = Modifier
+            .defaultMinSize(minWidth = 20.dp)
+            .height(20.dp)
+            .clip(CircleShape)
+            .background(background)
+            .padding(horizontal = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = count.toString(),
+            color = textColor,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
         )
     }
 }
 
 @Composable
-private fun ShareTabPill(
-    modifier: Modifier,
-    label: String,
-    count: Int,
-    active: Boolean,
-    icon: ImageVector,
-    onClick: () -> Unit,
+private fun ShareContactTabPage(
+    tab: ShareContactTab,
+    query: String,
+    selectedCount: Int,
+    contacts: List<ShareContact>,
+    selectedIds: Set<String>,
+    onToggleContact: (String) -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val shape = RoundedCornerShape(percent = 50)
-    Row(
-        modifier = modifier
-            .clip(shape)
-            .background(if (active) palette.cardSurface else Color.Transparent)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = if (active) palette.foreground else palette.mutedForeground,
-            modifier = Modifier.size(14.dp),
-        )
-        Spacer(Modifier.size(6.dp))
-        Text(
-            text = label,
-            color = if (active) palette.foreground else palette.mutedForeground,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.ExtraBold,
-        )
-        Spacer(Modifier.size(6.dp))
-        Box(
-            modifier = Modifier
-                .defaultMinSize(minWidth = 18.dp)
-                .heightIn(min = 18.dp)
-                .clip(CircleShape)
-                .background(if (active) palette.brand else palette.cardSurface)
-                .padding(horizontal = 6.dp, vertical = 2.dp),
-            contentAlignment = Alignment.Center,
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                text = count.toString(),
-                color = if (active) RestaurantColors.Base.white else palette.mutedForeground,
-                fontSize = 10.sp,
+                text = if (tab == ShareContactTab.Selected) "Selected contacts" else "Available contacts",
+                color = palette.foreground,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.ExtraBold,
             )
+            Text(
+                text = "$selectedCount selected",
+                color = palette.mutedForeground,
+                fontSize = 12.sp,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 0.dp, max = 320.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (contacts.isEmpty()) {
+                ShareEmptyContactsState(query = query, tab = tab)
+            } else {
+                contacts.forEach { contact ->
+                    ShareContactRow(
+                        contact = contact,
+                        isSelected = contact.id in selectedIds,
+                        onToggle = { onToggleContact(contact.id) },
+                    )
+                }
+            }
         }
     }
 }

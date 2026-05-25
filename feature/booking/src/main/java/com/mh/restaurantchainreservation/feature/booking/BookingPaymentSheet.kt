@@ -28,7 +28,16 @@ import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.Wallet
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -49,11 +58,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mh.restaurantchainreservation.core.designsystem.components.DsBottomSheet
 import com.mh.restaurantchainreservation.core.designsystem.components.PaymentToggle
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalBottomSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import kotlin.math.roundToInt
 
@@ -62,7 +72,6 @@ private val MerchantCardRadius = 26.dp
 private val TotalCardRadius = 28.dp
 private val PocketCardRadius = 22.dp
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun BookingPaymentSheet(
     visible: Boolean,
@@ -74,52 +83,81 @@ internal fun BookingPaymentSheet(
     onDismiss: () -> Unit,
     onPaymentComplete: () -> Unit,
 ) {
+    if (!visible) return
     val palette = LocalRestaurantPalette.current
     val depositAmount = guests * DEPOSIT_PER_GUEST
     val payKrw = 0.0
     val payUsd = totalAmount
 
-    DsBottomSheet(
-        visible = visible,
-        onDismiss = onDismiss,
-        title = "Reservation payment",
+    RestaurantModalBottomSheet(
+        onDismissRequest = onDismiss,
         containerColor = SheetWhite,
-        wrapContentHeight = paymentConfirmed,
-        footer = {
-            if (paymentConfirmed) {
-                PaymentConfirmedFooter()
-            } else {
-                PaymentSheetFooter(
-                    amountLabel = "$${fmtMoney(totalAmount)}",
-                    onComplete = onPaymentComplete,
-                )
-            }
-        },
     ) {
-        if (!paymentConfirmed) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (paymentConfirmed) {
+                        Modifier.wrapContentHeight()
+                    } else {
+                        Modifier.fillMaxHeight(0.92f)
+                    },
+                )
+                .navigationBarsPadding(),
+        ) {
+            Text(
+                text = "Reservation payment",
+                color = palette.foreground,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+            )
+            HorizontalDivider(color = palette.border)
+            if (!paymentConfirmed) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp)
+                        .padding(top = 16.dp, bottom = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    PaymentMerchantCard(payTo = payTo, payToSub = payToSub)
+                    PaymentTotalCard(totalAmount = totalAmount)
+                    WalletPocketsSection(
+                        payKrw = payKrw,
+                        payUsd = payUsd,
+                        finalKrw = payKrw,
+                        finalUsd = payUsd,
+                    )
+                    PaymentBreakdownCard(
+                        guests = guests,
+                        depositAmount = depositAmount,
+                        totalAmount = totalAmount,
+                    )
+                    BonusBalanceCard(
+                        domesticEligible = payKrw > 0,
+                    )
+                }
+            }
+            HorizontalDivider(color = palette.border)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .padding(top = 16.dp, bottom = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
             ) {
-                PaymentMerchantCard(payTo = payTo, payToSub = payToSub)
-                PaymentTotalCard(totalAmount = totalAmount)
-                WalletPocketsSection(
-                    payKrw = payKrw,
-                    payUsd = payUsd,
-                    finalKrw = payKrw,
-                    finalUsd = payUsd,
-                )
-                PaymentBreakdownCard(
-                    guests = guests,
-                    depositAmount = depositAmount,
-                    totalAmount = totalAmount,
-                )
-                BonusBalanceCard(
-                    domesticEligible = payKrw > 0,
-                )
+                if (paymentConfirmed) {
+                    PaymentConfirmedFooter()
+                } else {
+                    PaymentSheetFooter(
+                        amountLabel = "$${fmtMoney(totalAmount)}",
+                        onComplete = onPaymentComplete,
+                    )
+                }
             }
         }
     }

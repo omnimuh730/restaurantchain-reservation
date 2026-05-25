@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -17,20 +18,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mh.restaurantchainreservation.core.designsystem.components.BottomModalSheet
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalBottomSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.i18n.R as I18nR
 
@@ -39,54 +39,37 @@ fun ManageSheet(
     onDismiss: () -> Unit,
     onModify: () -> Unit,
     onCancel: () -> Unit,
+    showModify: Boolean = true,
 ) {
     val palette = LocalRestaurantPalette.current
-    BottomModalSheet(onDismiss = onDismiss) {
+
+    RestaurantModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(bottom = 8.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(palette.brand.copy(alpha = 0.10f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Shield,
-                        contentDescription = null,
-                        tint = palette.brand,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                Column {
-                    Text(
-                        text = stringResource(I18nR.string.manage_title),
-                        color = palette.foreground,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                    Text(
-                        text = stringResource(I18nR.string.manage_subtitle),
-                        color = palette.mutedForeground,
-                        fontSize = 13.sp,
-                    )
-                }
-            }
-
-            ManageActionRow(
-                icon = Icons.Outlined.Edit,
-                title = stringResource(I18nR.string.manage_modify),
-                desc = stringResource(I18nR.string.manage_modify_desc),
-                tone = ManageTone.Primary,
-                onClick = onModify,
+            Text(
+                text = stringResource(I18nR.string.manage_title),
+                color = palette.foreground,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
             )
+            Spacer(Modifier.height(10.dp))
+
+            if (showModify) {
+                ManageActionRow(
+                    icon = Icons.Outlined.Edit,
+                    title = stringResource(I18nR.string.manage_modify),
+                    desc = stringResource(I18nR.string.manage_modify_desc),
+                    tone = ManageTone.Primary,
+                    onClick = onModify,
+                )
+            }
             ManageActionRow(
                 icon = Icons.Outlined.Delete,
                 title = stringResource(I18nR.string.manage_cancel),
@@ -94,23 +77,6 @@ fun ManageSheet(
                 tone = ManageTone.Destructive,
                 onClick = onCancel,
             )
-
-            Spacer(Modifier.height(2.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp)
-                    .clip(RoundedCornerShape(percent = 50))
-                    .clickable(onClick = onDismiss),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = stringResource(I18nR.string.manage_close),
-                    color = palette.mutedForeground,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                )
-            }
         }
     }
 }
