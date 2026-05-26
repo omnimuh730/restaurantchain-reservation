@@ -88,7 +88,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -100,8 +99,6 @@ import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloa
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingIconButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingToolbar
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroScrollOverlay
-import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroPullScaleMax
-import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroMaxPullFraction
 import com.mh.restaurantchainreservation.core.designsystem.components.collapsingHeaderListScroll
 import com.mh.restaurantchainreservation.core.designsystem.components.detailHeroParallax
 import com.mh.restaurantchainreservation.core.designsystem.components.detailMorphingSheetBackground
@@ -109,7 +106,6 @@ import com.mh.restaurantchainreservation.core.designsystem.components.detailMorp
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberCollapsingHeaderScrollState
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailCollapseProgress
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailHeroScrollOffsetPx
-import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailHeroPullMotion
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuSeeAllCard
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuTile
 import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantLocationMap
@@ -270,11 +266,6 @@ fun RestaurantDetailScreen(
     val navigationBars = WindowInsets.navigationBars
     val bodySlidePx = remember(density) { with(density) { 28.dp.toPx() } }
 
-    val pullMotion = rememberDetailHeroPullMotion(coroutineScope)
-    val pullDistancePx by pullMotion.pullDistancePx
-    val maxPullPx = remember(density) { with(density) { HeroHeight.toPx() * DetailHeroMaxPullFraction } }
-    val pullProgress = (pullDistancePx / maxPullPx).coerceIn(0f, 1f)
-
     LaunchedEffect(restaurantId) {
         val cached = RestaurantDetailPayloadCache.get(restaurantId)
         if (cached != null) {
@@ -324,21 +315,11 @@ fun RestaurantDetailScreen(
             .fillMaxSize()
             .background(palette.pageBackground),
     ) {
-        val pullDistanceDp = with(density) { pullDistancePx.toDp() }
-
         LazyColumn(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .collapsingHeaderListScroll(headerScroll, listState)
-                .nestedScroll(
-                    pullMotion.nestedScrollConnection(
-                        maxPullPx = maxPullPx,
-                        isAtTop = {
-                            listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
-                        },
-                    ),
-                ),
+                .collapsingHeaderListScroll(headerScroll, listState),
             contentPadding = PaddingValues(bottom = DetailListBottomPadding),
         ) {
             // Hero + sheet must live in one item: LazyColumn clips each item, so a separate
@@ -352,7 +333,7 @@ fun RestaurantDetailScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(HeroHeight + pullDistanceDp)
+                            .height(HeroHeight)
                             .detailHeroParallax(heroScrollOffsetPx),
                     ) {
                         HeroCarousel(
@@ -360,7 +341,6 @@ fun RestaurantDetailScreen(
                             galleryImages = heroImages,
                             restaurantName = restaurant.name,
                             showPageIndicator = contentReady && heroImages.size > 1,
-                            pullProgress = pullProgress,
                             onOpenFullscreen = {
                                 if (contentReady) {
                                     onOpenPhotoGrid(RestaurantPhotoGallerySource.Gallery)
@@ -511,12 +491,13 @@ private fun HeroCarousel(
     galleryImages: List<String>,
     restaurantName: String,
     showPageIndicator: Boolean,
-    pullProgress: Float,
     onOpenFullscreen: (Int) -> Unit,
 ) {
     val pagerState = rememberPagerState(pageCount = { galleryImages.size.coerceAtLeast(1) })
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(HeroHeight),
     ) {
         HorizontalPager(
             state = pagerState,
@@ -529,12 +510,6 @@ private fun HeroCarousel(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer {
-                        val scale = 1f + pullProgress * DetailHeroPullScaleMax
-                        scaleX = scale
-                        scaleY = scale
-                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0f)
-                    }
                     .then(
                         if (showPageIndicator) {
                             Modifier.clickable { onOpenFullscreen(page) }
