@@ -48,6 +48,7 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
+import com.mh.restaurantchainreservation.core.designsystem.components.shimmer
 /** Top Picks by Food Type / Popular menu rail tiles (Discover home + restaurant detail). */
 object DiscoverMenuRailDefaults {
     val TileSize = 112.dp
@@ -86,6 +87,7 @@ fun DiscoverMenuTile(
                     .size(DiscoverMenuRailDefaults.TileSize)
                     .hubSurfaceShadow(shape = shape)
                     .clip(shape)
+                    .shimmer(shape = shape)
                     .background(palette.cardSurface),
             ) {
                 AsyncImage(
@@ -199,8 +201,8 @@ private fun DiscoverMenuSeeAllFooter(
         fontSize = (DiscoverMenuRailDefaults.SeeAllFooterFontSp * scale * fontScale).sp,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
-            .offset(y = (-8f * scale).dp)
-            .padding(bottom = (6f * scale).dp),
+            .offset(y = (2f * scale).dp)
+            .padding(bottom = (10f * scale).dp),
     )
 }
 
@@ -263,34 +265,34 @@ private data class ThumbnailLayer(
 
 private val SeeAllThumbnailBack = ThumbnailLayer(
     layerName = "Back",
-    topPercent = 17f,
-    leftPercent = 26.5f,
-    widthPercent = 33.5f,
-    heightPercent = 31.0f,
+    topPercent = 15f,
+    leftPercent = 22f,
+    widthPercent = 42f,
+    heightPercent = 40.0f,
     zIndex = 1f,
 )
 private val SeeAllThumbnailMiddle = ThumbnailLayer(
     layerName = "Middle",
-    topPercent = 25.0f,
-    leftPercent = 46.5f,
-    widthPercent = 37.0f,
-    heightPercent = 36.5f,
+    topPercent = 22f,
+    leftPercent = 39f,
+    widthPercent = 44f,
+    heightPercent = 42.0f,
     zIndex = 2f,
 )
 private val SeeAllThumbnailFront = ThumbnailLayer(
     layerName = "Front",
-    topPercent = 31.5f,
-    leftPercent = 20.0f,
-    widthPercent = 36.0f,
-    heightPercent = 38.5f,
+    topPercent = 32f,
+    leftPercent = 17f,
+    widthPercent = 46f,
+    heightPercent = 44.0f,
     zIndex = 3f,
 )
 private val SeeAllThumbnailSlideStart = ThumbnailLayer(
     layerName = "Slide start",
-    topPercent = 30.5f,
-    leftPercent = 36f,
-    widthPercent = 28f,
-    heightPercent = 28f,
+    topPercent = 30.0f,
+    leftPercent = 33f,
+    widthPercent = 34f,
+    heightPercent = 34f,
     zIndex = 0f,
 )
 private val SeeAllStackLayerRotations = floatArrayOf(-5.5f, 7.5f, -12f)

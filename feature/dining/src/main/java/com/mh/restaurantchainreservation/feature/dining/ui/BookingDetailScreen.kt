@@ -27,6 +27,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AccessTime
@@ -49,7 +50,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -64,17 +64,33 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailCollapsingMetrics
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingHeartButton
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingIconButton
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingToolbar
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroScrollOverlay
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroPullScaleMax
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroMaxPullFraction
+import com.mh.restaurantchainreservation.core.designsystem.components.detailHeroParallax
+import com.mh.restaurantchainreservation.core.designsystem.components.detailMorphingSheetBackground
+import com.mh.restaurantchainreservation.core.designsystem.components.detailMorphingSheetShape
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailCollapseProgress
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailTransitionThresholds
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailHeroPullMotion
 import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavContentBottomPadding
-import com.mh.restaurantchainreservation.core.designsystem.components.HeartDrawableIcon
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantLocationMap
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
@@ -100,6 +116,9 @@ private val DetailSheetTopPadding = 28.dp
 private val DetailSectionVerticalPadding = 24.dp
 private val DetailSectionTitleSpacing = 20.dp
 private val HeroOverlayBottomPadding = 20.dp
+/** Bottom edge of the large hero title (above the host row) in scroll content coordinates. */
+private val BookingHeroTitleBottomInContent: Dp
+    get() = HeroHeight - (SheetTopRadius + HeroOverlayBottomPadding) - (10.dp + 22.dp)
 private val SectionSpacing = HubSurfaceCardDefaults.SectionSpacing
 private val ReservationIconSize = 40.dp
 private val ReservationIconGap = 14.dp
@@ -149,6 +168,7 @@ fun BookingDetailScreen(
     onDeleteRequest: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
+    val density = LocalDensity.current
     val scroll = rememberScrollState()
 
     val isScheduled = booking.status == BookingStatus.Confirmed
@@ -162,8 +182,19 @@ fun BookingDetailScreen(
     val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
     val saved = wishlistRestaurant.id in savedIds
     val galleryImages = remember(booking.id, booking.image) { galleryImagesFor(booking) }
-    val headerSolidDerived by remember { derivedStateOf { scroll.value > 48 } }
+    val collapseRangePx = remember(density) { DetailCollapsingMetrics.heroScrollRangePx(density) }
+    val collapseProgress = rememberDetailCollapseProgress(scroll, collapseRangePx)
+    val transitionThresholds = rememberDetailTransitionThresholds(
+        titleBottomFromContentTop = BookingHeroTitleBottomInContent,
+    )
+    val sheetShape = detailMorphingSheetShape(collapseProgress)
+    val heroScrollOffsetPx = scroll.value
     val navBottomPadding = LocalNavContentBottomPadding.current
+
+    val pullMotion = rememberDetailHeroPullMotion()
+    val pullDistancePx by pullMotion.pullDistancePx
+    val maxPullPx = remember(density) { with(density) { HeroHeight.toPx() * DetailHeroMaxPullFraction } }
+    val pullProgress = (pullDistancePx / maxPullPx).coerceIn(0f, 1f)
 
     Box(
         modifier = Modifier
@@ -171,23 +202,43 @@ fun BookingDetailScreen(
             .background(palette.pageBackground)
             .trackBottomNavScroll(),
     ) {
+        val pullDistanceDp = with(density) { pullDistancePx.toDp() }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .nestedScroll(
+                    pullMotion.nestedScrollConnection(
+                        maxPullPx = maxPullPx,
+                        isAtTop = { scroll.value == 0 },
+                    ),
+                )
                 .verticalScroll(scroll),
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                BookingHeroCarousel(
-                    booking = booking,
-                    galleryImages = galleryImages,
-                    restaurant = restaurant,
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(HeroHeight + pullDistanceDp)
+                        .detailHeroParallax(heroScrollOffsetPx),
+                ) {
+                    BookingHeroCarousel(
+                        booking = booking,
+                        galleryImages = galleryImages,
+                        restaurant = restaurant,
+                        pullProgress = pullProgress,
+                    )
+                    DetailHeroScrollOverlay(
+                        collapseProgress = collapseProgress,
+                        transitionThresholds = transitionThresholds,
+                    )
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .offset(y = -SheetTopRadius)
-                        .detailSheetTopRoundedBackground(palette.pageBackground)
-                        .clip(HeaderSheetShape)
+                        .detailMorphingSheetBackground(palette.pageBackground, collapseProgress)
+                        .clip(sheetShape)
                         .padding(horizontal = DetailInfoHorizontalPadding),
                 ) {
                     Spacer(Modifier.height(DetailSheetTopPadding))
@@ -303,14 +354,37 @@ fun BookingDetailScreen(
             }
         }
 
-        BookingDetailTopBar(
-            restaurantName = booking.restaurant,
-            solid = headerSolidDerived,
-            saved = saved,
+        DetailFloatingToolbar(
+            title = booking.restaurant,
+            collapseProgress = collapseProgress,
             onBack = onBack,
-            onShare = onInvite,
-            onToggleSave = { WishlistStore.onHeartTap(wishlistRestaurant) },
-        )
+            backContentDescription = stringResource(I18nR.string.detail_header_back),
+            transitionThresholds = transitionThresholds,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(2f),
+        ) { plateAlpha ->
+            DetailFloatingIconButton(
+                onClick = onInvite,
+                plateAlpha = plateAlpha,
+                contentDescription = stringResource(I18nR.string.detail_header_share),
+            ) {
+                Icon(
+                    Icons.Outlined.PersonAdd,
+                    contentDescription = null,
+                    tint = palette.foreground,
+                    modifier = Modifier.size(17.dp),
+                )
+            }
+            DetailFloatingHeartButton(
+                active = saved,
+                plateAlpha = plateAlpha,
+                onClick = { WishlistStore.onHeartTap(wishlistRestaurant) },
+                contentDescription = stringResource(
+                    if (saved) I18nR.string.detail_unsave else I18nR.string.detail_save,
+                ),
+            )
+        }
     }
 }
 
@@ -334,17 +408,14 @@ private fun BookingHeroCarousel(
     booking: Booking,
     galleryImages: List<String>,
     restaurant: Restaurant?,
+    pullProgress: Float,
 ) {
-    val palette = LocalRestaurantPalette.current
     val pagerState = rememberPagerState(pageCount = { galleryImages.size })
     val hostName = restaurantHostName(booking, restaurant)
     val heroOverlayBottom = SheetTopRadius + HeroOverlayBottomPadding
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(HeroHeight)
-            .background(palette.mutedSurface),
+        modifier = Modifier.fillMaxSize(),
     ) {
         HorizontalPager(
             state = pagerState,
@@ -354,7 +425,14 @@ private fun BookingHeroCarousel(
                 model = galleryImages[page],
                 contentDescription = booking.restaurant,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        val scale = 1f + pullProgress * DetailHeroPullScaleMax
+                        scaleX = scale
+                        scaleY = scale
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0f)
+                    },
             )
         }
 
@@ -987,109 +1065,6 @@ private fun resolveOccasionLabel(occasion: String): String = when (occasion.lowe
     "special" -> stringResource(I18nR.string.detail_occasion_special)
     "celebration" -> stringResource(I18nR.string.detail_occasion_celebration)
     else -> occasion
-}
-
-@Composable
-private fun BookingDetailTopBar(
-    restaurantName: String,
-    solid: Boolean,
-    saved: Boolean,
-    onBack: () -> Unit,
-    onShare: () -> Unit,
-    onToggleSave: () -> Unit,
-) {
-    val palette = LocalRestaurantPalette.current
-    val buttonBg = RestaurantColors.Base.white
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                if (solid) palette.pageBackground.copy(alpha = 0.95f) else Color.Transparent,
-            )
-            .then(
-                if (solid) Modifier.border(1.dp, palette.border) else Modifier,
-            )
-            .windowInsetsPadding(WindowInsets.statusBars),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            GlassCircleButton(onClick = onBack, background = buttonBg) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    stringResource(I18nR.string.detail_header_back),
-                    tint = palette.foreground,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 12.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (solid) {
-                    Text(
-                        text = restaurantName,
-                        color = palette.foreground,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                GlassCircleButton(onClick = onShare, background = buttonBg) {
-                    Icon(
-                        Icons.Outlined.PersonAdd,
-                        stringResource(I18nR.string.detail_header_share),
-                        tint = palette.foreground,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                GlassCircleButton(onClick = onToggleSave, background = buttonBg) {
-                    HeartDrawableIcon(
-                        active = saved,
-                        contentDescription = stringResource(
-                            if (saved) I18nR.string.detail_unsave else I18nR.string.detail_save,
-                        ),
-                        iconHeight = 20.dp,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun GlassCircleButton(
-    onClick: () -> Unit,
-    background: Color,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        modifier = modifier
-            .size(40.dp)
-            .shadow(
-                elevation = 4.dp,
-                shape = CircleShape,
-                ambientColor = RestaurantColors.Base.black.copy(alpha = 0.12f),
-                spotColor = RestaurantColors.Base.black.copy(alpha = 0.10f),
-            )
-            .clip(CircleShape)
-            .background(background)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        content()
-    }
 }
 
 @Composable

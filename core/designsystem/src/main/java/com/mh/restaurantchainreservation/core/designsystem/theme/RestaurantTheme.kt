@@ -1,6 +1,10 @@
 package com.mh.restaurantchainreservation.core.designsystem.theme
 
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.LocalOverscrollFactory
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -37,10 +41,15 @@ private fun appColorScheme(): ColorScheme {
     )
 }
 
-/** App theme — light mode only. Edit colors in [RestaurantColors][com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors]. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RestaurantTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalRestaurantPalette provides DefaultRestaurantPalette) {
+    CompositionLocalProvider(
+        LocalRestaurantPalette provides DefaultRestaurantPalette,
+        LocalIndication provides NoRippleIndication,
+        LocalRippleConfiguration provides null,
+        LocalOverscrollFactory provides AppOverscrollFactory,
+    ) {
         MaterialTheme(
             colorScheme = appColorScheme(),
             typography = RestaurantTypography,

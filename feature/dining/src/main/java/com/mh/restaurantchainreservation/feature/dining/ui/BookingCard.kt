@@ -54,6 +54,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.mh.restaurantchainreservation.core.designsystem.components.shimmer
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
@@ -127,6 +128,7 @@ fun BookingCard(
                     modifier = Modifier
                         .size(108.dp)
                         .clip(RoundedCornerShape(18.dp))
+                        .shimmer(shape = RoundedCornerShape(18.dp))
                         .background(palette.mutedSurface),
                 ) {
                     AsyncImage(

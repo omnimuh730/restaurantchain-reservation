@@ -173,7 +173,7 @@ fun RestaurantPhotoGridScreen(
             RestaurantPhotoFullscreenViewer(
                 entries = entries,
                 initialIndex = start,
-                onDismiss = { fullscreenStartIndex = null },
+                onDismiss = onBack,
                 onOpenGrid = { fullscreenStartIndex = null },
             )
         }

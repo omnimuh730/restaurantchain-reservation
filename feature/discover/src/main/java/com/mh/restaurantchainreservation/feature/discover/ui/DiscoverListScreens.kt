@@ -273,7 +273,12 @@ private fun ListScaffold(
                 val selectedDayMillis = selectedDay.timeInMillis
                 LazyColumn(
                     modifier = Modifier.fillMaxSize().trackBottomNavScroll(),
-                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 32.dp),
+                    contentPadding = PaddingValues(
+                        start = DiscoverListHorizontalPadding,
+                        end = DiscoverListHorizontalPadding,
+                        top = 20.dp,
+                        bottom = 32.dp,
+                    ),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     items(restaurants, key = { it.id }) { item ->

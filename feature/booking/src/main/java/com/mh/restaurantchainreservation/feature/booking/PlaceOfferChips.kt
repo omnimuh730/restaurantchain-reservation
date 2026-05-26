@@ -65,8 +65,8 @@ fun PlaceOfferChip(
         Text(
             text = chip.label,
             color = palette.foreground,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Normal,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
         )
     }
 }
@@ -83,8 +83,8 @@ fun PlaceOfferChipCategorySection(
         Text(
             text = category.title,
             color = palette.foreground,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 12.dp),
         )
         FlowRow(

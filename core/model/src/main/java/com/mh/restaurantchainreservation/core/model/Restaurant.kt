@@ -38,9 +38,8 @@ fun deriveGuestFavoriteLevel(
     rating >= 4.75 && reviews >= 800 -> GuestFavoriteLevel.High
     rating >= 4.5 && reviews >= 350 -> GuestFavoriteLevel.Normal
     tag?.contains("favorite", ignoreCase = true) == true -> GuestFavoriteLevel.Normal
-    tag?.contains("Monthly Best", ignoreCase = true) == true && rating >= 4.65 ->
-        GuestFavoriteLevel.High
-    tag?.contains("Romantic", ignoreCase = true) == true && rating >= 4.7 ->
+    tag?.contains("Guest Favorite", ignoreCase = true) == true -> GuestFavoriteLevel.Normal
+    tag?.contains("Rare Find", ignoreCase = true) == true && rating >= 4.7 ->
         GuestFavoriteLevel.High
     else -> GuestFavoriteLevel.None
 }
@@ -212,49 +211,49 @@ object DiscoverData {
             id = "m1", name = "Prime Cut Steakhouse", cuisine = "Grilled Beef",
             rating = 4.7, reviews = 1850, price = "$$$", distance = "1.1 mi",
             image = "https://images.unsplash.com/photo-1678684279246-96e6afb970f2?w=400&h=300&fit=crop",
-            area = "Hayes Valley", tag = "Monthly Best",
+            area = "Hayes Valley", tag = "Guest Favorite",
         ),
         Restaurant(
             id = "m2", name = "Harbor Kitchen", cuisine = "American",
             rating = 4.5, reviews = 1320, price = "$$", distance = "0.9 mi",
             image = "https://images.unsplash.com/photo-1590189599125-67138c6509ef?w=400&h=300&fit=crop",
-            area = "Mission District", tag = "Monthly Best",
+            area = "Mission District", tag = "Popular",
         ),
         Restaurant(
             id = "m3", name = "Le Bouchon Moderne", cuisine = "French",
             rating = 4.8, reviews = 2105, price = "$$$$", distance = "0.6 mi",
             image = "https://images.unsplash.com/photo-1657502996869-6ccd568b9d41?w=400&h=300&fit=crop",
-            area = "Downtown", tag = "Monthly Best",
+            area = "Downtown", tag = "Guest Favorite",
         ),
         Restaurant(
             id = "m4", name = "Omakase Serenity", cuisine = "Japanese",
             rating = 4.9, reviews = 980, price = "$$$$", distance = "1.4 mi",
             image = "https://images.unsplash.com/photo-1681270507609-e2a5f21969b0?w=400&h=300&fit=crop",
-            area = "Midtown", tag = "Monthly Best",
+            area = "Midtown", tag = "Rare Find",
         ),
         Restaurant(
             id = "m5", name = "Mission Smoke BBQ", cuisine = "BBQ · Smokehouse",
             rating = 4.8, reviews = 3100, price = "$$$", distance = "1.5 mi",
             image = "https://images.unsplash.com/photo-1590189599125-67138c6509ef?w=400&h=300&fit=crop",
-            area = "Mission District", tag = "Monthly Best",
+            area = "Mission District", tag = "Popular",
         ),
         Restaurant(
             id = "m6", name = "Candlelit Terrace", cuisine = "Mediterranean",
             rating = 4.9, reviews = 1100, price = "$$$$", distance = "1.0 mi",
             image = "https://images.unsplash.com/photo-1773188243397-29591fa09047?w=400&h=300&fit=crop",
-            area = "Waterfront", tag = "Monthly Best",
+            area = "Waterfront", tag = "Guest Favorite",
         ),
         Restaurant(
             id = "m7", name = "Skyline Rooftop", cuisine = "Contemporary",
             rating = 4.8, reviews = 1250, price = "$$$$", distance = "1.8 mi",
             image = "https://images.unsplash.com/photo-1768397003905-a202ea6325f5?w=400&h=300&fit=crop",
-            area = "Uptown", tag = "Monthly Best",
+            area = "Uptown", tag = "Rare Find",
         ),
         Restaurant(
             id = "m8", name = "Harbor Kitchen · 12", cuisine = "Seafood",
             rating = 4.6, reviews = 1640, price = "$$$", distance = "2.1 mi",
             image = "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop",
-            area = "Harbor District", tag = "Monthly Best",
+            area = "Harbor District", tag = "Popular",
         ),
     )
 
@@ -269,19 +268,19 @@ object DiscoverData {
             id = "l2", name = "Golden Dragon Palace", cuisine = "Chinese · Dim Sum",
             rating = 4.5, reviews = 987, price = "$$", distance = "0.8 mi",
             image = "https://images.unsplash.com/photo-1694834589398-27b369c6f7a6?w=400&h=300&fit=crop",
-            tag = "Local Pick",
+            tag = "Rare Find",
         ),
         Restaurant(
             id = "l3", name = "Sakura Garden", cuisine = "Japanese · Ramen",
             rating = 4.7, reviews = 1456, price = "$$$", distance = "0.5 mi",
             image = "https://images.unsplash.com/photo-1731460202531-bf8389d565f7?w=400&h=300&fit=crop",
-            tag = "Must Try",
+            tag = "Guest Favorite",
         ),
         Restaurant(
             id = "l4", name = "Neon Bites", cuisine = "Fusion · Street Food",
             rating = 4.4, reviews = 2300, price = "$", distance = "1.2 mi",
             image = "https://images.unsplash.com/photo-1564759319376-a60b400ced8e?w=400&h=300&fit=crop",
-            area = "Arts District", tag = "Local Pick",
+            area = "Arts District", tag = "Rare Find",
         ),
         Restaurant(
             id = "l5", name = "The Sweet Spot", cuisine = "Dessert · Pastry",
@@ -293,13 +292,13 @@ object DiscoverData {
             id = "l6", name = "Wine & Whisper", cuisine = "Wine Bar · French",
             rating = 4.7, reviews = 850, price = "$$$", distance = "0.6 mi",
             image = "https://images.unsplash.com/photo-1763867641400-96b9cccdbf7d?w=400&h=300&fit=crop",
-            area = "North End", tag = "Local gem",
+            area = "North End", tag = "Rare Find",
         ),
         Restaurant(
             id = "l7", name = "Urban Grill · 8", cuisine = "American · Grill",
             rating = 4.5, reviews = 920, price = "$$", distance = "1.0 mi",
             image = "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=400&h=300&fit=crop",
-            area = "West Loop", tag = "Must Try",
+            area = "West Loop", tag = "Guest Favorite",
         ),
         Restaurant(
             id = "l8", name = "Lotus Noodle · 14", cuisine = "Vietnamese",
@@ -314,19 +313,19 @@ object DiscoverData {
             id = "v1", name = "Neon Bites", cuisine = "Fusion · Street Food",
             rating = 4.4, reviews = 2300, price = "$", distance = "1.2 mi",
             image = "https://images.unsplash.com/photo-1564759319376-a60b400ced8e?w=400&h=300&fit=crop",
-            tag = "2.3M views",
+            tag = "Popular",
         ),
         Restaurant(
             id = "v2", name = "The Sweet Spot", cuisine = "Dessert · Pastry",
             rating = 4.6, reviews = 1800, price = "$$", distance = "0.7 mi",
             image = "https://images.unsplash.com/photo-1753722157947-8a50f04a9309?w=400&h=300&fit=crop",
-            tag = "1.8M views",
+            tag = "Popular",
         ),
         Restaurant(
             id = "v3", name = "Mission Smoke BBQ", cuisine = "BBQ · Smokehouse",
             rating = 4.8, reviews = 3100, price = "$$$", distance = "1.5 mi",
             image = "https://images.unsplash.com/photo-1590189599125-67138c6509ef?w=400&h=300&fit=crop",
-            tag = "3.1M views",
+            tag = "Popular",
         ),
     )
 
@@ -335,19 +334,19 @@ object DiscoverData {
             id = "d1", name = "Candlelit Terrace", cuisine = "Mediterranean",
             rating = 4.9, reviews = 1100, price = "$$$$", distance = "1.0 mi",
             image = "https://images.unsplash.com/photo-1773188243397-29591fa09047?w=400&h=300&fit=crop",
-            tag = "Romantic",
+            tag = "Rare Find",
         ),
         Restaurant(
             id = "d2", name = "Wine & Whisper", cuisine = "Wine Bar · French",
             rating = 4.7, reviews = 850, price = "$$$", distance = "0.6 mi",
             image = "https://images.unsplash.com/photo-1763867641400-96b9cccdbf7d?w=400&h=300&fit=crop",
-            tag = "Romantic",
+            tag = "Rare Find",
         ),
         Restaurant(
             id = "d3", name = "Skyline Rooftop", cuisine = "Contemporary",
             rating = 4.8, reviews = 1250, price = "$$$$", distance = "1.8 mi",
             image = "https://images.unsplash.com/photo-1768397003905-a202ea6325f5?w=400&h=300&fit=crop",
-            tag = "Romantic",
+            tag = "Guest Favorite",
         ),
     )
 
@@ -397,7 +396,7 @@ object DiscoverData {
         "Downtown", "Midtown", "Arts District", "Waterfront", "Old Town", "North End",
         "SoHo", "West Loop", "Koreatown", "Japantown", "Uptown", "Financial District",
     )
-    private val priceCatalogTags = listOf("New", "Popular", "Chef's pick", "Local gem", null, null, null)
+    private val priceCatalogTags = listOf("New", "Popular", "Rare Find", null, null, null)
 
     private fun buildPriceTierCatalog(): List<Restaurant> {
         fun tier(price: String, tierKey: String): List<Restaurant> {
