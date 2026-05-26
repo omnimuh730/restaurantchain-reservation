@@ -708,7 +708,7 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onScrollToReviews: () -> U
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 repeat(5) {
-                    Icon(Icons.Filled.Star, null, tint = palette.foreground, modifier = Modifier.size(13.dp))
+                    Icon(Icons.Filled.Star, null, tint = palette.foreground, modifier = Modifier.size(12.dp))
                 }
             }
         }
@@ -722,7 +722,7 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onScrollToReviews: () -> U
                 animationKey = restaurant.id,
                 modifier = Modifier.weight(DetailStatsCenterColumnWeight),
                 laurelHeight = 38.dp,
-                titleSize = 20.sp,
+                titleSize = 18.sp,
             )
         }
         RatingsSummaryDivider(
@@ -742,8 +742,8 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onScrollToReviews: () -> U
             Text(
                 text = "Reviews",
                 color = palette.foreground,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(top = 4.dp),
             )
         }
@@ -785,7 +785,7 @@ private fun AboutSection(ext: RestaurantExtendedData) {
             text = "${ext.description} Experience the best of our cuisine at this location.",
             color = palette.foreground.copy(alpha = 0.9f),
             fontSize = 16.sp,
-            lineHeight = 28.sp,
+            lineHeight = 24.sp,
             modifier = Modifier.padding(top = 12.dp),
         )
     }
