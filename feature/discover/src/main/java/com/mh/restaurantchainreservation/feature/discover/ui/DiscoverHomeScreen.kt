@@ -120,6 +120,7 @@ import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import dev.chrisbanes.haze.rememberHazeState
+import com.mh.restaurantchainreservation.core.designsystem.badge.DiscoverRestaurantCardBadgeChip
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
@@ -1307,15 +1308,12 @@ private fun AirbnbMiniCard(
                         .fillMaxSize()
                         .then(heroModifier),
                 )
-                val tag = restaurant.tag
-                if (!tag.isNullOrBlank()) {
-                    com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
-                        text = tag,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(8.dp),
-                    )
-                }
+                DiscoverRestaurantCardBadgeChip(
+                    restaurant = restaurant,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(8.dp),
+                )
                 HeartButton(
                     active = saved,
                     onClick = { WishlistStore.onHeartTap(restaurant) },
@@ -1946,7 +1944,7 @@ private fun restaurantsForPriceTab(selected: String): List<Restaurant> =
             restaurant.copy(
                 id = "price-${selected.length}-${restaurant.id}",
                 price = selected,
-                tag = if (index % 2 == 0) "New" else "Sale",
+                tag = if (index % 2 == 0) "New" else "Popular",
             )
         }
     }
@@ -2144,19 +2142,16 @@ private fun RestaurantByPriceListRow(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
                 )
-                val tag = restaurant.tag
-                if (!tag.isNullOrBlank()) {
-                    com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
-                        text = tag,
-                        fontSize = 10.sp,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(
-                                start = PriceListAvatarOverlayPadding,
-                                top = PriceListAvatarOverlayPadding,
-                            ),
-                    )
-                }
+                DiscoverRestaurantCardBadgeChip(
+                    restaurant = restaurant,
+                    fontSize = 10.sp,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(
+                            start = PriceListAvatarOverlayPadding,
+                            top = PriceListAvatarOverlayPadding,
+                        ),
+                )
                 HeartButton(
                     active = saved,
                     onClick = { WishlistStore.onHeartTap(restaurant) },
@@ -2334,7 +2329,7 @@ private fun rememberNewThisWeek(): List<Restaurant> = remember {
 private fun rememberLateNight(): List<Restaurant> = remember {
     homeRailRestaurants(
         seed = 102,
-        tag = "Late night",
+        tag = "Rare Find",
         areaFor = { index ->
             when (index % 4) {
                 0 -> "Open until 1 AM"

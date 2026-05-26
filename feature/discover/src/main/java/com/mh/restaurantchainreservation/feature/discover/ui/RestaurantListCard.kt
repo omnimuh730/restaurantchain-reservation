@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.badge.DiscoverRestaurantCardBadgeChip
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.PressableContentScale
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
@@ -106,16 +107,12 @@ fun RestaurantListCard(
                         .align(Alignment.TopEnd)
                         .padding(10.dp),
                 )
-                // Optional tag chip top-left.
-                val tag = restaurant.tag
-                if (!tag.isNullOrBlank()) {
-                    com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
-                        text = tag,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(10.dp),
-                    )
-                }
+                DiscoverRestaurantCardBadgeChip(
+                    restaurant = restaurant,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(10.dp),
+                )
             }
             Column(
                 modifier = Modifier.padding(

@@ -115,6 +115,7 @@ import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnima
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.LocalBottomNavScrollBehavior
 import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavContentBottomPadding
+import com.mh.restaurantchainreservation.core.designsystem.badge.DiscoverRestaurantCardBadgeChip
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
@@ -1189,15 +1190,13 @@ private fun RestaurantResultCard(
                         .fillMaxSize()
                         .then(heroModifier),
                 )
-                restaurant.tag?.takeIf { it.isNotBlank() }?.let { tag ->
-                    com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
-                        text = tag,
-                        fontSize = 12.sp,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(12.dp),
-                    )
-                }
+                DiscoverRestaurantCardBadgeChip(
+                    restaurant = restaurant,
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(12.dp),
+                )
                 HeartButton(
                     active = saved,
                     onClick = { WishlistStore.onHeartTap(restaurant) },
@@ -1348,10 +1347,9 @@ private fun MapPreviewCard(
                     .fillMaxSize()
                     .then(heroModifier),
             )
-            com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
-                text = if (index % 2 == 0) "Trophy pick" else "Top rated",
+            DiscoverRestaurantCardBadgeChip(
+                restaurant = restaurant,
                 fontSize = 11.sp,
-                textColor = palette.foreground,
                 modifier = Modifier.padding(8.dp),
             )
             HeartButton(
