@@ -2,12 +2,13 @@ package com.mh.restaurantchainreservation.core.designsystem.theme
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.OverscrollEffect
 import androidx.compose.foundation.OverscrollFactory
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -20,12 +21,15 @@ import androidx.compose.ui.unit.Velocity
 import kotlin.math.abs
 
 /**
- * Premium iOS-style elastic overscroll (Rubber-Banding) restricted to Horizontal axis only.
+ * Premium iOS-style elastic overscroll (Rubber-Banding).
+ * Supports:
+ * - Horizontal (Left & Right)
+ * - Vertical Bottom only (Top is stable)
  */
 @Stable
-class HorizontalBounceOverscrollEffect : OverscrollEffect {
-    private val animatable = Animatable(0f)
-    private var overscrollX by mutableFloatStateOf(0f)
+class AppOverscrollEffect : OverscrollEffect {
+    private val animatable = Animatable(Offset.Zero, Offset.VectorConverter)
+    private var overscrollOffset by mutableStateOf(Offset.Zero)
 
     override fun applyToScroll(
         delta: Offset,
@@ -34,17 +38,32 @@ class HorizontalBounceOverscrollEffect : OverscrollEffect {
     ): Offset {
         // 1. Let the container scroll first
         val consumedByScroll = performScroll(delta)
-        
-        // 2. Only handle horizontal overscroll (left/right)
-        val leftOverX = delta.x - consumedByScroll.x
+        val leftOver = delta - consumedByScroll
 
-        if (source == NestedScrollSource.UserInput && abs(leftOverX) > 0.5f) {
-            // Rubber band resistance factor
+        // 2. Filter leftover delta based on requirements
+        if (source == NestedScrollSource.UserInput) {
             val resistance = 0.45f
-            overscrollX += leftOverX * resistance
             
-            // Consume X delta completely to indicate we've handled it
-            return Offset(x = delta.x, y = consumedByScroll.y)
+            // Horizontal is always allowed (left and right)
+            val allowedX = leftOver.x
+            
+            // Vertical is only allowed for bottom (upward drag result, delta.y < 0)
+            val allowedY = if (leftOver.y < -0.5f) leftOver.y else 0f
+
+            if (abs(allowedX) > 0.5f || abs(allowedY) > 0.5f) {
+                val current = overscrollOffset
+                val newOffset = Offset(
+                    x = current.x + allowedX * resistance,
+                    y = current.y + allowedY * resistance
+                )
+                overscrollOffset = newOffset
+                
+                // Return consumed delta to prevent platform effects
+                return Offset(
+                    x = if (abs(allowedX) > 0.5f) delta.x else consumedByScroll.x,
+                    y = if (abs(allowedY) > 0.5f) delta.y else consumedByScroll.y
+                )
+            }
         }
 
         return consumedByScroll
@@ -54,38 +73,35 @@ class HorizontalBounceOverscrollEffect : OverscrollEffect {
         velocity: Velocity,
         performFling: suspend (Velocity) -> Velocity
     ) {
-        // Let the container fling first
         performFling(velocity)
 
         // Reset with a spring animation when fling/drag ends
-        animatable.snapTo(overscrollX)
+        animatable.snapTo(overscrollOffset)
         animatable.animateTo(
-            targetValue = 0f,
+            targetValue = Offset.Zero,
             animationSpec = spring(
                 dampingRatio = Spring.DampingRatioLowBouncy,
                 stiffness = Spring.StiffnessLow
             )
         ) {
-            overscrollX = value
+            overscrollOffset = value
         }
     }
 
     override val isInProgress: Boolean
-        get() = overscrollX != 0f
+        get() = overscrollOffset != Offset.Zero
 
     override val node: DelegatableNode = object : Modifier.Node(), DrawModifierNode {
         override fun ContentDrawScope.draw() {
-            translate(left = overscrollX) {
+            translate(left = overscrollOffset.x, top = overscrollOffset.y) {
                 this@draw.drawContent()
             }
         }
     }
 }
 
-object HorizontalBounceOverscrollFactory : OverscrollFactory {
-    override fun createOverscrollEffect(): OverscrollEffect = HorizontalBounceOverscrollEffect()
-
-    override fun hashCode(): Int = 31338
-
+object AppOverscrollFactory : OverscrollFactory {
+    override fun createOverscrollEffect(): OverscrollEffect = AppOverscrollEffect()
+    override fun hashCode(): Int = 31340
     override fun equals(other: Any?): Boolean = other === this
 }
