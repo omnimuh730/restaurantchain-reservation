@@ -105,7 +105,7 @@ import com.mh.restaurantchainreservation.feature.dining.data.displaySeatingLabel
 
 private val SheetTopRadius = 34.dp
 private val HeaderSheetShape = RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius)
-private val HeroHeight = 288.dp
+private val HeroHeight = 380.dp
 private val DetailInfoHorizontalPadding = 24.dp
 private val DetailSheetTopPadding = 28.dp
 private val DetailSectionVerticalPadding = 24.dp

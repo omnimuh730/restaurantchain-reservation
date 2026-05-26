@@ -126,7 +126,7 @@ import kotlinx.coroutines.launch
 
 private val SheetTopRadius = 34.dp
 private val HeaderSheetShape = RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius)
-private val HeroHeight = 288.dp
+private val HeroHeight = 380.dp
 private val DetailInfoHorizontalPadding = 24.dp
 private val DetailListBottomPadding = 148.dp
 /** Gap between the bottom of "Show all reviews" and the top of the sticky Reserve bar. */
