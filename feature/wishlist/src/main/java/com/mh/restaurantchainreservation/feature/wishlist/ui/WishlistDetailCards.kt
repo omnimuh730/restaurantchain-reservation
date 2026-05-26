@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.components.shimmer
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
@@ -72,6 +73,7 @@ fun RecentlyViewedGridItem(
                 .fillMaxWidth()
                 .aspectRatio(1f)
                 .clip(RoundedCornerShape(16.dp))
+                .shimmer(shape = RoundedCornerShape(16.dp))
                 .background(palette.mutedSurface),
         ) {
             AsyncImage(
@@ -174,6 +176,7 @@ fun WishlistRestaurantResultCard(
                     .fillMaxWidth()
                     .aspectRatio(WishlistResultImageAspect)
                     .clip(RoundedCornerShape(16.dp))
+                    .shimmer(shape = RoundedCornerShape(16.dp))
                     .background(palette.mutedSurface),
             ) {
                 AsyncImage(

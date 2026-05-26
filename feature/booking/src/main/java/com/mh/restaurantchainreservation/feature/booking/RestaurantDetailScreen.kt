@@ -94,6 +94,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
+import com.mh.restaurantchainreservation.core.designsystem.components.shimmer
+import com.mh.restaurantchainreservation.core.designsystem.components.SkeletonBox
 import com.mh.restaurantchainreservation.core.designsystem.badge.AnimatedGuestFavoriteCenterBadge
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailCollapsingMetrics
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingHeartButton
@@ -520,7 +522,7 @@ private fun HeroCarousel(
     ) {
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().shimmer(),
             userScrollEnabled = showPageIndicator,
         ) { page ->
             AsyncImage(
@@ -1082,6 +1084,7 @@ private fun ReviewPreviewCard(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
+                    .shimmer(shape = CircleShape)
                     .background(palette.mutedSurface),
                 contentAlignment = Alignment.Center,
             ) {
@@ -1219,6 +1222,7 @@ private fun PopularMenuSection(
                     contentDescription = item.name,
                     showTitle = false,
                     showImageCaption = false,
+                    modifier = Modifier.shimmer(shape = RoundedCornerShape(12.dp)),
                 )
             }
             if (allImages.isNotEmpty()) {

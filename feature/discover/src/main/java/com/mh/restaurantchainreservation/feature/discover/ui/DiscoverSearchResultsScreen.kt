@@ -111,6 +111,8 @@ import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import androidx.compose.ui.window.DialogProperties
+import com.mh.restaurantchainreservation.core.designsystem.components.shimmer
+import com.mh.restaurantchainreservation.core.designsystem.components.SkeletonBox
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.LocalBottomNavScrollBehavior
@@ -1180,6 +1182,7 @@ private fun RestaurantResultCard(
                     .fillMaxWidth()
                     .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
                     .clip(RoundedCornerShape(16.dp))
+                    .shimmer(shape = RoundedCornerShape(16.dp))
                     .background(palette.mutedSurface),
             ) {
                 AsyncImage(
@@ -1337,6 +1340,7 @@ private fun MapPreviewCard(
             modifier = Modifier
                 .fillMaxHeight()
                 .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
+                .shimmer()
                 .background(palette.mutedSurface),
         ) {
             AsyncImage(
