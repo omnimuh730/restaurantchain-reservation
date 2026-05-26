@@ -205,7 +205,7 @@ private val DiningNewsCardShape = MoreCardShape
 private const val RestaurantRailVisibleCount = 8
 
 /** City / food image rails show this many cards, then the explore-more tile. */
-private const val ImageRailVisibleCount = 7
+private const val ImageRailVisibleCount = 8
 
 private val RestaurantMiniCardWidth = 176.dp
 private val RestaurantMiniImageHeight =
