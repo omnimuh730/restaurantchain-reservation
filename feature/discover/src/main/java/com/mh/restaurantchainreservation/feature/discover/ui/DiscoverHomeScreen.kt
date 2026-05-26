@@ -129,8 +129,6 @@ import com.mh.restaurantchainreservation.core.designsystem.components.HubSurface
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuSeeAllCard
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuTile
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
-import com.mh.restaurantchainreservation.core.designsystem.components.SkeletonBox
-import com.mh.restaurantchainreservation.core.designsystem.components.shimmer
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailHeroPullMotion
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroPullScaleMax
@@ -1172,7 +1170,7 @@ private fun WhereToEatCityTile(
             .size(WhereToEatCityTileWidth, WhereToEatCityTileHeight)
             .discoverImageCardSurface(RestaurantRailImageShape),
     ) {
-        Box(modifier = Modifier.fillMaxSize().shimmer(shape = RestaurantRailImageShape)) {
+        Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
                 model = image,
                 contentDescription = title,
@@ -1300,7 +1298,6 @@ private fun AirbnbMiniCard(
                     .fillMaxWidth()
                     .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
                     .discoverImageCardSurface(RestaurantRailImageShape)
-                    .shimmer(shape = RestaurantRailImageShape)
                     .background(palette.cardSurface),
             ) {
                 AsyncImage(
@@ -1390,8 +1387,7 @@ private fun NewsRail(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(DiningNewsHeroImageHeight)
-                                .shimmer(),
+                                .height(DiningNewsHeroImageHeight),
                         ) {
                             AsyncImage(
                                 model = newsItem.image,
@@ -2138,7 +2134,6 @@ private fun RestaurantByPriceListRow(
                 modifier = Modifier
                     .size(PriceListThumbnailWidth, PriceListThumbnailHeight)
                     .clip(RoundedCornerShape(PriceListAvatarCorner))
-                    .shimmer(shape = RoundedCornerShape(PriceListAvatarCorner))
                     .background(palette.cardSurface),
             ) {
                 AsyncImage(

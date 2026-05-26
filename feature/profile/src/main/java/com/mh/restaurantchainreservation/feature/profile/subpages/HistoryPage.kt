@@ -4,10 +4,6 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColo
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -244,7 +240,6 @@ fun HistoryPage(onBack: () -> Unit, modifier: Modifier = Modifier) {
                                 loadingMore = false
                             }
                         }
-                        LoadingTransactionSkeleton()
                     } else if (filtered.size > HistoryPageSize) {
                         Text(
                             text = "You are all caught up.",
@@ -281,70 +276,6 @@ private fun LazyListScope.groupedTransactionItems(
                     modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
                 )
                 GroupCard(items = items, onTap = onTap)
-            }
-        }
-    }
-}
-
-@Composable
-private fun LoadingTransactionSkeleton() {
-    val palette = LocalRestaurantPalette.current
-    val pulse by rememberInfiniteTransition(label = "history_skeleton").animateFloat(
-        initialValue = 0.32f,
-        targetValue = 0.76f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(760),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "history_skeleton_alpha",
-    )
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp, bottom = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        repeat(3) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(72.dp)
-                    .clip(RoundedCornerShape(22.dp))
-                    .border(1.dp, palette.border, RoundedCornerShape(22.dp))
-                    .background(palette.cardSurface)
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(CircleShape)
-                        .background(palette.mutedSurface.copy(alpha = pulse)),
-                )
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.64f)
-                            .height(13.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(palette.mutedSurface.copy(alpha = pulse)),
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.38f)
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(palette.mutedSurface.copy(alpha = pulse * 0.75f)),
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .width(54.dp)
-                        .height(13.dp)
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(palette.mutedSurface.copy(alpha = pulse)),
-                )
             }
         }
     }
