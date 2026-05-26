@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,6 +32,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -62,6 +65,7 @@ fun RestaurantListCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     timeSlots: List<RestaurantTimeSlot>? = null,
+    listHorizontalPadding: Dp = DiscoverListHorizontalPadding,
 ) {
     val palette = LocalRestaurantPalette.current
     val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
@@ -74,12 +78,13 @@ fun RestaurantListCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(palette.cardSurface),
+            .background(palette.cardSurface, RoundedCornerShape(20.dp)),
     ) {
         PressableContentScale(
             onClick = onClick,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)),
         ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -175,9 +180,23 @@ fun RestaurantListCard(
                 onSlotClick = { slot ->
                     if (slot.available) onClick()
                 },
-                modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 14.dp),
+                horizontalPadding = listHorizontalPadding,
+                modifier = Modifier
+                    .horizontalBleed(listHorizontalPadding)
+                    .padding(bottom = 14.dp),
             )
         }
+    }
+}
+
+/** Extends [horizontalPadding] past the list card so time chips scroll edge-to-edge on screen. */
+private fun Modifier.horizontalBleed(horizontalPadding: Dp): Modifier = layout { measurable, constraints ->
+    val padPx = horizontalPadding.roundToPx()
+    val placeable = measurable.measure(
+        constraints.copy(maxWidth = constraints.maxWidth + padPx * 2),
+    )
+    layout(constraints.maxWidth, placeable.height) {
+        placeable.place(-padPx, 0)
     }
 }
 
@@ -185,11 +204,13 @@ fun RestaurantListCard(
 private fun TimeSlotRow(
     slots: List<RestaurantTimeSlot>,
     onSlotClick: (RestaurantTimeSlot) -> Unit,
+    horizontalPadding: Dp,
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
     LazyRow(
         modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = horizontalPadding),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(slots, key = { it.label }) { slot ->
