@@ -222,6 +222,8 @@ fun RestaurantNavHost(
         showAppChrome &&
         !suppressBottomNav &&
         (bottomNavVisibilityProgress > 0.01f || (targetBottomNavVisible && !hideTabNavigation))
+    // Keep scroll tracking while the bar is hidden so upward scroll / pull can show it again.
+    val shouldTrackBottomNavScroll = isCompact && showAppChrome && !suppressBottomNav && !hideTabNavigation
     val bottomNavInsetProgress = bottomNavVisibilityProgress
 
     LaunchedEffect(destination?.route) {
@@ -291,7 +293,7 @@ fun RestaurantNavHost(
             Box(modifier = Modifier.fillMaxSize()) {
                 CompositionLocalProvider(
                     LocalBottomNavScrollBehavior provides
-                        bottomNavScrollBehavior.takeIf { showBottomBarSlot || suppressBottomNavOnDiscover },
+                        bottomNavScrollBehavior.takeIf { shouldTrackBottomNavScroll },
                     LocalNavContentBottomPadding provides compactBottomInset,
                 ) {
                     AppGraph(
@@ -608,10 +610,10 @@ private fun AppGraph(
                 ) {
             composable(
                 route = DiscoverRoutes.Home,
-                enterTransition = { fadeIn(tween(0)) },
-                exitTransition = { fadeOut(tween(0)) },
-                popEnterTransition = { fadeIn(tween(0)) },
-                popExitTransition = { fadeOut(tween(0)) },
+                enterTransition = { fadeIn(tween(RestaurantSharedTransitionMotion.durationMillis)) },
+                exitTransition = { fadeOut(tween(RestaurantSharedTransitionMotion.durationMillis)) },
+                popEnterTransition = { fadeIn(tween(RestaurantSharedTransitionMotion.durationMillis)) },
+                popExitTransition = { fadeOut(tween(RestaurantSharedTransitionMotion.durationMillis)) },
             ) { entry ->
                 CompositionLocalProvider(
                     LocalAnimatedContentScope provides this,
@@ -813,10 +815,10 @@ private fun AppGraph(
             composable(
                 route = BookingRoutes.RestaurantDetail,
                 arguments = listOf(navArgument("restaurantId") { type = NavType.StringType }),
-                enterTransition = { fadeIn(tween(0)) },
-                exitTransition = { fadeOut(tween(0)) },
-                popEnterTransition = { fadeIn(tween(0)) },
-                popExitTransition = { fadeOut(tween(0)) },
+                enterTransition = { fadeIn(tween(RestaurantSharedTransitionMotion.durationMillis)) },
+                exitTransition = { fadeOut(tween(RestaurantSharedTransitionMotion.durationMillis)) },
+                popEnterTransition = { fadeIn(tween(RestaurantSharedTransitionMotion.durationMillis)) },
+                popExitTransition = { fadeOut(tween(RestaurantSharedTransitionMotion.durationMillis)) },
             ) { entry ->
                 CompositionLocalProvider(
                     LocalAnimatedContentScope provides this,

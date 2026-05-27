@@ -126,6 +126,7 @@ import com.mh.restaurantchainreservation.core.designsystem.transition.LocalResta
 import com.mh.restaurantchainreservation.core.designsystem.components.PressableContentScale
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionChrome
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantHeroChromeAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
@@ -580,6 +581,21 @@ fun DiscoverSearchResultsScreen(
                     filtersOpen = false
                 },
                 onClose = { filtersOpen = false },
+            )
+        }
+
+        val sharedProgress = RestaurantSharedTransitionChrome.snapshot.progress
+        val isTransitionActive = RestaurantSharedTransitionChrome.snapshot.active
+        if (isTransitionActive && sharedProgress > 0.01f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        // Airbnb style: Blur background during transition from search results to detail.
+                        alpha = (sharedProgress * 1.5f).coerceIn(0f, 1f)
+                    }
+                    .background(palette.pageBackground.copy(alpha = (sharedProgress * 0.65f).coerceIn(0f, 1f)))
+                    .zIndex(40f), // Above everything including header (30f)
             )
         }
     }

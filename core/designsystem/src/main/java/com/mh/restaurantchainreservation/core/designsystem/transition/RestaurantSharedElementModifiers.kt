@@ -228,6 +228,7 @@ fun Modifier.restaurantSharedContentPanelLayer(
 ): Modifier {
     val palette = LocalRestaurantPalette.current
     val isTransitionCard = rememberRestaurantSharedTransitionParticipant(restaurantId, sharedTransitionScope)
+    val progress = RestaurantSharedTransitionChrome.snapshot.progress
     val showSurface = when (role) {
         RestaurantSharedContentPanelLayerRole.DiscoverCard -> isTransitionCard
         RestaurantSharedContentPanelLayerRole.DetailSheet -> true
@@ -237,12 +238,27 @@ fun Modifier.restaurantSharedContentPanelLayer(
             if (isTransitionCard) heroOverlap else 0.dp
         RestaurantSharedContentPanelLayerRole.DetailSheet -> heroOverlap
     }
+
+    // Smoothly fade in the white sheet background during the shared-element transition
+    // to avoid a sudden "white flash" behind the moving hero image.
+    val surfaceAlpha = if (isTransitionCard) {
+        // Start fading in slightly after the bounds animation starts for a cleaner "reveal"
+        ((progress - 0.12f) / 0.88f).coerceIn(0f, 1f)
+    } else if (role == RestaurantSharedContentPanelLayerRole.DetailSheet) {
+        1f
+    } else {
+        0f
+    }
+
     return this
         .then(if (showSurface) Modifier.zIndex(1f) else Modifier)
         .offset(y = -overlap)
         .then(
             if (showSurface) {
-                Modifier.background(color = palette.pageBackground, shape = shape)
+                Modifier.background(
+                    color = palette.pageBackground.copy(alpha = surfaceAlpha),
+                    shape = shape,
+                )
             } else {
                 Modifier
             },

@@ -85,7 +85,7 @@ class BottomNavScrollBehavior {
 @Composable
 fun rememberBottomNavScrollBehavior(): BottomNavScrollBehavior = remember { BottomNavScrollBehavior() }
 
-/** Provided by the app nav host on phone layouts when the bottom bar is shown. */
+/** Provided by the app nav host on phone tab layouts, including while the bar is hidden. */
 val LocalBottomNavScrollBehavior = staticCompositionLocalOf<BottomNavScrollBehavior?> { null }
 
 /** Attach to lazy lists, grids, or [verticalScroll] so scroll drives hide/show. */

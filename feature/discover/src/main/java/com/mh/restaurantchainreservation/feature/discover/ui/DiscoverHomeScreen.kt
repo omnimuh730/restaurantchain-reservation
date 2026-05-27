@@ -128,6 +128,7 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPale
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionChrome
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantHeroChromeAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
@@ -569,6 +570,25 @@ fun DiscoverHomeScreen(
                     PriceSectionLoadingMoreFooter()
                 }
             }
+        }
+
+        val sharedProgress = RestaurantSharedTransitionChrome.snapshot.progress
+        val isTransitionActive = RestaurantSharedTransitionChrome.snapshot.active
+        if (isTransitionActive && sharedProgress > 0.01f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        // Airbnb style: Discover page background blurs out during the shared-element
+                        // push to emphasize the moving card and provide a smooth landing for the
+                        // white detail sheet background.
+                        alpha = (sharedProgress * 1.5f).coerceIn(0f, 1f)
+                    }
+                    .hazeEffect(state = hazeState, style = HazeMaterials.regular())
+                    // Gentle white-out scrim synced with blur strength
+                    .background(palette.pageBackground.copy(alpha = (sharedProgress * 0.65f).coerceIn(0f, 1f)))
+                    .zIndex(3f),
+            )
         }
 
         AnimatedVisibility(
