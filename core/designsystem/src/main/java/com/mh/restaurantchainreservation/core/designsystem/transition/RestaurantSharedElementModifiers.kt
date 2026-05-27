@@ -49,6 +49,10 @@ object RestaurantSharedTransitionShapes {
     val detailContentPanel = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
 }
 
+/** White sheet overlap onto the hero (Airbnb-style card → detail). */
+val RestaurantCardContentPanelHeroOverlap = 14.dp
+val RestaurantCardContentPanelHeroOverlapCompact = 8.dp
+
 enum class RestaurantSharedTitleRole {
     Card,
     Detail,
@@ -168,31 +172,28 @@ fun rememberRestaurantSharedContentPanelModifier(
     }
 }
 
-/** Fades guest-favorite badge and heart to 0 while a shared-element transition is running. */
+/** Fades secondary card lines (address, rating row) during the shared-element transition. */
 @Composable
-fun rememberRestaurantCardHeroChromeAlpha(
+fun rememberRestaurantCardContentMetaAlpha(
     sharedTransitionScope: SharedTransitionScope?,
 ): Float {
     val transitionActive = sharedTransitionScope?.isTransitionActive == true
     val alpha by animateFloatAsState(
         targetValue = if (transitionActive) 0f else 1f,
-        animationSpec = tween(durationMillis = 100),
-        label = "restaurant-card-hero-chrome-alpha",
+        animationSpec = tween(durationMillis = 90),
+        label = "restaurant-card-content-meta-alpha",
     )
     return alpha
 }
 
 @Composable
 fun BoxScope.RestaurantCardHeroChromeLayer(
-    sharedTransitionScope: SharedTransitionScope?,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val chromeAlpha = rememberRestaurantCardHeroChromeAlpha(sharedTransitionScope)
     Box(
         modifier = Modifier
             .matchParentSize()
-            .graphicsLayer { alpha = chromeAlpha }
             .then(modifier),
         content = content,
     )

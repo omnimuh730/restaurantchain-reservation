@@ -201,7 +201,6 @@ private suspend fun LazyListState.scrollToReviewsShowAllButton(
 }
 
 private enum class DetailLoadPhase {
-    Shell,
     Loading,
     Ready,
 }
@@ -248,8 +247,8 @@ fun RestaurantDetailScreen(
         animatedVisibilityScope,
         shape = RestaurantSharedTransitionShapes.detailContentPanel,
     )
-    var loadPhase by remember(restaurantId) { mutableStateOf(DetailLoadPhase.Shell) }
-    var loadedPayload by remember(restaurantId) { mutableStateOf<DetailLoadedPayload?>(null) }
+    var loadPhase by remember { mutableStateOf(DetailLoadPhase.Loading) }
+    var loadedPayload by remember { mutableStateOf<DetailLoadedPayload?>(null) }
     val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
     val saved = restaurant.id in savedIds
     var showReviews by remember { mutableStateOf(false) }
@@ -271,11 +270,9 @@ fun RestaurantDetailScreen(
     val bodySlidePx = remember(density) { with(density) { 28.dp.toPx() } }
 
     LaunchedEffect(restaurantId) {
-        loadPhase = DetailLoadPhase.Shell
+        loadPhase = DetailLoadPhase.Loading
         loadedPayload = null
         bodyReveal.snapTo(0f)
-        delay(72)
-        loadPhase = DetailLoadPhase.Loading
         val payload = coroutineScope {
             val fetch = async(Dispatchers.Default) {
                 DetailLoadedPayload(
@@ -349,8 +346,10 @@ fun RestaurantDetailScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .zIndex(1f)
                             .offset(y = -SheetTopRadius)
                             .then(contentPanelModifier)
+                            .clip(RestaurantSharedTransitionShapes.detailContentPanel)
                             .background(palette.pageBackground),
                     ) {
                         HeaderSummaryCard(
@@ -553,11 +552,7 @@ private fun HeaderSummaryCard(
             .padding(horizontal = DetailInfoHorizontalPadding)
             .padding(
                 top = 28.dp,
-                bottom = when (loadPhase) {
-                    DetailLoadPhase.Ready -> 0.dp
-                    DetailLoadPhase.Loading -> 16.dp
-                    DetailLoadPhase.Shell -> 20.dp
-                },
+                bottom = if (loadPhase == DetailLoadPhase.Ready) 0.dp else 16.dp,
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -572,7 +567,7 @@ private fun HeaderSummaryCard(
                 .fillMaxWidth()
                 .then(titleVisibilityModifier),
         )
-        if (loadPhase == DetailLoadPhase.Loading) {
+        if (loadPhase != DetailLoadPhase.Ready) {
             RestaurantDetailLoadingDots(
                 modifier = Modifier.padding(top = 24.dp),
             )

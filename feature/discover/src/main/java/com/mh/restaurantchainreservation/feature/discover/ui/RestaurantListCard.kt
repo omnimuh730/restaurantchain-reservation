@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Dp
@@ -39,7 +41,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
+import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.badge.DiscoverRestaurantCardBadgeChip
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
@@ -47,10 +49,13 @@ import com.mh.restaurantchainreservation.core.designsystem.components.PressableC
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardContentPanelHeroOverlap
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionShapes
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleVisibilityModifier
@@ -77,7 +82,7 @@ fun RestaurantListCard(
     val shared = LocalRestaurantSharedTransitionScope.current
     val animatedContent = LocalAnimatedContentScope.current
     val heroShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-    val contentPanelRestShape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+    val contentPanelShape = RestaurantSharedTransitionShapes.cardContentPanel
     val heroModifier = rememberRestaurantSharedHeroModifier(
         restaurant.id,
         shared,
@@ -93,117 +98,120 @@ fun RestaurantListCard(
         restaurant.id,
         shared,
         animatedContent,
-        shape = RestaurantSharedTransitionShapes.cardContentPanel,
+        shape = contentPanelShape,
     )
+    val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(shared)
     val hasTimeSlots = !timeSlots.isNullOrEmpty()
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(palette.cardSurface, RoundedCornerShape(20.dp)),
+            .clip(RoundedCornerShape(20.dp)),
     ) {
         PressableContentScale(
             onClick = onClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)),
-        ) {
-        Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight),
-            ) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .then(heroModifier),
+                        .fillMaxWidth()
+                        .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight),
                 ) {
-                    AsyncImage(
-                        model = restaurant.image,
-                        contentDescription = restaurant.name,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-                RestaurantCardHeroChromeLayer(sharedTransitionScope = shared) {
-                    HeartButton(
-                        active = saved,
-                        onClick = { WishlistStore.onHeartTap(restaurant) },
-                        size = HeartButtonSize.Medium,
-                        style = HeartButtonStyle.Overlay,
-                        overlayContentAlignment = Alignment.TopCenter,
+                    Box(
                         modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(10.dp),
-                    )
-                    DiscoverRestaurantCardBadgeChip(
-                        restaurant = restaurant,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(10.dp),
-                    )
+                            .fillMaxSize()
+                            .then(heroModifier),
+                    ) {
+                        AsyncImage(
+                            model = restaurant.image,
+                            contentDescription = restaurant.name,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        RestaurantCardHeroChromeLayer {
+                            HeartButton(
+                                active = saved,
+                                onClick = { WishlistStore.onHeartTap(restaurant) },
+                                size = HeartButtonSize.Medium,
+                                style = HeartButtonStyle.Overlay,
+                                overlayContentAlignment = Alignment.TopCenter,
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(10.dp),
+                            )
+                            DiscoverRestaurantCardBadgeChip(
+                                restaurant = restaurant,
+                                modifier = Modifier
+                                    .align(Alignment.TopStart)
+                                    .padding(10.dp),
+                            )
+                        }
+                    }
                 }
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(contentPanelModifier)
-                    .background(palette.cardSurface, contentPanelRestShape)
-                    .padding(
-                        start = 14.dp,
-                        end = 14.dp,
-                        top = 14.dp,
-                        bottom = if (hasTimeSlots) 4.dp else 14.dp,
-                    ),
-            ) {
-                Text(
-                    text = restaurant.name,
-                    color = palette.foreground,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = titleVisibilityModifier,
-                )
-                Spacer(Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .zIndex(1f)
+                        .offset(y = -RestaurantCardContentPanelHeroOverlap)
+                        .then(contentPanelModifier)
+                        .background(palette.cardSurface, contentPanelShape)
+                        .padding(
+                            start = 14.dp,
+                            end = 14.dp,
+                            top = 14.dp,
+                            bottom = if (hasTimeSlots) 4.dp else 14.dp,
+                        ),
                 ) {
-                    val metaColor = palette.mutedForeground
-                    Icon(
-                        imageVector = Icons.Outlined.Place,
-                        contentDescription = null,
-                        tint = metaColor,
-                        modifier = Modifier.size(14.dp),
-                    )
-                    Spacer(Modifier.width(4.dp))
                     Text(
-                        text = listCardAddressLine(restaurant),
-                        color = metaColor,
-                        fontSize = 13.sp,
-                        maxLines = 1,
+                        text = restaurant.name,
+                        color = palette.foreground,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = titleVisibilityModifier,
                     )
-                    DiscoverInlineDot(color = metaColor)
-                    Text(
-                        text = "★ %.1f".format(restaurant.rating),
-                        color = metaColor,
-                        fontSize = 13.sp,
-                        maxLines = 1,
-                    )
+                    Column(
+                        modifier = Modifier.graphicsLayer { alpha = contentMetaAlpha },
+                    ) {
+                        Spacer(Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            val metaColor = palette.mutedForeground
+                            Icon(
+                                imageVector = Icons.Outlined.Place,
+                                contentDescription = null,
+                                tint = metaColor,
+                                modifier = Modifier.size(14.dp),
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = listCardAddressLine(restaurant),
+                                color = metaColor,
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            DiscoverInlineDot(color = metaColor)
+                            Text(
+                                text = "★ %.1f".format(restaurant.rating),
+                                color = metaColor,
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                            )
+                        }
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "${formatReviewCount(restaurant.reviews)} reviews",
+                            color = palette.mutedForeground,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                        )
+                    }
                 }
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "${formatReviewCount(restaurant.reviews)} reviews",
-                    color = palette.mutedForeground,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                )
             }
-        }
         }
         if (hasTimeSlots) {
             TimeSlotRow(

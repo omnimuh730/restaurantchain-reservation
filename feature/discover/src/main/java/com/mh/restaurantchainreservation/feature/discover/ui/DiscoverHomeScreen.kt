@@ -129,6 +129,8 @@ import com.mh.restaurantchainreservation.core.designsystem.transition.LocalResta
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionShapes
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardContentPanelHeroOverlapCompact
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleVisibilityModifier
@@ -1237,19 +1239,20 @@ private fun AirbnbMiniCard(
         animatedVisibilityScope = animatedContent,
         role = RestaurantSharedTitleRole.Card,
     )
-    val contentPanelRestShape = RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
+    val contentPanelShape = RestaurantSharedTransitionShapes.cardContentPanelCompact
     val contentPanelModifier = rememberRestaurantSharedContentPanelModifier(
         restaurant.id,
         shared,
         animatedContent,
-        shape = RestaurantSharedTransitionShapes.cardContentPanelCompact,
+        shape = contentPanelShape,
     )
+    val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(shared)
     val widthModifier = if (width > 0.dp) modifier.width(width) else modifier
     PressableScale(
         onClick = onClick,
         modifier = widthModifier,
     ) {
-        Column {
+        Box {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1268,30 +1271,32 @@ private fun AirbnbMiniCard(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
                     )
-                }
-                RestaurantCardHeroChromeLayer(sharedTransitionScope = shared) {
-                    DiscoverRestaurantCardBadgeChip(
-                        restaurant = restaurant,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(8.dp),
-                    )
-                    HeartButton(
-                        active = saved,
-                        onClick = { WishlistStore.onHeartTap(restaurant) },
-                        size = HeartButtonSize.Medium,
-                        style = HeartButtonStyle.Overlay,
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(8.dp),
-                    )
+                    RestaurantCardHeroChromeLayer {
+                        DiscoverRestaurantCardBadgeChip(
+                            restaurant = restaurant,
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(8.dp),
+                        )
+                        HeartButton(
+                            active = saved,
+                            onClick = { WishlistStore.onHeartTap(restaurant) },
+                            size = HeartButtonSize.Medium,
+                            style = HeartButtonStyle.Overlay,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp),
+                        )
+                    }
                 }
             }
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .zIndex(1f)
+                    .offset(y = -RestaurantCardContentPanelHeroOverlapCompact)
                     .then(contentPanelModifier)
-                    .background(palette.pageBackground, contentPanelRestShape)
+                    .background(palette.pageBackground, contentPanelShape)
                     .padding(top = 8.dp, bottom = 4.dp),
             ) {
                 Text(
@@ -1306,7 +1311,8 @@ private fun AirbnbMiniCard(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 2.dp),
+                        .padding(top = 2.dp)
+                        .graphicsLayer { alpha = contentMetaAlpha },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     val metaColor = palette.mutedForeground
@@ -2132,31 +2138,31 @@ private fun RestaurantByPriceListRow(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
                     )
-                }
-                RestaurantCardHeroChromeLayer(sharedTransitionScope = shared) {
-                    DiscoverRestaurantCardBadgeChip(
-                        restaurant = restaurant,
-                        fontSize = 10.sp,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(
-                                start = PriceListAvatarOverlayPadding,
-                                top = PriceListAvatarOverlayPadding,
-                            ),
-                    )
-                    HeartButton(
-                        active = saved,
-                        onClick = { WishlistStore.onHeartTap(restaurant) },
-                        size = HeartButtonSize.ExtraSmall,
-                        style = HeartButtonStyle.Overlay,
-                        overlayContentAlignment = Alignment.TopCenter,
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(
-                                top = PriceListAvatarOverlayPadding,
-                                end = PriceListAvatarOverlayPadding,
-                            ),
-                    )
+                    RestaurantCardHeroChromeLayer {
+                        DiscoverRestaurantCardBadgeChip(
+                            restaurant = restaurant,
+                            fontSize = 10.sp,
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(
+                                    start = PriceListAvatarOverlayPadding,
+                                    top = PriceListAvatarOverlayPadding,
+                                ),
+                        )
+                        HeartButton(
+                            active = saved,
+                            onClick = { WishlistStore.onHeartTap(restaurant) },
+                            size = HeartButtonSize.ExtraSmall,
+                            style = HeartButtonStyle.Overlay,
+                            overlayContentAlignment = Alignment.TopCenter,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(
+                                    top = PriceListAvatarOverlayPadding,
+                                    end = PriceListAvatarOverlayPadding,
+                                ),
+                        )
+                    }
                 }
             }
             Column(

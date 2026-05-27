@@ -1092,6 +1092,7 @@ private fun NavHostController.navigateToRestaurantDetail(restaurantId: String) {
     DiscoverData.findById(restaurantId)?.let { WishlistStore.recordRecentlyViewed(it) }
     navigate(BookingRoutes.restaurantDetail(restaurantId)) {
         launchSingleTop = true
+        restoreState = false
     }
 }
 
