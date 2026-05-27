@@ -1,18 +1,26 @@
 package com.mh.restaurantchainreservation.feature.booking
 
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantNavEntry
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionShapes
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionMotion
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantDetailChromeAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleVisibilityModifier
-import androidx.compose.animation.core.Animatable
+import com.mh.restaurantchainreservation.core.designsystem.transition.restaurantDetailChromeFade
+import com.mh.restaurantchainreservation.core.designsystem.transition.restaurantSharedContentPanelLayer
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
@@ -205,9 +213,10 @@ private suspend fun LazyListState.scrollToReviewsShowAllButton(
     animateScrollToItem(index = 0, scrollOffset = targetOffset)
 }
 
-private enum class DetailLoadPhase {
+/** Detail payload lifecycle for the twin-layer transition and post-arrival reveal. */
+enum class RestaurantDetailUiState {
     Loading,
-    Ready,
+    Success,
 }
 
 private data class DetailLoadedPayload(
@@ -252,7 +261,7 @@ fun RestaurantDetailScreen(
         animatedVisibilityScope,
         shape = RestaurantSharedTransitionShapes.detailContentPanel,
     )
-    var loadPhase by remember { mutableStateOf(DetailLoadPhase.Loading) }
+    var loadPhase by remember { mutableStateOf(RestaurantDetailUiState.Loading) }
     var loadedPayload by remember { mutableStateOf<DetailLoadedPayload?>(null) }
     val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
     val saved = restaurant.id in savedIds
@@ -264,7 +273,7 @@ fun RestaurantDetailScreen(
     val coroutineScope = rememberCoroutineScope()
     var detailPageCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     var reviewsShowAllButtonBottomPx by remember { mutableIntStateOf(0) }
-    val bodyReveal = remember { Animatable(0f) }
+    val detailChromeAlpha = rememberRestaurantDetailChromeAlpha(sharedTransitionScope)
     val navEntry = LocalRestaurantNavEntry.current as? NavBackStackEntry
     var visitGeneration by remember { mutableIntStateOf(0) }
     DisposableEffect(navEntry) {
@@ -288,17 +297,14 @@ fun RestaurantDetailScreen(
     val collapseProgress = rememberDetailCollapseProgress(listState, collapseRangePx)
     val heroScrollOffsetPx = rememberDetailHeroScrollOffsetPx(listState, collapseRangePx)
     val navigationBars = WindowInsets.navigationBars
-    val bodySlidePx = remember(density) { with(density) { 28.dp.toPx() } }
-
     LaunchedEffect(restaurantId, navEntry) {
         if (navEntry == null) visitGeneration = 1
     }
 
     LaunchedEffect(restaurantId, visitGeneration) {
         if (visitGeneration == 0) return@LaunchedEffect
-        loadPhase = DetailLoadPhase.Loading
+        loadPhase = RestaurantDetailUiState.Loading
         loadedPayload = null
-        bodyReveal.snapTo(0f)
         val payload = coroutineScope {
             val fetch = async(Dispatchers.Default) {
                 DetailLoadedPayload(
@@ -311,20 +317,10 @@ fun RestaurantDetailScreen(
             fetch.await()
         }
         loadedPayload = payload
-        loadPhase = DetailLoadPhase.Ready
+        loadPhase = RestaurantDetailUiState.Success
     }
 
-    LaunchedEffect(loadPhase, visitGeneration) {
-        if (loadPhase == DetailLoadPhase.Ready) {
-            bodyReveal.snapTo(0f)
-            bodyReveal.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(durationMillis = 420, delayMillis = 48, easing = FastOutSlowInEasing),
-            )
-        }
-    }
-
-    val contentReady = loadPhase == DetailLoadPhase.Ready && loadedPayload != null
+    val contentReady = loadPhase == RestaurantDetailUiState.Success && loadedPayload != null
     val payload = loadedPayload
     val heroImages = payload?.gallery ?: listOf(restaurant.image)
 
@@ -371,8 +367,11 @@ fun RestaurantDetailScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .zIndex(1f)
-                            .offset(y = -SheetTopRadius)
+                            .restaurantSharedContentPanelLayer(
+                                sharedTransitionScope = sharedTransitionScope,
+                                shape = RestaurantSharedTransitionShapes.detailContentPanel,
+                                heroOverlap = SheetTopRadius,
+                            )
                             .then(contentPanelModifier)
                             .clip(RestaurantSharedTransitionShapes.detailContentPanel)
                             .background(palette.pageBackground),
@@ -383,69 +382,83 @@ fun RestaurantDetailScreen(
                             loadPhase = loadPhase,
                             titleVisibilityModifier = titleVisibilityModifier,
                         )
-                        if (contentReady && payload != null) {
-                            RatingsSummaryRow(
-                                restaurant = restaurant,
-                                onScrollToReviews = {
-                                    coroutineScope.launch {
-                                        listState.scrollToReviewsShowAllButton(
-                                            showAllButtonBottomPx = reviewsShowAllButtonBottomPx,
-                                            bottomClearancePx = with(density) {
-                                                navigationBars.getBottom(this) +
-                                                    (
-                                                        BookingBarEstimatedHeight +
-                                                            ReviewsScrollGapAboveBookingBar
-                                                        ).roundToPx()
-                                            },
-                                        )
-                                    }
-                                },
-                            )
-                            Column(
-                                modifier = Modifier.graphicsLayer {
-                                    val p = bodyReveal.value
-                                    translationY = (1f - p) * bodySlidePx
-                                    alpha = 0.22f + 0.78f * p
-                                },
-                            ) {
-                                AboutSection(ext = payload.ext)
-                                AmenitiesSection(
-                                    restaurant = restaurant,
-                                    ext = payload.ext,
-                                    onShowAll = { showAmenities = true },
-                                )
-                                LocationSection(restaurant = restaurant, ext = payload.ext)
-                                ReviewsPreviewSection(
-                                    restaurant = restaurant,
-                                    reviews = payload.topReviews,
-                                    onOpenReviews = { showReviews = true },
-                                    onShowHowReviewsWork = { showHowReviewsWork = true },
-                                    detailPageCoordinates = detailPageCoordinates,
-                                    onShowAllButtonBottomMeasured = { bottomPx ->
-                                        reviewsShowAllButtonBottomPx = bottomPx
-                                    },
-                                )
-                                CancellationPolicySection()
-                                PopularMenuSection(
-                                    onShowMenu = onShowMenu,
-                                    onOpenPhotoGrid = onOpenPhotoGrid,
-                                )
+                        AnimatedContent(
+                            targetState = contentReady,
+                            transitionSpec = {
+                                (
+                                    fadeIn(RestaurantSharedTransitionMotion.contentRevealTween) +
+                                        slideInVertically(
+                                            animationSpec = tween(
+                                                durationMillis = 300,
+                                                easing = RestaurantSharedTransitionMotion.easing,
+                                            ),
+                                        ) { it / 10 }
+                                    ) togetherWith fadeOut(RestaurantSharedTransitionMotion.contentRevealTween)
+                            },
+                            label = "restaurant-detail-body",
+                        ) { ready ->
+                            if (ready && payload != null) {
+                                Column {
+                                    RatingsSummaryRow(
+                                        restaurant = restaurant,
+                                        onScrollToReviews = {
+                                            coroutineScope.launch {
+                                                listState.scrollToReviewsShowAllButton(
+                                                    showAllButtonBottomPx = reviewsShowAllButtonBottomPx,
+                                                    bottomClearancePx = with(density) {
+                                                        navigationBars.getBottom(this) +
+                                                            (
+                                                                BookingBarEstimatedHeight +
+                                                                    ReviewsScrollGapAboveBookingBar
+                                                                ).roundToPx()
+                                                    },
+                                                )
+                                            }
+                                        },
+                                    )
+                                    AboutSection(ext = payload.ext)
+                                    AmenitiesSection(
+                                        restaurant = restaurant,
+                                        ext = payload.ext,
+                                        onShowAll = { showAmenities = true },
+                                    )
+                                    LocationSection(restaurant = restaurant, ext = payload.ext)
+                                    ReviewsPreviewSection(
+                                        restaurant = restaurant,
+                                        reviews = payload.topReviews,
+                                        onOpenReviews = { showReviews = true },
+                                        onShowHowReviewsWork = { showHowReviewsWork = true },
+                                        detailPageCoordinates = detailPageCoordinates,
+                                        onShowAllButtonBottomMeasured = { bottomPx ->
+                                            reviewsShowAllButtonBottomPx = bottomPx
+                                        },
+                                    )
+                                    CancellationPolicySection()
+                                    PopularMenuSection(
+                                        onShowMenu = onShowMenu,
+                                        onOpenPhotoGrid = onOpenPhotoGrid,
+                                    )
+                                }
+                            } else {
+                                Spacer(Modifier.height(DetailListBottomPadding))
                             }
-                        } else {
-                            Spacer(Modifier.height(DetailListBottomPadding))
                         }
                     }
                 }
             }
         }
 
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(2f)
+                .restaurantDetailChromeFade(detailChromeAlpha),
+        ) {
         DetailFloatingToolbar(
             title = restaurant.name,
             collapseProgress = collapseProgress,
             onBack = onBack,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .zIndex(2f),
+            modifier = Modifier.fillMaxWidth(),
         ) { plateAlpha ->
             DetailFloatingIconButton(
                 onClick = { showShareSheet = true },
@@ -460,6 +473,7 @@ fun RestaurantDetailScreen(
                 onClick = { WishlistStore.onHeartTap(restaurant) },
                 contentDescription = "Save",
             )
+        }
         }
 
         if (showShareSheet) {
@@ -477,13 +491,13 @@ fun RestaurantDetailScreen(
             )
         }
 
-        if (contentReady) {
-            BookingBar(
-                restaurant = restaurant,
-                onBookNow = onBookNow,
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
-        }
+        BookingBar(
+            restaurant = restaurant,
+            onBookNow = onBookNow,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .restaurantDetailChromeFade(detailChromeAlpha),
+        )
 
         if (showReviews) {
             RestaurantReviewsScreen(
@@ -567,7 +581,7 @@ private fun HeroCarousel(
 private fun HeaderSummaryCard(
     restaurant: Restaurant,
     ext: RestaurantExtendedData?,
-    loadPhase: DetailLoadPhase,
+    loadPhase: RestaurantDetailUiState,
     titleVisibilityModifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
@@ -575,10 +589,7 @@ private fun HeaderSummaryCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = DetailInfoHorizontalPadding)
-            .padding(
-                top = 28.dp,
-                bottom = if (loadPhase == DetailLoadPhase.Ready) 0.dp else 16.dp,
-            ),
+            .padding(top = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -592,32 +603,52 @@ private fun HeaderSummaryCard(
                 .fillMaxWidth()
                 .then(titleVisibilityModifier),
         )
-        if (loadPhase != DetailLoadPhase.Ready) {
-            RestaurantDetailLoadingDots(
-                modifier = Modifier.padding(top = 24.dp),
-            )
-        }
-        if (loadPhase == DetailLoadPhase.Ready && ext != null) {
-            Text(
-                text = detailHeaderLocationLine(restaurant, ext),
-                color = palette.mutedForeground,
-                fontSize = 16.sp,
-                lineHeight = 22.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp),
-            )
-            Text(
-                text = detailHeaderHoursLine(restaurant, ext),
-                color = palette.mutedForeground,
-                fontSize = 16.sp,
-                lineHeight = 22.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
-            )
+        AnimatedContent(
+            targetState = loadPhase,
+            transitionSpec = {
+                fadeIn(RestaurantSharedTransitionMotion.contentRevealTween) togetherWith
+                    fadeOut(RestaurantSharedTransitionMotion.contentRevealTween)
+            },
+            label = "restaurant-detail-header-payload",
+        ) { phase ->
+            when (phase) {
+                RestaurantDetailUiState.Loading -> {
+                    RestaurantDetailLoadingDots(
+                        modifier = Modifier.padding(top = 24.dp, bottom = 16.dp),
+                    )
+                }
+                RestaurantDetailUiState.Success -> {
+                    if (ext != null) {
+                        Column(
+                            modifier = Modifier.padding(bottom = 4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Text(
+                                text = detailHeaderLocationLine(restaurant, ext),
+                                color = palette.mutedForeground,
+                                fontSize = 16.sp,
+                                lineHeight = 22.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp),
+                            )
+                            Text(
+                                text = detailHeaderHoursLine(restaurant, ext),
+                                color = palette.mutedForeground,
+                                fontSize = 16.sp,
+                                lineHeight = 22.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp),
+                            )
+                        }
+                    } else {
+                        Spacer(Modifier.height(16.dp))
+                    }
+                }
+            }
         }
     }
 }

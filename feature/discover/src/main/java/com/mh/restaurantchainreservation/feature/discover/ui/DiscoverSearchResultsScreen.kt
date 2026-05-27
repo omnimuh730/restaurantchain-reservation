@@ -127,9 +127,11 @@ import com.mh.restaurantchainreservation.core.designsystem.components.PressableC
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantHeroChromeAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleVisibilityModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.restaurantSharedContentPanelLayer
 import com.mh.restaurantchainreservation.core.model.DiscoverData
 import com.mh.restaurantchainreservation.core.model.LocationStore
 import com.mh.restaurantchainreservation.core.model.Restaurant
@@ -1191,6 +1193,7 @@ private fun RestaurantResultCard(
         animatedContent,
     )
     val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(shared)
+    val heroChromeAlpha = rememberRestaurantHeroChromeAlpha(shared)
     PressableContentScale(
         onClick = onOpen,
         modifier = Modifier.fillMaxWidth(),
@@ -1214,7 +1217,9 @@ private fun RestaurantResultCard(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
                     )
-                    RestaurantCardHeroChromeLayer {
+                    RestaurantCardHeroChromeLayer(
+                        modifier = Modifier.graphicsLayer { alpha = heroChromeAlpha },
+                    ) {
                         DiscoverRestaurantCardBadgeChip(
                             restaurant = restaurant,
                             fontSize = 12.sp,
@@ -1237,6 +1242,7 @@ private fun RestaurantResultCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .restaurantSharedContentPanelLayer(shared)
                     .then(contentPanelModifier)
                     .padding(top = 12.dp, bottom = 4.dp),
             ) {

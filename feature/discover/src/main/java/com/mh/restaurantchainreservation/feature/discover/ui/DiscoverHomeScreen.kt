@@ -128,10 +128,15 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPale
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionChrome
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantDiscoverChromeAlpha
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantHeroChromeAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleVisibilityModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.restaurantDiscoverChromeFade
+import com.mh.restaurantchainreservation.core.designsystem.transition.restaurantSharedContentPanelLayer
 import com.mh.restaurantchainreservation.core.model.Banner
 import com.mh.restaurantchainreservation.core.model.City
 import com.mh.restaurantchainreservation.core.model.DiscoverData
@@ -370,6 +375,9 @@ fun DiscoverHomeScreen(
     }
 
     val hazeState = rememberHazeState()
+    val sharedTransitionScope = LocalRestaurantSharedTransitionScope.current
+    val discoverChromeAlpha = rememberRestaurantDiscoverChromeAlpha(sharedTransitionScope)
+    val sharedTransitionChrome = RestaurantSharedTransitionChrome.snapshot
     DisposableEffect(hazeState) {
         DiscoverHazeRegistry.register(hazeState)
         onDispose { DiscoverHazeRegistry.unregister(hazeState) }
@@ -446,6 +454,7 @@ fun DiscoverHomeScreen(
                     onOpenMap = onOpenMap,
                     onViewAll = { onOpenSection("banners") },
                     onBannerClick = { bannerId -> onOpenSection(bannerId) },
+                    discoverChromeAlpha = discoverChromeAlpha,
                 )
             }
             item {
@@ -575,12 +584,23 @@ fun DiscoverHomeScreen(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .zIndex(4f),
+                .zIndex(4f)
+                .restaurantDiscoverChromeFade(discoverChromeAlpha),
         ) {
             CompactDiscoverBar(
                 hazeState = hazeState,
                 onOpenSearch = onOpenSearch,
                 onOpenMap = onOpenMap,
+            )
+        }
+
+        if (sharedTransitionChrome.active && sharedTransitionChrome.progress > 0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(3f)
+                    .hazeEffect(state = hazeState, style = HazeMaterials.thin())
+                    .graphicsLayer { alpha = sharedTransitionChrome.progress.coerceIn(0f, 1f) },
             )
         }
 
@@ -599,6 +619,7 @@ private fun HeroBanner(
     onOpenMap: () -> Unit,
     onViewAll: () -> Unit,
     onBannerClick: (String) -> Unit,
+    discoverChromeAlpha: Float = 1f,
 ) {
     val palette = LocalRestaurantPalette.current
     val pagerState = rememberPagerState(pageCount = { banners.size })
@@ -687,6 +708,7 @@ private fun HeroBanner(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .zIndex(2f)
+                .restaurantDiscoverChromeFade(discoverChromeAlpha)
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(
                     start = DiscoverLayout.PageHorizontal,
@@ -1243,6 +1265,7 @@ private fun AirbnbMiniCard(
         animatedContent,
     )
     val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(shared)
+    val heroChromeAlpha = rememberRestaurantHeroChromeAlpha(shared)
     val widthModifier = if (width > 0.dp) modifier.width(width) else modifier
     PressableScale(
         onClick = onClick,
@@ -1267,7 +1290,9 @@ private fun AirbnbMiniCard(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
                     )
-                    RestaurantCardHeroChromeLayer {
+                    RestaurantCardHeroChromeLayer(
+                        modifier = Modifier.graphicsLayer { alpha = heroChromeAlpha },
+                    ) {
                         DiscoverRestaurantCardBadgeChip(
                             restaurant = restaurant,
                             modifier = Modifier
@@ -1289,6 +1314,7 @@ private fun AirbnbMiniCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .restaurantSharedContentPanelLayer(shared)
                     .then(contentPanelModifier)
                     .padding(top = 8.dp, bottom = 4.dp),
             ) {

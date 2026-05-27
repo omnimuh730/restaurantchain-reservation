@@ -12,8 +12,10 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,7 +24,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
+import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 
 private val defaultSharedCornerShape = RoundedCornerShape(20.dp)
 
@@ -34,6 +40,14 @@ private val sharedSpring = spring<Float>(
     stiffness = Spring.StiffnessMediumLow,
     dampingRatio = Spring.DampingRatioNoBouncy,
 )
+
+private val sharedBoundsTransform: (Rect, Rect) -> androidx.compose.animation.core.FiniteAnimationSpec<Rect> =
+    { _, _ ->
+        tween(
+            durationMillis = RestaurantSharedTransitionMotion.durationMillis,
+            easing = RestaurantSharedTransitionMotion.easing,
+        )
+    }
 
 private val cardTitleFadeOutSpec = tween<Float>(durationMillis = CardTitleFadeOutMillis)
 private val detailTitleFadeInSpec = tween<Float>(
@@ -72,6 +86,7 @@ fun rememberRestaurantSharedHeroModifier(
             .sharedElement(
                 sharedContentState = rememberSharedContentState(key = RestaurantSharedKeys.hero(restaurantId)),
                 animatedVisibilityScope = animatedVisibilityScope,
+                boundsTransform = sharedBoundsTransform,
             )
             .clip(shape)
     }
@@ -91,6 +106,7 @@ fun rememberRestaurantSharedTitleModifier(
             enter = fadeIn(animationSpec = sharedSpring),
             exit = fadeOut(animationSpec = sharedSpring),
             resizeMode = SharedTransitionScope.ResizeMode.scaleToBounds(),
+            boundsTransform = sharedBoundsTransform,
         )
     }
 }
@@ -179,9 +195,29 @@ fun rememberRestaurantSharedContentPanelModifier(
                 enter = fadeIn(animationSpec = sharedSpring),
                 exit = fadeOut(animationSpec = sharedSpring),
                 resizeMode = SharedTransitionScope.ResizeMode.scaleToBounds(),
+                boundsTransform = sharedBoundsTransform,
             )
             .clip(clipShape)
     }
+}
+
+/**
+ * Twin-layer white sheet above the hero: shared bounds, overlap, and surface fill while
+ * the transition is in flight.
+ */
+@Composable
+fun Modifier.restaurantSharedContentPanelLayer(
+    sharedTransitionScope: SharedTransitionScope?,
+    shape: Shape = RestaurantSharedTransitionShapes.cardContentPanel,
+    heroOverlap: Dp = RestaurantCardContentPanelHeroOverlap,
+): Modifier {
+    val palette = LocalRestaurantPalette.current
+    val transitionActive = sharedTransitionScope?.isTransitionActive == true
+    val surfaceShape = if (transitionActive) shape else RectangleShape
+    return this
+        .zIndex(1f)
+        .offset(y = -heroOverlap)
+        .background(color = palette.pageBackground, shape = surfaceShape)
 }
 
 /** Fades secondary card lines (address, rating row) during the shared-element transition. */

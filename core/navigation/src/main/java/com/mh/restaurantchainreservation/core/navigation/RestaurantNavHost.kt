@@ -62,6 +62,9 @@ import androidx.navigation.navArgument
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantNavEntry
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionChrome
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionChromeSink
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionMotion
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavIconPaths
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavStrokeIcon
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucidePaths
@@ -191,18 +194,25 @@ fun RestaurantNavHost(
     }
 
     val bottomNavScrollBehavior = rememberBottomNavScrollBehavior()
+    val sharedTransitionChrome by androidx.compose.runtime.remember {
+        androidx.compose.runtime.derivedStateOf { RestaurantSharedTransitionChrome.snapshot }
+    }
     val hideTabNavigation = hidesMainTabNavigation(destination?.route)
     val showBottomBarSlot = isCompact &&
         showAppChrome &&
-        !hideTabNavigation &&
+        (!hideTabNavigation || sharedTransitionChrome.active) &&
         !suppressBottomNav
     val scrollNavShowProgress by animateFloatAsState(
         targetValue = if (!showBottomBarSlot || !bottomNavScrollBehavior.isVisible) 0f else 1f,
         animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
         label = "bottomNavScrollShow",
     )
+    val sharedChromeDiscoverAlpha = RestaurantSharedTransitionMotion.discoverChromeAlpha(
+        transitionProgress = sharedTransitionChrome.progress,
+        transitionActive = sharedTransitionChrome.active,
+    )
     val bottomNavInsetProgress = if (showBottomBarSlot) scrollNavShowProgress else 0f
-    val bottomNavVisibilityProgress = bottomNavInsetProgress
+    val bottomNavVisibilityProgress = bottomNavInsetProgress * sharedChromeDiscoverAlpha
 
     LaunchedEffect(destination?.route) {
         bottomNavScrollBehavior.show()
@@ -563,6 +573,7 @@ private fun AppGraph(
     Box(modifier = modifier) {
         SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalRestaurantSharedTransitionScope provides this) {
+                RestaurantSharedTransitionChromeSink()
                 NavHost(
                     navController = navController,
                     startDestination = initialStartDestination,
@@ -771,6 +782,10 @@ private fun AppGraph(
             composable(
                 route = BookingRoutes.RestaurantDetail,
                 arguments = listOf(navArgument("restaurantId") { type = NavType.StringType }),
+                enterTransition = { fadeIn(tween(0)) },
+                exitTransition = { fadeOut(tween(0)) },
+                popEnterTransition = { fadeIn(tween(0)) },
+                popExitTransition = { fadeOut(tween(0)) },
             ) { entry ->
                 CompositionLocalProvider(
                     LocalAnimatedContentScope provides this,

@@ -52,9 +52,11 @@ import com.mh.restaurantchainreservation.core.designsystem.transition.LocalResta
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantHeroChromeAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleVisibilityModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.restaurantSharedContentPanelLayer
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.RestaurantTimeSlot
 import com.mh.restaurantchainreservation.core.model.WishlistStore
@@ -96,6 +98,7 @@ fun RestaurantListCard(
         animatedContent,
     )
     val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(shared)
+    val heroChromeAlpha = rememberRestaurantHeroChromeAlpha(shared)
     val hasTimeSlots = !timeSlots.isNullOrEmpty()
     Column(modifier = modifier.fillMaxWidth()) {
         PressableContentScale(
@@ -120,7 +123,9 @@ fun RestaurantListCard(
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize(),
                         )
-                        RestaurantCardHeroChromeLayer {
+                        RestaurantCardHeroChromeLayer(
+                            modifier = Modifier.graphicsLayer { alpha = heroChromeAlpha },
+                        ) {
                             HeartButton(
                                 active = saved,
                                 onClick = { WishlistStore.onHeartTap(restaurant) },
@@ -143,6 +148,7 @@ fun RestaurantListCard(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .restaurantSharedContentPanelLayer(shared)
                         .then(contentPanelModifier)
                         .padding(
                             start = 2.dp,
