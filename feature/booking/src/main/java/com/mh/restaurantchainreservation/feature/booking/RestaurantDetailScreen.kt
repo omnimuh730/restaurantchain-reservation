@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantNavEntry
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionShapes
@@ -65,6 +66,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -126,6 +128,9 @@ import com.mh.restaurantchainreservation.core.model.WishlistStore
 import com.mh.restaurantchainreservation.core.model.withDerivedGuestFavoriteLevel
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.navigation.NavBackStackEntry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -260,6 +265,22 @@ fun RestaurantDetailScreen(
     var detailPageCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     var reviewsShowAllButtonBottomPx by remember { mutableIntStateOf(0) }
     val bodyReveal = remember { Animatable(0f) }
+    val navEntry = LocalRestaurantNavEntry.current as? NavBackStackEntry
+    var visitGeneration by remember { mutableIntStateOf(0) }
+    DisposableEffect(navEntry) {
+        val lifecycle = navEntry?.lifecycle
+        if (lifecycle == null) {
+            onDispose {}
+        } else {
+            val observer = LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    visitGeneration++
+                }
+            }
+            lifecycle.addObserver(observer)
+            onDispose { lifecycle.removeObserver(observer) }
+        }
+    }
     val density = LocalDensity.current
     val collapseRangePx = remember(density) { DetailCollapsingMetrics.heroScrollRangePx(density) }
     val headerScroll = rememberCollapsingHeaderScrollState(collapseRangePx)
@@ -269,7 +290,12 @@ fun RestaurantDetailScreen(
     val navigationBars = WindowInsets.navigationBars
     val bodySlidePx = remember(density) { with(density) { 28.dp.toPx() } }
 
-    LaunchedEffect(restaurantId) {
+    LaunchedEffect(restaurantId, navEntry) {
+        if (navEntry == null) visitGeneration = 1
+    }
+
+    LaunchedEffect(restaurantId, visitGeneration) {
+        if (visitGeneration == 0) return@LaunchedEffect
         loadPhase = DetailLoadPhase.Loading
         loadedPayload = null
         bodyReveal.snapTo(0f)
@@ -288,9 +314,8 @@ fun RestaurantDetailScreen(
         loadPhase = DetailLoadPhase.Ready
     }
 
-    LaunchedEffect(loadPhase) {
+    LaunchedEffect(loadPhase, visitGeneration) {
         if (loadPhase == DetailLoadPhase.Ready) {
-            if (bodyReveal.value >= 0.99f) return@LaunchedEffect
             bodyReveal.snapTo(0f)
             bodyReveal.animateTo(
                 targetValue = 1f,

@@ -40,6 +40,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -776,6 +777,7 @@ private fun AppGraph(
                     LocalRestaurantNavEntry provides entry,
                 ) {
                     val id = entry.arguments?.getString("restaurantId").orEmpty()
+                    key(entry.id) {
                     RestaurantDetailScreen(
                         restaurantId = id,
                         onBack = { navController.popBackStack() },
@@ -791,6 +793,7 @@ private fun AppGraph(
                             navController.navigateToPhotoGrid(id, source)
                         },
                     )
+                    }
                 }
             }
             composable(
@@ -1093,6 +1096,11 @@ private fun NavHostController.navigateToRestaurantDetail(restaurantId: String) {
     navigate(BookingRoutes.restaurantDetail(restaurantId)) {
         launchSingleTop = true
         restoreState = false
+        // Drop any saved detail entry so reopening the same restaurant does not reuse Ready state.
+        popUpTo(DiscoverRoutes.Home) {
+            inclusive = false
+            saveState = false
+        }
     }
 }
 
