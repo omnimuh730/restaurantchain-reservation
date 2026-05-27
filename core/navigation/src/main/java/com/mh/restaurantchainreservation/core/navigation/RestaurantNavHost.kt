@@ -581,7 +581,13 @@ private fun AppGraph(
                         .fillMaxSize()
                         .padding(contentPadding),
                 ) {
-            composable(DiscoverRoutes.Home) { entry ->
+            composable(
+                route = DiscoverRoutes.Home,
+                enterTransition = { fadeIn(tween(0)) },
+                exitTransition = { fadeOut(tween(0)) },
+                popEnterTransition = { fadeIn(tween(0)) },
+                popExitTransition = { fadeOut(tween(0)) },
+            ) { entry ->
                 CompositionLocalProvider(
                     LocalAnimatedContentScope provides this,
                     LocalRestaurantNavEntry provides entry,
@@ -1110,11 +1116,11 @@ private fun NavHostController.navigateToRestaurantDetail(restaurantId: String) {
     DiscoverData.findById(restaurantId)?.let { WishlistStore.recordRecentlyViewed(it) }
     navigate(BookingRoutes.restaurantDetail(restaurantId)) {
         launchSingleTop = true
+        // Fresh detail each open; discover below keeps scroll + list via saveState.
         restoreState = false
-        // Drop any saved detail entry so reopening the same restaurant does not reuse Ready state.
         popUpTo(DiscoverRoutes.Home) {
             inclusive = false
-            saveState = false
+            saveState = true
         }
     }
 }

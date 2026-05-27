@@ -128,7 +128,6 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPale
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
-import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionChrome
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantDiscoverChromeAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantHeroChromeAlpha
@@ -322,7 +321,9 @@ fun DiscoverHomeScreen(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val listState = rememberLazyListState()
+    val listState = rememberSaveable(saver = LazyListState.Saver) {
+        LazyListState()
+    }
     val news = remember { NewsData.all }
     val compact by remember {
         derivedStateOf {
@@ -334,21 +335,26 @@ fun DiscoverHomeScreen(
     val priceTabBasePool = remember(selectedPriceTab) {
         restaurantsForPriceTab(selectedPriceTab)
     }
-    var priceSectionRestaurants by remember(selectedPriceTab) {
-        mutableStateOf(restaurantsForPriceTab(selectedPriceTab).take(5))
+    var priceSectionIds by rememberSaveable(selectedPriceTab) {
+        mutableStateOf(
+            restaurantsForPriceTab(selectedPriceTab).take(5).map { it.id },
+        )
     }
-    var priceSectionLoadingMore by remember { mutableStateOf(false) }
+    val priceSectionRestaurants = remember(priceSectionIds) {
+        priceSectionIds.mapNotNull { id -> DiscoverData.findById(id) }
+    }
+    var priceSectionLoadingMore by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(selectedPriceTab, compact) {
         priceSectionLoadingMore = false
         if (compact && listState.firstVisibleItemIndex >= 2) {
             listState.scrollToItem(index = 2, scrollOffset = 0)
         }
     }
-    LaunchedEffect(listState, priceSectionRestaurants.size, selectedPriceTab, priceTabBasePool) {
+    LaunchedEffect(listState, priceSectionIds.size, selectedPriceTab, priceTabBasePool) {
         snapshotFlow {
             if (priceSectionLoadingMore) return@snapshotFlow false
             val poolSize = priceTabBasePool.size
-            val n = priceSectionRestaurants.size
+            val n = priceSectionIds.size
             if (n == 0 || n >= poolSize) {
                 false
             } else {
@@ -361,13 +367,13 @@ fun DiscoverHomeScreen(
             .distinctUntilChanged()
             .collect { showLastRow ->
                 if (!showLastRow) return@collect
-                val loaded = priceSectionRestaurants.size
+                val loaded = priceSectionIds.size
                 val more = priceTabBasePool.drop(loaded).take(5)
                 if (more.isEmpty()) return@collect
                 priceSectionLoadingMore = true
                 try {
                     delay(520)
-                    priceSectionRestaurants = priceSectionRestaurants + more
+                    priceSectionIds = priceSectionIds + more.map { it.id }
                 } finally {
                     priceSectionLoadingMore = false
                 }
@@ -377,7 +383,6 @@ fun DiscoverHomeScreen(
     val hazeState = rememberHazeState()
     val sharedTransitionScope = LocalRestaurantSharedTransitionScope.current
     val discoverChromeAlpha = rememberRestaurantDiscoverChromeAlpha(sharedTransitionScope)
-    val sharedTransitionChrome = RestaurantSharedTransitionChrome.snapshot
     DisposableEffect(hazeState) {
         DiscoverHazeRegistry.register(hazeState)
         onDispose { DiscoverHazeRegistry.unregister(hazeState) }
@@ -591,16 +596,6 @@ fun DiscoverHomeScreen(
                 hazeState = hazeState,
                 onOpenSearch = onOpenSearch,
                 onOpenMap = onOpenMap,
-            )
-        }
-
-        if (sharedTransitionChrome.active && sharedTransitionChrome.progress > 0f) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(3f)
-                    .hazeEffect(state = hazeState, style = HazeMaterials.thin())
-                    .graphicsLayer { alpha = sharedTransitionChrome.progress.coerceIn(0f, 1f) },
             )
         }
 

@@ -76,11 +76,13 @@ fun RestaurantSharedTransitionChromeSink() {
             )
         } else {
             driver.snapTo(0f)
+            RestaurantSharedTransitionChrome.update(progress = 0f, active = false)
         }
     }
     SideEffect {
-        val active = scope.isTransitionActive || driver.value > 0f
-        RestaurantSharedTransitionChrome.update(driver.value, active)
+        if (scope.isTransitionActive) {
+            RestaurantSharedTransitionChrome.update(driver.value, active = true)
+        }
     }
 }
 
@@ -88,22 +90,20 @@ fun RestaurantSharedTransitionChromeSink() {
 fun rememberRestaurantDiscoverChromeAlpha(
     sharedTransitionScope: SharedTransitionScope?,
 ): Float {
-    val chrome = RestaurantSharedTransitionChrome.snapshot
     val scopeActive = sharedTransitionScope?.isTransitionActive == true
-    val progress = if (scopeActive || chrome.active) chrome.progress else 0f
-    val active = scopeActive || chrome.active
-    return RestaurantSharedTransitionMotion.discoverChromeAlpha(progress, active)
+    if (!scopeActive) return 1f
+    val progress = RestaurantSharedTransitionChrome.snapshot.progress
+    return RestaurantSharedTransitionMotion.discoverChromeAlpha(progress, transitionActive = true)
 }
 
 @Composable
 fun rememberRestaurantDetailChromeAlpha(
     sharedTransitionScope: SharedTransitionScope?,
 ): Float {
-    val chrome = RestaurantSharedTransitionChrome.snapshot
     val scopeActive = sharedTransitionScope?.isTransitionActive == true
-    val progress = if (scopeActive || chrome.active) chrome.progress else 0f
-    val active = scopeActive || chrome.active
-    return RestaurantSharedTransitionMotion.detailChromeAlpha(progress, active)
+    if (!scopeActive) return 1f
+    val progress = RestaurantSharedTransitionChrome.snapshot.progress
+    return RestaurantSharedTransitionMotion.detailChromeAlpha(progress, transitionActive = true)
 }
 
 @Composable
