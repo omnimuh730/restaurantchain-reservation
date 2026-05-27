@@ -128,8 +128,6 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPale
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
-import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionShapes
-import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardContentPanelHeroOverlapCompact
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
@@ -1239,12 +1237,10 @@ private fun AirbnbMiniCard(
         animatedVisibilityScope = animatedContent,
         role = RestaurantSharedTitleRole.Card,
     )
-    val contentPanelShape = RestaurantSharedTransitionShapes.cardContentPanelCompact
     val contentPanelModifier = rememberRestaurantSharedContentPanelModifier(
         restaurant.id,
         shared,
         animatedContent,
-        shape = contentPanelShape,
     )
     val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(shared)
     val widthModifier = if (width > 0.dp) modifier.width(width) else modifier
@@ -1252,7 +1248,7 @@ private fun AirbnbMiniCard(
         onClick = onClick,
         modifier = widthModifier,
     ) {
-        Box {
+        Column {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1293,10 +1289,7 @@ private fun AirbnbMiniCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .zIndex(1f)
-                    .offset(y = -RestaurantCardContentPanelHeroOverlapCompact)
                     .then(contentPanelModifier)
-                    .background(palette.pageBackground, contentPanelShape)
                     .padding(top = 8.dp, bottom = 4.dp),
             ) {
                 Text(

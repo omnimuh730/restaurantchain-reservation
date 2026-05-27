@@ -126,8 +126,6 @@ import com.mh.restaurantchainreservation.core.designsystem.transition.LocalResta
 import com.mh.restaurantchainreservation.core.designsystem.components.PressableContentScale
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
-import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionShapes
-import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardContentPanelHeroOverlap
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
@@ -1176,7 +1174,6 @@ private fun RestaurantResultCard(
     val shared = LocalRestaurantSharedTransitionScope.current
     val animatedContent = LocalAnimatedContentScope.current
     val heroShape = RoundedCornerShape(24.dp)
-    val contentPanelShape = RestaurantSharedTransitionShapes.cardContentPanelWide
     val heroModifier = rememberRestaurantSharedHeroModifier(
         restaurant.id,
         shared,
@@ -1192,14 +1189,13 @@ private fun RestaurantResultCard(
         restaurant.id,
         shared,
         animatedContent,
-        shape = contentPanelShape,
     )
     val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(shared)
     PressableContentScale(
         onClick = onOpen,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1241,10 +1237,7 @@ private fun RestaurantResultCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .zIndex(1f)
-                    .offset(y = -RestaurantCardContentPanelHeroOverlap)
                     .then(contentPanelModifier)
-                    .background(palette.pageBackground, contentPanelShape)
                     .padding(top = 12.dp, bottom = 4.dp),
             ) {
                 Row(

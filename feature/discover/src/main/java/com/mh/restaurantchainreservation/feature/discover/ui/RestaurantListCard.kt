@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -41,7 +40,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.badge.DiscoverRestaurantCardBadgeChip
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
@@ -51,10 +49,8 @@ import com.mh.restaurantchainreservation.core.designsystem.components.HeartButto
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
-import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardContentPanelHeroOverlap
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
-import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionShapes
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
@@ -62,6 +58,8 @@ import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRe
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.RestaurantTimeSlot
 import com.mh.restaurantchainreservation.core.model.WishlistStore
+
+private val ListCardImageShape = RoundedCornerShape(20.dp)
 
 /**
  * Discover list card — hero at [DiscoverRestaurantImageAspectWidthOverHeight], title,
@@ -81,13 +79,11 @@ fun RestaurantListCard(
     val saved = restaurant.id in savedIds
     val shared = LocalRestaurantSharedTransitionScope.current
     val animatedContent = LocalAnimatedContentScope.current
-    val heroShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-    val contentPanelShape = RestaurantSharedTransitionShapes.cardContentPanel
     val heroModifier = rememberRestaurantSharedHeroModifier(
         restaurant.id,
         shared,
         animatedContent,
-        shape = heroShape,
+        shape = ListCardImageShape,
     )
     val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
         sharedTransitionScope = shared,
@@ -98,24 +94,20 @@ fun RestaurantListCard(
         restaurant.id,
         shared,
         animatedContent,
-        shape = contentPanelShape,
     )
     val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(shared)
     val hasTimeSlots = !timeSlots.isNullOrEmpty()
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp)),
-    ) {
+    Column(modifier = modifier.fillMaxWidth()) {
         PressableContentScale(
             onClick = onClick,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight),
+                        .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
+                        .clip(ListCardImageShape),
                 ) {
                     Box(
                         modifier = Modifier
@@ -151,15 +143,12 @@ fun RestaurantListCard(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .zIndex(1f)
-                        .offset(y = -RestaurantCardContentPanelHeroOverlap)
                         .then(contentPanelModifier)
-                        .background(palette.cardSurface, contentPanelShape)
                         .padding(
-                            start = 14.dp,
-                            end = 14.dp,
-                            top = 14.dp,
-                            bottom = if (hasTimeSlots) 4.dp else 14.dp,
+                            start = 2.dp,
+                            end = 2.dp,
+                            top = 10.dp,
+                            bottom = if (hasTimeSlots) 0.dp else 2.dp,
                         ),
                 ) {
                     Text(

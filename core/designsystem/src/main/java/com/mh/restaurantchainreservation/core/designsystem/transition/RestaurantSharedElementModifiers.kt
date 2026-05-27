@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
@@ -148,15 +149,26 @@ fun rememberRestaurantSharedTitleVisibilityModifier(
     return Modifier.graphicsLayer { this.alpha = alpha }
 }
 
-/** Morphs the card text block into the detail screen's rounded sheet under the hero. */
+/**
+ * Morphs the card text block into the detail screen's rounded sheet under the hero.
+ *
+ * On discover cards, [clipOnlyWhileTransitioning] avoids clipping list text at rest; rounded
+ * corners apply only once the shared-element transition is in flight.
+ */
 @Composable
 fun rememberRestaurantSharedContentPanelModifier(
     restaurantId: String,
     sharedTransitionScope: SharedTransitionScope?,
     animatedVisibilityScope: AnimatedVisibilityScope?,
-    shape: Shape,
+    shape: Shape = RestaurantSharedTransitionShapes.cardContentPanel,
+    clipOnlyWhileTransitioning: Boolean = true,
 ): Modifier {
     if (sharedTransitionScope == null || animatedVisibilityScope == null) return Modifier
+    val clipShape = when {
+        !clipOnlyWhileTransitioning -> shape
+        sharedTransitionScope.isTransitionActive -> shape
+        else -> RectangleShape
+    }
     return with(sharedTransitionScope) {
         Modifier
             .sharedBounds(
@@ -168,7 +180,7 @@ fun rememberRestaurantSharedContentPanelModifier(
                 exit = fadeOut(animationSpec = sharedSpring),
                 resizeMode = SharedTransitionScope.ResizeMode.scaleToBounds(),
             )
-            .clip(shape)
+            .clip(clipShape)
     }
 }
 
