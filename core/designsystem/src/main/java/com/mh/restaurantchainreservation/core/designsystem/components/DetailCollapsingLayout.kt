@@ -55,7 +55,7 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColo
 
 /** Shared metrics for restaurant / booking detail collapsing-hero screens. */
 object DetailCollapsingMetrics {
-    val heroHeight = 380.dp
+    val heroHeight = 360.dp
     val sheetTopRadius = 34.dp
     val toolbarBodyHeight = 56.dp
     /** Large title top padding inside the white sheet (restaurant detail). */
