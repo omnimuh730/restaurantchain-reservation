@@ -108,8 +108,6 @@ import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloa
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroScrollOverlay
 import com.mh.restaurantchainreservation.core.designsystem.components.collapsingHeaderListScroll
 import com.mh.restaurantchainreservation.core.designsystem.components.detailHeroParallax
-import com.mh.restaurantchainreservation.core.designsystem.components.detailMorphingSheetBackground
-import com.mh.restaurantchainreservation.core.designsystem.components.detailMorphingSheetShape
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberCollapsingHeaderScrollState
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailCollapseProgress
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailHeroScrollOffsetPx
@@ -131,7 +129,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private val SheetTopRadius = 34.dp
+private val SheetTopRadius = 32.dp
 private val HeaderSheetShape = RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius)
 private val HeroHeight = 360.dp
 private val DetailInfoHorizontalPadding = 24.dp
@@ -159,23 +157,6 @@ private val DetailLoaderDotKeyframes: List<List<Pair<Float, Float>>> = listOf(
     listOf(0f to 0.5f, 0.2f to 0.5f, 0.4f to 0f, 0.6f to 1f, 0.8f to 0.5f, 1f to 0.5f),
     listOf(0f to 0.5f, 0.2f to 0.5f, 0.4f to 0.5f, 0.6f to 0f, 0.8f to 1f, 1f to 0.5f),
 )
-
-/** Paints a sheet with only the top corners rounded (reliable vs clip/background on lazy lists). */
-private fun Modifier.detailSheetTopRoundedBackground(color: Color): Modifier = drawBehind {
-    val topRadius = SheetTopRadius.toPx()
-    val path = Path().apply {
-        addRoundRect(
-            RoundRect(
-                rect = Rect(0f, 0f, size.width, size.height),
-                topLeft = CornerRadius(topRadius, topRadius),
-                topRight = CornerRadius(topRadius, topRadius),
-                bottomRight = CornerRadius.Zero,
-                bottomLeft = CornerRadius.Zero,
-            ),
-        )
-    }
-    drawPath(path, color = color)
-}
 
 private fun interpolateLoaderKeyframes(
     keyframes: List<Pair<Float, Float>>,
@@ -273,7 +254,6 @@ fun RestaurantDetailScreen(
     headerScroll.BindListResetOnShortContent(listState)
     val collapseProgress = rememberDetailCollapseProgress(listState, collapseRangePx)
     val heroScrollOffsetPx = rememberDetailHeroScrollOffsetPx(listState, collapseRangePx)
-    val sheetShape = detailMorphingSheetShape(collapseProgress)
     val navigationBars = WindowInsets.navigationBars
     val bodySlidePx = remember(density) { with(density) { 28.dp.toPx() } }
 
@@ -365,8 +345,8 @@ fun RestaurantDetailScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .offset(y = -SheetTopRadius)
-                            .detailMorphingSheetBackground(palette.pageBackground, collapseProgress)
-                            .clip(sheetShape),
+                            .clip(RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius))
+                            .background(palette.pageBackground),
                     ) {
                         HeaderSummaryCard(
                             restaurant = restaurant,

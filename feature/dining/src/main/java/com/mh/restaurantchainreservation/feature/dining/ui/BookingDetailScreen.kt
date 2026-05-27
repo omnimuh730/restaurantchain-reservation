@@ -88,8 +88,6 @@ import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloa
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingToolbar
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroScrollOverlay
 import com.mh.restaurantchainreservation.core.designsystem.components.detailHeroParallax
-import com.mh.restaurantchainreservation.core.designsystem.components.detailMorphingSheetBackground
-import com.mh.restaurantchainreservation.core.designsystem.components.detailMorphingSheetShape
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailCollapseProgress
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailTransitionThresholds
 import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavContentBottomPadding
@@ -110,7 +108,7 @@ import com.mh.restaurantchainreservation.feature.dining.data.isGuestInviteBookin
 import com.mh.restaurantchainreservation.feature.dining.data.displayCuisineLabels
 import com.mh.restaurantchainreservation.feature.dining.data.displaySeatingLabels
 
-private val SheetTopRadius = 34.dp
+private val SheetTopRadius = 32.dp
 private val HeaderSheetShape = RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius)
 private val HeroHeight = 360.dp
 private val DetailInfoHorizontalPadding = 24.dp
@@ -137,22 +135,6 @@ private fun galleryImagesFor(booking: Booking): List<String> {
     val restaurant = DiscoverData.findById(booking.id)
     val primary = restaurant?.image ?: booking.image
     return listOf(primary) + GalleryExtras
-}
-
-private fun Modifier.detailSheetTopRoundedBackground(color: Color): Modifier = drawBehind {
-    val topRadius = SheetTopRadius.toPx()
-    val path = Path().apply {
-        addRoundRect(
-            RoundRect(
-                rect = Rect(0f, 0f, size.width, size.height),
-                topLeft = CornerRadius(topRadius, topRadius),
-                topRight = CornerRadius(topRadius, topRadius),
-                bottomRight = CornerRadius.Zero,
-                bottomLeft = CornerRadius.Zero,
-            ),
-        )
-    }
-    drawPath(path, color = color)
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -193,7 +175,6 @@ fun BookingDetailScreen(
     val transitionThresholds = rememberDetailTransitionThresholds(
         titleBottomFromContentTop = BookingHeroTitleBottomInContent,
     )
-    val sheetShape = detailMorphingSheetShape(collapseProgress)
     val heroScrollOffsetPx = scroll.value
     val navBottomPadding = LocalNavContentBottomPadding.current
 
@@ -231,8 +212,8 @@ fun BookingDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .offset(y = -SheetTopRadius)
-                        .detailMorphingSheetBackground(palette.pageBackground, collapseProgress)
-                        .clip(sheetShape)
+                        .clip(RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius))
+                        .background(palette.pageBackground)
                         .padding(horizontal = DetailInfoHorizontalPadding),
                 ) {
                     Spacer(Modifier.height(DetailSheetTopPadding))

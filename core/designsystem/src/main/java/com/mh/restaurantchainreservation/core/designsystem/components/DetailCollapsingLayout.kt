@@ -182,9 +182,6 @@ object DetailCollapsingMetrics {
     fun floatingButtonPlateAlpha(collapseProgress: Float): Float =
         (1f - collapseProgress * 1.35f).coerceIn(0f, 1f)
 
-    fun morphingSheetCornerRadius(collapseProgress: Float): Dp =
-        lerp(sheetTopRadius, 0.dp, collapseProgress.coerceIn(0f, 1f))
-
     /** Counter-scroll parallax so the hero lingers briefly while the sheet rises. */
     fun heroParallaxTranslationY(scrollOffsetPx: Int): Float = scrollOffsetPx * 0.42f
 }
@@ -284,34 +281,6 @@ fun DetailHeroScrollOverlay(
             .fillMaxSize()
             .background(Color.White.copy(alpha = overlayAlpha)),
     )
-}
-
-fun Modifier.detailMorphingSheetBackground(
-    color: Color,
-    collapseProgress: Float,
-): Modifier {
-    val topRadius = DetailCollapsingMetrics.morphingSheetCornerRadius(collapseProgress)
-    return drawBehind {
-        val radiusPx = topRadius.toPx()
-        val path = Path().apply {
-            addRoundRect(
-                RoundRect(
-                    rect = Rect(0f, 0f, size.width, size.height),
-                    topLeft = CornerRadius(radiusPx, radiusPx),
-                    topRight = CornerRadius(radiusPx, radiusPx),
-                    bottomRight = CornerRadius.Zero,
-                    bottomLeft = CornerRadius.Zero,
-                ),
-            )
-        }
-        drawPath(path, color = color)
-    }
-}
-
-@Composable
-fun detailMorphingSheetShape(collapseProgress: Float): RoundedCornerShape {
-    val radius = DetailCollapsingMetrics.morphingSheetCornerRadius(collapseProgress)
-    return RoundedCornerShape(topStart = radius, topEnd = radius)
 }
 
 /**
