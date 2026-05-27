@@ -88,6 +88,7 @@ fun RestaurantListCard(
         shape = ListCardImageShape,
     )
     val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
+        restaurantId = restaurant.id,
         sharedTransitionScope = shared,
         animatedVisibilityScope = animatedContent,
         role = RestaurantSharedTitleRole.Card,
@@ -97,8 +98,8 @@ fun RestaurantListCard(
         shared,
         animatedContent,
     )
-    val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(shared)
-    val heroChromeAlpha = rememberRestaurantHeroChromeAlpha(shared)
+    val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(restaurant.id, shared)
+    val heroChromeAlpha = rememberRestaurantHeroChromeAlpha(restaurant.id, shared)
     val hasTimeSlots = !timeSlots.isNullOrEmpty()
     Column(modifier = modifier.fillMaxWidth()) {
         PressableContentScale(
@@ -148,7 +149,7 @@ fun RestaurantListCard(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .restaurantSharedContentPanelLayer(shared)
+                        .restaurantSharedContentPanelLayer(restaurant.id, shared)
                         .then(contentPanelModifier)
                         .padding(
                             start = 2.dp,

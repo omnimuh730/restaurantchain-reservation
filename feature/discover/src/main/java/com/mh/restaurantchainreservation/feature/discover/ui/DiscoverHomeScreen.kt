@@ -129,12 +129,10 @@ import com.mh.restaurantchainreservation.core.designsystem.transition.LocalResta
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
-import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantDiscoverChromeAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantHeroChromeAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleVisibilityModifier
-import com.mh.restaurantchainreservation.core.designsystem.transition.restaurantDiscoverChromeFade
 import com.mh.restaurantchainreservation.core.designsystem.transition.restaurantSharedContentPanelLayer
 import com.mh.restaurantchainreservation.core.model.Banner
 import com.mh.restaurantchainreservation.core.model.City
@@ -381,8 +379,6 @@ fun DiscoverHomeScreen(
     }
 
     val hazeState = rememberHazeState()
-    val sharedTransitionScope = LocalRestaurantSharedTransitionScope.current
-    val discoverChromeAlpha = rememberRestaurantDiscoverChromeAlpha(sharedTransitionScope)
     DisposableEffect(hazeState) {
         DiscoverHazeRegistry.register(hazeState)
         onDispose { DiscoverHazeRegistry.unregister(hazeState) }
@@ -459,7 +455,6 @@ fun DiscoverHomeScreen(
                     onOpenMap = onOpenMap,
                     onViewAll = { onOpenSection("banners") },
                     onBannerClick = { bannerId -> onOpenSection(bannerId) },
-                    discoverChromeAlpha = discoverChromeAlpha,
                 )
             }
             item {
@@ -589,8 +584,7 @@ fun DiscoverHomeScreen(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .zIndex(4f)
-                .restaurantDiscoverChromeFade(discoverChromeAlpha),
+                .zIndex(4f),
         ) {
             CompactDiscoverBar(
                 hazeState = hazeState,
@@ -614,7 +608,6 @@ private fun HeroBanner(
     onOpenMap: () -> Unit,
     onViewAll: () -> Unit,
     onBannerClick: (String) -> Unit,
-    discoverChromeAlpha: Float = 1f,
 ) {
     val palette = LocalRestaurantPalette.current
     val pagerState = rememberPagerState(pageCount = { banners.size })
@@ -703,7 +696,6 @@ private fun HeroBanner(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .zIndex(2f)
-                .restaurantDiscoverChromeFade(discoverChromeAlpha)
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(
                     start = DiscoverLayout.PageHorizontal,
@@ -1250,6 +1242,7 @@ private fun AirbnbMiniCard(
         shape = RestaurantRailImageShape,
     )
     val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
+        restaurantId = restaurant.id,
         sharedTransitionScope = shared,
         animatedVisibilityScope = animatedContent,
         role = RestaurantSharedTitleRole.Card,
@@ -1259,8 +1252,8 @@ private fun AirbnbMiniCard(
         shared,
         animatedContent,
     )
-    val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(shared)
-    val heroChromeAlpha = rememberRestaurantHeroChromeAlpha(shared)
+    val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(restaurant.id, shared)
+    val heroChromeAlpha = rememberRestaurantHeroChromeAlpha(restaurant.id, shared)
     val widthModifier = if (width > 0.dp) modifier.width(width) else modifier
     PressableScale(
         onClick = onClick,
@@ -1309,7 +1302,7 @@ private fun AirbnbMiniCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .restaurantSharedContentPanelLayer(shared)
+                    .restaurantSharedContentPanelLayer(restaurant.id, shared)
                     .then(contentPanelModifier)
                     .padding(top = 8.dp, bottom = 4.dp),
             ) {
@@ -2121,6 +2114,7 @@ private fun RestaurantByPriceListRow(
         shape = priceListHeroShape,
     )
     val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
+        restaurantId = restaurant.id,
         sharedTransitionScope = shared,
         animatedVisibilityScope = animatedContent,
         role = RestaurantSharedTitleRole.Card,

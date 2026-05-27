@@ -116,6 +116,7 @@ fun rememberRestaurantSharedTitleModifier(
  */
 @Composable
 fun rememberRestaurantSharedTitleVisibilityModifier(
+    restaurantId: String,
     sharedTransitionScope: SharedTransitionScope?,
     animatedVisibilityScope: AnimatedVisibilityScope?,
     role: RestaurantSharedTitleRole,
@@ -132,11 +133,12 @@ fun rememberRestaurantSharedTitleVisibilityModifier(
     val enteringDestination = hasNavContext && inFlight && targetState == navEntry
     val leavingDestination = hasNavContext && inFlight &&
         currentState == navEntry && targetState != navEntry
+    val isTransitionCard = rememberRestaurantSharedTransitionParticipant(restaurantId, sharedTransitionScope)
 
     val targetAlpha = when (role) {
         RestaurantSharedTitleRole.Card -> when {
-            leavingSource -> 0f
-            returningToSource -> 1f
+            leavingSource && isTransitionCard -> 0f
+            returningToSource && isTransitionCard -> 1f
             else -> 1f
         }
         RestaurantSharedTitleRole.Detail -> when {
@@ -147,8 +149,8 @@ fun rememberRestaurantSharedTitleVisibilityModifier(
     }
     val animationSpec: AnimationSpec<Float> = when (role) {
         RestaurantSharedTitleRole.Card -> when {
-            leavingSource -> cardTitleFadeOutSpec
-            returningToSource -> detailTitleFadeInSpec
+            leavingSource && isTransitionCard -> cardTitleFadeOutSpec
+            returningToSource && isTransitionCard -> detailTitleFadeInSpec
             else -> titleFadeDefaultSpec
         }
         RestaurantSharedTitleRole.Detail -> when {
@@ -180,9 +182,10 @@ fun rememberRestaurantSharedContentPanelModifier(
     clipOnlyWhileTransitioning: Boolean = true,
 ): Modifier {
     if (sharedTransitionScope == null || animatedVisibilityScope == null) return Modifier
+    val isTransitionCard = rememberRestaurantSharedTransitionParticipant(restaurantId, sharedTransitionScope)
     val clipShape = when {
         !clipOnlyWhileTransitioning -> shape
-        sharedTransitionScope.isTransitionActive -> shape
+        isTransitionCard -> shape
         else -> RectangleShape
     }
     return with(sharedTransitionScope) {
@@ -201,33 +204,60 @@ fun rememberRestaurantSharedContentPanelModifier(
     }
 }
 
+/** Where [restaurantSharedContentPanelLayer] is applied. */
+enum class RestaurantSharedContentPanelLayerRole {
+    /** List/rail cards: transparent text block at rest; white sheet only while transitioning. */
+    DiscoverCard,
+    /** Detail screen: always the opaque sheet over the hero. */
+    DetailSheet,
+}
+
 /**
- * Twin-layer white sheet above the hero: shared bounds, overlap, and surface fill while
- * the transition is in flight.
+ * Twin-layer white sheet above the hero during shared-element transitions.
+ *
+ * On discover cards at rest, leaves the text block fully transparent with no overlap so the
+ * image (and its shadow) is not clipped by a solid panel — matching the Airbnb list layout.
  */
 @Composable
 fun Modifier.restaurantSharedContentPanelLayer(
+    restaurantId: String,
     sharedTransitionScope: SharedTransitionScope?,
+    role: RestaurantSharedContentPanelLayerRole = RestaurantSharedContentPanelLayerRole.DiscoverCard,
     shape: Shape = RestaurantSharedTransitionShapes.cardContentPanel,
     heroOverlap: Dp = RestaurantCardContentPanelHeroOverlap,
 ): Modifier {
     val palette = LocalRestaurantPalette.current
-    val transitionActive = sharedTransitionScope?.isTransitionActive == true
-    val surfaceShape = if (transitionActive) shape else RectangleShape
+    val isTransitionCard = rememberRestaurantSharedTransitionParticipant(restaurantId, sharedTransitionScope)
+    val showSurface = when (role) {
+        RestaurantSharedContentPanelLayerRole.DiscoverCard -> isTransitionCard
+        RestaurantSharedContentPanelLayerRole.DetailSheet -> true
+    }
+    val overlap = when (role) {
+        RestaurantSharedContentPanelLayerRole.DiscoverCard ->
+            if (isTransitionCard) heroOverlap else 0.dp
+        RestaurantSharedContentPanelLayerRole.DetailSheet -> heroOverlap
+    }
     return this
-        .zIndex(1f)
-        .offset(y = -heroOverlap)
-        .background(color = palette.pageBackground, shape = surfaceShape)
+        .then(if (showSurface) Modifier.zIndex(1f) else Modifier)
+        .offset(y = -overlap)
+        .then(
+            if (showSurface) {
+                Modifier.background(color = palette.pageBackground, shape = shape)
+            } else {
+                Modifier
+            },
+        )
 }
 
 /** Fades secondary card lines (address, rating row) during the shared-element transition. */
 @Composable
 fun rememberRestaurantCardContentMetaAlpha(
+    restaurantId: String,
     sharedTransitionScope: SharedTransitionScope?,
 ): Float {
-    val transitionActive = sharedTransitionScope?.isTransitionActive == true
+    val participant = rememberRestaurantSharedTransitionParticipant(restaurantId, sharedTransitionScope)
     val alpha by animateFloatAsState(
-        targetValue = if (transitionActive) 0f else 1f,
+        targetValue = if (participant) 0f else 1f,
         animationSpec = tween(durationMillis = 90),
         label = "restaurant-card-content-meta-alpha",
     )

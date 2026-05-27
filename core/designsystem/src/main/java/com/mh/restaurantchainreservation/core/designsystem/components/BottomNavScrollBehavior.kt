@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.core.designsystem.components
 
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionChrome
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -55,6 +56,7 @@ class BottomNavScrollBehavior {
     fun show() {
         scrollUpAccumulator = 0f
         isVisible = true
+        RestaurantSharedTransitionChrome.clearBottomNavSuppressOnDiscover()
     }
 
     fun hide() {

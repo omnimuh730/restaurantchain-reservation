@@ -1183,6 +1183,7 @@ private fun RestaurantResultCard(
         shape = heroShape,
     )
     val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
+        restaurantId = restaurant.id,
         sharedTransitionScope = shared,
         animatedVisibilityScope = animatedContent,
         role = RestaurantSharedTitleRole.Card,
@@ -1192,8 +1193,8 @@ private fun RestaurantResultCard(
         shared,
         animatedContent,
     )
-    val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(shared)
-    val heroChromeAlpha = rememberRestaurantHeroChromeAlpha(shared)
+    val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(restaurant.id, shared)
+    val heroChromeAlpha = rememberRestaurantHeroChromeAlpha(restaurant.id, shared)
     PressableContentScale(
         onClick = onOpen,
         modifier = Modifier.fillMaxWidth(),
@@ -1242,7 +1243,7 @@ private fun RestaurantResultCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .restaurantSharedContentPanelLayer(shared)
+                    .restaurantSharedContentPanelLayer(restaurant.id, shared)
                     .then(contentPanelModifier)
                     .padding(top = 12.dp, bottom = 4.dp),
             ) {
@@ -1368,6 +1369,7 @@ private fun MapPreviewCard(
     val animatedContent = LocalAnimatedContentScope.current
     val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
     val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
+        restaurantId = restaurant.id,
         sharedTransitionScope = shared,
         animatedVisibilityScope = animatedContent,
         role = RestaurantSharedTitleRole.Card,

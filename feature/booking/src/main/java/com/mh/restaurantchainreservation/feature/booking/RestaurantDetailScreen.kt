@@ -7,7 +7,6 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantNavEntry
@@ -20,10 +19,12 @@ import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRe
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleVisibilityModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.restaurantDetailChromeFade
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedContentPanelLayerRole
 import com.mh.restaurantchainreservation.core.designsystem.transition.restaurantSharedContentPanelLayer
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -160,6 +161,8 @@ private val DetailListBottomPadding = 148.dp
 private val ReviewsScrollGapAboveBookingBar = 16.dp
 /** Booking bar row (padding + price + Reserve), excluding system nav inset handled on the bar. */
 private val BookingBarEstimatedHeight = 84.dp
+/** Off-screen start offset for the Reserve bar rise-in (bar + system nav inset). */
+private val ReserveBarRiseDistance = 112.dp
 private val DetailStatsSideColumnWeight = 0.9f
 private val DetailStatsCenterColumnWeight = 1.75f
 private val DetailStatsDividerHeight = 36.dp
@@ -251,6 +254,7 @@ fun RestaurantDetailScreen(
         shape = DetailHeroTransitionShape,
     )
     val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
+        restaurantId = restaurant.id,
         sharedTransitionScope = sharedTransitionScope,
         animatedVisibilityScope = animatedVisibilityScope,
         role = RestaurantSharedTitleRole.Detail,
@@ -323,6 +327,17 @@ fun RestaurantDetailScreen(
     val contentReady = loadPhase == RestaurantDetailUiState.Success && loadedPayload != null
     val payload = loadedPayload
     val heroImages = payload?.gallery ?: listOf(restaurant.image)
+    val reserveBarRiseDistancePx = remember(density) {
+        with(density) { ReserveBarRiseDistance.toPx() }
+    }
+    val reserveBarTranslationY by animateFloatAsState(
+        targetValue = if (contentReady) 0f else reserveBarRiseDistancePx,
+        animationSpec = tween(
+            durationMillis = RestaurantSharedTransitionMotion.durationMillis,
+            easing = RestaurantSharedTransitionMotion.easing,
+        ),
+        label = "reserve-bar-rise",
+    )
 
     Box(
         modifier = modifier
@@ -368,7 +383,9 @@ fun RestaurantDetailScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .restaurantSharedContentPanelLayer(
+                                restaurantId = restaurant.id,
                                 sharedTransitionScope = sharedTransitionScope,
+                                role = RestaurantSharedContentPanelLayerRole.DetailSheet,
                                 shape = RestaurantSharedTransitionShapes.detailContentPanel,
                                 heroOverlap = SheetTopRadius,
                             )
@@ -385,15 +402,8 @@ fun RestaurantDetailScreen(
                         AnimatedContent(
                             targetState = contentReady,
                             transitionSpec = {
-                                (
-                                    fadeIn(RestaurantSharedTransitionMotion.contentRevealTween) +
-                                        slideInVertically(
-                                            animationSpec = tween(
-                                                durationMillis = 300,
-                                                easing = RestaurantSharedTransitionMotion.easing,
-                                            ),
-                                        ) { it / 10 }
-                                    ) togetherWith fadeOut(RestaurantSharedTransitionMotion.contentRevealTween)
+                                fadeIn(RestaurantSharedTransitionMotion.contentRevealTween) togetherWith
+                                    fadeOut(RestaurantSharedTransitionMotion.contentRevealTween)
                             },
                             label = "restaurant-detail-body",
                         ) { ready ->
@@ -496,7 +506,9 @@ fun RestaurantDetailScreen(
             onBookNow = onBookNow,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .restaurantDetailChromeFade(detailChromeAlpha),
+                .graphicsLayer {
+                    translationY = reserveBarTranslationY
+                },
         )
 
         if (showReviews) {

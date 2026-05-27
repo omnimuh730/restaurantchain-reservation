@@ -41,6 +41,13 @@ object RestaurantSharedTransitionMotion {
 data class RestaurantSharedTransitionChromeSnapshot(
     val progress: Float = 0f,
     val active: Boolean = false,
+    /** Restaurant whose card is the active shared-element source/destination. */
+    val restaurantId: String? = null,
+    /**
+     * After opening restaurant detail from Discover, keep the bottom nav hidden on return
+     * until the user scrolls to reveal it ([clearBottomNavSuppressOnDiscover]).
+     */
+    val suppressBottomNavOnDiscover: Boolean = false,
 )
 
 /**
@@ -51,11 +58,40 @@ object RestaurantSharedTransitionChrome {
     var snapshot by mutableStateOf(RestaurantSharedTransitionChromeSnapshot())
         private set
 
-    internal fun update(progress: Float, active: Boolean) {
-        snapshot = RestaurantSharedTransitionChromeSnapshot(
+    internal fun update(
+        progress: Float,
+        active: Boolean,
+        restaurantId: String? = snapshot.restaurantId,
+    ) {
+        snapshot = snapshot.copy(
             progress = progress.coerceIn(0f, 1f),
             active = active,
+            restaurantId = if (active) restaurantId else snapshot.restaurantId,
         )
+    }
+
+    fun beginRestaurantDetailTransition(restaurantId: String) {
+        snapshot = snapshot.copy(
+            restaurantId = restaurantId,
+            suppressBottomNavOnDiscover = true,
+        )
+    }
+
+    fun clearBottomNavSuppressOnDiscover() {
+        if (!snapshot.suppressBottomNavOnDiscover) return
+        snapshot = snapshot.copy(suppressBottomNavOnDiscover = false)
+    }
+
+    /** Clears transition progress only; keeps [restaurantId] for the pop animation. */
+    fun clearTransitionProgress() {
+        snapshot = snapshot.copy(
+            progress = 0f,
+            active = false,
+        )
+    }
+
+    fun clearRestaurantTransitionTarget() {
+        snapshot = snapshot.copy(restaurantId = null)
     }
 }
 
@@ -77,13 +113,28 @@ fun RestaurantSharedTransitionChromeSink() {
         } else {
             driver.snapTo(0f)
             RestaurantSharedTransitionChrome.update(progress = 0f, active = false)
+            RestaurantSharedTransitionChrome.clearTransitionProgress()
         }
     }
     SideEffect {
         if (scope.isTransitionActive) {
-            RestaurantSharedTransitionChrome.update(driver.value, active = true)
+            RestaurantSharedTransitionChrome.update(
+                progress = driver.value,
+                active = true,
+                restaurantId = RestaurantSharedTransitionChrome.snapshot.restaurantId,
+            )
         }
     }
+}
+
+/** True when this restaurant is the card involved in the current shared-element transition. */
+@Composable
+fun rememberRestaurantSharedTransitionParticipant(
+    restaurantId: String,
+    sharedTransitionScope: SharedTransitionScope?,
+): Boolean {
+    if (sharedTransitionScope?.isTransitionActive != true) return false
+    return RestaurantSharedTransitionChrome.snapshot.restaurantId == restaurantId
 }
 
 @Composable
@@ -108,10 +159,11 @@ fun rememberRestaurantDetailChromeAlpha(
 
 @Composable
 fun rememberRestaurantHeroChromeAlpha(
+    restaurantId: String,
     sharedTransitionScope: SharedTransitionScope?,
 ): Float {
-    val transitionActive = sharedTransitionScope?.isTransitionActive == true
-    return if (transitionActive) 0f else 1f
+    val participant = rememberRestaurantSharedTransitionParticipant(restaurantId, sharedTransitionScope)
+    return if (participant) 0f else 1f
 }
 
 fun Modifier.restaurantDiscoverChromeFade(alpha: Float): Modifier =

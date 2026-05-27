@@ -198,24 +198,49 @@ fun RestaurantNavHost(
         androidx.compose.runtime.derivedStateOf { RestaurantSharedTransitionChrome.snapshot }
     }
     val hideTabNavigation = hidesMainTabNavigation(destination?.route)
+    val suppressBottomNavOnDiscover =
+        onDiscoverHome && sharedTransitionChrome.suppressBottomNavOnDiscover
+    val targetBottomNavVisible = when {
+        hideTabNavigation -> false
+        suppressBottomNavOnDiscover -> false
+        !bottomNavScrollBehavior.isVisible -> false
+        else -> true
+    }
+    val bottomNavVisibilityProgress by animateFloatAsState(
+        targetValue = if (targetBottomNavVisible) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = if (!targetBottomNavVisible && hideTabNavigation) {
+                RestaurantSharedTransitionMotion.durationMillis
+            } else {
+                300
+            },
+            easing = FastOutSlowInEasing,
+        ),
+        label = "bottomNavVisibility",
+    )
     val showBottomBarSlot = isCompact &&
         showAppChrome &&
-        (!hideTabNavigation || sharedTransitionChrome.active) &&
-        !suppressBottomNav
-    val scrollNavShowProgress by animateFloatAsState(
-        targetValue = if (!showBottomBarSlot || !bottomNavScrollBehavior.isVisible) 0f else 1f,
-        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
-        label = "bottomNavScrollShow",
-    )
-    val sharedChromeDiscoverAlpha = RestaurantSharedTransitionMotion.discoverChromeAlpha(
-        transitionProgress = sharedTransitionChrome.progress,
-        transitionActive = sharedTransitionChrome.active,
-    )
-    val bottomNavInsetProgress = if (showBottomBarSlot) scrollNavShowProgress else 0f
-    val bottomNavVisibilityProgress = bottomNavInsetProgress * sharedChromeDiscoverAlpha
+        !suppressBottomNav &&
+        (bottomNavVisibilityProgress > 0.01f || (targetBottomNavVisible && !hideTabNavigation))
+    val bottomNavInsetProgress = bottomNavVisibilityProgress
 
     LaunchedEffect(destination?.route) {
+        val route = destination?.route ?: return@LaunchedEffect
+        if (hidesMainTabNavigation(route)) return@LaunchedEffect
+        if (route == DiscoverRoutes.Home && RestaurantSharedTransitionChrome.snapshot.suppressBottomNavOnDiscover) {
+            return@LaunchedEffect
+        }
         bottomNavScrollBehavior.show()
+    }
+
+    LaunchedEffect(destination?.route, sharedTransitionChrome.active) {
+        val route = destination?.route ?: return@LaunchedEffect
+        if (route != DiscoverRoutes.Home && route?.startsWith("discover/restaurant/") != true) {
+            RestaurantSharedTransitionChrome.clearBottomNavSuppressOnDiscover()
+        }
+        if (!sharedTransitionChrome.active && !hidesMainTabNavigation(route)) {
+            RestaurantSharedTransitionChrome.clearRestaurantTransitionTarget()
+        }
     }
 
     LaunchedEffect(authenticated, destination?.route) {
@@ -266,7 +291,7 @@ fun RestaurantNavHost(
             Box(modifier = Modifier.fillMaxSize()) {
                 CompositionLocalProvider(
                     LocalBottomNavScrollBehavior provides
-                        bottomNavScrollBehavior.takeIf { showBottomBarSlot },
+                        bottomNavScrollBehavior.takeIf { showBottomBarSlot || suppressBottomNavOnDiscover },
                     LocalNavContentBottomPadding provides compactBottomInset,
                 ) {
                     AppGraph(
@@ -1114,6 +1139,7 @@ private fun AppGraph(
 
 private fun NavHostController.navigateToRestaurantDetail(restaurantId: String) {
     DiscoverData.findById(restaurantId)?.let { WishlistStore.recordRecentlyViewed(it) }
+    RestaurantSharedTransitionChrome.beginRestaurantDetailTransition(restaurantId)
     navigate(BookingRoutes.restaurantDetail(restaurantId)) {
         launchSingleTop = true
         // Fresh detail each open; discover below keeps scroll + list via saveState.
