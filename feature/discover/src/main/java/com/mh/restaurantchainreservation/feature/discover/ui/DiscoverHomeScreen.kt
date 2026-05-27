@@ -295,9 +295,9 @@ private object DiscoverLayout {
 private val PriceListThumbnailWidth = 110.dp
 private val PriceListThumbnailHeight =
     PriceListThumbnailWidth / DiscoverRestaurantImageAspectWidthOverHeight
-private val PriceListAvatarCorner = 16.dp
+private val PriceListAvatarCorner = 20.dp
 private val PriceListAvatarOverlayPadding = 8.dp
-private val RestaurantRailImageShape = RoundedCornerShape(12.dp)
+private val RestaurantRailImageShape = RoundedCornerShape(22.dp)
 
 /** Default hub card shadow + clip for Discover image tiles. */
 private fun Modifier.discoverImageCardSurface(shape: Shape): Modifier =
