@@ -11,6 +11,12 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.dp
+
+private val defaultSharedCornerShape = RoundedCornerShape(20.dp)
 
 private val sharedSpring = spring<Float>(
     stiffness = Spring.StiffnessMediumLow,
@@ -22,13 +28,16 @@ fun rememberRestaurantSharedHeroModifier(
     restaurantId: String,
     sharedTransitionScope: SharedTransitionScope?,
     animatedVisibilityScope: AnimatedVisibilityScope?,
+    shape: Shape = defaultSharedCornerShape,
 ): Modifier {
     if (sharedTransitionScope == null || animatedVisibilityScope == null) return Modifier
     return with(sharedTransitionScope) {
-        Modifier.sharedElement(
-            sharedContentState = rememberSharedContentState(key = RestaurantSharedKeys.hero(restaurantId)),
-            animatedVisibilityScope = animatedVisibilityScope,
-        )
+        Modifier
+            .sharedElement(
+                sharedContentState = rememberSharedContentState(key = RestaurantSharedKeys.hero(restaurantId)),
+                animatedVisibilityScope = animatedVisibilityScope,
+            )
+            .clip(shape)
     }
 }
 

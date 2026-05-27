@@ -27,6 +27,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleModifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -161,6 +168,8 @@ fun BookingDetailScreen(
     onBookAgain: () -> Unit,
     onViewReceipt: () -> Unit,
     onDeleteRequest: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope? = LocalRestaurantSharedTransitionScope.current,
+    animatedVisibilityScope: AnimatedVisibilityScope? = LocalAnimatedContentScope.current,
 ) {
     val palette = LocalRestaurantPalette.current
     val density = LocalDensity.current
@@ -173,6 +182,8 @@ fun BookingDetailScreen(
     val isCompleted = booking.status == BookingStatus.Completed
 
     val restaurant = remember(booking.id) { DiscoverData.findById(booking.id) }
+    val heroModifier = rememberRestaurantSharedHeroModifier(booking.id, sharedTransitionScope, animatedVisibilityScope)
+    val titleModifier = rememberRestaurantSharedTitleModifier(booking.id, sharedTransitionScope, animatedVisibilityScope)
     val wishlistRestaurant = remember(booking.id, restaurant) { restaurantForBooking(booking, restaurant) }
     val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
     val saved = wishlistRestaurant.id in savedIds
@@ -208,6 +219,8 @@ fun BookingDetailScreen(
                         booking = booking,
                         galleryImages = galleryImages,
                         restaurant = restaurant,
+                        modifier = heroModifier,
+                        titleModifier = titleModifier,
                     )
                     DetailHeroScrollOverlay(
                         collapseProgress = collapseProgress,
@@ -389,15 +402,24 @@ private fun BookingHeroCarousel(
     booking: Booking,
     galleryImages: List<String>,
     restaurant: Restaurant?,
+    modifier: Modifier = Modifier,
+    titleModifier: Modifier = Modifier,
 ) {
     val pagerState = rememberPagerState(pageCount = { galleryImages.size })
     val hostName = restaurantHostName(booking, restaurant)
     val heroOverlayBottom = SheetTopRadius + HeroOverlayBottomPadding
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(HeroHeight),
+            .height(HeroHeight)
+            .clip(RoundedCornerShape(
+                topStart = 20.dp,
+                topEnd = 20.dp,
+                bottomEnd = 6.dp,
+                bottomStart = 6.dp
+                )
+            ),
     ) {
         HorizontalPager(
             state = pagerState,
@@ -463,6 +485,7 @@ private fun BookingHeroCarousel(
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
+                modifier = titleModifier,
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,

@@ -293,7 +293,7 @@ private val PriceListThumbnailHeight =
     PriceListThumbnailWidth / DiscoverRestaurantImageAspectWidthOverHeight
 private val PriceListAvatarCorner = 16.dp
 private val PriceListAvatarOverlayPadding = 8.dp
-private val RestaurantRailImageShape = RoundedCornerShape(18.dp)
+private val RestaurantRailImageShape = RoundedCornerShape(12.dp)
 
 /** Default hub card shadow + clip for Discover image tiles. */
 private fun Modifier.discoverImageCardSurface(shape: Shape): Modifier =
@@ -1105,7 +1105,7 @@ private fun WhereToEatCityTile(
         onClick = onClick,
         modifier = Modifier
             .size(WhereToEatCityTileWidth, WhereToEatCityTileHeight)
-            .discoverImageCardSurface(RestaurantRailImageShape),
+            .discoverImageCardSurface(RoundedCornerShape(20.dp)),
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
@@ -2057,6 +2057,10 @@ private fun RestaurantByPriceListRow(
     val goldStar = RestaurantColors.Semantic.starYellow
     val emptyStar = palette.mutedForeground.copy(alpha = 0.35f)
     val filledStars = (restaurant.rating + 0.25).roundToInt().coerceIn(0, 5)
+    val shared = LocalRestaurantSharedTransitionScope.current
+    val animatedContent = LocalAnimatedContentScope.current
+    val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
+    val titleModifier = rememberRestaurantSharedTitleModifier(restaurant.id, shared, animatedContent)
 
     PressableScale(
         onClick = onOpenRestaurant,
@@ -2077,7 +2081,9 @@ private fun RestaurantByPriceListRow(
                     model = restaurant.image,
                     contentDescription = restaurant.name,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(heroModifier),
                 )
                 DiscoverRestaurantCardBadgeChip(
                     restaurant = restaurant,
@@ -2114,6 +2120,7 @@ private fun RestaurantByPriceListRow(
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = titleModifier,
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

@@ -1179,7 +1179,7 @@ private fun RestaurantResultCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(24.dp))
                     .background(palette.mutedSurface),
             ) {
                 AsyncImage(

@@ -1,6 +1,13 @@
 package com.mh.restaurantchainreservation.feature.booking
 
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleModifier
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -235,6 +242,8 @@ fun RestaurantDetailScreen(
     onShowMenu: () -> Unit,
     onOpenPhotoGrid: (RestaurantPhotoGallerySource) -> Unit,
     modifier: Modifier = Modifier,
+    sharedTransitionScope: SharedTransitionScope? = LocalRestaurantSharedTransitionScope.current,
+    animatedVisibilityScope: AnimatedVisibilityScope? = LocalAnimatedContentScope.current,
 ) {
     val palette = LocalRestaurantPalette.current
     val restaurant = remember(restaurantId) {
@@ -243,6 +252,8 @@ fun RestaurantDetailScreen(
                 ?: com.mh.restaurantchainreservation.core.model.DiscoverData.MONTHLY_BEST.first()
             ).withDerivedGuestFavoriteLevel()
     }
+    val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, sharedTransitionScope, animatedVisibilityScope)
+    val titleModifier = rememberRestaurantSharedTitleModifier(restaurant.id, sharedTransitionScope, animatedVisibilityScope)
     var loadPhase by remember(restaurantId) { mutableStateOf(DetailLoadPhase.Shell) }
     var loadedPayload by remember(restaurantId) { mutableStateOf<DetailLoadedPayload?>(null) }
     val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
@@ -346,6 +357,7 @@ fun RestaurantDetailScreen(
                                     onOpenPhotoGrid(RestaurantPhotoGallerySource.Gallery)
                                 }
                             },
+                            modifier = heroModifier,
                         )
                         DetailHeroScrollOverlay(collapseProgress = collapseProgress)
                     }
@@ -360,6 +372,7 @@ fun RestaurantDetailScreen(
                             restaurant = restaurant,
                             ext = payload?.ext,
                             loadPhase = loadPhase,
+                            titleModifier = titleModifier,
                         )
                         if (contentReady && payload != null) {
                             RatingsSummaryRow(
@@ -492,12 +505,20 @@ private fun HeroCarousel(
     restaurantName: String,
     showPageIndicator: Boolean,
     onOpenFullscreen: (Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val pagerState = rememberPagerState(pageCount = { galleryImages.size.coerceAtLeast(1) })
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(HeroHeight),
+            .height(HeroHeight)
+            .clip(RoundedCornerShape(
+                topStart = 20.dp,
+                topEnd = 20.dp,
+                bottomEnd = 6.dp,
+                bottomStart = 6.dp
+                )
+            ),
     ) {
         HorizontalPager(
             state = pagerState,
@@ -544,6 +565,7 @@ private fun HeaderSummaryCard(
     restaurant: Restaurant,
     ext: RestaurantExtendedData?,
     loadPhase: DetailLoadPhase,
+    titleModifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
     Column(
@@ -567,7 +589,9 @@ private fun HeaderSummaryCard(
             lineHeight = 38.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(titleModifier),
         )
         if (loadPhase == DetailLoadPhase.Loading) {
             RestaurantDetailLoadingDots(

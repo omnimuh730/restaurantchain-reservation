@@ -51,7 +51,7 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColo
 /** Top Picks by Food Type / Popular menu rail tiles (Discover home + restaurant detail). */
 object DiscoverMenuRailDefaults {
     val TileSize = 112.dp
-    val TileCornerRadius = 16.dp
+    val TileCornerRadius = 20.dp
     val SeeAllCardShape = RoundedCornerShape(TileCornerRadius)
     val SeeAllThumbShape = RoundedCornerShape(8.dp)
     /** Base “See all” label size on 112dp menu/food-type tiles (scaled slightly with card size). */
