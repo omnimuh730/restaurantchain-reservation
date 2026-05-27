@@ -4,4 +4,5 @@ package com.mh.restaurantchainreservation.core.designsystem.transition
 object RestaurantSharedKeys {
     fun hero(restaurantId: String) = "restaurant-$restaurantId-hero"
     fun title(restaurantId: String) = "restaurant-$restaurantId-title"
+    fun contentPanel(restaurantId: String) = "restaurant-$restaurantId-content-panel"
 }

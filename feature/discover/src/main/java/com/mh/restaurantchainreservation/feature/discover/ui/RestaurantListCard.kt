@@ -48,8 +48,12 @@ import com.mh.restaurantchainreservation.core.designsystem.components.HeartButto
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionShapes
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
-import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleVisibilityModifier
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.RestaurantTimeSlot
 import com.mh.restaurantchainreservation.core.model.WishlistStore
@@ -72,8 +76,25 @@ fun RestaurantListCard(
     val saved = restaurant.id in savedIds
     val shared = LocalRestaurantSharedTransitionScope.current
     val animatedContent = LocalAnimatedContentScope.current
-    val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
-    val titleModifier = rememberRestaurantSharedTitleModifier(restaurant.id, shared, animatedContent)
+    val heroShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+    val contentPanelRestShape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+    val heroModifier = rememberRestaurantSharedHeroModifier(
+        restaurant.id,
+        shared,
+        animatedContent,
+        shape = heroShape,
+    )
+    val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
+        sharedTransitionScope = shared,
+        animatedVisibilityScope = animatedContent,
+        role = RestaurantSharedTitleRole.Card,
+    )
+    val contentPanelModifier = rememberRestaurantSharedContentPanelModifier(
+        restaurant.id,
+        shared,
+        animatedContent,
+        shape = RestaurantSharedTransitionShapes.cardContentPanel,
+    )
     val hasTimeSlots = !timeSlots.isNullOrEmpty()
     Column(
         modifier = modifier
@@ -94,38 +115,48 @@ fun RestaurantListCard(
                     .fillMaxWidth()
                     .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight),
             ) {
-                AsyncImage(
-                    model = restaurant.image,
-                    contentDescription = restaurant.name,
-                    contentScale = ContentScale.Crop,
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .then(heroModifier),
-                )
-                HeartButton(
-                    active = saved,
-                    onClick = { WishlistStore.onHeartTap(restaurant) },
-                    size = HeartButtonSize.Medium,
-                    style = HeartButtonStyle.Overlay,
-                    overlayContentAlignment = Alignment.TopCenter,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(10.dp),
-                )
-                DiscoverRestaurantCardBadgeChip(
-                    restaurant = restaurant,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(10.dp),
-                )
+                ) {
+                    AsyncImage(
+                        model = restaurant.image,
+                        contentDescription = restaurant.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+                RestaurantCardHeroChromeLayer(sharedTransitionScope = shared) {
+                    HeartButton(
+                        active = saved,
+                        onClick = { WishlistStore.onHeartTap(restaurant) },
+                        size = HeartButtonSize.Medium,
+                        style = HeartButtonStyle.Overlay,
+                        overlayContentAlignment = Alignment.TopCenter,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(10.dp),
+                    )
+                    DiscoverRestaurantCardBadgeChip(
+                        restaurant = restaurant,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(10.dp),
+                    )
+                }
             }
             Column(
-                modifier = Modifier.padding(
-                    start = 14.dp,
-                    end = 14.dp,
-                    top = 14.dp,
-                    bottom = if (hasTimeSlots) 4.dp else 14.dp,
-                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(contentPanelModifier)
+                    .background(palette.cardSurface, contentPanelRestShape)
+                    .padding(
+                        start = 14.dp,
+                        end = 14.dp,
+                        top = 14.dp,
+                        bottom = if (hasTimeSlots) 4.dp else 14.dp,
+                    ),
             ) {
                 Text(
                     text = restaurant.name,
@@ -134,7 +165,7 @@ fun RestaurantListCard(
                     fontWeight = FontWeight.Bold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = titleModifier,
+                    modifier = titleVisibilityModifier,
                 )
                 Spacer(Modifier.height(6.dp))
                 Row(

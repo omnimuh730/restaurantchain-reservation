@@ -59,6 +59,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantNavEntry
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavIconPaths
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavStrokeIcon
@@ -568,8 +569,11 @@ private fun AppGraph(
                         .fillMaxSize()
                         .padding(contentPadding),
                 ) {
-            composable(DiscoverRoutes.Home) {
-                CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+            composable(DiscoverRoutes.Home) { entry ->
+                CompositionLocalProvider(
+                    LocalAnimatedContentScope provides this,
+                    LocalRestaurantNavEntry provides entry,
+                ) {
                     val currentLocation by LocationStore.current.collectAsState()
                     DiscoverHomeScreen(
                         onOpenSearch = { navController.navigate(DiscoverRoutes.Search) },
@@ -682,7 +686,10 @@ private fun AppGraph(
                     navArgument("locationId") { type = NavType.StringType; defaultValue = "" },
                 ),
             ) { entry ->
-                CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                CompositionLocalProvider(
+                    LocalAnimatedContentScope provides this,
+                    LocalRestaurantNavEntry provides entry,
+                ) {
                     val q = entry.arguments?.getString("q").orEmpty()
                     val summary = entry.arguments?.getString("summary").orEmpty()
                     val locationId = entry.arguments?.getString("locationId").orEmpty()
@@ -700,51 +707,74 @@ private fun AppGraph(
                 route = DiscoverRoutes.Category,
                 arguments = listOf(navArgument("categoryId") { type = NavType.StringType }),
             ) { entry ->
-                val id = entry.arguments?.getString("categoryId").orEmpty()
-                CategoryResultsScreen(
-                    categoryId = id,
-                    onBack = { navController.popBackStack() },
-                    onOpenRestaurant = { rid -> navController.navigateToRestaurantDetail(rid) },
-                )
+                CompositionLocalProvider(
+                    LocalAnimatedContentScope provides this,
+                    LocalRestaurantNavEntry provides entry,
+                ) {
+                    val id = entry.arguments?.getString("categoryId").orEmpty()
+                    CategoryResultsScreen(
+                        categoryId = id,
+                        onBack = { navController.popBackStack() },
+                        onOpenRestaurant = { rid -> navController.navigateToRestaurantDetail(rid) },
+                    )
+                }
             }
             composable(
                 route = DiscoverRoutes.Food,
                 arguments = listOf(navArgument("foodId") { type = NavType.StringType }),
             ) { entry ->
-                val id = entry.arguments?.getString("foodId").orEmpty()
-                FoodResultsScreen(
-                    foodId = id,
-                    onBack = { navController.popBackStack() },
-                    onOpenRestaurant = { rid -> navController.navigateToRestaurantDetail(rid) },
-                )
+                CompositionLocalProvider(
+                    LocalAnimatedContentScope provides this,
+                    LocalRestaurantNavEntry provides entry,
+                ) {
+                    val id = entry.arguments?.getString("foodId").orEmpty()
+                    FoodResultsScreen(
+                        foodId = id,
+                        onBack = { navController.popBackStack() },
+                        onOpenRestaurant = { rid -> navController.navigateToRestaurantDetail(rid) },
+                    )
+                }
             }
             composable(
                 route = DiscoverRoutes.Location,
                 arguments = listOf(navArgument("locationId") { type = NavType.StringType }),
             ) { entry ->
-                val id = entry.arguments?.getString("locationId").orEmpty()
-                LocationResultsScreen(
-                    locationId = id,
-                    onBack = { navController.popBackStack() },
-                    onOpenRestaurant = { rid -> navController.navigateToRestaurantDetail(rid) },
-                )
+                CompositionLocalProvider(
+                    LocalAnimatedContentScope provides this,
+                    LocalRestaurantNavEntry provides entry,
+                ) {
+                    val id = entry.arguments?.getString("locationId").orEmpty()
+                    LocationResultsScreen(
+                        locationId = id,
+                        onBack = { navController.popBackStack() },
+                        onOpenRestaurant = { rid -> navController.navigateToRestaurantDetail(rid) },
+                    )
+                }
             }
             composable(
                 route = DiscoverRoutes.Section,
                 arguments = listOf(navArgument("sectionId") { type = NavType.StringType }),
             ) { entry ->
-                val id = entry.arguments?.getString("sectionId").orEmpty()
-                SectionListScreen(
-                    sectionId = id,
-                    onBack = { navController.popBackStack() },
-                    onOpenRestaurant = { rid -> navController.navigateToRestaurantDetail(rid) },
-                )
+                CompositionLocalProvider(
+                    LocalAnimatedContentScope provides this,
+                    LocalRestaurantNavEntry provides entry,
+                ) {
+                    val id = entry.arguments?.getString("sectionId").orEmpty()
+                    SectionListScreen(
+                        sectionId = id,
+                        onBack = { navController.popBackStack() },
+                        onOpenRestaurant = { rid -> navController.navigateToRestaurantDetail(rid) },
+                    )
+                }
             }
             composable(
                 route = BookingRoutes.RestaurantDetail,
                 arguments = listOf(navArgument("restaurantId") { type = NavType.StringType }),
             ) { entry ->
-                CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                CompositionLocalProvider(
+                    LocalAnimatedContentScope provides this,
+                    LocalRestaurantNavEntry provides entry,
+                ) {
                     val id = entry.arguments?.getString("restaurantId").orEmpty()
                     RestaurantDetailScreen(
                         restaurantId = id,

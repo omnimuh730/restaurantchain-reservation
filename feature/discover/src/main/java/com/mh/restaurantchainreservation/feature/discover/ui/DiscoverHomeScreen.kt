@@ -126,8 +126,12 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestauran
 import com.mh.restaurantchainreservation.core.designsystem.tokens.pageCanvasBackground
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionShapes
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
-import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleVisibilityModifier
 import com.mh.restaurantchainreservation.core.model.Banner
 import com.mh.restaurantchainreservation.core.model.City
 import com.mh.restaurantchainreservation.core.model.DiscoverData
@@ -1222,8 +1226,24 @@ private fun AirbnbMiniCard(
     val saved = restaurant.id in savedIds
     val shared = LocalRestaurantSharedTransitionScope.current
     val animatedContent = LocalAnimatedContentScope.current
-    val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
-    val titleModifier = rememberRestaurantSharedTitleModifier(restaurant.id, shared, animatedContent)
+    val heroModifier = rememberRestaurantSharedHeroModifier(
+        restaurant.id,
+        shared,
+        animatedContent,
+        shape = RestaurantRailImageShape,
+    )
+    val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
+        sharedTransitionScope = shared,
+        animatedVisibilityScope = animatedContent,
+        role = RestaurantSharedTitleRole.Card,
+    )
+    val contentPanelRestShape = RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
+    val contentPanelModifier = rememberRestaurantSharedContentPanelModifier(
+        restaurant.id,
+        shared,
+        animatedContent,
+        shape = RestaurantSharedTransitionShapes.cardContentPanelCompact,
+    )
     val widthModifier = if (width > 0.dp) modifier.width(width) else modifier
     PressableScale(
         onClick = onClick,
@@ -1237,60 +1257,74 @@ private fun AirbnbMiniCard(
                     .discoverImageCardSurface(RestaurantRailImageShape)
                     .background(palette.cardSurface),
             ) {
-                AsyncImage(
-                    model = restaurant.image,
-                    contentDescription = restaurant.name,
-                    contentScale = ContentScale.Crop,
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .then(heroModifier),
-                )
-                DiscoverRestaurantCardBadgeChip(
-                    restaurant = restaurant,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(8.dp),
-                )
-                HeartButton(
-                    active = saved,
-                    onClick = { WishlistStore.onHeartTap(restaurant) },
-                    size = HeartButtonSize.Medium,
-                    style = HeartButtonStyle.Overlay,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp),
-                )
+                ) {
+                    AsyncImage(
+                        model = restaurant.image,
+                        contentDescription = restaurant.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+                RestaurantCardHeroChromeLayer(sharedTransitionScope = shared) {
+                    DiscoverRestaurantCardBadgeChip(
+                        restaurant = restaurant,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(8.dp),
+                    )
+                    HeartButton(
+                        active = saved,
+                        onClick = { WishlistStore.onHeartTap(restaurant) },
+                        size = HeartButtonSize.Medium,
+                        style = HeartButtonStyle.Overlay,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp),
+                    )
+                }
             }
-            Text(
-                text = restaurant.name,
-                color = palette.foreground,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = titleModifier.padding(top = 8.dp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    .then(contentPanelModifier)
+                    .background(palette.pageBackground, contentPanelRestShape)
+                    .padding(top = 8.dp, bottom = 4.dp),
             ) {
-                val metaColor = palette.mutedForeground
                 Text(
-                    text = restaurant.area ?: restaurant.cuisine,
-                    color = metaColor,
-                    fontSize = 12.sp,
+                    text = restaurant.name,
+                    color = palette.foreground,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = titleVisibilityModifier,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                DiscoverInlineDot(color = metaColor)
-                Text(
-                    text = "★ %.1f".format(restaurant.rating),
-                    color = metaColor,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val metaColor = palette.mutedForeground
+                    Text(
+                        text = restaurant.area ?: restaurant.cuisine,
+                        color = metaColor,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    DiscoverInlineDot(color = metaColor)
+                    Text(
+                        text = "★ %.1f".format(restaurant.rating),
+                        color = metaColor,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                    )
+                }
             }
         }
     }
@@ -2059,8 +2093,18 @@ private fun RestaurantByPriceListRow(
     val filledStars = (restaurant.rating + 0.25).roundToInt().coerceIn(0, 5)
     val shared = LocalRestaurantSharedTransitionScope.current
     val animatedContent = LocalAnimatedContentScope.current
-    val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
-    val titleModifier = rememberRestaurantSharedTitleModifier(restaurant.id, shared, animatedContent)
+    val priceListHeroShape = RoundedCornerShape(PriceListAvatarCorner)
+    val heroModifier = rememberRestaurantSharedHeroModifier(
+        restaurant.id,
+        shared,
+        animatedContent,
+        shape = priceListHeroShape,
+    )
+    val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
+        sharedTransitionScope = shared,
+        animatedVisibilityScope = animatedContent,
+        role = RestaurantSharedTitleRole.Card,
+    )
 
     PressableScale(
         onClick = onOpenRestaurant,
@@ -2074,40 +2118,46 @@ private fun RestaurantByPriceListRow(
             Box(
                 modifier = Modifier
                     .size(PriceListThumbnailWidth, PriceListThumbnailHeight)
-                    .clip(RoundedCornerShape(PriceListAvatarCorner))
+                    .clip(priceListHeroShape)
                     .background(palette.cardSurface),
             ) {
-                AsyncImage(
-                    model = restaurant.image,
-                    contentDescription = restaurant.name,
-                    contentScale = ContentScale.Crop,
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .then(heroModifier),
-                )
-                DiscoverRestaurantCardBadgeChip(
-                    restaurant = restaurant,
-                    fontSize = 10.sp,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(
-                            start = PriceListAvatarOverlayPadding,
-                            top = PriceListAvatarOverlayPadding,
-                        ),
-                )
-                HeartButton(
-                    active = saved,
-                    onClick = { WishlistStore.onHeartTap(restaurant) },
-                    size = HeartButtonSize.ExtraSmall,
-                    style = HeartButtonStyle.Overlay,
-                    overlayContentAlignment = Alignment.TopCenter,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(
-                            top = PriceListAvatarOverlayPadding,
-                            end = PriceListAvatarOverlayPadding,
-                        ),
-                )
+                ) {
+                    AsyncImage(
+                        model = restaurant.image,
+                        contentDescription = restaurant.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+                RestaurantCardHeroChromeLayer(sharedTransitionScope = shared) {
+                    DiscoverRestaurantCardBadgeChip(
+                        restaurant = restaurant,
+                        fontSize = 10.sp,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(
+                                start = PriceListAvatarOverlayPadding,
+                                top = PriceListAvatarOverlayPadding,
+                            ),
+                    )
+                    HeartButton(
+                        active = saved,
+                        onClick = { WishlistStore.onHeartTap(restaurant) },
+                        size = HeartButtonSize.ExtraSmall,
+                        style = HeartButtonStyle.Overlay,
+                        overlayContentAlignment = Alignment.TopCenter,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(
+                                top = PriceListAvatarOverlayPadding,
+                                end = PriceListAvatarOverlayPadding,
+                            ),
+                    )
+                }
             }
             Column(
                 modifier = Modifier.weight(1f),
@@ -2120,7 +2170,7 @@ private fun RestaurantByPriceListRow(
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = titleModifier,
+                    modifier = titleVisibilityModifier,
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

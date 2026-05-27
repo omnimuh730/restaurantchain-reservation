@@ -6,8 +6,11 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionShapes
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
-import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleVisibilityModifier
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -131,6 +134,12 @@ import kotlinx.coroutines.launch
 
 private val SheetTopRadius = 32.dp
 private val HeaderSheetShape = RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius)
+private val DetailHeroTransitionShape = RoundedCornerShape(
+    topStart = 20.dp,
+    topEnd = 20.dp,
+    bottomEnd = 6.dp,
+    bottomStart = 6.dp,
+)
 private val HeroHeight = 360.dp
 private val DetailInfoHorizontalPadding = 24.dp
 private val DetailListBottomPadding = 148.dp
@@ -203,17 +212,6 @@ private data class DetailLoadedPayload(
     val topReviews: List<ReviewEntry>,
 )
 
-/** Keeps detail content warm when returning from photo grid or other sub-routes. */
-private object RestaurantDetailPayloadCache {
-    private val payloads = mutableMapOf<String, DetailLoadedPayload>()
-
-    fun get(restaurantId: String): DetailLoadedPayload? = payloads[restaurantId]
-
-    fun put(restaurantId: String, payload: DetailLoadedPayload) {
-        payloads[restaurantId] = payload
-    }
-}
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RestaurantDetailScreen(
@@ -233,8 +231,23 @@ fun RestaurantDetailScreen(
                 ?: com.mh.restaurantchainreservation.core.model.DiscoverData.MONTHLY_BEST.first()
             ).withDerivedGuestFavoriteLevel()
     }
-    val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, sharedTransitionScope, animatedVisibilityScope)
-    val titleModifier = rememberRestaurantSharedTitleModifier(restaurant.id, sharedTransitionScope, animatedVisibilityScope)
+    val heroModifier = rememberRestaurantSharedHeroModifier(
+        restaurant.id,
+        sharedTransitionScope,
+        animatedVisibilityScope,
+        shape = DetailHeroTransitionShape,
+    )
+    val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
+        sharedTransitionScope = sharedTransitionScope,
+        animatedVisibilityScope = animatedVisibilityScope,
+        role = RestaurantSharedTitleRole.Detail,
+    )
+    val contentPanelModifier = rememberRestaurantSharedContentPanelModifier(
+        restaurant.id,
+        sharedTransitionScope,
+        animatedVisibilityScope,
+        shape = RestaurantSharedTransitionShapes.detailContentPanel,
+    )
     var loadPhase by remember(restaurantId) { mutableStateOf(DetailLoadPhase.Shell) }
     var loadedPayload by remember(restaurantId) { mutableStateOf<DetailLoadedPayload?>(null) }
     val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
@@ -258,13 +271,6 @@ fun RestaurantDetailScreen(
     val bodySlidePx = remember(density) { with(density) { 28.dp.toPx() } }
 
     LaunchedEffect(restaurantId) {
-        val cached = RestaurantDetailPayloadCache.get(restaurantId)
-        if (cached != null) {
-            loadedPayload = cached
-            loadPhase = DetailLoadPhase.Ready
-            bodyReveal.snapTo(1f)
-            return@LaunchedEffect
-        }
         loadPhase = DetailLoadPhase.Shell
         loadedPayload = null
         bodyReveal.snapTo(0f)
@@ -282,7 +288,6 @@ fun RestaurantDetailScreen(
             fetch.await()
         }
         loadedPayload = payload
-        RestaurantDetailPayloadCache.put(restaurantId, payload)
         loadPhase = DetailLoadPhase.Ready
     }
 
@@ -325,7 +330,8 @@ fun RestaurantDetailScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(HeroHeight)
-                            .detailHeroParallax(heroScrollOffsetPx),
+                            .detailHeroParallax(heroScrollOffsetPx)
+                            .then(heroModifier),
                     ) {
                         HeroCarousel(
                             restaurantId = restaurant.id,
@@ -337,7 +343,6 @@ fun RestaurantDetailScreen(
                                     onOpenPhotoGrid(RestaurantPhotoGallerySource.Gallery)
                                 }
                             },
-                            modifier = heroModifier,
                         )
                         DetailHeroScrollOverlay(collapseProgress = collapseProgress)
                     }
@@ -345,14 +350,14 @@ fun RestaurantDetailScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .offset(y = -SheetTopRadius)
-                            .clip(RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius))
+                            .then(contentPanelModifier)
                             .background(palette.pageBackground),
                     ) {
                         HeaderSummaryCard(
                             restaurant = restaurant,
                             ext = payload?.ext,
                             loadPhase = loadPhase,
-                            titleModifier = titleModifier,
+                            titleVisibilityModifier = titleVisibilityModifier,
                         )
                         if (contentReady && payload != null) {
                             RatingsSummaryRow(
@@ -492,13 +497,7 @@ private fun HeroCarousel(
         modifier = modifier
             .fillMaxWidth()
             .height(HeroHeight)
-            .clip(RoundedCornerShape(
-                topStart = 20.dp,
-                topEnd = 20.dp,
-                bottomEnd = 6.dp,
-                bottomStart = 6.dp
-                )
-            ),
+            .clipToBounds(),
     ) {
         HorizontalPager(
             state = pagerState,
@@ -545,7 +544,7 @@ private fun HeaderSummaryCard(
     restaurant: Restaurant,
     ext: RestaurantExtendedData?,
     loadPhase: DetailLoadPhase,
-    titleModifier: Modifier = Modifier,
+    titleVisibilityModifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
     Column(
@@ -571,7 +570,7 @@ private fun HeaderSummaryCard(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .then(titleModifier),
+                .then(titleVisibilityModifier),
         )
         if (loadPhase == DetailLoadPhase.Loading) {
             RestaurantDetailLoadingDots(
