@@ -85,6 +85,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -103,6 +104,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp as lerpUnit
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
@@ -470,8 +472,6 @@ fun DiscoverHomeScreen(
                 ) {
                     HeroBanner(
                         banners = DiscoverData.BANNERS,
-                        onOpenSearch = onOpenSearch,
-                        onOpenMap = onOpenMap,
                         onViewAll = { onOpenSection("banners") },
                         onBannerClick = { bannerId -> onOpenSection(bannerId) },
                     )
@@ -613,27 +613,13 @@ fun DiscoverHomeScreen(
             )
         }
 
-        AnimatedVisibility(
-            visible = compact,
-            enter = slideInVertically(
-                initialOffsetY = { -it },
-                animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)
-            ) + fadeIn(tween(220)),
-            exit = slideOutVertically(
-                targetOffsetY = { -it },
-                animationSpec = tween(220)
-            ) + fadeOut(tween(180)),
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .zIndex(4f),
-        ) {
-            CompactDiscoverBar(
-                hazeState = hazeState,
-                onOpenSearch = onOpenSearch,
-                onOpenMap = onOpenMap,
-            )
-        }
+        UnifiedDiscoverSearchBar(
+            listState = listState,
+            hazeState = hazeState,
+            onOpenSearch = onOpenSearch,
+            onOpenMap = onOpenMap,
+            modifier = Modifier.zIndex(4f),
+        )
 
     }
     }
@@ -646,12 +632,9 @@ private val DiscoverSheetTopOverlap = 32.dp
 @Composable
 private fun HeroBanner(
     banners: List<Banner>,
-    onOpenSearch: () -> Unit,
-    onOpenMap: () -> Unit,
     onViewAll: () -> Unit,
     onBannerClick: (String) -> Unit,
 ) {
-    val palette = LocalRestaurantPalette.current
     val pagerState = rememberPagerState(pageCount = { banners.size })
 
     LaunchedEffect(pagerState, banners.size) {
@@ -734,31 +717,14 @@ private fun HeroBanner(
             }
         }
 
-        Row(
+        HeroBannerPagerIndicators(
+            pageCount = banners.size,
+            pagerState = pagerState,
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .zIndex(2f)
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(
-                    start = DiscoverLayout.PageHorizontal,
-                    top = 18.dp,
-                    end = DiscoverLayout.PageHorizontal,
-                )
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(DiscoverLayout.RailItemGap),
-        ) {
-            GlassSearchButton(
-                title = "Find a restaurant",
-                subtitle = "Type of food, restaurant name…",
-                compact = false,
-                opaqueGlass = false,
-                palette = palette,
-                onClick = onOpenSearch,
-                modifier = Modifier.weight(1f),
-            )
-            GlassMapButton(compact = false, opaqueGlass = false, palette = palette, onClick = onOpenMap)
-        }
+                .align(Alignment.BottomCenter)
+                .zIndex(3f)
+                .padding(bottom = 64.dp),
+        )
 
         PressableScale(
             onClick = onViewAll,
@@ -772,15 +738,6 @@ private fun HeroBanner(
         ) {
             Text("View All", color = RestaurantColors.Text.primary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
-
-        HeroBannerPagerIndicators(
-            pageCount = banners.size,
-            pagerState = pagerState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .zIndex(3f)
-                .padding(bottom = 64.dp),
-        )
     }
 }
 
@@ -813,38 +770,88 @@ private fun HeroBannerPagerIndicators(
 }
 
 @Composable
-private fun CompactDiscoverBar(
+private fun UnifiedDiscoverSearchBar(
+    listState: LazyListState,
     hazeState: HazeState,
     onOpenSearch: () -> Unit,
     onOpenMap: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .hazeEffect(state = hazeState, style = HazeMaterials.thin())
-            .border(width = 1.dp, color = discoverGlassBarEdgeColor(palette))
-            .windowInsetsPadding(WindowInsets.statusBars)
-            .padding(
-                start = DiscoverLayout.PageHorizontal,
-                end = DiscoverLayout.PageHorizontal,
-                top = 8.dp,
-                bottom = 8.dp,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(DiscoverLayout.RailItemGap),
+    val density = LocalDensity.current
+
+    val scrollProgress by remember {
+        derivedStateOf {
+            if (listState.firstVisibleItemIndex > 0) 1f
+            else {
+                val threshold = with(density) { 60.dp.toPx() }
+                (listState.firstVisibleItemScrollOffset / threshold).coerceIn(0f, 1f)
+            }
+        }
+    }
+
+    val bgProgress by remember {
+        derivedStateOf {
+            if (listState.firstVisibleItemIndex > 0) 1f
+            else {
+                val start = with(density) { 40.dp.toPx() }
+                val end = with(density) { 100.dp.toPx() }
+                ((listState.firstVisibleItemScrollOffset - start) / (end - start)).coerceIn(0f, 1f)
+            }
+        }
+    }
+
+    val topPadding = lerpUnit(18.dp, 8.dp, scrollProgress)
+    val bottomPadding = lerpUnit(0.dp, 8.dp, scrollProgress)
+
+    Box(
+        modifier = modifier.fillMaxWidth()
     ) {
-        GlassSearchButton(
-            title = "Find a restaurant",
-            subtitle = "Type of food, restaurant name…",
-            compact = true,
-            opaqueGlass = false,
-            palette = palette,
-            onClick = onOpenSearch,
-            modifier = Modifier.weight(1f),
-        )
-        GlassMapButton(compact = true, opaqueGlass = false, palette = palette, onClick = onOpenMap)
+        if (bgProgress > 0f) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .graphicsLayer { alpha = bgProgress }
+                    .background(palette.pageBackground.copy(alpha = 0.85f))
+                    .hazeEffect(state = hazeState, style = HazeMaterials.thin())
+                    .drawBehind {
+                        drawLine(
+                            color = discoverGlassBarEdgeColor(palette).copy(alpha = bgProgress),
+                            start = Offset(0f, size.height),
+                            end = Offset(size.width, size.height),
+                            strokeWidth = 1.dp.toPx()
+                        )
+                    }
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(
+                    start = DiscoverLayout.PageHorizontal,
+                    end = DiscoverLayout.PageHorizontal,
+                    top = topPadding,
+                    bottom = bottomPadding,
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(DiscoverLayout.RailItemGap),
+        ) {
+            GlassSearchButton(
+                title = "Find a restaurant",
+                subtitle = "Type of food, restaurant name…",
+                progress = scrollProgress,
+                palette = palette,
+                onClick = onOpenSearch,
+                modifier = Modifier.weight(1f),
+            )
+            GlassMapButton(
+                progress = scrollProgress,
+                palette = palette,
+                onClick = onOpenMap
+            )
+        }
     }
 }
 
@@ -859,31 +866,14 @@ private data class GlassPillLayers(
 )
 
 private fun discoverGlassPillLayers(
-    palette: RestaurantPalette,
-    compact: Boolean,
-    opaqueGlass: Boolean,
+    @Suppress("UNUSED_PARAMETER") palette: RestaurantPalette,
+    progress: Float,
 ): GlassPillLayers {
-    val strong = opaqueGlass && compact
-    val baseAlpha = when {
-        strong -> 0.52f
-        compact -> 0.38f
-        else -> 0.28f
-    }
-    val borderAlpha = when {
-        strong -> 0.70f
-        compact -> 0.60f
-        else -> 0.56f
-    }
-    val iconAlpha = when {
-        strong -> 0.52f
-        compact -> 0.44f
-        else -> 0.40f
-    }
-    val gradTop = when {
-        strong -> 0.50f
-        compact -> 0.44f
-        else -> 0.38f
-    }
+    val baseAlpha = lerp(0.28f, 0.38f, progress)
+    val borderAlpha = lerp(0.56f, 0.60f, progress)
+    val iconAlpha = lerp(0.40f, 0.44f, progress)
+    val gradTop = lerp(0.38f, 0.44f, progress)
+
     return GlassPillLayers(
         baseFill = RestaurantColors.Base.white.copy(alpha = baseAlpha),
         borderAlpha = borderAlpha,
@@ -901,16 +891,18 @@ private fun discoverGlassPillBorderColor(
 private fun GlassSearchButton(
     title: String,
     subtitle: String,
-    compact: Boolean,
+    progress: Float,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    opaqueGlass: Boolean = false,
     palette: RestaurantPalette,
 ) {
-    val height = if (compact) 44.dp else 56.dp
-    val iconSize = if (compact) 32.dp else 38.dp
-    val layers = discoverGlassPillLayers(palette, compact, opaqueGlass)
-    val horizontalPadding = if (compact) 10.dp else 14.dp
+    val height = lerpUnit(56.dp, 44.dp, progress)
+    val iconSize = lerpUnit(38.dp, 32.dp, progress)
+    val horizontalPadding = lerpUnit(14.dp, 10.dp, progress)
+    val titleFontSize = lerpUnit(15.sp, 13.sp, progress)
+    val subtitleFontSize = lerpUnit(12.sp, 10.sp, progress)
+    val layers = discoverGlassPillLayers(palette, progress)
+    val spacerWidth = lerpUnit(11.dp, 9.dp, progress)
 
     val sharedScope = LocalRestaurantSharedTransitionScope.current
     val animatedScope = LocalAnimatedContentScope.current
@@ -968,22 +960,22 @@ private fun GlassSearchButton(
                         .border(1.dp, discoverGlassPillBorderColor(palette, layers.borderAlpha * 0.92f), CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.Outlined.Search, contentDescription = null, tint = palette.foreground, modifier = Modifier.size(if (compact) 15.dp else 18.dp))
+                    Icon(Icons.Outlined.Search, contentDescription = null, tint = palette.foreground, modifier = Modifier.size(lerpUnit(18.dp, 15.dp, progress)))
                 }
-                Spacer(Modifier.width(if (compact) 9.dp else 11.dp))
+                Spacer(Modifier.width(spacerWidth))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title,
                         color = palette.foreground,
-                        fontSize = if (compact) 13.sp else 15.sp,
+                        fontSize = titleFontSize,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
                         text = subtitle,
-                        color = palette.foreground.copy(alpha = if (opaqueGlass && compact) 0.72f else 0.68f),
-                        fontSize = if (compact) 10.sp else 12.sp,
+                        color = palette.foreground.copy(alpha = lerp(0.68f, 0.72f, progress)),
+                        fontSize = subtitleFontSize,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -996,13 +988,12 @@ private fun GlassSearchButton(
 
 @Composable
 private fun GlassMapButton(
-    compact: Boolean,
+    progress: Float,
     onClick: () -> Unit,
-    opaqueGlass: Boolean = false,
     palette: RestaurantPalette,
 ) {
-    val size = if (compact) 44.dp else 56.dp
-    val layers = discoverGlassPillLayers(palette, compact, opaqueGlass)
+    val size = lerpUnit(56.dp, 44.dp, progress)
+    val layers = discoverGlassPillLayers(palette, progress)
     PressableScale(
         onClick = onClick,
         modifier = Modifier
@@ -1025,7 +1016,7 @@ private fun GlassMapButton(
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Outlined.Map, contentDescription = "Open map search", tint = palette.foreground, modifier = Modifier.size(if (compact) 23.dp else 28.dp))
+            Icon(Icons.Outlined.Map, contentDescription = "Open map search", tint = palette.foreground, modifier = Modifier.size(lerpUnit(28.dp, 23.dp, progress)))
         }
     }
 }
