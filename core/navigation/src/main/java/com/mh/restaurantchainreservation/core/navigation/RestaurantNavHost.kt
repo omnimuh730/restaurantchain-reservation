@@ -9,6 +9,12 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.lerp as lerpDp
+import androidx.compose.ui.util.lerp as lerpFloat
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -65,6 +71,7 @@ import com.mh.restaurantchainreservation.core.designsystem.transition.LocalResta
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionChrome
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionChromeSink
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionMotion
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalTransition
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavIconPaths
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.BottomNavStrokeIcon
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucidePaths
@@ -261,185 +268,199 @@ fun RestaurantNavHost(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(palette.pageBackground),
+            .background(Color.Black),
     ) {
+        val recessionProgress = RestaurantModalTransition.rememberRecessionProgress()
+        
+        // Shrinking content card (Main App UI)
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .graphicsLayer {
+                    val scale = lerpFloat(1f, 0.94f, recessionProgress)
+                    scaleX = scale
+                    scaleY = scale
+                    clip = true
+                    shape = RoundedCornerShape(lerpDp(0.dp, 28.dp, recessionProgress))
+                }
                 .background(palette.pageBackground)
                 .hazeSource(state = updateDataHazeState),
         ) {
-    val density = LocalDensity.current
-    val layoutDirection = LocalLayoutDirection.current
-    var bottomBarHeightPx by remember { mutableIntStateOf(0) }
+            val density = LocalDensity.current
+            val layoutDirection = LocalLayoutDirection.current
+            var bottomBarHeightPx by remember { mutableIntStateOf(0) }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = palette.pageBackground,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        // Phone bottom nav is drawn as an overlay so hide/show can animate in sync with content inset.
-        bottomBar = {},
-    ) { paddingValues ->
-        val compactBottomInset = with(density) {
-            (bottomBarHeightPx * bottomNavInsetProgress).toDp()
-        }
-        val compactContentPadding = PaddingValues(
-            top = paddingValues.calculateTopPadding(),
-            start = paddingValues.calculateStartPadding(layoutDirection),
-            end = paddingValues.calculateEndPadding(layoutDirection),
-            bottom = compactBottomInset,
-        )
-        if (isCompact) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                CompositionLocalProvider(
-                    LocalBottomNavScrollBehavior provides
-                        bottomNavScrollBehavior.takeIf { shouldTrackBottomNavScroll },
-                    LocalNavContentBottomPadding provides compactBottomInset,
-                ) {
-                    AppGraph(
-                        navController = navController,
-                        contentPadding = compactContentPadding,
-                        authenticated = authenticated,
-                        onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
-                        onRequireSignIn = { promptSignIn(it) },
-                        modifier = Modifier.fillMaxSize(),
-                    )
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = palette.pageBackground,
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                bottomBar = {},
+            ) { paddingValues ->
+                val compactBottomInset = with(density) {
+                    (bottomBarHeightPx * bottomNavInsetProgress).toDp()
                 }
-                if (showAppChrome) {
-                    // Wishlist overlay (sheet + toast) sits above app destinations.
-                    // Toast is offset up by the bottom-bar inset so it floats just
-                    // above the nav bar.
-                    WishlistOverlayHost(bottomInset = compactContentPadding)
-                }
-                GlobalNotificationHost(
-                    bottomInset = if (showAppChrome) compactContentPadding else PaddingValues(0.dp),
+                val compactContentPadding = PaddingValues(
+                    top = paddingValues.calculateTopPadding(),
+                    start = paddingValues.calculateStartPadding(layoutDirection),
+                    end = paddingValues.calculateEndPadding(layoutDirection),
+                    bottom = compactBottomInset,
                 )
-                signInRequiredReason?.let { reason ->
-                    SignInRequiredDialog(
-                        message = stringResource(reason.messageRes),
-                        onSignIn = { navigateToLogin() },
-                        onDismiss = { signInRequiredReason = null },
-                    )
-                }
-                if (showBottomBarSlot) {
-                    BottomNavAnimatedOverlay(
-                        visibilityProgress = bottomNavVisibilityProgress,
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                        onBarLayoutHeightChanged = { heightPx ->
-                            bottomBarHeightPx = heightPx
-                        },
-                    ) {
-                        BottomNavBar(
-                            tabs = bottomTabs,
-                            activeId = activeTabId,
-                            onTabSelect = { id ->
-                                bottomNavScrollBehavior.show()
-                                val route = routeForTab(id)
-                                if (!authenticated && requiresAuthRoute(route)) {
-                                    promptSignIn(signInReasonForTab(id))
-                                } else if (id == BottomNavTabId.Discover) {
-                                    navController.navigateToDiscoverHome()
-                                } else {
-                                    navController.navigateToTab(route)
-                                }
-                            },
-                            onQrPay = {
-                                if (authenticated) {
-                                    navController.navigate(QrPayRoutes.Home)
-                                } else {
-                                    promptSignIn(SignInRequiredReason.QrPay)
-                                }
-                            },
-                            qrPayContentDescription = qrPayLabel,
+                if (isCompact) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        CompositionLocalProvider(
+                            LocalBottomNavScrollBehavior provides
+                                bottomNavScrollBehavior.takeIf { shouldTrackBottomNavScroll },
+                            LocalNavContentBottomPadding provides compactBottomInset,
+                        ) {
+                            AppGraph(
+                                navController = navController,
+                                contentPadding = compactContentPadding,
+                                authenticated = authenticated,
+                                onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
+                                onRequireSignIn = { promptSignIn(it) },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                        if (showAppChrome) {
+                            WishlistOverlayHost(bottomInset = compactContentPadding)
+                        }
+                        GlobalNotificationHost(
+                            bottomInset = if (showAppChrome) compactContentPadding else PaddingValues(0.dp),
                         )
+                        signInRequiredReason?.let { reason ->
+                            SignInRequiredDialog(
+                                message = stringResource(reason.messageRes),
+                                onSignIn = { navigateToLogin() },
+                                onDismiss = { signInRequiredReason = null },
+                            )
+                        }
+                        if (showBottomBarSlot) {
+                            BottomNavAnimatedOverlay(
+                                visibilityProgress = bottomNavVisibilityProgress,
+                                modifier = Modifier.align(Alignment.BottomCenter),
+                                onBarLayoutHeightChanged = { heightPx ->
+                                    bottomBarHeightPx = heightPx
+                                },
+                            ) {
+                                BottomNavBar(
+                                    tabs = bottomTabs,
+                                    activeId = activeTabId,
+                                    onTabSelect = { id ->
+                                        bottomNavScrollBehavior.show()
+                                        val route = routeForTab(id)
+                                        if (!authenticated && requiresAuthRoute(route)) {
+                                            promptSignIn(signInReasonForTab(id))
+                                        } else if (id == BottomNavTabId.Discover) {
+                                            navController.navigateToDiscoverHome()
+                                        } else {
+                                            navController.navigateToTab(route)
+                                        }
+                                    },
+                                    onQrPay = {
+                                        if (authenticated) {
+                                            navController.navigate(QrPayRoutes.Home)
+                                        } else {
+                                            promptSignIn(SignInRequiredReason.QrPay)
+                                        }
+                                    },
+                                    qrPayContentDescription = qrPayLabel,
+                                )
+                            }
+                        }
+                    }
+                } else if (showAppChrome && !hideTabNavigation) {
+                    Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                        NavigationRail {
+                            bottomTabs.forEach { tab ->
+                                val selected = tab.id == activeTabId
+                                NavigationRailItem(
+                                    selected = selected,
+                                    onClick = {
+                                        val route = routeForTab(tab.id)
+                                        if (!authenticated && requiresAuthRoute(route)) {
+                                            promptSignIn(signInReasonForTab(tab.id))
+                                        } else if (tab.id == BottomNavTabId.Discover) {
+                                            navController.navigateToDiscoverHome()
+                                        } else {
+                                            navController.navigateToTab(route)
+                                        }
+                                    },
+                                    icon = { RailIconFor(tab.id, selected = selected) },
+                                    label = { Text(tab.label) },
+                                )
+                            }
+                        }
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            AppGraph(
+                                navController = navController,
+                                contentPadding = PaddingValues(0.dp),
+                                authenticated = authenticated,
+                                onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
+                                onRequireSignIn = { promptSignIn(it) },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                            WishlistOverlayHost()
+                            GlobalNotificationHost()
+                            signInRequiredReason?.let { reason ->
+                                SignInRequiredDialog(
+                                    message = stringResource(reason.messageRes),
+                                    onSignIn = { navigateToLogin() },
+                                    onDismiss = { signInRequiredReason = null },
+                                )
+                            }
+                        }
+                    }
+                } else if (showAppChrome) {
+                    Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                        AppGraph(
+                            navController = navController,
+                            contentPadding = PaddingValues(0.dp),
+                            authenticated = authenticated,
+                            onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
+                            onRequireSignIn = { promptSignIn(it) },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        WishlistOverlayHost()
+                        GlobalNotificationHost()
+                        signInRequiredReason?.let { reason ->
+                            SignInRequiredDialog(
+                                message = stringResource(reason.messageRes),
+                                onSignIn = { navigateToLogin() },
+                                onDismiss = { signInRequiredReason = null },
+                            )
+                        }
+                    }
+                } else {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        AppGraph(
+                            navController = navController,
+                            contentPadding = PaddingValues(0.dp),
+                            authenticated = authenticated,
+                            onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
+                            onRequireSignIn = { promptSignIn(it) },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        GlobalNotificationHost()
+                        signInRequiredReason?.let { reason ->
+                            SignInRequiredDialog(
+                                message = stringResource(reason.messageRes),
+                                onSignIn = { navigateToLogin() },
+                                onDismiss = { signInRequiredReason = null },
+                            )
+                        }
                     }
                 }
             }
-        } else if (showAppChrome && !hideTabNavigation) {
-            Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-                NavigationRail {
-                    bottomTabs.forEach { tab ->
-                        val selected = tab.id == activeTabId
-                        NavigationRailItem(
-                            selected = selected,
-                            onClick = {
-                                val route = routeForTab(tab.id)
-                                if (!authenticated && requiresAuthRoute(route)) {
-                                    promptSignIn(signInReasonForTab(tab.id))
-                                } else if (tab.id == BottomNavTabId.Discover) {
-                                    navController.navigateToDiscoverHome()
-                                } else {
-                                    navController.navigateToTab(route)
-                                }
-                            },
-                            icon = { RailIconFor(tab.id, selected = selected) },
-                            label = { Text(tab.label) },
-                        )
-                    }
-                }
-                Box(modifier = Modifier.fillMaxSize()) {
-                    AppGraph(
-                        navController = navController,
-                        contentPadding = PaddingValues(0.dp),
-                        authenticated = authenticated,
-                        onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
-                        onRequireSignIn = { promptSignIn(it) },
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    WishlistOverlayHost()
-                    GlobalNotificationHost()
-                    signInRequiredReason?.let { reason ->
-                        SignInRequiredDialog(
-                            message = stringResource(reason.messageRes),
-                            onSignIn = { navigateToLogin() },
-                            onDismiss = { signInRequiredReason = null },
-                        )
-                    }
-                }
-            }
-        } else if (showAppChrome) {
-            Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-                AppGraph(
-                    navController = navController,
-                    contentPadding = PaddingValues(0.dp),
-                    authenticated = authenticated,
-                    onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
-                    onRequireSignIn = { promptSignIn(it) },
-                    modifier = Modifier.fillMaxSize(),
-                )
-                WishlistOverlayHost()
-                GlobalNotificationHost()
-                signInRequiredReason?.let { reason ->
-                    SignInRequiredDialog(
-                        message = stringResource(reason.messageRes),
-                        onSignIn = { navigateToLogin() },
-                        onDismiss = { signInRequiredReason = null },
-                    )
-                }
-            }
-        } else {
-            Box(modifier = Modifier.fillMaxSize()) {
-                AppGraph(
-                    navController = navController,
-                    contentPadding = PaddingValues(0.dp),
-                    authenticated = authenticated,
-                    onAuthenticated = { AuthSessionStore.markAuthenticated(context.applicationContext) },
-                    onRequireSignIn = { promptSignIn(it) },
-                    modifier = Modifier.fillMaxSize(),
-                )
-                GlobalNotificationHost()
-                signInRequiredReason?.let { reason ->
-                    SignInRequiredDialog(
-                        message = stringResource(reason.messageRes),
-                        onSignIn = { navigateToLogin() },
-                        onDismiss = { signInRequiredReason = null },
-                    )
-                }
-            }
-        }
-    }
 
+            // Dim overlay (within the shrinking card)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.4f * recessionProgress))
+            )
         }
+
+        // Modals / Overlays that stay full-screen and don't shrink
         UpdateDataModalHost(
             authenticated = authenticated,
             hazeState = updateDataHazeState,
