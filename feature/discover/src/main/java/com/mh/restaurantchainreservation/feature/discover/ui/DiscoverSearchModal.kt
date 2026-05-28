@@ -182,66 +182,40 @@ fun DiscoverSearchModal(
     val foodFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        delay(420)
         locationFocusRequester.requestFocus()
     }
 
-    val sharedScope = LocalRestaurantSharedTransitionScope.current
-    val animatedScope = LocalAnimatedContentScope.current
-    val transitionSnapshot = RestaurantSharedTransitionChrome.snapshot
-    val transitionProgress = if (transitionSnapshot.active) transitionSnapshot.progress else 1f
-
-    val sharedBoundsModifier = if (sharedScope != null && animatedScope != null) {
-        with(sharedScope) {
-            Modifier.sharedBounds(
-                rememberSharedContentState(key = RestaurantSharedKeys.SearchBar),
-                animatedVisibilityScope = animatedScope,
-                boundsTransform = { _, _ ->
-                    tween(
-                        durationMillis = RestaurantSharedTransitionMotion.durationMillis,
-                        easing = RestaurantSharedTransitionMotion.easing,
-                    )
-                },
-                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-            )
-        }
-    } else Modifier
+    val sharedBoundsModifier = Modifier
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .graphicsLayer { alpha = transitionProgress }
             .background(palette.pageBackground),
     ) {
-        AnimatedVisibility(
-            visible = true,
-            enter = fadeIn(tween(400, delayMillis = 200)) + slideInVertically(initialOffsetY = { -20 }),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
+            Spacer(Modifier.size(36.dp))
+            Text(
+                text = "Start your search",
+                modifier = Modifier.weight(1f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                color = palette.foreground,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = 24.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .clickable(role = Role.Button, onClick = onClose),
+                contentAlignment = Alignment.Center,
             ) {
-                Spacer(Modifier.size(36.dp))
-                Text(
-                    text = "Start your search",
-                    modifier = Modifier.weight(1f),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    color = palette.foreground,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .clickable(role = Role.Button, onClick = onClose),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.Filled.Close, contentDescription = "Close", tint = palette.foreground, modifier = Modifier.size(20.dp))
-                }
+                Icon(Icons.Filled.Close, contentDescription = "Close", tint = palette.foreground, modifier = Modifier.size(20.dp))
             }
         }
 
@@ -274,11 +248,6 @@ fun DiscoverSearchModal(
                     customWhere = ""
                 },
                 focusRequester = locationFocusRequester,
-                modifier = Modifier.graphicsLayer {
-                    val p = (transitionProgress - 0.2f) / 0.4f
-                    alpha = p.coerceIn(0f, 1f)
-                    translationY = (1f - p.coerceIn(0f, 1f)) * 12.dp.toPx()
-                }
             )
             Spacer(Modifier.height(10.dp))
             SearchInputRow(
@@ -290,14 +259,8 @@ fun DiscoverSearchModal(
                 onValueChange = { keyword = it },
                 onClear = { keyword = "" },
                 focusRequester = foodFocusRequester,
-                modifier = Modifier.graphicsLayer {
-                    val p = (transitionProgress - 0.3f) / 0.4f
-                    alpha = p.coerceIn(0f, 1f)
-                    translationY = (1f - p.coerceIn(0f, 1f)) * 16.dp.toPx()
-                }
             )
             Spacer(Modifier.height(shortcutGapTop))
-            val shortcutProgress = ((transitionProgress - 0.45f) / 0.4f).coerceIn(0f, 1f)
             when (activeInput) {
                 ActiveSearchInput.Location -> {
                     ShortcutRow(
@@ -308,10 +271,6 @@ fun DiscoverSearchModal(
                             selectedWhere = WhereSelection.NearMe.name
                             customWhere = ""
                         },
-                        modifier = Modifier.graphicsLayer {
-                            alpha = shortcutProgress
-                            translationY = (1f - shortcutProgress) * 20.dp.toPx()
-                        }
                     )
                 }
                 ActiveSearchInput.Food -> {
@@ -323,10 +282,6 @@ fun DiscoverSearchModal(
                             keyword = ""
                             submitSearch()
                         },
-                        modifier = Modifier.graphicsLayer {
-                            alpha = shortcutProgress
-                            translationY = (1f - shortcutProgress) * 20.dp.toPx()
-                        }
                     )
                 }
             }
@@ -336,7 +291,7 @@ fun DiscoverSearchModal(
                     .fillMaxWidth()
                     .height(1.dp)
                     .graphicsLayer {
-                        alpha = dividerAlpha * shortcutProgress
+                        alpha = dividerAlpha
                         translationY = dividerTranslationY.toPx()
                     }
                     .background(palette.border),
@@ -347,12 +302,7 @@ fun DiscoverSearchModal(
             state = listState,
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth()
-                .graphicsLayer {
-                    val p = ((transitionProgress - 0.55f) / 0.4f).coerceIn(0f, 1f)
-                    alpha = p
-                    translationY = (1f - p) * 24.dp.toPx()
-                },
+                .fillMaxWidth(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
         ) {
             when (activeInput) {

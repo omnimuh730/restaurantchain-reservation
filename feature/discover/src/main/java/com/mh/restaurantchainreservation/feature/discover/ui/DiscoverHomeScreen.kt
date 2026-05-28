@@ -904,24 +904,7 @@ private fun GlassSearchButton(
     val layers = discoverGlassPillLayers(palette, progress)
     val spacerWidth = lerpUnit(11.dp, 9.dp, progress)
 
-    val sharedScope = LocalRestaurantSharedTransitionScope.current
-    val animatedScope = LocalAnimatedContentScope.current
-
-    val sharedBoundsModifier = if (sharedScope != null && animatedScope != null) {
-        with(sharedScope) {
-            Modifier.sharedBounds(
-                rememberSharedContentState(key = RestaurantSharedKeys.SearchBar),
-                animatedVisibilityScope = animatedScope,
-                boundsTransform = { _, _ ->
-                    tween(
-                        durationMillis = RestaurantSharedTransitionMotion.durationMillis,
-                        easing = RestaurantSharedTransitionMotion.easing,
-                    )
-                },
-                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-            )
-        }
-    } else Modifier
+    val sharedBoundsModifier = Modifier
 
     PressableScale(
         onClick = onClick,
