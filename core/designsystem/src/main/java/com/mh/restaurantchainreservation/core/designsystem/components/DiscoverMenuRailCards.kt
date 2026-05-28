@@ -48,11 +48,10 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
-import com.mh.restaurantchainreservation.core.designsystem.components.shimmer
 /** Top Picks by Food Type / Popular menu rail tiles (Discover home + restaurant detail). */
 object DiscoverMenuRailDefaults {
     val TileSize = 112.dp
-    val TileCornerRadius = 16.dp
+    val TileCornerRadius = 20.dp
     val SeeAllCardShape = RoundedCornerShape(TileCornerRadius)
     val SeeAllThumbShape = RoundedCornerShape(8.dp)
     /** Base “See all” label size on 112dp menu/food-type tiles (scaled slightly with card size). */
@@ -87,7 +86,6 @@ fun DiscoverMenuTile(
                     .size(DiscoverMenuRailDefaults.TileSize)
                     .hubSurfaceShadow(shape = shape)
                     .clip(shape)
-                    .shimmer(shape = shape)
                     .background(palette.cardSurface),
             ) {
                 AsyncImage(

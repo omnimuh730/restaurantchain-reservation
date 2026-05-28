@@ -56,7 +56,7 @@ fun BottomNavAnimatedOverlay(
             .clip(RectangleShape)
             .graphicsLayer {
                 alpha = progress
-                translationY = (1f - progress) * clipHeightPx
+                translationY = (1f - progress) * layoutHeightPx
             },
     ) {
         Box(

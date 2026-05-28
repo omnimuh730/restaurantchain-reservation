@@ -57,7 +57,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.mh.restaurantchainreservation.core.designsystem.components.shimmer
 import com.mh.restaurantchainreservation.core.designsystem.components.DeterministicQrCode
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
@@ -294,7 +293,6 @@ private fun RestaurantImageWithStrip(
     Box(
         modifier = modifier
             .clip(imageShape)
-            .shimmer(shape = imageShape)
             .background(RestaurantColors.Neutral.chip),
     ) {
         AsyncImage(

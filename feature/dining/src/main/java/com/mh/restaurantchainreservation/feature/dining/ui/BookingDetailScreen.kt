@@ -27,6 +27,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleModifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -64,10 +71,8 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -82,14 +87,9 @@ import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloa
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingIconButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingToolbar
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroScrollOverlay
-import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroPullScaleMax
-import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroMaxPullFraction
 import com.mh.restaurantchainreservation.core.designsystem.components.detailHeroParallax
-import com.mh.restaurantchainreservation.core.designsystem.components.detailMorphingSheetBackground
-import com.mh.restaurantchainreservation.core.designsystem.components.detailMorphingSheetShape
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailCollapseProgress
 import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailTransitionThresholds
-import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailHeroPullMotion
 import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavContentBottomPadding
 import com.mh.restaurantchainreservation.core.designsystem.components.HubSurfaceCardDefaults
 import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantLocationMap
@@ -108,9 +108,9 @@ import com.mh.restaurantchainreservation.feature.dining.data.isGuestInviteBookin
 import com.mh.restaurantchainreservation.feature.dining.data.displayCuisineLabels
 import com.mh.restaurantchainreservation.feature.dining.data.displaySeatingLabels
 
-private val SheetTopRadius = 34.dp
+private val SheetTopRadius = 32.dp
 private val HeaderSheetShape = RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius)
-private val HeroHeight = 288.dp
+private val HeroHeight = 360.dp
 private val DetailInfoHorizontalPadding = 24.dp
 private val DetailSheetTopPadding = 28.dp
 private val DetailSectionVerticalPadding = 24.dp
@@ -137,22 +137,6 @@ private fun galleryImagesFor(booking: Booking): List<String> {
     return listOf(primary) + GalleryExtras
 }
 
-private fun Modifier.detailSheetTopRoundedBackground(color: Color): Modifier = drawBehind {
-    val topRadius = SheetTopRadius.toPx()
-    val path = Path().apply {
-        addRoundRect(
-            RoundRect(
-                rect = Rect(0f, 0f, size.width, size.height),
-                topLeft = CornerRadius(topRadius, topRadius),
-                topRight = CornerRadius(topRadius, topRadius),
-                bottomRight = CornerRadius.Zero,
-                bottomLeft = CornerRadius.Zero,
-            ),
-        )
-    }
-    drawPath(path, color = color)
-}
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BookingDetailScreen(
@@ -166,6 +150,8 @@ fun BookingDetailScreen(
     onBookAgain: () -> Unit,
     onViewReceipt: () -> Unit,
     onDeleteRequest: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope? = LocalRestaurantSharedTransitionScope.current,
+    animatedVisibilityScope: AnimatedVisibilityScope? = LocalAnimatedContentScope.current,
 ) {
     val palette = LocalRestaurantPalette.current
     val density = LocalDensity.current
@@ -178,6 +164,8 @@ fun BookingDetailScreen(
     val isCompleted = booking.status == BookingStatus.Completed
 
     val restaurant = remember(booking.id) { DiscoverData.findById(booking.id) }
+    val heroModifier = rememberRestaurantSharedHeroModifier(booking.id, sharedTransitionScope, animatedVisibilityScope)
+    val titleModifier = rememberRestaurantSharedTitleModifier(booking.id, sharedTransitionScope, animatedVisibilityScope)
     val wishlistRestaurant = remember(booking.id, restaurant) { restaurantForBooking(booking, restaurant) }
     val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
     val saved = wishlistRestaurant.id in savedIds
@@ -187,14 +175,8 @@ fun BookingDetailScreen(
     val transitionThresholds = rememberDetailTransitionThresholds(
         titleBottomFromContentTop = BookingHeroTitleBottomInContent,
     )
-    val sheetShape = detailMorphingSheetShape(collapseProgress)
     val heroScrollOffsetPx = scroll.value
     val navBottomPadding = LocalNavContentBottomPadding.current
-
-    val pullMotion = rememberDetailHeroPullMotion()
-    val pullDistancePx by pullMotion.pullDistancePx
-    val maxPullPx = remember(density) { with(density) { HeroHeight.toPx() * DetailHeroMaxPullFraction } }
-    val pullProgress = (pullDistancePx / maxPullPx).coerceIn(0f, 1f)
 
     Box(
         modifier = Modifier
@@ -202,31 +184,24 @@ fun BookingDetailScreen(
             .background(palette.pageBackground)
             .trackBottomNavScroll(),
     ) {
-        val pullDistanceDp = with(density) { pullDistancePx.toDp() }
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .nestedScroll(
-                    pullMotion.nestedScrollConnection(
-                        maxPullPx = maxPullPx,
-                        isAtTop = { scroll.value == 0 },
-                    ),
-                )
                 .verticalScroll(scroll),
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(HeroHeight + pullDistanceDp)
+                        .height(HeroHeight)
                         .detailHeroParallax(heroScrollOffsetPx),
                 ) {
                     BookingHeroCarousel(
                         booking = booking,
                         galleryImages = galleryImages,
                         restaurant = restaurant,
-                        pullProgress = pullProgress,
+                        modifier = heroModifier,
+                        titleModifier = titleModifier,
                     )
                     DetailHeroScrollOverlay(
                         collapseProgress = collapseProgress,
@@ -237,8 +212,8 @@ fun BookingDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .offset(y = -SheetTopRadius)
-                        .detailMorphingSheetBackground(palette.pageBackground, collapseProgress)
-                        .clip(sheetShape)
+                        .clip(RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius))
+                        .background(palette.pageBackground)
                         .padding(horizontal = DetailInfoHorizontalPadding),
                 ) {
                     Spacer(Modifier.height(DetailSheetTopPadding))
@@ -408,14 +383,24 @@ private fun BookingHeroCarousel(
     booking: Booking,
     galleryImages: List<String>,
     restaurant: Restaurant?,
-    pullProgress: Float,
+    modifier: Modifier = Modifier,
+    titleModifier: Modifier = Modifier,
 ) {
     val pagerState = rememberPagerState(pageCount = { galleryImages.size })
     val hostName = restaurantHostName(booking, restaurant)
     val heroOverlayBottom = SheetTopRadius + HeroOverlayBottomPadding
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(HeroHeight)
+            .clip(RoundedCornerShape(
+                topStart = 20.dp,
+                topEnd = 20.dp,
+                bottomEnd = 6.dp,
+                bottomStart = 6.dp
+                )
+            ),
     ) {
         HorizontalPager(
             state = pagerState,
@@ -425,14 +410,7 @@ private fun BookingHeroCarousel(
                 model = galleryImages[page],
                 contentDescription = booking.restaurant,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        val scale = 1f + pullProgress * DetailHeroPullScaleMax
-                        scaleX = scale
-                        scaleY = scale
-                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0f)
-                    },
+                modifier = Modifier.fillMaxSize(),
             )
         }
 
@@ -488,6 +466,7 @@ private fun BookingHeroCarousel(
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
+                modifier = titleModifier,
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,

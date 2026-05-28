@@ -4,9 +4,7 @@ package com.mh.restaurantchainreservation.feature.discover.ui
 
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.RepeatMode
@@ -78,7 +76,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
@@ -86,13 +83,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.unit.Velocity
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -129,18 +121,20 @@ import com.mh.restaurantchainreservation.core.designsystem.components.HubSurface
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuSeeAllCard
 import com.mh.restaurantchainreservation.core.designsystem.components.DiscoverMenuTile
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceCard
-import com.mh.restaurantchainreservation.core.designsystem.components.SkeletonBox
-import com.mh.restaurantchainreservation.core.designsystem.components.shimmer
 import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
-import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailHeroPullMotion
-import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroPullScaleMax
-import com.mh.restaurantchainreservation.core.designsystem.components.DetailHeroMaxPullFraction
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.tokens.pageCanvasBackground
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionChrome
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantHeroChromeAlpha
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedHeroModifier
-import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedTitleVisibilityModifier
+import com.mh.restaurantchainreservation.core.designsystem.transition.restaurantSharedContentPanelLayer
 import com.mh.restaurantchainreservation.core.model.Banner
 import com.mh.restaurantchainreservation.core.model.City
 import com.mh.restaurantchainreservation.core.model.DiscoverData
@@ -153,11 +147,7 @@ import com.mh.restaurantchainreservation.core.model.NewsData
 import com.mh.restaurantchainreservation.feature.discover.R
 import kotlin.math.abs
 import kotlin.math.roundToInt
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlin.math.min
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 private val DiningNewsCardWidth = 260.dp
@@ -222,7 +212,7 @@ private val DiningNewsCardShape = MoreCardShape
 private const val RestaurantRailVisibleCount = 8
 
 /** City / food image rails show this many cards, then the explore-more tile. */
-private const val ImageRailVisibleCount = 7
+private const val ImageRailVisibleCount = 8
 
 private val RestaurantMiniCardWidth = 176.dp
 private val RestaurantMiniImageHeight =
@@ -308,9 +298,9 @@ private object DiscoverLayout {
 private val PriceListThumbnailWidth = 110.dp
 private val PriceListThumbnailHeight =
     PriceListThumbnailWidth / DiscoverRestaurantImageAspectWidthOverHeight
-private val PriceListAvatarCorner = 16.dp
+private val PriceListAvatarCorner = 20.dp
 private val PriceListAvatarOverlayPadding = 8.dp
-private val RestaurantRailImageShape = RoundedCornerShape(18.dp)
+private val RestaurantRailImageShape = RoundedCornerShape(22.dp)
 
 /** Default hub card shadow + clip for Discover image tiles. */
 private fun Modifier.discoverImageCardSurface(shape: Shape): Modifier =
@@ -330,7 +320,9 @@ fun DiscoverHomeScreen(
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
-    val listState = rememberLazyListState()
+    val listState = rememberSaveable(saver = LazyListState.Saver) {
+        LazyListState()
+    }
     val news = remember { NewsData.all }
     val compact by remember {
         derivedStateOf {
@@ -342,21 +334,26 @@ fun DiscoverHomeScreen(
     val priceTabBasePool = remember(selectedPriceTab) {
         restaurantsForPriceTab(selectedPriceTab)
     }
-    var priceSectionRestaurants by remember(selectedPriceTab) {
-        mutableStateOf(restaurantsForPriceTab(selectedPriceTab).take(5))
+    var priceSectionIds by rememberSaveable(selectedPriceTab) {
+        mutableStateOf(
+            restaurantsForPriceTab(selectedPriceTab).take(5).map { it.id },
+        )
     }
-    var priceSectionLoadingMore by remember { mutableStateOf(false) }
+    val priceSectionRestaurants = remember(priceSectionIds) {
+        priceSectionIds.mapNotNull { id -> DiscoverData.findById(id) }
+    }
+    var priceSectionLoadingMore by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(selectedPriceTab, compact) {
         priceSectionLoadingMore = false
         if (compact && listState.firstVisibleItemIndex >= 2) {
             listState.scrollToItem(index = 2, scrollOffset = 0)
         }
     }
-    LaunchedEffect(listState, priceSectionRestaurants.size, selectedPriceTab, priceTabBasePool) {
+    LaunchedEffect(listState, priceSectionIds.size, selectedPriceTab, priceTabBasePool) {
         snapshotFlow {
             if (priceSectionLoadingMore) return@snapshotFlow false
             val poolSize = priceTabBasePool.size
-            val n = priceSectionRestaurants.size
+            val n = priceSectionIds.size
             if (n == 0 || n >= poolSize) {
                 false
             } else {
@@ -369,13 +366,13 @@ fun DiscoverHomeScreen(
             .distinctUntilChanged()
             .collect { showLastRow ->
                 if (!showLastRow) return@collect
-                val loaded = priceSectionRestaurants.size
+                val loaded = priceSectionIds.size
                 val more = priceTabBasePool.drop(loaded).take(5)
                 if (more.isEmpty()) return@collect
                 priceSectionLoadingMore = true
                 try {
                     delay(520)
-                    priceSectionRestaurants = priceSectionRestaurants + more
+                    priceSectionIds = priceSectionIds + more.map { it.id }
                 } finally {
                     priceSectionLoadingMore = false
                 }
@@ -443,38 +440,12 @@ fun DiscoverHomeScreen(
             }
         }
 
-        val discoverBannerHeightPx = remember(density) { with(density) { DiscoverBannerHeight.toPx() } }
-        val discoverBannerMaxPullPx = remember(discoverBannerHeightPx) {
-            discoverBannerHeightPx * DetailHeroMaxPullFraction
-        }
-        val discoverBannerScope = rememberCoroutineScope()
-        val discoverBannerMotion = rememberDetailHeroPullMotion(discoverBannerScope)
-        val discoverBannerScrollOffsetPx by remember(listState, discoverBannerHeightPx) {
-            derivedStateOf {
-                if (listState.firstVisibleItemIndex == 0) {
-                    listState.firstVisibleItemScrollOffset.toFloat()
-                } else {
-                    discoverBannerHeightPx
-                }
-            }
-        }
-        val discoverBannerPullPx by discoverBannerMotion.pullDistancePx
-        val discoverBannerPullProgress = (discoverBannerPullPx / discoverBannerMaxPullPx).coerceIn(0f, 1f)
-
         LazyColumn(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .pageCanvasBackground()
                 .trackBottomNavScroll()
-                .nestedScroll(
-                    discoverBannerMotion.nestedScrollConnection(
-                        maxPullPx = discoverBannerMaxPullPx,
-                        isAtTop = {
-                            listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
-                        }
-                    ),
-                )
                 .hazeSource(state = hazeState),
             contentPadding = PaddingValues(bottom = 16.dp),
         ) {
@@ -485,9 +456,6 @@ fun DiscoverHomeScreen(
                     onOpenMap = onOpenMap,
                     onViewAll = { onOpenSection("banners") },
                     onBannerClick = { bannerId -> onOpenSection(bannerId) },
-                    bannerScrollOffsetPx = discoverBannerScrollOffsetPx,
-                    pullProgress = discoverBannerPullProgress,
-                    pullDistancePx = discoverBannerPullPx,
                 )
             }
             item {
@@ -604,6 +572,25 @@ fun DiscoverHomeScreen(
             }
         }
 
+        val sharedProgress = RestaurantSharedTransitionChrome.snapshot.progress
+        val isTransitionActive = RestaurantSharedTransitionChrome.snapshot.active
+        if (isTransitionActive && sharedProgress > 0.01f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        // Airbnb style: Discover page background blurs out during the shared-element
+                        // push to emphasize the moving card and provide a smooth landing for the
+                        // white detail sheet background.
+                        alpha = (sharedProgress * 1.5f).coerceIn(0f, 1f)
+                    }
+                    .hazeEffect(state = hazeState, style = HazeMaterials.regular())
+                    // Gentle white-out scrim synced with blur strength
+                    .background(palette.pageBackground.copy(alpha = (sharedProgress * 0.65f).coerceIn(0f, 1f)))
+                    .zIndex(3f),
+            )
+        }
+
         AnimatedVisibility(
             visible = compact,
             enter = slideInVertically(
@@ -633,7 +620,7 @@ fun DiscoverHomeScreen(
 private val DiscoverBannerHeight = 360.dp
 private val DiscoverSheetTopOverlap = 32.dp
 
-/** Pull-to-stretch + scroll parallax for Discover hero banner photos. */
+/** Discover hero banner carousel. */
 @Composable
 private fun HeroBanner(
     banners: List<Banner>,
@@ -641,12 +628,8 @@ private fun HeroBanner(
     onOpenMap: () -> Unit,
     onViewAll: () -> Unit,
     onBannerClick: (String) -> Unit,
-    bannerScrollOffsetPx: Float,
-    pullProgress: Float,
-    pullDistancePx: Float,
 ) {
     val palette = LocalRestaurantPalette.current
-    val density = LocalDensity.current
     val pagerState = rememberPagerState(pageCount = { banners.size })
 
     LaunchedEffect(pagerState, banners.size) {
@@ -656,12 +639,10 @@ private fun HeroBanner(
         }
     }
 
-    val pullDistanceDp = with(density) { pullDistancePx.toDp() }
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(DiscoverBannerHeight + pullDistanceDp),
+            .height(DiscoverBannerHeight),
     ) {
         HorizontalPager(
             state = pagerState,
@@ -669,27 +650,14 @@ private fun HeroBanner(
         ) { page ->
             val banner = banners[page]
             Box(modifier = Modifier.fillMaxSize()) {
-                Box(
+                AsyncImage(
+                    model = banner.image,
+                    contentDescription = banner.title,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clipToBounds(),
-                ) {
-                    AsyncImage(
-                        model = banner.image,
-                        contentDescription = banner.title,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .graphicsLayer {
-                                translationY = bannerScrollOffsetPx * 0.40f
-                                val scale = 1f + pullProgress * DetailHeroPullScaleMax
-                                scaleX = scale
-                                scaleY = scale
-                                transformOrigin = TransformOrigin(0.5f, 0f)
-                            }
-                            .clickable { onBannerClick(banner.id) },
-                    )
-                }
+                        .clickable { onBannerClick(banner.id) },
+                )
                 Box(
                     modifier = Modifier
                         .matchParentSize()
@@ -1170,9 +1138,9 @@ private fun WhereToEatCityTile(
         onClick = onClick,
         modifier = Modifier
             .size(WhereToEatCityTileWidth, WhereToEatCityTileHeight)
-            .discoverImageCardSurface(RestaurantRailImageShape),
+            .discoverImageCardSurface(RoundedCornerShape(20.dp)),
     ) {
-        Box(modifier = Modifier.fillMaxSize().shimmer(shape = RestaurantRailImageShape)) {
+        Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
                 model = image,
                 contentDescription = title,
@@ -1287,8 +1255,25 @@ private fun AirbnbMiniCard(
     val saved = restaurant.id in savedIds
     val shared = LocalRestaurantSharedTransitionScope.current
     val animatedContent = LocalAnimatedContentScope.current
-    val heroModifier = rememberRestaurantSharedHeroModifier(restaurant.id, shared, animatedContent)
-    val titleModifier = rememberRestaurantSharedTitleModifier(restaurant.id, shared, animatedContent)
+    val heroModifier = rememberRestaurantSharedHeroModifier(
+        restaurant.id,
+        shared,
+        animatedContent,
+        shape = RestaurantRailImageShape,
+    )
+    val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
+        restaurantId = restaurant.id,
+        sharedTransitionScope = shared,
+        animatedVisibilityScope = animatedContent,
+        role = RestaurantSharedTitleRole.Card,
+    )
+    val contentPanelModifier = rememberRestaurantSharedContentPanelModifier(
+        restaurant.id,
+        shared,
+        animatedContent,
+    )
+    val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(restaurant.id, shared)
+    val heroChromeAlpha = rememberRestaurantHeroChromeAlpha(restaurant.id, shared)
     val widthModifier = if (width > 0.dp) modifier.width(width) else modifier
     PressableScale(
         onClick = onClick,
@@ -1300,63 +1285,79 @@ private fun AirbnbMiniCard(
                     .fillMaxWidth()
                     .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
                     .discoverImageCardSurface(RestaurantRailImageShape)
-                    .shimmer(shape = RestaurantRailImageShape)
                     .background(palette.cardSurface),
             ) {
-                AsyncImage(
-                    model = restaurant.image,
-                    contentDescription = restaurant.name,
-                    contentScale = ContentScale.Crop,
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .then(heroModifier),
-                )
-                DiscoverRestaurantCardBadgeChip(
-                    restaurant = restaurant,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(8.dp),
-                )
-                HeartButton(
-                    active = saved,
-                    onClick = { WishlistStore.onHeartTap(restaurant) },
-                    size = HeartButtonSize.Medium,
-                    style = HeartButtonStyle.Overlay,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp),
-                )
+                ) {
+                    AsyncImage(
+                        model = restaurant.image,
+                        contentDescription = restaurant.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    RestaurantCardHeroChromeLayer(
+                        modifier = Modifier.graphicsLayer { alpha = heroChromeAlpha },
+                    ) {
+                        DiscoverRestaurantCardBadgeChip(
+                            restaurant = restaurant,
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(8.dp),
+                        )
+                        HeartButton(
+                            active = saved,
+                            onClick = { WishlistStore.onHeartTap(restaurant) },
+                            size = HeartButtonSize.Medium,
+                            style = HeartButtonStyle.Overlay,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp),
+                        )
+                    }
+                }
             }
-            Text(
-                text = restaurant.name,
-                color = palette.foreground,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = titleModifier.padding(top = 8.dp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    .restaurantSharedContentPanelLayer(restaurant.id, shared)
+                    .then(contentPanelModifier)
+                    .padding(top = 8.dp, bottom = 4.dp),
             ) {
-                val metaColor = palette.mutedForeground
                 Text(
-                    text = restaurant.area ?: restaurant.cuisine,
-                    color = metaColor,
-                    fontSize = 12.sp,
+                    text = restaurant.name,
+                    color = palette.foreground,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = titleVisibilityModifier,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                DiscoverInlineDot(color = metaColor)
-                Text(
-                    text = "★ %.1f".format(restaurant.rating),
-                    color = metaColor,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 2.dp)
+                        .graphicsLayer { alpha = contentMetaAlpha },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val metaColor = palette.mutedForeground
+                    Text(
+                        text = restaurant.area ?: restaurant.cuisine,
+                        color = metaColor,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    DiscoverInlineDot(color = metaColor)
+                    Text(
+                        text = "★ %.1f".format(restaurant.rating),
+                        color = metaColor,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                    )
+                }
             }
         }
     }
@@ -1390,8 +1391,7 @@ private fun NewsRail(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(DiningNewsHeroImageHeight)
-                                .shimmer(),
+                                .height(DiningNewsHeroImageHeight),
                         ) {
                             AsyncImage(
                                 model = newsItem.image,
@@ -2124,6 +2124,21 @@ private fun RestaurantByPriceListRow(
     val goldStar = RestaurantColors.Semantic.starYellow
     val emptyStar = palette.mutedForeground.copy(alpha = 0.35f)
     val filledStars = (restaurant.rating + 0.25).roundToInt().coerceIn(0, 5)
+    val shared = LocalRestaurantSharedTransitionScope.current
+    val animatedContent = LocalAnimatedContentScope.current
+    val priceListHeroShape = RoundedCornerShape(PriceListAvatarCorner)
+    val heroModifier = rememberRestaurantSharedHeroModifier(
+        restaurant.id,
+        shared,
+        animatedContent,
+        shape = priceListHeroShape,
+    )
+    val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
+        restaurantId = restaurant.id,
+        sharedTransitionScope = shared,
+        animatedVisibilityScope = animatedContent,
+        role = RestaurantSharedTitleRole.Card,
+    )
 
     PressableScale(
         onClick = onOpenRestaurant,
@@ -2137,39 +2152,46 @@ private fun RestaurantByPriceListRow(
             Box(
                 modifier = Modifier
                     .size(PriceListThumbnailWidth, PriceListThumbnailHeight)
-                    .clip(RoundedCornerShape(PriceListAvatarCorner))
-                    .shimmer(shape = RoundedCornerShape(PriceListAvatarCorner))
+                    .clip(priceListHeroShape)
                     .background(palette.cardSurface),
             ) {
-                AsyncImage(
-                    model = restaurant.image,
-                    contentDescription = restaurant.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
-                DiscoverRestaurantCardBadgeChip(
-                    restaurant = restaurant,
-                    fontSize = 10.sp,
+                Box(
                     modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(
-                            start = PriceListAvatarOverlayPadding,
-                            top = PriceListAvatarOverlayPadding,
-                        ),
-                )
-                HeartButton(
-                    active = saved,
-                    onClick = { WishlistStore.onHeartTap(restaurant) },
-                    size = HeartButtonSize.ExtraSmall,
-                    style = HeartButtonStyle.Overlay,
-                    overlayContentAlignment = Alignment.TopCenter,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(
-                            top = PriceListAvatarOverlayPadding,
-                            end = PriceListAvatarOverlayPadding,
-                        ),
-                )
+                        .fillMaxSize()
+                        .then(heroModifier),
+                ) {
+                    AsyncImage(
+                        model = restaurant.image,
+                        contentDescription = restaurant.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    RestaurantCardHeroChromeLayer {
+                        DiscoverRestaurantCardBadgeChip(
+                            restaurant = restaurant,
+                            fontSize = 10.sp,
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(
+                                    start = PriceListAvatarOverlayPadding,
+                                    top = PriceListAvatarOverlayPadding,
+                                ),
+                        )
+                        HeartButton(
+                            active = saved,
+                            onClick = { WishlistStore.onHeartTap(restaurant) },
+                            size = HeartButtonSize.ExtraSmall,
+                            style = HeartButtonStyle.Overlay,
+                            overlayContentAlignment = Alignment.TopCenter,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(
+                                    top = PriceListAvatarOverlayPadding,
+                                    end = PriceListAvatarOverlayPadding,
+                                ),
+                        )
+                    }
+                }
             }
             Column(
                 modifier = Modifier.weight(1f),
@@ -2182,6 +2204,7 @@ private fun RestaurantByPriceListRow(
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = titleVisibilityModifier,
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

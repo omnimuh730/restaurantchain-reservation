@@ -160,7 +160,7 @@ object DiscoverData {
             "https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop",
         ),
         City("miami", "Miami", "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=400&h=300&fit=crop"),
-        City("austin", "Austin", "https://images.unsplash.com/photo-1531218150217-54595bc2b79d?w=400&h=300&fit=crop"),
+        City("austin", "Austin", "https://images.unsplash.com/photo-1563720223185-11003d516935?w=400&h=300&fit=crop"),
         City("denver", "Denver", "https://images.unsplash.com/photo-1546156929-a1951014851e?w=400&h=300&fit=crop"),
         City("portland", "Portland", "https://images.unsplash.com/photo-1541452880569-b95c1a5d8542?w=400&h=300&fit=crop"),
         City("san-diego", "San Diego", "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400&h=300&fit=crop"),

@@ -45,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -69,6 +70,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalTransition
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucideIcon
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.LucidePaths
 import com.mh.restaurantchainreservation.core.designsystem.components.icons.TonightLogoMark
@@ -174,6 +176,13 @@ fun UpdateDataModalHost(
     }
 
     if (!showModal) return
+
+    DisposableEffect(Unit) {
+        RestaurantModalTransition.increment()
+        onDispose {
+            RestaurantModalTransition.decrement()
+        }
+    }
 
     UpdateDataModal(
         hazeState = hazeState,
