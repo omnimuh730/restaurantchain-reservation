@@ -95,6 +95,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -161,9 +162,6 @@ private val ResultsSheetDragHandleHeight = 56.dp
 
 /** Top corner radius when the sheet floats over the map (morphs to 0 when docked under search chrome). */
 private val ResultsSheetTopCornerRadius = 28.dp
-
-/** Elevation when the sheet floats over the map (fades out when docked). */
-private val ResultsSheetFloatingShadow = 12.dp
 
 /** Map top inset: search/plan chrome only (filter row overlays the map below). */
 private val SearchResultsMapTopInset = SearchResultsChromeHeight
@@ -262,6 +260,8 @@ fun DiscoverSearchResultsScreen(
 
     LaunchedEffect(Unit) {
         bottomNavScrollBehavior?.show()
+        // Ensure shared transition state is reset when entering this screen.
+        RestaurantSharedTransitionChrome.clearTransitionProgress()
     }
 
     SideEffect {
@@ -349,7 +349,10 @@ fun DiscoverSearchResultsScreen(
         val listRevealThresholdPx = remember(density) {
             with(density) { ResultsSheetListRevealThreshold.toPx() }
         }
-        val displayedSheetHeightPx = if (isDraggingSheet) dragSheetHeightPx else sheetHeightAnim.value
+        val currentHeightPx = if (isDraggingSheet) dragSheetHeightPx else sheetHeightAnim.value
+        val displayedSheetHeightPx = remember(currentHeightPx, sheetAnchors) {
+            currentHeightPx.coerceAtLeast(sheetAnchors.peekPx)
+        }
         val sheetDockProgress = remember(displayedSheetHeightPx, sheetAnchors) {
             sheetDockProgress(displayedSheetHeightPx, sheetAnchors)
         }
@@ -1034,9 +1037,12 @@ private fun ResultsSheet(
     val palette = LocalRestaurantPalette.current
     val docked = sheetDockProgress.coerceIn(0f, 1f)
     val topCornerRadius = lerp(ResultsSheetTopCornerRadius, 0.dp, docked)
-    val sheetShadow = lerp(ResultsSheetFloatingShadow, 0.dp, docked)
     val sheetBorderAlpha = (1f - docked).coerceIn(0f, 1f)
-    val topShape = RoundedCornerShape(topStart = topCornerRadius, topEnd = topCornerRadius)
+    val topShape = if (docked > 0.99f) {
+        RectangleShape
+    } else {
+        RoundedCornerShape(topStart = topCornerRadius, topEnd = topCornerRadius)
+    }
     val mapFabAlpha = mapFabRevealProgress.coerceIn(0f, 1f)
     val showMapFabForList = mapFabAlpha > 0.35f && showListContent && restaurants.isNotEmpty()
     val resultsLabel = if (restaurants.isEmpty()) "No restaurants found" else "Over 1,000 results"
@@ -1095,13 +1101,6 @@ private fun ResultsSheet(
         modifier = modifier
             .fillMaxWidth()
             .height(sheetHeight)
-            .then(
-                if (sheetShadow > 0.5.dp) {
-                    Modifier.shadow(sheetShadow, topShape)
-                } else {
-                    Modifier
-                },
-            )
             .clip(topShape)
             .background(palette.cardSurface)
             .then(
@@ -1116,7 +1115,11 @@ private fun ResultsSheet(
                 },
             ),
     ) {
-        Column(Modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .background(palette.cardSurface),
+        ) {
             ResultsSheetDragHeader(
                 resultsLabel = resultsLabel,
                 dockProgress = docked,
@@ -1477,6 +1480,7 @@ private fun EmptyResults(query: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .background(palette.cardSurface)
             .padding(horizontal = 28.dp, vertical = 38.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
