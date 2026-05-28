@@ -93,6 +93,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -121,6 +122,7 @@ import com.mh.restaurantchainreservation.core.designsystem.badge.DiscoverRestaur
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalBottomSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.BrandPink
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
@@ -1511,85 +1513,29 @@ private fun SearchFiltersSheet(
         }
     }
     val showPinnedTitleBorder = headerCollapseProgress > 0.92f
-
     val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
-    Dialog(
+    RestaurantModalBottomSheet(
         onDismissRequest = onClose,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnClickOutside = true,
-            decorFitsSystemWindows = false,
-        ),
     ) {
-        val scrimInteraction = remember { MutableInteractionSource() }
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(RestaurantColors.Overlay.scrimLight)
-                .clickable(
-                    interactionSource = scrimInteraction,
-                    indication = null,
-                    onClick = onClose,
-                ),
-            contentAlignment = Alignment.BottomCenter,
+                .fillMaxWidth()
+                .fillMaxHeight(0.92f),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.92f)
-                    .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                    .background(palette.cardSurface)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {},
-                    ),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .then(
-                            if (showPinnedTitleBorder) {
-                                Modifier.border(1.dp, palette.border)
-                            } else {
-                                Modifier
-                            },
-                        ),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    Text(
-                        text = "Filters",
-                        color = palette.foreground,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        modifier = Modifier
-                            .padding(start = 22.dp)
-                            .graphicsLayer {
-                                alpha = headerCollapseProgress
-                                translationY = (1f - headerCollapseProgress) * 8.dp.toPx()
-                            },
-                    )
-                    CircleIcon(
-                        icon = Icons.Filled.Close,
-                        label = "Close",
-                        onClick = onClose,
-                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp),
-                    )
-                }
+            Box(modifier = Modifier.weight(1f)) {
                 Column(
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxSize()
                         .verticalScroll(scrollState),
                 ) {
                     Text(
                         text = "Filters",
                         color = palette.foreground,
-                        fontSize = 24.sp,
+                        fontSize = 28.sp,
                         fontWeight = FontWeight.ExtraBold,
                         modifier = Modifier
-                            .padding(start = 22.dp, end = 22.dp, top = 4.dp, bottom = 8.dp)
+                            .padding(start = 22.dp, end = 22.dp, top = 0.dp, bottom = 8.dp)
                             .graphicsLayer {
                                 alpha = 1f - headerCollapseProgress
                                 translationY = -headerCollapseProgress * 12.dp.toPx()
@@ -1698,44 +1644,76 @@ private fun SearchFiltersSheet(
                     }
                     Spacer(Modifier.height(24.dp))
                 }
-                Column(modifier = Modifier.fillMaxWidth().background(palette.cardSurface)) {
-                    HorizontalDivider(color = palette.border)
-                    Row(
+
+                // Pinned Title Header
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .background(palette.cardSurface.copy(alpha = headerCollapseProgress))
+                        .drawBehind {
+                            if (showPinnedTitleBorder) {
+                                drawLine(
+                                    color = palette.border,
+                                    start = Offset(0f, size.height),
+                                    end = Offset(size.width, size.height),
+                                    strokeWidth = 1.dp.toPx()
+                                )
+                            }
+                        },
+                    contentAlignment = Alignment.TopCenter,
+                ) {
+                    Text(
+                        text = "Filters",
+                        color = palette.foreground,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                start = 22.dp,
-                                end = 22.dp,
-                                top = 14.dp,
-                                bottom = 14.dp + navigationBarBottom,
-                            ),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                            .padding(top = 0.dp)
+                            .graphicsLayer {
+                                alpha = headerCollapseProgress
+                                translationY = (1f - headerCollapseProgress) * 8.dp.toPx()
+                            },
+                    )
+                }
+            }
+            Column(modifier = Modifier.fillMaxWidth().background(palette.cardSurface)) {
+                HorizontalDivider(color = palette.border)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = 22.dp,
+                            end = 22.dp,
+                            top = 14.dp,
+                            bottom = 14.dp + navigationBarBottom,
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = "Clear all",
+                        color = if (filters.activeCount > 0) palette.foreground else palette.mutedForeground.copy(alpha = 0.55f),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(enabled = filters.activeCount > 0, onClick = onClear)
+                            .padding(vertical = 8.dp),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(palette.foreground)
+                            .clickable(onClick = onApply)
+                            .padding(horizontal = 24.dp, vertical = 13.dp),
                     ) {
                         Text(
-                            text = "Clear all",
-                            color = if (filters.activeCount > 0) palette.foreground else palette.mutedForeground.copy(alpha = 0.55f),
+                            text = "Apply",
+                            color = palette.cardSurface,
                             fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable(enabled = filters.activeCount > 0, onClick = onClear)
-                                .padding(vertical = 8.dp),
+                            fontWeight = FontWeight.ExtraBold,
                         )
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(palette.foreground)
-                                .clickable(onClick = onApply)
-                                .padding(horizontal = 24.dp, vertical = 13.dp),
-                        ) {
-                            Text(
-                                text = "Apply",
-                                color = palette.cardSurface,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                            )
-                        }
                     }
                 }
             }
