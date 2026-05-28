@@ -389,7 +389,6 @@ fun RestaurantDetailScreen(
                                 restaurantId = restaurant.id,
                                 sharedTransitionScope = sharedTransitionScope,
                                 role = RestaurantSharedContentPanelLayerRole.DetailSheet,
-                                shape = RestaurantSharedTransitionShapes.detailContentPanel,
                                 heroOverlap = SheetTopRadius,
                             )
                             .then(contentPanelModifier)

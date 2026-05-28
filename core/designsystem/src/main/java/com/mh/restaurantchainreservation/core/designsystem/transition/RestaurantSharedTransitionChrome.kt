@@ -174,7 +174,10 @@ fun rememberRestaurantHeroChromeAlpha(
     sharedTransitionScope: SharedTransitionScope?,
 ): Float {
     val participant = rememberRestaurantSharedTransitionParticipant(restaurantId, sharedTransitionScope)
-    return if (participant) 0f else 1f
+    if (!participant) return 1f
+    val progress = RestaurantSharedTransitionChrome.snapshot.progress
+    // Fade out smoothly at the start of push (matching meta-alpha for consistent card UI fade)
+    return (1f - (progress / 0.25f)).coerceIn(0f, 1f)
 }
 
 fun Modifier.restaurantDiscoverChromeFade(alpha: Float): Modifier =
