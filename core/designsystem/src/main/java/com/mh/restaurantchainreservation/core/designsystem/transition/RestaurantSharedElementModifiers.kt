@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.zIndex
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 
@@ -58,10 +59,12 @@ private val titleFadeDefaultSpec = tween<Float>(durationMillis = 80)
 
 /** Clip shapes for shared content-panel bounds (card → detail sheet). */
 object RestaurantSharedTransitionShapes {
+    val cardHero = RoundedCornerShape(20.dp)
+    val detailHero = RoundedCornerShape(0.dp)
     val cardContentPanel = RoundedCornerShape(20.dp)
     val cardContentPanelCompact = RoundedCornerShape(12.dp)
     val cardContentPanelWide = RoundedCornerShape(24.dp)
-    val detailContentPanel = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+    val detailContentPanel = RoundedCornerShape(32.dp)
 }
 
 /** White sheet overlap onto the hero (Airbnb-style card → detail). */
@@ -80,7 +83,23 @@ fun rememberRestaurantSharedHeroModifier(
     animatedVisibilityScope: AnimatedVisibilityScope?,
     shape: Shape = defaultSharedCornerShape,
 ): Modifier {
-    if (sharedTransitionScope == null || animatedVisibilityScope == null) return Modifier
+    if (sharedTransitionScope == null || animatedVisibilityScope == null) {
+        return Modifier.clip(shape)
+    }
+    val isParticipant = rememberRestaurantSharedTransitionParticipant(restaurantId, sharedTransitionScope)
+    val progress = RestaurantSharedTransitionChrome.snapshot.progress
+
+    // Smoothly interpolate all corner radii from 20dp (card) to 0dp (detail).
+    // We delay the radius change until the final 15% of the transition (0.85 to 1.0)
+    // so the image remains a distinct rounded "card" for most of the flight.
+    val clipShape = if (isParticipant) {
+        val radiusProgress = ((progress - 0.55f) / 0.45f).coerceIn(0f, 1f)
+        val radius = lerp(20.dp, 0.dp, radiusProgress)
+        RoundedCornerShape(radius)
+    } else {
+        shape
+    }
+
     return with(sharedTransitionScope) {
         Modifier
             .sharedElement(
@@ -88,7 +107,7 @@ fun rememberRestaurantSharedHeroModifier(
                 animatedVisibilityScope = animatedVisibilityScope,
                 boundsTransform = sharedBoundsTransform,
             )
-            .clip(shape)
+            .clip(clipShape)
     }
 }
 
@@ -241,13 +260,15 @@ fun Modifier.restaurantSharedContentPanelLayer(
 
     // Smoothly fade in the white sheet background during the shared-element transition
     // to avoid a sudden "white flash" behind the moving hero image.
-    val surfaceAlpha = if (isTransitionCard) {
+    val isTransitionActive = sharedTransitionScope?.isTransitionActive == true
+    val surfaceAlpha = if (isTransitionActive) {
         // Start fading in slightly after the bounds animation starts for a cleaner "reveal"
         ((progress - 0.12f) / 0.88f).coerceIn(0f, 1f)
-    } else if (role == RestaurantSharedContentPanelLayerRole.DetailSheet) {
-        1f
     } else {
-        0f
+        when (role) {
+            RestaurantSharedContentPanelLayerRole.DetailSheet -> 1f
+            RestaurantSharedContentPanelLayerRole.DiscoverCard -> 0f
+        }
     }
 
     return this

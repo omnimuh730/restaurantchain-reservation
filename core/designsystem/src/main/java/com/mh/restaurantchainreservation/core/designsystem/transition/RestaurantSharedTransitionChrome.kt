@@ -19,9 +19,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 
 /** Timeline for discover ↔ detail shared-element choreography. */
 object RestaurantSharedTransitionMotion {
-    const val durationMillis = 400
+    const val durationMillis = 500
     val easing = FastOutSlowInEasing
-    val contentRevealTween = tween<Float>(durationMillis = 300, easing = easing)
+    val contentRevealTween = tween<Float>(durationMillis = 350, easing = easing)
 
     val boundsProgressTween = tween<Float>(durationMillis = durationMillis, easing = easing)
 
@@ -100,22 +100,33 @@ object RestaurantSharedTransitionChrome {
  * with a fixed [RestaurantSharedTransitionMotion.durationMillis] curve.
  */
 @Composable
-fun RestaurantSharedTransitionChromeSink() {
+fun RestaurantSharedTransitionChromeSink(isPop: Boolean) {
     val scope = LocalRestaurantSharedTransitionScope.current ?: return
     val driver = remember { Animatable(0f) }
-    LaunchedEffect(scope.isTransitionActive) {
+
+    LaunchedEffect(scope.isTransitionActive, isPop) {
         if (scope.isTransitionActive) {
-            driver.snapTo(0f)
+            val target = if (isPop) 0f else 1f
+            // Push (isPop=false): animate 0 -> 1
+            // Pop (isPop=true): animate 1 -> 0
+            if (isPop && driver.value < 0.01f) {
+                driver.snapTo(1f)
+            } else if (!isPop && driver.value > 0.99f) {
+                driver.snapTo(0f)
+            }
+
             driver.animateTo(
-                targetValue = 1f,
+                targetValue = target,
                 animationSpec = RestaurantSharedTransitionMotion.boundsProgressTween,
             )
         } else {
+            // Reset to 0 when inactive (at rest on Discover home).
             driver.snapTo(0f)
             RestaurantSharedTransitionChrome.update(progress = 0f, active = false)
             RestaurantSharedTransitionChrome.clearTransitionProgress()
         }
     }
+
     SideEffect {
         if (scope.isTransitionActive) {
             RestaurantSharedTransitionChrome.update(

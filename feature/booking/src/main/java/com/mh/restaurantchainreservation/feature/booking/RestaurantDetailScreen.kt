@@ -148,12 +148,6 @@ import kotlinx.coroutines.launch
 
 private val SheetTopRadius = 32.dp
 private val HeaderSheetShape = RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius)
-private val DetailHeroTransitionShape = RoundedCornerShape(
-    topStart = 20.dp,
-    topEnd = 20.dp,
-    bottomEnd = 6.dp,
-    bottomStart = 6.dp,
-)
 private val HeroHeight = 360.dp
 private val DetailInfoHorizontalPadding = 24.dp
 private val DetailListBottomPadding = 148.dp
@@ -251,7 +245,7 @@ fun RestaurantDetailScreen(
         restaurant.id,
         sharedTransitionScope,
         animatedVisibilityScope,
-        shape = DetailHeroTransitionShape,
+        shape = RestaurantSharedTransitionShapes.detailHero,
     )
     val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
         restaurantId = restaurant.id,
@@ -382,6 +376,12 @@ fun RestaurantDetailScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(
+                                min = with(density) {
+                                    val screenHeight = detailPageCoordinates?.size?.height ?: 0
+                                    (screenHeight - HeroHeight.toPx()).toDp()
+                                },
+                            )
                             .restaurantSharedContentPanelLayer(
                                 restaurantId = restaurant.id,
                                 sharedTransitionScope = sharedTransitionScope,

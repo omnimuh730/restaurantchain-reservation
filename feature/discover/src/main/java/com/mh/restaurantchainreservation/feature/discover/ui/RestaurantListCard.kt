@@ -50,6 +50,7 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestauran
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionShapes
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantHeroChromeAlpha
@@ -61,7 +62,6 @@ import com.mh.restaurantchainreservation.core.model.Restaurant
 import com.mh.restaurantchainreservation.core.model.RestaurantTimeSlot
 import com.mh.restaurantchainreservation.core.model.WishlistStore
 
-private val ListCardImageShape = RoundedCornerShape(20.dp)
 
 /**
  * Discover list card — hero at [DiscoverRestaurantImageAspectWidthOverHeight], title,
@@ -85,7 +85,7 @@ fun RestaurantListCard(
         restaurant.id,
         shared,
         animatedContent,
-        shape = ListCardImageShape,
+        shape = RestaurantSharedTransitionShapes.cardHero,
     )
     val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
         restaurantId = restaurant.id,
@@ -110,8 +110,7 @@ fun RestaurantListCard(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
-                        .clip(ListCardImageShape),
+                        .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight),
                 ) {
                     Box(
                         modifier = Modifier

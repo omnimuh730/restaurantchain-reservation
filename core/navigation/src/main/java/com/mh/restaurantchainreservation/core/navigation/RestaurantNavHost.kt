@@ -216,11 +216,7 @@ fun RestaurantNavHost(
     val bottomNavVisibilityProgress by animateFloatAsState(
         targetValue = if (targetBottomNavVisible) 1f else 0f,
         animationSpec = tween(
-            durationMillis = if (!targetBottomNavVisible && hideTabNavigation) {
-                RestaurantSharedTransitionMotion.durationMillis
-            } else {
-                300
-            },
+            durationMillis = RestaurantSharedTransitionMotion.durationMillis,
             easing = FastOutSlowInEasing,
         ),
         label = "bottomNavVisibility",
@@ -619,9 +615,14 @@ private fun AppGraph(
     val initialStartDestination = remember { DiscoverRoutes.Home }
 
     Box(modifier = modifier) {
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val destination = navBackStackEntry?.destination
+        val sharedTransitionChrome = RestaurantSharedTransitionChrome.snapshot
+
         SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalRestaurantSharedTransitionScope provides this) {
-                RestaurantSharedTransitionChromeSink()
+                val isDetailPage = destination?.route?.startsWith("discover/restaurant/") == true
+                RestaurantSharedTransitionChromeSink(isPop = !isDetailPage && sharedTransitionChrome.active)
                 NavHost(
                     navController = navController,
                     startDestination = initialStartDestination,
