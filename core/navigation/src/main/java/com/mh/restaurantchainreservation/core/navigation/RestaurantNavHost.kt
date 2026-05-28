@@ -30,6 +30,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.zIndex
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -896,7 +897,9 @@ private fun AppGraph(
                 RestaurantMenuScreen(
                     restaurantName = restaurant.name,
                     onBack = { navController.popBackStack() },
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(3f),
                 )
             }
             composable(
@@ -945,6 +948,9 @@ private fun AppGraph(
                             DiningStore.updateBooking(BookingTablePrefill.applyResult(booking, result))
                         }
                     },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(3f),
                 )
             }
             composable(DiningRoutes.Home) {

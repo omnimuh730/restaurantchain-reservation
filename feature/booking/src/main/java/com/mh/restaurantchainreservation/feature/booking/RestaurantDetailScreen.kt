@@ -23,15 +23,18 @@ import com.mh.restaurantchainreservation.core.designsystem.transition.Restaurant
 import com.mh.restaurantchainreservation.core.designsystem.transition.restaurantSharedContentPanelLayer
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -108,6 +111,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -210,7 +214,15 @@ private suspend fun LazyListState.scrollToReviewsShowAllButton(
     val viewportHeight = layoutInfo.viewportSize.height
     val targetOffset =
         (showAllButtonBottomPx - (viewportHeight - bottomClearancePx)).coerceAtLeast(0)
-    animateScrollToItem(index = 0, scrollOffset = targetOffset)
+
+    val currentOffset = firstVisibleItemScrollOffset
+    animateScrollBy(
+        value = (targetOffset - currentOffset).toFloat(),
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessLow,
+        ),
+    )
 }
 
 /** Detail payload lifecycle for the twin-layer transition and post-arrival reveal. */
@@ -519,7 +531,9 @@ fun RestaurantDetailScreen(
             RestaurantReviewsScreen(
                 restaurant = restaurant,
                 onBack = { showReviews = false },
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(3f),
             )
         }
         if (showHowReviewsWork) {
@@ -529,7 +543,9 @@ fun RestaurantDetailScreen(
             RestaurantAmenitiesScreen(
                 restaurant = restaurant,
                 onBack = { showAmenities = false },
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(3f),
             )
         }
 
