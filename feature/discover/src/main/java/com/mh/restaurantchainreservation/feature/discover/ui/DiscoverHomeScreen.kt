@@ -1,7 +1,9 @@
-@file:OptIn(ExperimentalFoundationApi::class, ExperimentalHazeMaterialsApi::class)
+@file:OptIn(ExperimentalFoundationApi::class, ExperimentalHazeMaterialsApi::class, ExperimentalSharedTransitionApi::class)
 
 package com.mh.restaurantchainreservation.feature.discover.ui
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -128,7 +130,9 @@ import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantPale
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedKeys
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionChrome
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionMotion
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantCardContentMetaAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantHeroChromeAlpha
 import com.mh.restaurantchainreservation.core.designsystem.transition.rememberRestaurantSharedContentPanelModifier
@@ -889,12 +893,33 @@ private fun GlassSearchButton(
     val iconSize = if (compact) 32.dp else 38.dp
     val layers = discoverGlassPillLayers(palette, compact, opaqueGlass)
     val horizontalPadding = if (compact) 10.dp else 14.dp
+
+    val sharedScope = LocalRestaurantSharedTransitionScope.current
+    val animatedScope = LocalAnimatedContentScope.current
+
+    val sharedBoundsModifier = if (sharedScope != null && animatedScope != null) {
+        with(sharedScope) {
+            Modifier.sharedBounds(
+                rememberSharedContentState(key = RestaurantSharedKeys.SearchBar),
+                animatedVisibilityScope = animatedScope,
+                boundsTransform = { _, _ ->
+                    tween(
+                        durationMillis = RestaurantSharedTransitionMotion.durationMillis,
+                        easing = RestaurantSharedTransitionMotion.easing,
+                    )
+                },
+                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+            )
+        }
+    } else Modifier
+
     PressableScale(
         onClick = onClick,
         modifier = modifier
             .height(height)
-            .clip(RoundedCornerShape(999.dp))
-            .border(1.dp, discoverGlassPillBorderColor(palette, layers.borderAlpha), RoundedCornerShape(999.dp))
+            .then(sharedBoundsModifier)
+            .clip(RoundedCornerShape(28.dp))
+            .border(1.dp, discoverGlassPillBorderColor(palette, layers.borderAlpha), RoundedCornerShape(28.dp))
             .background(layers.baseFill),
     ) {
         Box(modifier = Modifier.matchParentSize()) {

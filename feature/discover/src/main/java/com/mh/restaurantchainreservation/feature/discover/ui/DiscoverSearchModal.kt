@@ -1,8 +1,18 @@
+@file:OptIn(ExperimentalSharedTransitionApi::class)
+
 package com.mh.restaurantchainreservation.feature.discover.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,6 +53,7 @@ import androidx.compose.material.icons.outlined.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -50,6 +61,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,6 +83,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedKeys
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionChrome
+import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTransitionMotion
 import com.mh.restaurantchainreservation.core.model.LocationStore
 
 private enum class ActiveSearchInput { Location, Food }
@@ -161,41 +178,78 @@ fun DiscoverSearchModal(
         onSubmit(q, planSummary)
     }
 
+    val locationFocusRequester = remember { FocusRequester() }
+    val foodFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        delay(420)
+        locationFocusRequester.requestFocus()
+    }
+
+    val sharedScope = LocalRestaurantSharedTransitionScope.current
+    val animatedScope = LocalAnimatedContentScope.current
+    val transitionSnapshot = RestaurantSharedTransitionChrome.snapshot
+    val transitionProgress = if (transitionSnapshot.active) transitionSnapshot.progress else 1f
+
+    val sharedBoundsModifier = if (sharedScope != null && animatedScope != null) {
+        with(sharedScope) {
+            Modifier.sharedBounds(
+                rememberSharedContentState(key = RestaurantSharedKeys.SearchBar),
+                animatedVisibilityScope = animatedScope,
+                boundsTransform = { _, _ ->
+                    tween(
+                        durationMillis = RestaurantSharedTransitionMotion.durationMillis,
+                        easing = RestaurantSharedTransitionMotion.easing,
+                    )
+                },
+                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+            )
+        }
+    } else Modifier
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(palette.pageBackground),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        AnimatedVisibility(
+            visible = true,
+            enter = fadeIn(tween(400, delayMillis = 200)) + slideInVertically(initialOffsetY = { -20 }),
         ) {
-            Spacer(Modifier.size(36.dp))
-            Text(
-                text = "Start your search",
-                modifier = Modifier.weight(1f),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                color = palette.foreground,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .clickable(role = Role.Button, onClick = onClose),
-                contentAlignment = Alignment.Center,
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Filled.Close, contentDescription = "Close", tint = palette.foreground, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.size(36.dp))
+                Text(
+                    text = "Start your search",
+                    modifier = Modifier.weight(1f),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    color = palette.foreground,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .clickable(role = Role.Button, onClick = onClose),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Filled.Close, contentDescription = "Close", tint = palette.foreground, modifier = Modifier.size(20.dp))
+                }
             }
         }
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .then(sharedBoundsModifier)
+                .clip(RoundedCornerShape(20.dp))
+                .background(palette.pageBackground)
                 .padding(horizontal = 16.dp),
         ) {
             Spacer(Modifier.height(16.dp))
@@ -218,6 +272,12 @@ fun DiscoverSearchModal(
                     selectedWhere = WhereSelection.Anywhere.name
                     customWhere = ""
                 },
+                focusRequester = locationFocusRequester,
+                modifier = Modifier.graphicsLayer {
+                    val p = (transitionProgress - 0.2f) / 0.4f
+                    alpha = p.coerceIn(0f, 1f)
+                    translationY = (1f - p.coerceIn(0f, 1f)) * 12.dp.toPx()
+                }
             )
             Spacer(Modifier.height(10.dp))
             SearchInputRow(
@@ -228,8 +288,15 @@ fun DiscoverSearchModal(
                 onFocus = { activeInput = ActiveSearchInput.Food },
                 onValueChange = { keyword = it },
                 onClear = { keyword = "" },
+                focusRequester = foodFocusRequester,
+                modifier = Modifier.graphicsLayer {
+                    val p = (transitionProgress - 0.3f) / 0.4f
+                    alpha = p.coerceIn(0f, 1f)
+                    translationY = (1f - p.coerceIn(0f, 1f)) * 16.dp.toPx()
+                }
             )
             Spacer(Modifier.height(shortcutGapTop))
+            val shortcutProgress = ((transitionProgress - 0.45f) / 0.4f).coerceIn(0f, 1f)
             when (activeInput) {
                 ActiveSearchInput.Location -> {
                     ShortcutRow(
@@ -240,6 +307,10 @@ fun DiscoverSearchModal(
                             selectedWhere = WhereSelection.NearMe.name
                             customWhere = ""
                         },
+                        modifier = Modifier.graphicsLayer {
+                            alpha = shortcutProgress
+                            translationY = (1f - shortcutProgress) * 20.dp.toPx()
+                        }
                     )
                 }
                 ActiveSearchInput.Food -> {
@@ -251,6 +322,10 @@ fun DiscoverSearchModal(
                             keyword = ""
                             submitSearch()
                         },
+                        modifier = Modifier.graphicsLayer {
+                            alpha = shortcutProgress
+                            translationY = (1f - shortcutProgress) * 20.dp.toPx()
+                        }
                     )
                 }
             }
@@ -260,7 +335,7 @@ fun DiscoverSearchModal(
                     .fillMaxWidth()
                     .height(1.dp)
                     .graphicsLayer {
-                        alpha = dividerAlpha
+                        alpha = dividerAlpha * shortcutProgress
                         translationY = dividerTranslationY.toPx()
                     }
                     .background(palette.border),
@@ -271,7 +346,12 @@ fun DiscoverSearchModal(
             state = listState,
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .graphicsLayer {
+                    val p = ((transitionProgress - 0.55f) / 0.4f).coerceIn(0f, 1f)
+                    alpha = p
+                    translationY = (1f - p) * 24.dp.toPx()
+                },
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
         ) {
             when (activeInput) {
@@ -412,12 +492,13 @@ private fun SearchInputRow(
     onFocus: () -> Unit,
     onValueChange: (String) -> Unit,
     onClear: () -> Unit,
+    modifier: Modifier = Modifier,
+    focusRequester: FocusRequester = remember { FocusRequester() },
 ) {
     val palette = LocalRestaurantPalette.current
-    val focusRequester = remember { FocusRequester() }
     val border = if (focused) palette.foreground else palette.border
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(56.dp)
             .clip(RoundedCornerShape(18.dp))
@@ -475,10 +556,11 @@ private fun ShortcutRow(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val palette = LocalRestaurantPalette.current
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(if (selected) palette.mutedSurface else Color.Transparent)

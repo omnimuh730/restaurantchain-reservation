@@ -624,8 +624,9 @@ private fun AppGraph(
 
         SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalRestaurantSharedTransitionScope provides this) {
-                val isDetailPage = destination?.route?.startsWith("discover/restaurant/") == true
-                RestaurantSharedTransitionChromeSink(isPop = !isDetailPage && sharedTransitionChrome.active)
+                val isSharedRoute = destination?.route?.startsWith("discover/restaurant/") == true ||
+                    destination?.route == DiscoverRoutes.Search
+                RestaurantSharedTransitionChromeSink(isPop = !isSharedRoute && sharedTransitionChrome.active)
                 NavHost(
                     navController = navController,
                     startDestination = initialStartDestination,
