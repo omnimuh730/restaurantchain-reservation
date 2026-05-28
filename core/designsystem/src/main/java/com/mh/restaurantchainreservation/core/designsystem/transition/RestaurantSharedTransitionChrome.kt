@@ -41,6 +41,7 @@ object RestaurantSharedTransitionMotion {
 data class RestaurantSharedTransitionChromeSnapshot(
     val progress: Float = 0f,
     val active: Boolean = false,
+    val isPop: Boolean = false,
     /** Restaurant whose card is the active shared-element source/destination. */
     val restaurantId: String? = null,
     /**
@@ -61,11 +62,13 @@ object RestaurantSharedTransitionChrome {
     internal fun update(
         progress: Float,
         active: Boolean,
+        isPop: Boolean = snapshot.isPop,
         restaurantId: String? = snapshot.restaurantId,
     ) {
         snapshot = snapshot.copy(
             progress = progress.coerceIn(0f, 1f),
             active = active,
+            isPop = isPop,
             restaurantId = if (active) restaurantId else snapshot.restaurantId,
         )
     }
@@ -73,8 +76,21 @@ object RestaurantSharedTransitionChrome {
     fun beginRestaurantDetailTransition(restaurantId: String) {
         snapshot = snapshot.copy(
             restaurantId = restaurantId,
+            isPop = false,
             suppressBottomNavOnDiscover = true,
         )
+    }
+
+    fun beginSearchTransition() {
+        snapshot = snapshot.copy(
+            restaurantId = null,
+            isPop = false,
+            suppressBottomNavOnDiscover = true,
+        )
+    }
+
+    fun prepareForPop() {
+        snapshot = snapshot.copy(isPop = true)
     }
 
     fun clearBottomNavSuppressOnDiscover() {
@@ -87,6 +103,7 @@ object RestaurantSharedTransitionChrome {
         snapshot = snapshot.copy(
             progress = 0f,
             active = false,
+            isPop = false,
         )
     }
 
@@ -132,6 +149,7 @@ fun RestaurantSharedTransitionChromeSink(isPop: Boolean) {
             RestaurantSharedTransitionChrome.update(
                 progress = driver.value,
                 active = true,
+                isPop = isPop,
                 restaurantId = RestaurantSharedTransitionChrome.snapshot.restaurantId,
             )
         }

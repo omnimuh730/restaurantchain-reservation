@@ -578,18 +578,21 @@ fun DiscoverHomeScreen(
 
         val sharedProgress = RestaurantSharedTransitionChrome.snapshot.progress
         val isTransitionActive = RestaurantSharedTransitionChrome.snapshot.active
-        if (isTransitionActive && sharedProgress > 0.01f) {
+        val isPop = RestaurantSharedTransitionChrome.snapshot.isPop
+        val isSearch = RestaurantSharedTransitionChrome.snapshot.restaurantId == null
+        
+        // Only show the blur/scrim overlay during opening, or during restaurant detail pop.
+        // For search pop, we remove it to return "directly" to the Discover feed content.
+        val showOverlay = isTransitionActive && sharedProgress > 0.01f && (!isPop || !isSearch)
+
+        if (showOverlay) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {
-                        // Airbnb style: Discover page background blurs out during the shared-element
-                        // push to emphasize the moving card and provide a smooth landing for the
-                        // white detail sheet background.
                         alpha = (sharedProgress * 1.5f).coerceIn(0f, 1f)
                     }
                     .hazeEffect(state = hazeState, style = HazeMaterials.regular())
-                    // Gentle white-out scrim synced with blur strength
                     .background(palette.pageBackground.copy(alpha = (sharedProgress * 0.65f).coerceIn(0f, 1f)))
                     .zIndex(3f),
             )

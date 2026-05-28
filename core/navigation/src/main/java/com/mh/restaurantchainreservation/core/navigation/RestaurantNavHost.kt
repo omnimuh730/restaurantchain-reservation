@@ -229,6 +229,8 @@ fun RestaurantNavHost(
     val shouldTrackBottomNavScroll = isCompact && showAppChrome && !suppressBottomNav && !hideTabNavigation
     val bottomNavInsetProgress = bottomNavVisibilityProgress
 
+    val isPopFromShared = sharedTransitionChrome.active && sharedTransitionChrome.isPop
+
     LaunchedEffect(destination?.route) {
         val route = destination?.route ?: return@LaunchedEffect
         if (hidesMainTabNavigation(route)) return@LaunchedEffect
@@ -626,7 +628,8 @@ private fun AppGraph(
             CompositionLocalProvider(LocalRestaurantSharedTransitionScope provides this) {
                 val isSharedRoute = destination?.route?.startsWith("discover/restaurant/") == true ||
                     destination?.route == DiscoverRoutes.Search
-                RestaurantSharedTransitionChromeSink(isPop = !isSharedRoute && sharedTransitionChrome.active)
+                val isPop = sharedTransitionChrome.isPop || (!isSharedRoute && sharedTransitionChrome.active)
+                RestaurantSharedTransitionChromeSink(isPop = isPop)
                 NavHost(
                     navController = navController,
                     startDestination = initialStartDestination,
@@ -647,7 +650,10 @@ private fun AppGraph(
                 ) {
                     val currentLocation by LocationStore.current.collectAsState()
                     DiscoverHomeScreen(
-                        onOpenSearch = { navController.navigate(DiscoverRoutes.Search) },
+                        onOpenSearch = {
+                            RestaurantSharedTransitionChrome.beginSearchTransition()
+                            navController.navigate(DiscoverRoutes.Search)
+                        },
                         onOpenMap = {
                             navController.navigateDiscoverSearchResults(
                                 q = "All restaurants",
@@ -740,10 +746,20 @@ private fun AppGraph(
                     onSelectCuisine = { foodId -> navController.navigate(DiscoverRoutes.food(foodId)) },
                 )
             }
-            composable(DiscoverRoutes.Search) {
+            composable(
+                route = DiscoverRoutes.Search,
+                enterTransition = { fadeIn(tween(RestaurantSharedTransitionMotion.durationMillis)) },
+                exitTransition = { fadeOut(tween(RestaurantSharedTransitionMotion.durationMillis)) },
+                popEnterTransition = { fadeIn(tween(RestaurantSharedTransitionMotion.durationMillis)) },
+                popExitTransition = { fadeOut(tween(RestaurantSharedTransitionMotion.durationMillis)) },
+            ) {
                 DiscoverSearchModal(
-                    onClose = { navController.popBackStack() },
+                    onClose = {
+                        RestaurantSharedTransitionChrome.prepareForPop()
+                        navController.popBackStack()
+                    },
                     onSubmit = { q, summary ->
+                        RestaurantSharedTransitionChrome.prepareForPop()
                         navController.popBackStack()
                         navController.navigateDiscoverSearchResults(q = q, summary = summary)
                     },
@@ -769,7 +785,10 @@ private fun AppGraph(
                         planSummary = summary.ifBlank { "Tonight, 7:00 PM, 2 people" },
                         locationId = locationId,
                         onBack = { navController.popBackStack() },
-                        onOpenSearch = { navController.navigate(DiscoverRoutes.Search) },
+                        onOpenSearch = {
+                            RestaurantSharedTransitionChrome.beginSearchTransition()
+                            navController.navigate(DiscoverRoutes.Search)
+                        },
                         onOpenRestaurant = { id -> navController.navigateToRestaurantDetail(id) },
                     )
                 }

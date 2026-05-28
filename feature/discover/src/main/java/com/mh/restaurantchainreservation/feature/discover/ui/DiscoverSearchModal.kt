@@ -210,6 +210,7 @@ fun DiscoverSearchModal(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .graphicsLayer { alpha = transitionProgress }
             .background(palette.pageBackground),
     ) {
         AnimatedVisibility(
