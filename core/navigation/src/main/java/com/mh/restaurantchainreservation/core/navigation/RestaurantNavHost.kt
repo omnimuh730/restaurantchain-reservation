@@ -549,10 +549,13 @@ private fun resolveActiveTab(hierarchyRoutes: List<String>): BottomNavTabId? {
     }
 }
 
-/** Restaurant detail and sub-flows (menu, photos, book) — full-screen, no tab bar. */
+/** Restaurant detail and sub-flows (menu, photos, book, search) — full-screen, no tab bar. */
 private fun hidesMainTabNavigation(route: String?): Boolean {
     if (route == null) return false
-    return route.startsWith("discover/restaurant/")
+    return route.startsWith("discover/restaurant/") ||
+        route == DiscoverRoutes.Search ||
+        route.startsWith("discover/search?") ||
+        route == DiscoverRoutes.AllPromotions
 }
 
 /** QR Pay (and other full-screen overlays) own the entire viewport. */
