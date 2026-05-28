@@ -106,6 +106,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailCollapsingMetrics
+import com.mh.restaurantchainreservation.core.designsystem.components.detailHeroParallax
+import com.mh.restaurantchainreservation.core.designsystem.components.rememberDetailHeroScrollOffsetPx
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import coil.compose.AsyncImage
 import dev.chrisbanes.haze.HazeState
@@ -396,6 +399,11 @@ fun DiscoverHomeScreen(
             .background(palette.pageBackground),
     ) {
         val density = LocalDensity.current
+        val bannerScrollRangePx = remember(density) {
+            with(density) { DiscoverBannerHeight.toPx() }
+        }
+        val bannerScrollOffsetPx = rememberDetailHeroScrollOffsetPx(listState, bannerScrollRangePx)
+
         val statusBarInsets = WindowInsets.statusBars
         val compactBarTotalHeight = remember(density, statusBarInsets) {
             with(density) { statusBarInsets.getTop(this).toDp() } + CompactDiscoverBarInnerHeight
@@ -454,13 +462,20 @@ fun DiscoverHomeScreen(
             contentPadding = PaddingValues(bottom = 16.dp),
         ) {
             item {
-                HeroBanner(
-                    banners = DiscoverData.BANNERS,
-                    onOpenSearch = onOpenSearch,
-                    onOpenMap = onOpenMap,
-                    onViewAll = { onOpenSection("banners") },
-                    onBannerClick = { bannerId -> onOpenSection(bannerId) },
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(DiscoverBannerHeight)
+                        .detailHeroParallax(bannerScrollOffsetPx),
+                ) {
+                    HeroBanner(
+                        banners = DiscoverData.BANNERS,
+                        onOpenSearch = onOpenSearch,
+                        onOpenMap = onOpenMap,
+                        onViewAll = { onOpenSection("banners") },
+                        onBannerClick = { bannerId -> onOpenSection(bannerId) },
+                    )
+                }
             }
             item {
                 Column(
