@@ -84,6 +84,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -113,6 +114,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.badge.AnimatedGuestFavoriteCenterBadge
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailCollapsingMetrics
@@ -229,7 +232,6 @@ fun RestaurantDetailScreen(
     onBack: () -> Unit,
     onBookNow: () -> Unit,
     onShowMenu: () -> Unit,
-    onOpenPhotoGrid: (RestaurantPhotoGallerySource) -> Unit,
     modifier: Modifier = Modifier,
     sharedTransitionScope: SharedTransitionScope? = LocalRestaurantSharedTransitionScope.current,
     animatedVisibilityScope: AnimatedVisibilityScope? = LocalAnimatedContentScope.current,
@@ -259,6 +261,7 @@ fun RestaurantDetailScreen(
         animatedVisibilityScope,
         shape = RestaurantSharedTransitionShapes.detailContentPanel,
     )
+    var activeGallerySource by rememberSaveable { mutableStateOf<RestaurantPhotoGallerySource?>(null) }
     var loadPhase by remember { mutableStateOf(RestaurantDetailUiState.Loading) }
     var loadedPayload by remember { mutableStateOf<DetailLoadedPayload?>(null) }
     val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
@@ -367,7 +370,7 @@ fun RestaurantDetailScreen(
                             showPageIndicator = contentReady && heroImages.size > 1,
                             onOpenFullscreen = {
                                 if (contentReady) {
-                                    onOpenPhotoGrid(RestaurantPhotoGallerySource.Gallery)
+                                    activeGallerySource = RestaurantPhotoGallerySource.Gallery
                                 }
                             },
                         )
@@ -446,7 +449,9 @@ fun RestaurantDetailScreen(
                                     CancellationPolicySection()
                                     PopularMenuSection(
                                         onShowMenu = onShowMenu,
-                                        onOpenPhotoGrid = onOpenPhotoGrid,
+                                        onOpenPhotoGrid = { source ->
+                                            activeGallerySource = source
+                                        },
                                     )
                                 }
                             } else {
@@ -527,6 +532,23 @@ fun RestaurantDetailScreen(
                 onBack = { showAmenities = false },
                 modifier = Modifier.fillMaxSize(),
             )
+        }
+
+        if (activeGallerySource != null) {
+            Dialog(
+                onDismissRequest = { activeGallerySource = null },
+                properties = DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    decorFitsSystemWindows = false,
+                ),
+            ) {
+                RestaurantPhotoGridScreen(
+                    restaurant = restaurant,
+                    source = activeGallerySource!!,
+                    onBack = { activeGallerySource = null },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
 
     }

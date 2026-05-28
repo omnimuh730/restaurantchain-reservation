@@ -859,44 +859,9 @@ private fun AppGraph(
                             }
                         },
                         onShowMenu = { navController.navigate(BookingRoutes.restaurantMenu(id)) },
-                        onOpenPhotoGrid = { source ->
-                            navController.navigateToPhotoGrid(id, source)
-                        },
                     )
                     }
                 }
-            }
-            composable(
-                route = BookingRoutes.PhotoGrid,
-                arguments = listOf(
-                    navArgument("restaurantId") { type = NavType.StringType },
-                    navArgument("source") {
-                        type = NavType.StringType
-                        defaultValue = RestaurantPhotoGallerySource.Gallery.routeValue
-                    },
-                    navArgument("bannerId") {
-                        type = NavType.StringType
-                        defaultValue = ""
-                    },
-                ),
-            ) { entry ->
-                val id = entry.arguments?.getString("restaurantId").orEmpty()
-                val source = RestaurantPhotoGallerySource.fromRoute(entry.arguments?.getString("source"))
-                val bannerId = entry.arguments?.getString("bannerId").orEmpty()
-                val restaurant = DiscoverData.findById(id)
-                    ?: DiscoverData.MONTHLY_BEST.first()
-                val banner = if (bannerId.isNotBlank()) {
-                    DiscoverData.BANNERS.firstOrNull { it.id == bannerId }
-                } else {
-                    null
-                }
-                RestaurantPhotoGridScreen(
-                    restaurant = restaurant,
-                    source = source,
-                    banner = banner,
-                    onBack = { navController.popBackStack() },
-                    modifier = Modifier.fillMaxSize(),
-                )
             }
             composable(
                 route = BookingRoutes.RestaurantMenu,
