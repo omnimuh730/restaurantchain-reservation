@@ -39,7 +39,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Star
+import com.mh.restaurantchainreservation.core.designsystem.components.icons.RestaurantIcons
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material.icons.outlined.Tune
@@ -1187,7 +1187,7 @@ private fun ReviewCard(
             Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                 repeat(5) { index ->
                     Icon(
-                        Icons.Filled.Star,
+                        RestaurantIcons.Star,
                         contentDescription = null,
                         tint = if (index < review.rating) StarAccent else palette.border,
                         modifier = Modifier.size(14.dp),

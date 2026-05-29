@@ -55,7 +55,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material.icons.filled.Star
+import com.mh.restaurantchainreservation.core.designsystem.components.icons.RestaurantIcons
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Navigation
@@ -1368,12 +1369,21 @@ private fun AirbnbMiniCard(
                         overflow = TextOverflow.Ellipsis,
                     )
                     DiscoverInlineDot(color = metaColor)
-                    Text(
-                        text = "★ %.1f".format(restaurant.rating),
-                        color = metaColor,
-                        fontSize = 12.sp,
-                        maxLines = 1,
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = RestaurantIcons.Star,
+                            contentDescription = null,
+                            tint = metaColor,
+                            modifier = Modifier.size(10.dp),
+                        )
+                        Spacer(Modifier.width(2.dp))
+                        Text(
+                            text = "%.1f".format(restaurant.rating),
+                            color = metaColor,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                        )
+                    }
                 }
             }
         }
@@ -2247,7 +2257,7 @@ private fun RestaurantByPriceListRow(
                 ) {
                     repeat(5) { index ->
                         Icon(
-                            Icons.Filled.Star,
+                            RestaurantIcons.Star,
                             contentDescription = null,
                             tint = if (index < filledStars) goldStar else emptyStar,
                             modifier = Modifier.size(14.dp),

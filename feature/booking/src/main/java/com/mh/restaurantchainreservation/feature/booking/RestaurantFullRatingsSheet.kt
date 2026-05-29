@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
+import com.mh.restaurantchainreservation.core.designsystem.components.icons.RestaurantIcons
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
@@ -68,7 +68,7 @@ fun RestaurantFullRatingsSheet(
                             horizontalArrangement = Arrangement.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Star,
+                                imageVector = RestaurantIcons.Star,
                                 contentDescription = null,
                                 tint = palette.foreground,
                                 modifier = Modifier.size(44.dp)

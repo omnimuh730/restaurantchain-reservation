@@ -52,7 +52,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Star
+import com.mh.restaurantchainreservation.core.designsystem.components.icons.RestaurantIcons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -1301,7 +1302,7 @@ private fun RestaurantResultCard(
                         modifier = Modifier.graphicsLayer { alpha = contentMetaAlpha },
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(Icons.Filled.Star, contentDescription = null, tint = RestaurantColors.Semantic.starGold, modifier = Modifier.size(15.dp))
+                        Icon(RestaurantIcons.Star, contentDescription = null, tint = RestaurantColors.Semantic.starGold, modifier = Modifier.size(15.dp))
                         Spacer(Modifier.width(3.dp))
                         Text("%.1f".format(restaurant.rating), color = palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     }
@@ -1458,7 +1459,7 @@ private fun MapPreviewCard(
                             .then(titleVisibilityModifier),
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.Star, contentDescription = null, tint = palette.foreground, modifier = Modifier.size(13.dp))
+                        Icon(RestaurantIcons.Star, contentDescription = null, tint = palette.foreground, modifier = Modifier.size(13.dp))
                         Text("%.1f".format(restaurant.rating), color = palette.foreground, fontSize = 12.sp)
                     }
                 }

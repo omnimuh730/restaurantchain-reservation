@@ -68,7 +68,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Star
+import com.mh.restaurantchainreservation.core.designsystem.components.icons.RestaurantIcons
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Phone
@@ -814,15 +814,15 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onScrollToReviews: () -> U
             Text(
                 text = formatRating(restaurant.rating),
                 color = palette.foreground,
-                fontSize = 20.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
             )
             Row(
-                modifier = Modifier.padding(top = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                modifier = Modifier.padding(top = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(1.dp),
             ) {
                 repeat(5) {
-                    Icon(Icons.Filled.Star, null, tint = palette.foreground, modifier = Modifier.size(12.dp))
+                    Icon(RestaurantIcons.Star, null, tint = palette.foreground, modifier = Modifier.size(8.dp))
                 }
             }
         }
@@ -850,13 +850,13 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onScrollToReviews: () -> U
             Text(
                 text = NumberFormat.getIntegerInstance(Locale.US).format(restaurant.reviews),
                 color = palette.foreground,
-                fontSize = 20.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
             )
             Text(
                 text = "Reviews",
                 color = palette.foreground,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(top = 4.dp),
             )
@@ -1065,7 +1065,7 @@ private fun ReviewsPreviewSection(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Star,
+                        imageVector = RestaurantIcons.Star,
                         contentDescription = null,
                         tint = palette.foreground,
                         modifier = Modifier.size(18.dp),
@@ -1273,10 +1273,10 @@ private fun ReviewPreviewCard(
         ) {
             repeat(5) { starIndex ->
                 Icon(
-                    imageVector = Icons.Filled.Star,
+                    imageVector = RestaurantIcons.Star,
                     contentDescription = null,
                     tint = if (starIndex < filledStars) palette.foreground else palette.border,
-                    modifier = Modifier.size(12.dp),
+                    modifier = Modifier.size(8.dp),
                 )
             }
             Text(
