@@ -1,7 +1,9 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import androidx.activity.compose.BackHandler
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,7 +55,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -84,7 +88,25 @@ fun RestaurantMenuScreen(
     val pagerState = rememberPagerState(pageCount = { categories.size })
     val tabRowState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+
+    var entered by remember { mutableStateOf(false) }
+    var exiting by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { entered = true }
+
     val density = LocalDensity.current
+    val screenWidthPx = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
+    val slideProgress by animateFloatAsState(
+        targetValue = if (entered && !exiting) 0f else 1f,
+        animationSpec = tween(durationMillis = 440, easing = FastOutSlowInEasing),
+        label = "menuSlide",
+        finishedListener = {
+            if (exiting) onBack()
+        },
+    )
+
+    val navigateBack = { exiting = true }
+    BackHandler(enabled = entered && !exiting) { navigateBack() }
+
     val tabScrollEdgeInsetPx = remember(density) { with(density) { MenuTabScrollEdgeInset.roundToPx() } }
     val topAppBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState)
@@ -122,6 +144,7 @@ fun RestaurantMenuScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .graphicsLayer { translationX = slideProgress * screenWidthPx }
             .background(palette.pageBackground),
     ) {
         Box(
@@ -151,7 +174,7 @@ fun RestaurantMenuScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = navigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                             contentDescription = "Back",

@@ -1,6 +1,10 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import androidx.activity.compose.BackHandler
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,6 +51,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -91,6 +98,24 @@ fun BookTableScreen(
         initialPage = 0,
         pageCount = { accessiblePageCount },
     )
+
+    var entered by remember { mutableStateOf(false) }
+    var exiting by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { entered = true }
+
+    val density = LocalDensity.current
+    val screenWidthPx = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
+    val slideProgress by animateFloatAsState(
+        targetValue = if (entered && !exiting) 0f else 1f,
+        animationSpec = tween(durationMillis = 440, easing = FastOutSlowInEasing),
+        label = "bookTableSlide",
+        finishedListener = {
+            if (exiting) onBack()
+        },
+    )
+
+    val navigateBack = { exiting = true }
+    BackHandler(enabled = entered && !exiting) { navigateBack() }
 
     var step by remember { mutableStateOf(BookingFlowStep.Date) }
     var isProgrammaticScroll by remember { mutableStateOf(false) }
@@ -267,6 +292,7 @@ fun BookTableScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .graphicsLayer { translationX = slideProgress * screenWidthPx }
             .background(screenBackground),
     ) {
         if (showHeader) {
@@ -275,7 +301,7 @@ fun BookTableScreen(
                 stepIndex = stepIndex,
                 title = headerTitle,
                 onBack = ::goBack,
-                onClose = onBack,
+                onClose = navigateBack,
                 onStepSelect = if (canNavigateLaterally) {
                     { index ->
                         if (index <= maxVisitedStepIndex) {
@@ -357,7 +383,7 @@ fun BookTableScreen(
 
             if (!showHeader) {
                 BookingFlowCloseButton(
-                    onClose = onBack,
+                    onClose = navigateBack,
                     modifier = Modifier.align(Alignment.TopEnd),
                 )
             }

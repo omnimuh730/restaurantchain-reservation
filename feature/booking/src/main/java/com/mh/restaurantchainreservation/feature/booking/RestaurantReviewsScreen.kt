@@ -2,6 +2,7 @@ package com.mh.restaurantchainreservation.feature.booking
 
 import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -143,6 +144,7 @@ fun RestaurantReviewsScreen(
     val allReviews = remember { RestaurantDetailData.reviews }
 
     var entered by remember { mutableStateOf(false) }
+    var exiting by remember { mutableStateOf(false) }
     var showHowReviewsWork by remember { mutableStateOf(false) }
     var sortOpen by remember { mutableStateOf(false) }
     var sortBy by remember { mutableStateOf(ReviewSortBy.MostRecent) }
@@ -227,10 +229,19 @@ fun RestaurantReviewsScreen(
 
     val screenWidthPx = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
     val slideProgress by animateFloatAsState(
-        targetValue = if (entered) 0f else 1f,
+        targetValue = if (entered && !exiting) 0f else 1f,
         animationSpec = tween(durationMillis = 440, easing = FastOutSlowInEasing),
         label = "reviewsSlide",
+        finishedListener = {
+            if (exiting) onBack()
+        },
     )
+
+    val navigateBack = { exiting = true }
+
+    BackHandler(enabled = entered && !exiting) {
+        navigateBack()
+    }
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -246,7 +257,7 @@ fun RestaurantReviewsScreen(
         }
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = topBarSurfaceColor.toArgb()
+            window.statusBarColor = Color.Transparent.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
         }
     }
@@ -371,7 +382,7 @@ fun RestaurantReviewsScreen(
                         searchOpen = false
                         searchText = ""
                     },
-                    onBack = onBack,
+                    onBack = navigateBack,
                 )
             } else {
                 ReviewsTopActionBar(
@@ -398,7 +409,7 @@ fun RestaurantReviewsScreen(
                         sortOpen = false
                         searchOpen = true
                     },
-                    onBack = onBack,
+                    onBack = navigateBack,
                 )
             }
 

@@ -871,18 +871,33 @@ private fun AppGraph(
                     LocalRestaurantNavEntry provides entry,
                 ) {
                     val id = entry.arguments?.getString("restaurantId").orEmpty()
+                    val restaurant = remember(id) {
+                        com.mh.restaurantchainreservation.core.model.DiscoverData.findById(id)
+                            ?: com.mh.restaurantchainreservation.core.model.DiscoverData.MONTHLY_BEST.first()
+                    }
                     key(entry.id) {
                     RestaurantDetailScreen(
                         restaurantId = id,
                         onBack = { navController.popBackStack() },
                         onBookNow = {
                             if (authenticated) {
-                                navController.navigate(BookingRoutes.bookTable(id))
+                                navController.navigate(DiningRoutes.Home) {
+                                    popUpTo(DiscoverRoutes.Home) { inclusive = false }
+                                    launchSingleTop = true
+                                }
                             } else {
                                 onRequireSignIn(SignInRequiredReason.Booking)
                             }
                         },
-                        onShowMenu = { navController.navigate(BookingRoutes.restaurantMenu(id)) },
+                        onBookingCompleted = { confirmationNo, result ->
+                            DiningStore.upsertBookingFront(
+                                BookingTablePrefill.createPendingBooking(
+                                    confirmationNo = confirmationNo,
+                                    restaurant = restaurant,
+                                    result = result,
+                                ),
+                            )
+                        },
                     )
                     }
                 }

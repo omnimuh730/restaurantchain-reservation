@@ -243,7 +243,7 @@ fun RestaurantDetailScreen(
     restaurantId: String,
     onBack: () -> Unit,
     onBookNow: () -> Unit,
-    onShowMenu: () -> Unit,
+    onBookingCompleted: (String, BookTableResult) -> Unit,
     modifier: Modifier = Modifier,
     sharedTransitionScope: SharedTransitionScope? = LocalRestaurantSharedTransitionScope.current,
     animatedVisibilityScope: AnimatedVisibilityScope? = LocalAnimatedContentScope.current,
@@ -281,6 +281,8 @@ fun RestaurantDetailScreen(
     var showReviews by remember { mutableStateOf(false) }
     var showHowReviewsWork by remember { mutableStateOf(false) }
     var showAmenities by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
+    var showBookTable by remember { mutableStateOf(false) }
     var showShareSheet by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -459,7 +461,7 @@ fun RestaurantDetailScreen(
                                     )
                                     CancellationPolicySection()
                                     PopularMenuSection(
-                                        onShowMenu = onShowMenu,
+                                        onShowMenu = { showMenu = true },
                                         onOpenPhotoGrid = { source ->
                                             activeGallerySource = source
                                         },
@@ -519,7 +521,7 @@ fun RestaurantDetailScreen(
 
         BookingBar(
             restaurant = restaurant,
-            onBookNow = onBookNow,
+            onBookNow = { showBookTable = true },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .graphicsLayer {
@@ -548,22 +550,45 @@ fun RestaurantDetailScreen(
                     .zIndex(3f),
             )
         }
+        if (showMenu) {
+            RestaurantMenuScreen(
+                restaurantName = restaurant.name,
+                onBack = { showMenu = false },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(3f),
+            )
+        }
+        if (showBookTable) {
+            BookTableScreen(
+                restaurantId = restaurant.id,
+                onBack = { showBookTable = false },
+                onNavigateToDining = {
+                    // Logic to navigate to Dining tab, usually handled by NavHost
+                    // but since we are an overlay, we might need a callback
+                    onBookNow() // Re-using existing callback to signal completion/navigation
+                },
+                onNavigateToDiscover = {
+                    showBookTable = false
+                },
+                onBookingCompleted = { confirmationNo, result ->
+                    onBookingCompleted(confirmationNo, result)
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(3f),
+            )
+        }
 
         if (activeGallerySource != null) {
-            Dialog(
-                onDismissRequest = { activeGallerySource = null },
-                properties = DialogProperties(
-                    usePlatformDefaultWidth = false,
-                    decorFitsSystemWindows = false,
-                ),
-            ) {
-                RestaurantPhotoGridScreen(
-                    restaurant = restaurant,
-                    source = activeGallerySource!!,
-                    onBack = { activeGallerySource = null },
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
+            RestaurantPhotoGridScreen(
+                restaurant = restaurant,
+                source = activeGallerySource!!,
+                onBack = { activeGallerySource = null },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(3f),
+            )
         }
 
     }
