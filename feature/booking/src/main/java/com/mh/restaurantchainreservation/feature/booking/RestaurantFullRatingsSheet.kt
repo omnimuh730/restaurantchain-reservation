@@ -8,14 +8,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteLaurelTier
 import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteRatingLaurelRow
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import java.text.NumberFormat
@@ -51,26 +56,39 @@ fun RestaurantFullRatingsSheet(
                 .padding(bottom = 40.dp)
         ) {
             item {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 24.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(bottom = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "Ratings",
-                        color = palette.foreground,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    GuestFavoriteRatingLaurelRow(
-                        tier = laurelTier,
-                        ratingText = formatRating(restaurant.rating),
-                        ratingFontSize = 24.sp,
-                        laurelHeight = 32.dp
-                    )
+                    if (laurelTier == GuestFavoriteLaurelTier.None) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Star,
+                                contentDescription = null,
+                                tint = palette.foreground,
+                                modifier = Modifier.size(44.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = formatRating(restaurant.rating),
+                                color = palette.foreground,
+                                fontSize = 56.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    } else {
+                        GuestFavoriteRatingLaurelRow(
+                            tier = laurelTier,
+                            ratingText = formatRating(restaurant.rating),
+                            ratingFontSize = 56.sp,
+                            laurelHeight = 64.dp
+                        )
+                    }
                 }
             }
 
