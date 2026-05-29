@@ -86,7 +86,10 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteLaurelTier
+import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteRatingLaurelRow
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
+import com.mh.restaurantchainreservation.core.model.GuestFavoriteLevel
 import com.mh.restaurantchainreservation.core.model.Restaurant
 import java.text.NumberFormat
 import java.util.Locale
@@ -108,29 +111,6 @@ private enum class ReviewSortBy {
     HighestRated,
     LowestRated,
 }
-
-private data class StarDistribution(val stars: Int, val percent: Int)
-
-private val ratingDistribution = listOf(
-    StarDistribution(5, 88),
-    StarDistribution(4, 64),
-    StarDistribution(3, 30),
-    StarDistribution(2, 14),
-    StarDistribution(1, 8),
-)
-
-private data class SubRatingMetric(
-    val label: String,
-    val score: String,
-    val emoji: String,
-)
-
-private val subRatingMetrics = listOf(
-    SubRatingMetric("Taste", "5.0", "🍽️"),
-    SubRatingMetric("Ambience", "4.9", "✨"),
-    SubRatingMetric("Service", "4.8", "🤝"),
-    SubRatingMetric("Value", "4.7", "💰"),
-)
 
 private data class ReviewSubCategory(val key: String, val emoji: String, val value: Int?)
 
@@ -744,6 +724,7 @@ private fun ReviewsStatsExpandedContent(
     sectionDividerAlpha: Float = 1f,
 ) {
     val palette = LocalRestaurantPalette.current
+    val laurelTier = restaurant.guestFavoriteLevel.toDetailLaurelTier()
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -755,19 +736,28 @@ private fun ReviewsStatsExpandedContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = formatRating(restaurant.rating),
-                color = palette.foreground,
-                fontSize = 56.sp,
-                fontWeight = FontWeight.Bold,
+            GuestFavoriteRatingLaurelRow(
+                tier = laurelTier,
+                ratingText = formatRating(restaurant.rating),
             )
+
+            if (laurelTier != GuestFavoriteLaurelTier.None) {
+                Text(
+                    text = "Guest favorite",
+                    color = palette.foreground,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+
             Text(
                 text = "Based on ${NumberFormat.getIntegerInstance(Locale.US).format(restaurant.reviews)} guest reviews",
                 color = palette.mutedForeground,
                 fontSize = 15.sp,
                 lineHeight = 24.sp,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 8.dp),
+                modifier = Modifier.padding(top = if (laurelTier != GuestFavoriteLaurelTier.None) 4.dp else 8.dp),
             )
             Text(
                 text = "How reviews work",
