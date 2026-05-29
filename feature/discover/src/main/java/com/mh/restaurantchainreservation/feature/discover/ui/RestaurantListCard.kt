@@ -45,6 +45,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.HeartButto
 import com.mh.restaurantchainreservation.core.designsystem.components.PressableContentScale
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
@@ -109,7 +110,10 @@ fun RestaurantListCard(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(1.33f),
+                        .aspectRatio(1.33f)
+                        .hubSurfaceShadow(shape = RestaurantSharedTransitionShapes.cardHero)
+                        .clip(RestaurantSharedTransitionShapes.cardHero)
+                        .background(palette.cardSurface),
                 ) {
                     Box(
                         modifier = Modifier
@@ -152,7 +156,7 @@ fun RestaurantListCard(
                         .padding(
                             start = 6.dp,
                             end = 6.dp,
-                            top = 6.dp,
+                            top = 10.dp,
                             bottom = if (hasTimeSlots) 0.dp else 6.dp,
                         ),
                 ) {
@@ -180,7 +184,7 @@ fun RestaurantListCard(
                                 tint = palette.foreground,
                                 modifier = Modifier.size(12.dp),
                             )
-                            Spacer(Modifier.width(4.dp))
+                            Spacer(Modifier.width(1.dp))
                             Text(
                                 text = "%.1f (%s)".format(restaurant.rating, formatReviewCount(restaurant.reviews)),
                                 color = palette.foreground,
@@ -189,7 +193,7 @@ fun RestaurantListCard(
                             )
                         }
                     }
-                    Spacer(Modifier.height(2.dp))
+                    Spacer(Modifier.height(1.dp))
                     Text(
                         text = listCardAddressLine(restaurant),
                         color = palette.mutedForeground,

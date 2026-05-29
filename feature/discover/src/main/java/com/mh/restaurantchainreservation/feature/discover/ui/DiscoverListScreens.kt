@@ -277,9 +277,9 @@ private fun ListScaffold(
                         start = DiscoverListHorizontalPadding,
                         end = DiscoverListHorizontalPadding,
                         top = 20.dp,
-                        bottom = 32.dp,
+                        bottom = 120.dp,
                     ),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     items(restaurants, key = { it.id }) { item ->
                         val slots = remember(item.id, selectedDayMillis, selectedTimeRangeId) {
