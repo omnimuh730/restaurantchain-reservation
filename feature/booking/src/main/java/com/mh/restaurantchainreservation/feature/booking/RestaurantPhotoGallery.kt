@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import androidx.activity.compose.BackHandler
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -19,11 +20,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -68,6 +71,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import kotlin.math.abs
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.text.font.FontWeight
@@ -75,10 +79,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.mh.restaurantchainreservation.core.designsystem.components.CollapsingTitleHeaderMetrics
-import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
-import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
-import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingHeartButton
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingIconButton
+import com.mh.restaurantchainreservation.core.designsystem.components.DetailCollapsingMetrics
 import com.mh.restaurantchainreservation.core.designsystem.components.ShareWithContactsSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.SharedContentStore
@@ -109,6 +112,24 @@ fun RestaurantPhotoGridScreen(
     val entries = remember(restaurant.id, source, banner?.id) {
         RestaurantPhotoGalleryData.entries(restaurant, source, banner)
     }
+    var entered by remember { mutableStateOf(false) }
+    var exiting by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { entered = true }
+
+    val density = LocalDensity.current
+    val screenWidthPx = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
+    val slideProgress by animateFloatAsState(
+        targetValue = if (entered && !exiting) 0f else 1f,
+        animationSpec = tween(durationMillis = 440, easing = FastOutSlowInEasing),
+        label = "photoGridSlide",
+        finishedListener = {
+            if (exiting) onBack()
+        },
+    )
+
+    val navigateBack = { exiting = true }
+    BackHandler(enabled = entered && !exiting) { navigateBack() }
+
     var fullscreenStartIndex by remember { mutableStateOf<Int?>(null) }
     var showShareSheet by remember { mutableStateOf(false) }
     val gridState = rememberLazyGridState()
@@ -137,11 +158,12 @@ fun RestaurantPhotoGridScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .graphicsLayer { translationX = slideProgress * screenWidthPx }
             .background(palette.pageBackground),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             PhotoGridTopBar(
-                onBack = onBack,
+                onBack = navigateBack,
                 onShare = { showShareSheet = true },
                 restaurant = restaurant,
                 showBottomBorder = showTopBarBorder,
@@ -173,7 +195,7 @@ fun RestaurantPhotoGridScreen(
             RestaurantPhotoFullscreenViewer(
                 entries = entries,
                 initialIndex = start,
-                onDismiss = onBack,
+                onDismiss = { fullscreenStartIndex = null },
                 onOpenGrid = { fullscreenStartIndex = null },
             )
         }
@@ -206,14 +228,12 @@ private fun PhotoGridTopBar(
     val density = LocalDensity.current
     val strokePx = with(density) { 1.dp.toPx() }
     val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
-    val unsavedInDetail by WishlistStore.unsavedInDetailCollection.collectAsState()
-    val saved = remember(savedIds, unsavedInDetail, restaurant.id) {
-        WishlistStore.isSaved(restaurant.id)
-    }
+    val saved = restaurant.id in savedIds
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
+            .background(palette.pageBackground)
             .windowInsetsPadding(WindowInsets.statusBars)
             .drawBehind {
                 if (showBottomBorder) {
@@ -225,39 +245,53 @@ private fun PhotoGridTopBar(
                     )
                 }
             }
-            .padding(start = 4.dp, end = 8.dp, top = 4.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier.size(40.dp),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(DetailCollapsingMetrics.toolbarBodyHeight)
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
+            DetailFloatingIconButton(
+                onClick = onBack,
+                plateAlpha = 0f,
                 contentDescription = "Back",
-                tint = palette.foreground,
-                modifier = Modifier.size(22.dp),
-            )
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = null,
+                    tint = palette.foreground,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                DetailFloatingIconButton(
+                    onClick = onShare,
+                    plateAlpha = 0f,
+                    contentDescription = "Share",
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Share,
+                        contentDescription = null,
+                        tint = palette.foreground,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+                DetailFloatingHeartButton(
+                    active = saved,
+                    plateAlpha = 0f,
+                    onClick = { WishlistStore.onHeartTap(restaurant) },
+                    contentDescription = "Save",
+                )
+            }
         }
-        Box(modifier = Modifier.weight(1f))
-        IconButton(
-            onClick = onShare,
-            modifier = Modifier.size(40.dp),
-        ) {
-            Icon(
-                Icons.Outlined.Share,
-                contentDescription = "Share",
-                tint = palette.foreground,
-                modifier = Modifier.size(20.dp),
-            )
-        }
-        HeartButton(
-            active = saved,
-            onClick = { WishlistStore.onHeartTap(restaurant) },
-            size = HeartButtonSize.Small,
-            style = HeartButtonStyle.Overlay,
-            modifier = Modifier.padding(end = 4.dp),
-        )
     }
 }
 

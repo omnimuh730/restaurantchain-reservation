@@ -23,15 +23,18 @@ import com.mh.restaurantchainreservation.core.designsystem.transition.Restaurant
 import com.mh.restaurantchainreservation.core.designsystem.transition.restaurantSharedContentPanelLayer
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -65,7 +68,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Star
+import com.mh.restaurantchainreservation.core.designsystem.components.icons.RestaurantIcons
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Phone
@@ -84,6 +87,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -107,14 +111,19 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.badge.AnimatedGuestFavoriteCenterBadge
+import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteLaurelTier
+import com.mh.restaurantchainreservation.core.designsystem.badge.GuestFavoriteRatingLaurelRow
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailCollapsingMetrics
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingHeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.DetailFloatingIconButton
@@ -207,7 +216,15 @@ private suspend fun LazyListState.scrollToReviewsShowAllButton(
     val viewportHeight = layoutInfo.viewportSize.height
     val targetOffset =
         (showAllButtonBottomPx - (viewportHeight - bottomClearancePx)).coerceAtLeast(0)
-    animateScrollToItem(index = 0, scrollOffset = targetOffset)
+
+    val currentOffset = firstVisibleItemScrollOffset
+    animateScrollBy(
+        value = (targetOffset - currentOffset).toFloat(),
+        animationSpec = tween(
+            durationMillis = 700,
+            easing = FastOutSlowInEasing,
+        ),
+    )
 }
 
 /** Detail payload lifecycle for the twin-layer transition and post-arrival reveal. */
@@ -228,8 +245,7 @@ fun RestaurantDetailScreen(
     restaurantId: String,
     onBack: () -> Unit,
     onBookNow: () -> Unit,
-    onShowMenu: () -> Unit,
-    onOpenPhotoGrid: (RestaurantPhotoGallerySource) -> Unit,
+    onBookingCompleted: (String, BookTableResult) -> Unit,
     modifier: Modifier = Modifier,
     sharedTransitionScope: SharedTransitionScope? = LocalRestaurantSharedTransitionScope.current,
     animatedVisibilityScope: AnimatedVisibilityScope? = LocalAnimatedContentScope.current,
@@ -259,13 +275,17 @@ fun RestaurantDetailScreen(
         animatedVisibilityScope,
         shape = RestaurantSharedTransitionShapes.detailContentPanel,
     )
+    var activeGallerySource by rememberSaveable { mutableStateOf<RestaurantPhotoGallerySource?>(null) }
     var loadPhase by remember { mutableStateOf(RestaurantDetailUiState.Loading) }
     var loadedPayload by remember { mutableStateOf<DetailLoadedPayload?>(null) }
     val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
     val saved = restaurant.id in savedIds
     var showReviews by remember { mutableStateOf(false) }
+    var showFullRatings by remember { mutableStateOf(false) }
     var showHowReviewsWork by remember { mutableStateOf(false) }
     var showAmenities by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
+    var showBookTable by remember { mutableStateOf(false) }
     var showShareSheet by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -367,7 +387,7 @@ fun RestaurantDetailScreen(
                             showPageIndicator = contentReady && heroImages.size > 1,
                             onOpenFullscreen = {
                                 if (contentReady) {
-                                    onOpenPhotoGrid(RestaurantPhotoGallerySource.Gallery)
+                                    activeGallerySource = RestaurantPhotoGallerySource.Gallery
                                 }
                             },
                         )
@@ -386,7 +406,6 @@ fun RestaurantDetailScreen(
                                 restaurantId = restaurant.id,
                                 sharedTransitionScope = sharedTransitionScope,
                                 role = RestaurantSharedContentPanelLayerRole.DetailSheet,
-                                shape = RestaurantSharedTransitionShapes.detailContentPanel,
                                 heroOverlap = SheetTopRadius,
                             )
                             .then(contentPanelModifier)
@@ -437,6 +456,7 @@ fun RestaurantDetailScreen(
                                         restaurant = restaurant,
                                         reviews = payload.topReviews,
                                         onOpenReviews = { showReviews = true },
+                                        onShowFullRatings = { showFullRatings = true },
                                         onShowHowReviewsWork = { showHowReviewsWork = true },
                                         detailPageCoordinates = detailPageCoordinates,
                                         onShowAllButtonBottomMeasured = { bottomPx ->
@@ -445,8 +465,10 @@ fun RestaurantDetailScreen(
                                     )
                                     CancellationPolicySection()
                                     PopularMenuSection(
-                                        onShowMenu = onShowMenu,
-                                        onOpenPhotoGrid = onOpenPhotoGrid,
+                                        onShowMenu = { showMenu = true },
+                                        onOpenPhotoGrid = { source ->
+                                            activeGallerySource = source
+                                        },
                                     )
                                 }
                             } else {
@@ -503,7 +525,7 @@ fun RestaurantDetailScreen(
 
         BookingBar(
             restaurant = restaurant,
-            onBookNow = onBookNow,
+            onBookNow = { showBookTable = true },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .graphicsLayer {
@@ -511,11 +533,20 @@ fun RestaurantDetailScreen(
                 },
         )
 
+        if (showFullRatings) {
+            RestaurantFullRatingsSheet(
+                restaurant = restaurant,
+                onDismiss = { showFullRatings = false }
+            )
+        }
+
         if (showReviews) {
             RestaurantReviewsScreen(
                 restaurant = restaurant,
                 onBack = { showReviews = false },
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(3f),
             )
         }
         if (showHowReviewsWork) {
@@ -525,7 +556,49 @@ fun RestaurantDetailScreen(
             RestaurantAmenitiesScreen(
                 restaurant = restaurant,
                 onBack = { showAmenities = false },
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(3f),
+            )
+        }
+        if (showMenu) {
+            RestaurantMenuScreen(
+                restaurantName = restaurant.name,
+                onBack = { showMenu = false },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(3f),
+            )
+        }
+        if (showBookTable) {
+            BookTableScreen(
+                restaurantId = restaurant.id,
+                onBack = { showBookTable = false },
+                onNavigateToDining = {
+                    // Logic to navigate to Dining tab, usually handled by NavHost
+                    // but since we are an overlay, we might need a callback
+                    onBookNow() // Re-using existing callback to signal completion/navigation
+                },
+                onNavigateToDiscover = {
+                    showBookTable = false
+                },
+                onBookingCompleted = { confirmationNo, result ->
+                    onBookingCompleted(confirmationNo, result)
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(3f),
+            )
+        }
+
+        if (activeGallerySource != null) {
+            RestaurantPhotoGridScreen(
+                restaurant = restaurant,
+                source = activeGallerySource!!,
+                onBack = { activeGallerySource = null },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(3f),
             )
         }
 
@@ -741,15 +814,15 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onScrollToReviews: () -> U
             Text(
                 text = formatRating(restaurant.rating),
                 color = palette.foreground,
-                fontSize = 20.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
             )
             Row(
-                modifier = Modifier.padding(top = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                modifier = Modifier.padding(top = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(1.dp),
             ) {
                 repeat(5) {
-                    Icon(Icons.Filled.Star, null, tint = palette.foreground, modifier = Modifier.size(12.dp))
+                    Icon(RestaurantIcons.Star, null, tint = palette.foreground, modifier = Modifier.size(8.dp))
                 }
             }
         }
@@ -777,13 +850,13 @@ private fun RatingsSummaryRow(restaurant: Restaurant, onScrollToReviews: () -> U
             Text(
                 text = NumberFormat.getIntegerInstance(Locale.US).format(restaurant.reviews),
                 color = palette.foreground,
-                fontSize = 20.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
             )
             Text(
                 text = "Reviews",
                 color = palette.foreground,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(top = 4.dp),
             )
@@ -938,6 +1011,7 @@ private fun ReviewsPreviewSection(
     restaurant: Restaurant,
     reviews: List<ReviewEntry>,
     onOpenReviews: () -> Unit,
+    onShowFullRatings: () -> Unit,
     onShowHowReviewsWork: () -> Unit,
     detailPageCoordinates: LayoutCoordinates?,
     onShowAllButtonBottomMeasured: (Int) -> Unit,
@@ -946,6 +1020,9 @@ private fun ReviewsPreviewSection(
     if (reviews.isEmpty()) return
     val palette = LocalRestaurantPalette.current
     val reviewCountLabel = NumberFormat.getIntegerInstance(Locale.US).format(restaurant.reviews)
+    val laurelTier = restaurant.guestFavoriteLevel.toDetailLaurelTier()
+    val isGuestFavorite = restaurant.guestFavoriteLevel.isGuestFavorite()
+
     Column(modifier = modifier.padding(top = 8.dp, bottom = 24.dp)) {
         Column(
             modifier = Modifier
@@ -953,33 +1030,63 @@ private fun ReviewsPreviewSection(
                 .padding(horizontal = DetailInfoHorizontalPadding)
                 .padding(vertical = 20.dp)
                 .padding(bottom = 14.dp),
+            horizontalAlignment = if (isGuestFavorite) Alignment.CenterHorizontally else Alignment.Start,
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = null,
-                    tint = palette.foreground,
-                    modifier = Modifier.size(18.dp),
+            if (isGuestFavorite) {
+                GuestFavoriteRatingLaurelRow(
+                    tier = laurelTier,
+                    ratingText = formatRating(restaurant.rating),
                 )
                 Text(
-                    text = String.format(Locale.US, "%.1f · %s reviews", restaurant.rating, reviewCountLabel),
+                    text = "Guest favorite",
                     color = palette.foreground,
-                    fontSize = 22.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                Text(
+                    text = "Based on $reviewCountLabel guest reviews",
+                    color = palette.mutedForeground,
+                    fontSize = 15.sp,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                Text(
+                    text = "Show full ratings",
+                    color = palette.mutedForeground,
+                    fontSize = 14.sp,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .clickable(onClick = onShowFullRatings),
+                )
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Icon(
+                        imageVector = RestaurantIcons.Star,
+                        contentDescription = null,
+                        tint = palette.foreground,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Text(
+                        text = String.format(Locale.US, "%.1f · %s reviews", restaurant.rating, reviewCountLabel),
+                        color = palette.foreground,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                Text(
+                    text = "Show full ratings",
+                    color = palette.mutedForeground,
+                    fontSize = 14.sp,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .clickable(onClick = onShowFullRatings),
                 )
             }
-            Text(
-                text = "How reviews work",
-                color = palette.foreground,
-                fontSize = 14.sp,
-                textDecoration = TextDecoration.Underline,
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .clickable(onClick = onShowHowReviewsWork),
-            )
         }
         DetailInsetDivider()
         ReviewsCarousel(
@@ -1010,6 +1117,16 @@ private fun ReviewsPreviewSection(
                 fontWeight = FontWeight.SemiBold,
             )
         }
+        Text(
+            text = "How reviews work",
+            color = palette.foreground,
+            fontSize = 14.sp,
+            textDecoration = TextDecoration.Underline,
+            modifier = Modifier
+                .padding(top = 16.dp)
+                .align(Alignment.CenterHorizontally)
+                .clickable(onClick = onShowHowReviewsWork),
+        )
     }
     DetailInsetDivider()
 }
@@ -1156,10 +1273,10 @@ private fun ReviewPreviewCard(
         ) {
             repeat(5) { starIndex ->
                 Icon(
-                    imageVector = Icons.Filled.Star,
+                    imageVector = RestaurantIcons.Star,
                     contentDescription = null,
                     tint = if (starIndex < filledStars) palette.foreground else palette.border,
-                    modifier = Modifier.size(12.dp),
+                    modifier = Modifier.size(8.dp),
                 )
             }
             Text(
@@ -1239,7 +1356,7 @@ private fun PopularMenuSection(
         Text(
             "Popular menu",
             color = palette.foreground,
-            fontSize = 28.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 24.dp),
         )
@@ -1283,7 +1400,7 @@ private fun PopularMenuSection(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "Show Full Menu",
+                text = "Show full menu",
                 color = palette.foreground,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -1330,14 +1447,14 @@ private fun BookingBar(
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(percent = 50))
-                .background(RestaurantColors.Brand.reservePink)
+                .background(palette.foreground)
                 .clickable(onClick = onBookNow)
-                .padding(horizontal = 28.dp, vertical = 14.dp),
+                .padding(horizontal = 28.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Icon(Icons.Outlined.CalendarMonth, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(18.dp))
-            Text("Reserve", color = RestaurantColors.Base.white, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Icon(Icons.Outlined.CalendarMonth, null, tint = palette.pageBackground, modifier = Modifier.size(18.dp))
+            Text("Reserve", color = palette.pageBackground, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

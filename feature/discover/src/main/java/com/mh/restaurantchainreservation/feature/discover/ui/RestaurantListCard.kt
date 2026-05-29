@@ -20,10 +20,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import com.mh.restaurantchainreservation.core.designsystem.components.icons.RestaurantIcons
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,6 +45,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.HeartButto
 import com.mh.restaurantchainreservation.core.designsystem.components.PressableContentScale
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceShadow
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalAnimatedContentScope
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
@@ -110,7 +110,10 @@ fun RestaurantListCard(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight),
+                        .aspectRatio(1.33f)
+                        .hubSurfaceShadow(shape = RestaurantSharedTransitionShapes.cardHero)
+                        .clip(RestaurantSharedTransitionShapes.cardHero)
+                        .background(palette.cardSurface),
                 ) {
                     Box(
                         modifier = Modifier
@@ -151,60 +154,54 @@ fun RestaurantListCard(
                         .restaurantSharedContentPanelLayer(restaurant.id, shared)
                         .then(contentPanelModifier)
                         .padding(
-                            start = 2.dp,
-                            end = 2.dp,
+                            start = 6.dp,
+                            end = 6.dp,
                             top = 10.dp,
-                            bottom = if (hasTimeSlots) 0.dp else 2.dp,
+                            bottom = if (hasTimeSlots) 0.dp else 6.dp,
                         ),
                 ) {
-                    Text(
-                        text = restaurant.name,
-                        color = palette.foreground,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = titleVisibilityModifier,
-                    )
-                    Column(
-                        modifier = Modifier.graphicsLayer { alpha = contentMetaAlpha },
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            text = restaurant.name,
+                            color = palette.foreground,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = titleVisibilityModifier.weight(1f),
+                        )
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.graphicsLayer { alpha = contentMetaAlpha },
                         ) {
-                            val metaColor = palette.mutedForeground
                             Icon(
-                                imageVector = Icons.Outlined.Place,
+                                imageVector = RestaurantIcons.Star,
                                 contentDescription = null,
-                                tint = metaColor,
-                                modifier = Modifier.size(14.dp),
+                                tint = palette.foreground,
+                                modifier = Modifier.size(12.dp),
                             )
-                            Spacer(Modifier.width(4.dp))
+                            Spacer(Modifier.width(1.dp))
                             Text(
-                                text = listCardAddressLine(restaurant),
-                                color = metaColor,
-                                fontSize = 13.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            DiscoverInlineDot(color = metaColor)
-                            Text(
-                                text = "★ %.1f".format(restaurant.rating),
-                                color = metaColor,
-                                fontSize = 13.sp,
-                                maxLines = 1,
+                                text = "%.1f (%s)".format(restaurant.rating, formatReviewCount(restaurant.reviews)),
+                                color = palette.foreground,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
                             )
                         }
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = "${formatReviewCount(restaurant.reviews)} reviews",
-                            color = palette.mutedForeground,
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                        )
                     }
+                    Spacer(Modifier.height(1.dp))
+                    Text(
+                        text = listCardAddressLine(restaurant),
+                        color = palette.mutedForeground,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.graphicsLayer { alpha = contentMetaAlpha },
+                    )
                 }
             }
         }
@@ -217,7 +214,7 @@ fun RestaurantListCard(
                 horizontalPadding = listHorizontalPadding,
                 modifier = Modifier
                     .horizontalBleed(listHorizontalPadding)
-                    .padding(bottom = 14.dp),
+                    .padding(top = 6.dp, bottom = 14.dp),
             )
         }
     }
@@ -248,9 +245,9 @@ private fun TimeSlotRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(slots, key = { it.label }) { slot ->
-            val borderColor = if (slot.available) palette.brand.copy(alpha = 0.45f) else palette.border
-            val bg = if (slot.available) palette.brandSoftSurface else palette.cardSurface
-            val textColor = if (slot.available) palette.brandStrong else palette.mutedForeground.copy(alpha = 0.55f)
+            val borderColor = if (slot.available) palette.foreground else palette.border
+            val bg = palette.cardSurface
+            val textColor = if (slot.available) palette.foreground else palette.mutedForeground.copy(alpha = 0.55f)
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(999.dp))
@@ -266,7 +263,7 @@ private fun TimeSlotRow(
                             Modifier
                         },
                     )
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
             ) {
                 Text(
                     text = slot.label,

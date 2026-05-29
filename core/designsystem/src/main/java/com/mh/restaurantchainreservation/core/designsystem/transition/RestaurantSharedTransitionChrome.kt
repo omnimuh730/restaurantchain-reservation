@@ -19,9 +19,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 
 /** Timeline for discover ↔ detail shared-element choreography. */
 object RestaurantSharedTransitionMotion {
-    const val durationMillis = 500
+    const val durationMillis = 400
     val easing = FastOutSlowInEasing
-    val contentRevealTween = tween<Float>(durationMillis = 350, easing = easing)
+    val contentRevealTween = tween<Float>(durationMillis = 300, easing = easing)
 
     val boundsProgressTween = tween<Float>(durationMillis = durationMillis, easing = easing)
 
@@ -41,6 +41,7 @@ object RestaurantSharedTransitionMotion {
 data class RestaurantSharedTransitionChromeSnapshot(
     val progress: Float = 0f,
     val active: Boolean = false,
+    val isPop: Boolean = false,
     /** Restaurant whose card is the active shared-element source/destination. */
     val restaurantId: String? = null,
     /**
@@ -61,11 +62,13 @@ object RestaurantSharedTransitionChrome {
     internal fun update(
         progress: Float,
         active: Boolean,
+        isPop: Boolean = snapshot.isPop,
         restaurantId: String? = snapshot.restaurantId,
     ) {
         snapshot = snapshot.copy(
             progress = progress.coerceIn(0f, 1f),
             active = active,
+            isPop = isPop,
             restaurantId = if (active) restaurantId else snapshot.restaurantId,
         )
     }
@@ -73,8 +76,21 @@ object RestaurantSharedTransitionChrome {
     fun beginRestaurantDetailTransition(restaurantId: String) {
         snapshot = snapshot.copy(
             restaurantId = restaurantId,
+            isPop = false,
             suppressBottomNavOnDiscover = true,
         )
+    }
+
+    fun beginSearchTransition() {
+        snapshot = snapshot.copy(
+            restaurantId = null,
+            isPop = false,
+            suppressBottomNavOnDiscover = true,
+        )
+    }
+
+    fun prepareForPop() {
+        snapshot = snapshot.copy(isPop = true)
     }
 
     fun clearBottomNavSuppressOnDiscover() {
@@ -87,6 +103,7 @@ object RestaurantSharedTransitionChrome {
         snapshot = snapshot.copy(
             progress = 0f,
             active = false,
+            isPop = false,
         )
     }
 
@@ -132,6 +149,7 @@ fun RestaurantSharedTransitionChromeSink(isPop: Boolean) {
             RestaurantSharedTransitionChrome.update(
                 progress = driver.value,
                 active = true,
+                isPop = isPop,
                 restaurantId = RestaurantSharedTransitionChrome.snapshot.restaurantId,
             )
         }
@@ -174,7 +192,10 @@ fun rememberRestaurantHeroChromeAlpha(
     sharedTransitionScope: SharedTransitionScope?,
 ): Float {
     val participant = rememberRestaurantSharedTransitionParticipant(restaurantId, sharedTransitionScope)
-    return if (participant) 0f else 1f
+    if (!participant) return 1f
+    val progress = RestaurantSharedTransitionChrome.snapshot.progress
+    // Fade out smoothly at the start of push (matching meta-alpha for consistent card UI fade)
+    return (1f - (progress / 0.25f)).coerceIn(0f, 1f)
 }
 
 fun Modifier.restaurantDiscoverChromeFade(alpha: Float): Modifier =

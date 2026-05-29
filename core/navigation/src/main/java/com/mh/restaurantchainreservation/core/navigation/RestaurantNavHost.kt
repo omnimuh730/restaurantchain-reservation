@@ -30,6 +30,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.zIndex
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -228,6 +229,8 @@ fun RestaurantNavHost(
     // Keep scroll tracking while the bar is hidden so upward scroll / pull can show it again.
     val shouldTrackBottomNavScroll = isCompact && showAppChrome && !suppressBottomNav && !hideTabNavigation
     val bottomNavInsetProgress = bottomNavVisibilityProgress
+
+    val isPopFromShared = sharedTransitionChrome.active && sharedTransitionChrome.isPop
 
     LaunchedEffect(destination?.route) {
         val route = destination?.route ?: return@LaunchedEffect
@@ -549,10 +552,13 @@ private fun resolveActiveTab(hierarchyRoutes: List<String>): BottomNavTabId? {
     }
 }
 
-/** Restaurant detail and sub-flows (menu, photos, book) — full-screen, no tab bar. */
+/** Restaurant detail and sub-flows (menu, photos, book, search) — full-screen, no tab bar. */
 private fun hidesMainTabNavigation(route: String?): Boolean {
     if (route == null) return false
-    return route.startsWith("discover/restaurant/")
+    return route.startsWith("discover/restaurant/") ||
+        route == DiscoverRoutes.Search ||
+        route.startsWith("discover/search?") ||
+        route == DiscoverRoutes.AllPromotions
 }
 
 /** QR Pay (and other full-screen overlays) own the entire viewport. */
@@ -621,8 +627,10 @@ private fun AppGraph(
 
         SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalRestaurantSharedTransitionScope provides this) {
-                val isDetailPage = destination?.route?.startsWith("discover/restaurant/") == true
-                RestaurantSharedTransitionChromeSink(isPop = !isDetailPage && sharedTransitionChrome.active)
+                val isSharedRoute = destination?.route?.startsWith("discover/restaurant/") == true ||
+                    destination?.route == DiscoverRoutes.Search
+                val isPop = sharedTransitionChrome.isPop || (!isSharedRoute && sharedTransitionChrome.active)
+                RestaurantSharedTransitionChromeSink(isPop = isPop)
                 NavHost(
                     navController = navController,
                     startDestination = initialStartDestination,
@@ -643,7 +651,10 @@ private fun AppGraph(
                 ) {
                     val currentLocation by LocationStore.current.collectAsState()
                     DiscoverHomeScreen(
-                        onOpenSearch = { navController.navigate(DiscoverRoutes.Search) },
+                        onOpenSearch = {
+                            RestaurantSharedTransitionChrome.beginSearchTransition()
+                            navController.navigate(DiscoverRoutes.Search)
+                        },
                         onOpenMap = {
                             navController.navigateDiscoverSearchResults(
                                 q = "All restaurants",
@@ -736,10 +747,20 @@ private fun AppGraph(
                     onSelectCuisine = { foodId -> navController.navigate(DiscoverRoutes.food(foodId)) },
                 )
             }
-            composable(DiscoverRoutes.Search) {
+            composable(
+                route = DiscoverRoutes.Search,
+                enterTransition = { fadeIn(tween(RestaurantSharedTransitionMotion.durationMillis)) },
+                exitTransition = { fadeOut(tween(RestaurantSharedTransitionMotion.durationMillis)) },
+                popEnterTransition = { fadeIn(tween(RestaurantSharedTransitionMotion.durationMillis)) },
+                popExitTransition = { fadeOut(tween(RestaurantSharedTransitionMotion.durationMillis)) },
+            ) {
                 DiscoverSearchModal(
-                    onClose = { navController.popBackStack() },
+                    onClose = {
+                        RestaurantSharedTransitionChrome.prepareForPop()
+                        navController.popBackStack()
+                    },
                     onSubmit = { q, summary ->
+                        RestaurantSharedTransitionChrome.prepareForPop()
                         navController.popBackStack()
                         navController.navigateDiscoverSearchResults(q = q, summary = summary)
                     },
@@ -765,7 +786,10 @@ private fun AppGraph(
                         planSummary = summary.ifBlank { "Tonight, 7:00 PM, 2 people" },
                         locationId = locationId,
                         onBack = { navController.popBackStack() },
-                        onOpenSearch = { navController.navigate(DiscoverRoutes.Search) },
+                        onOpenSearch = {
+                            RestaurantSharedTransitionChrome.beginSearchTransition()
+                            navController.navigate(DiscoverRoutes.Search)
+                        },
                         onOpenRestaurant = { id -> navController.navigateToRestaurantDetail(id) },
                     )
                 }
@@ -847,56 +871,36 @@ private fun AppGraph(
                     LocalRestaurantNavEntry provides entry,
                 ) {
                     val id = entry.arguments?.getString("restaurantId").orEmpty()
+                    val restaurant = remember(id) {
+                        com.mh.restaurantchainreservation.core.model.DiscoverData.findById(id)
+                            ?: com.mh.restaurantchainreservation.core.model.DiscoverData.MONTHLY_BEST.first()
+                    }
                     key(entry.id) {
                     RestaurantDetailScreen(
                         restaurantId = id,
                         onBack = { navController.popBackStack() },
                         onBookNow = {
                             if (authenticated) {
-                                navController.navigate(BookingRoutes.bookTable(id))
+                                navController.navigate(DiningRoutes.Home) {
+                                    popUpTo(DiscoverRoutes.Home) { inclusive = false }
+                                    launchSingleTop = true
+                                }
                             } else {
                                 onRequireSignIn(SignInRequiredReason.Booking)
                             }
                         },
-                        onShowMenu = { navController.navigate(BookingRoutes.restaurantMenu(id)) },
-                        onOpenPhotoGrid = { source ->
-                            navController.navigateToPhotoGrid(id, source)
+                        onBookingCompleted = { confirmationNo, result ->
+                            DiningStore.upsertBookingFront(
+                                BookingTablePrefill.createPendingBooking(
+                                    confirmationNo = confirmationNo,
+                                    restaurant = restaurant,
+                                    result = result,
+                                ),
+                            )
                         },
                     )
                     }
                 }
-            }
-            composable(
-                route = BookingRoutes.PhotoGrid,
-                arguments = listOf(
-                    navArgument("restaurantId") { type = NavType.StringType },
-                    navArgument("source") {
-                        type = NavType.StringType
-                        defaultValue = RestaurantPhotoGallerySource.Gallery.routeValue
-                    },
-                    navArgument("bannerId") {
-                        type = NavType.StringType
-                        defaultValue = ""
-                    },
-                ),
-            ) { entry ->
-                val id = entry.arguments?.getString("restaurantId").orEmpty()
-                val source = RestaurantPhotoGallerySource.fromRoute(entry.arguments?.getString("source"))
-                val bannerId = entry.arguments?.getString("bannerId").orEmpty()
-                val restaurant = DiscoverData.findById(id)
-                    ?: DiscoverData.MONTHLY_BEST.first()
-                val banner = if (bannerId.isNotBlank()) {
-                    DiscoverData.BANNERS.firstOrNull { it.id == bannerId }
-                } else {
-                    null
-                }
-                RestaurantPhotoGridScreen(
-                    restaurant = restaurant,
-                    source = source,
-                    banner = banner,
-                    onBack = { navController.popBackStack() },
-                    modifier = Modifier.fillMaxSize(),
-                )
             }
             composable(
                 route = BookingRoutes.RestaurantMenu,
@@ -908,7 +912,9 @@ private fun AppGraph(
                 RestaurantMenuScreen(
                     restaurantName = restaurant.name,
                     onBack = { navController.popBackStack() },
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(3f),
                 )
             }
             composable(
@@ -957,6 +963,9 @@ private fun AppGraph(
                             DiningStore.updateBooking(BookingTablePrefill.applyResult(booking, result))
                         }
                     },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(3f),
                 )
             }
             composable(DiningRoutes.Home) {

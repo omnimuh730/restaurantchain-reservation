@@ -104,12 +104,12 @@ internal fun BookingStepHeader(
             }
             Text(
                 text = "${stepIndex + 1}/${PROGRESS_STEPS.size}",
-                color = palette.brand,
+                color = palette.foreground,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier
                     .clip(RoundedCornerShape(999.dp))
-                    .background(palette.brand.copy(alpha = 0.1f))
+                    .background(palette.foreground.copy(alpha = 0.1f))
                     .padding(horizontal = 12.dp, vertical = 6.dp),
             )
             Spacer(Modifier.width(8.dp))
@@ -141,7 +141,7 @@ internal fun BookingStepHeader(
                         .height(6.dp)
                         .clip(RoundedCornerShape(999.dp))
                         .background(
-                            if (index <= stepIndex) palette.brand else palette.border,
+                            if (index <= stepIndex) palette.foreground else palette.border,
                         )
                         .then(
                             if (onStepSelect != null && index <= maxSelectableStepIndex) {
@@ -194,7 +194,7 @@ internal fun BookingStepHeader(
             Icon(
                 imageVector = Icons.Outlined.Shield,
                 contentDescription = null,
-                tint = palette.brand,
+                tint = palette.foreground,
                 modifier = Modifier.size(16.dp),
             )
         }
@@ -216,10 +216,10 @@ internal fun BookingSectionTitle(
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(palette.brand.copy(alpha = 0.1f)),
+                .background(palette.foreground.copy(alpha = 0.1f)),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(icon, contentDescription = null, tint = palette.brand, modifier = Modifier.size(16.dp))
+            Icon(icon, contentDescription = null, tint = palette.foreground, modifier = Modifier.size(16.dp))
         }
         Column(modifier = Modifier.padding(start = 8.dp)) {
             Text(title, color = palette.foreground, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -299,11 +299,11 @@ internal fun BookingPrimaryButton(
             .fillMaxWidth()
             .height(48.dp)
             .clip(RoundedCornerShape(999.dp))
-            .background(if (enabled) palette.brand else palette.brand.copy(alpha = 0.35f))
+            .background(if (enabled) palette.foreground else palette.foreground.copy(alpha = 0.35f))
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, color = RestaurantColors.Base.white, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        Text(text, color = palette.pageBackground, fontSize = 15.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -336,14 +336,14 @@ internal fun PreferenceChip(
     val palette = LocalRestaurantPalette.current
     Text(
         text = label,
-        color = if (selected) RestaurantColors.Base.white else palette.foreground,
+        color = if (selected) palette.pageBackground else palette.foreground,
         fontSize = 13.sp,
         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
         modifier = Modifier
             .clip(RoundedCornerShape(999.dp))
-            .background(if (selected) palette.brand else palette.cardSurface)
-            .border(1.dp, if (selected) palette.brand else palette.border, RoundedCornerShape(999.dp))
+            .background(if (selected) palette.foreground else palette.cardSurface)
+            .border(1.dp, if (selected) palette.foreground else palette.border, RoundedCornerShape(999.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
     )
 }

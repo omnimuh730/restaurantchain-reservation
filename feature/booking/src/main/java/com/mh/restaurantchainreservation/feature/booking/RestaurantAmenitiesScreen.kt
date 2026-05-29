@@ -1,5 +1,6 @@
 package com.mh.restaurantchainreservation.feature.booking
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -91,14 +92,21 @@ fun RestaurantAmenitiesScreen(
     }
 
     var entered by remember { mutableStateOf(false) }
+    var exiting by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { entered = true }
 
     val screenWidthPx = with(LocalDensity.current) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
     val slideProgress by animateFloatAsState(
-        targetValue = if (entered) 0f else 1f,
+        targetValue = if (entered && !exiting) 0f else 1f,
         animationSpec = tween(durationMillis = 440, easing = FastOutSlowInEasing),
         label = "amenitiesSlide",
+        finishedListener = {
+            if (exiting) onBack()
+        },
     )
+
+    val navigateBack = { exiting = true }
+    BackHandler(enabled = entered && !exiting) { navigateBack() }
 
     val listState = rememberLazyListState()
     val density = LocalDensity.current
@@ -178,7 +186,7 @@ fun RestaurantAmenitiesScreen(
         CollapsingSubpageScreenHeader(
             title = "What this place offers",
             collapseProgress = collapseProgress,
-            onBack = onBack,
+            onBack = navigateBack,
             backContentDescription = "Back",
             subtitle = restaurant.name,
             modifier = Modifier

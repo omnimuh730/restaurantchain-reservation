@@ -1,6 +1,8 @@
 package com.mh.restaurantchainreservation.feature.discover.ui
 
 import com.mh.restaurantchainreservation.core.designsystem.tokens.RestaurantColors
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
@@ -26,11 +28,10 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -41,14 +42,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.RestaurantModalBottomSheet
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
+import kotlin.math.abs
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 internal data class SearchPlanState(
@@ -92,7 +98,6 @@ internal fun PlanPickerSheet(
 ) {
     if (!visible) return
     val palette = LocalRestaurantPalette.current
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var dateOffset by remember(visible, initial) { mutableIntStateOf(initial.dateOffset) }
     var time24 by remember(visible, initial) { mutableStateOf(initial.time24) }
@@ -112,48 +117,26 @@ internal fun PlanPickerSheet(
 
     val showDeleteAction = initial.hasSelection
 
-    ModalBottomSheet(
+    RestaurantModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = palette.cardSurface,
-        contentColor = palette.foreground,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        dragHandle = null,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 28.dp),
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Spacer(Modifier.width(40.dp))
-                Text(
-                    text = "What time do you want to reserve a table for?",
-                    color = palette.foreground,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 4.dp, top = 12.dp, end = 4.dp, bottom = 4.dp),
-                )
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(percent = 50))
-                        .clickable(onClick = onDismiss),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.Filled.Close, contentDescription = "Close", tint = palette.foreground)
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
+            Text(
+                text = "What time do you want to reserve a table for?",
+                color = palette.foreground,
+                fontSize = 20.sp,
+                lineHeight = 28.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp, bottom = 24.dp),
+            )
 
             val dateLabels = dateRows.map { it.first }
             val timeLabels = DiscoverSearchData.planTimeSlots.map { formatReservationTime(it) }
@@ -174,15 +157,16 @@ internal fun PlanPickerSheet(
                 onGuestSelect = { idx -> partySize = DiscoverSearchData.guestOptions[idx] },
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(24.dp))
+
             Text(
                 text = "APPLY",
                 color = RestaurantColors.Base.white,
                 fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(percent = 50))
                     .background(palette.brandStrong)
                     .clickable {
                         val label = dateRows.find { it.second == dateOffset }?.first ?: "Tonight"
@@ -197,19 +181,21 @@ internal fun PlanPickerSheet(
                         )
                         onDismiss()
                     }
-                    .padding(vertical = 16.dp),
+                    .padding(vertical = 12.dp),
                 textAlign = TextAlign.Center,
             )
-            Spacer(Modifier.height(10.dp))
+
+            Spacer(Modifier.height(8.dp))
+
             if (showDeleteAction) {
                 Text(
                     text = "Delete",
                     color = palette.mutedForeground,
                     fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(percent = 50))
                         .clickable {
                             dateOffset = 0
                             time24 = "19:00"
@@ -217,7 +203,7 @@ internal fun PlanPickerSheet(
                             onApply(SearchPlanState())
                             onDismiss()
                         }
-                        .padding(vertical = 14.dp),
+                        .padding(vertical = 10.dp),
                     textAlign = TextAlign.Center,
                 )
             } else {
@@ -225,12 +211,12 @@ internal fun PlanPickerSheet(
                     text = "Skip",
                     color = palette.mutedForeground,
                     fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(percent = 50))
                         .clickable(onClick = onDismiss)
-                        .padding(vertical = 14.dp),
+                        .padding(vertical = 10.dp),
                     textAlign = TextAlign.Center,
                 )
             }
@@ -279,16 +265,6 @@ private fun PlanTimePickerSlider(
                 modifier = Modifier.weight(1f),
             )
         }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.Center),
-        ) {
-            HorizontalDivider(color = PlanPickerDividerColor, thickness = 1.dp)
-            Spacer(Modifier.height(PlanPickerRowHeight))
-            HorizontalDivider(color = PlanPickerDividerColor, thickness = 1.dp)
-        }
     }
 }
 
@@ -299,10 +275,11 @@ private fun PlanPickerWheelColumn(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val palette = LocalRestaurantPalette.current
     val listState = rememberLazyListState()
     val centerPaddingRows = 1
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
+    val density = LocalDensity.current
+    val itemHeightPx = with(density) { PlanPickerRowHeight.toPx() }
 
     LaunchedEffect(selectedIndex, labels.size) {
         if (labels.isEmpty()) return@LaunchedEffect
@@ -332,19 +309,38 @@ private fun PlanPickerWheelColumn(
         contentPadding = PaddingValues(vertical = PlanPickerRowHeight * centerPaddingRows),
     ) {
         itemsIndexed(labels) { index, label ->
-            val selected = index == selectedIndex
+            val interpolationFactor by remember {
+                derivedStateOf {
+                    val currentScroll = listState.firstVisibleItemIndex * itemHeightPx + listState.firstVisibleItemScrollOffset
+                    val itemOffset = index * itemHeightPx
+                    val distance = abs(currentScroll - itemOffset)
+                    (1f - (distance / itemHeightPx)).coerceIn(0f, 1f)
+                }
+            }
+
+            val fontSize = 14f + (15f - 14f) * interpolationFactor
+            val fontWeight = FontWeight(400 + (300 * interpolationFactor).toInt())
+            val color = lerp(Color(0xFFB8B8B8), Color(0xFF222222), interpolationFactor)
+            val opacity = 0.6f + 0.4f * interpolationFactor
+            val scale = 1.0f + 0.1f * interpolationFactor
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(PlanPickerRowHeight)
+                    .graphicsLayer {
+                        this.scaleX = scale
+                        this.scaleY = scale
+                        this.alpha = opacity
+                    }
                     .clickable { onSelect(index) },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = label,
-                    color = if (selected) palette.foreground else palette.mutedForeground.copy(alpha = 0.5f),
-                    fontSize = if (selected) 17.sp else 15.sp,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                    color = color,
+                    fontSize = fontSize.sp,
+                    fontWeight = fontWeight,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                 )
