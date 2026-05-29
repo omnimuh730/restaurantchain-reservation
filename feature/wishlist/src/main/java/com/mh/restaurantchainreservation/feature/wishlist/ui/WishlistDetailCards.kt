@@ -185,7 +185,7 @@ fun WishlistRestaurantResultCard(
                 restaurant.tag?.takeIf { it.isNotBlank() }?.let { tag ->
                     com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardTagChip(
                         text = tag,
-                        fontSize = 12.sp,
+                        size = com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardBadgeChipSize.Large,
                         modifier = Modifier
                             .align(Alignment.TopStart)
                             .padding(12.dp),

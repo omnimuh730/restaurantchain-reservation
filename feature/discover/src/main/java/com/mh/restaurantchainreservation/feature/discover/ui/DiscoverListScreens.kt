@@ -308,6 +308,7 @@ private fun ListScaffold(
                         RestaurantListCard(
                             restaurant = item,
                             timeSlots = slots,
+                            badgeSize = com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardBadgeChipSize.Large,
                             onClick = { onOpenRestaurant(item.id) },
                         )
                     }

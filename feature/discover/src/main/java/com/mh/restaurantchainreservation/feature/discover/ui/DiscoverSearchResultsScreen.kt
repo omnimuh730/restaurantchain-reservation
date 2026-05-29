@@ -120,6 +120,7 @@ import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.components.LocalBottomNavScrollBehavior
 import com.mh.restaurantchainreservation.core.designsystem.components.LocalNavContentBottomPadding
 import com.mh.restaurantchainreservation.core.designsystem.badge.DiscoverRestaurantCardBadgeChip
+import com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardBadgeChipSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonStyle
@@ -1167,6 +1168,7 @@ private fun ResultsSheet(
                         items(restaurants, key = { it.id }) { restaurant ->
                             RestaurantListCard(
                                 restaurant = restaurant,
+                                badgeSize = RestaurantCardBadgeChipSize.Large,
                                 onClick = { onOpenRestaurant(restaurant.id) },
                                 timeSlots = null,
                                 listHorizontalPadding = 0.dp,
@@ -1315,7 +1317,7 @@ private fun MapPreviewCard(
                 RestaurantCardHeroChromeLayer {
                     DiscoverRestaurantCardBadgeChip(
                         restaurant = restaurant,
-                        fontSize = 11.sp,
+                        size = RestaurantCardBadgeChipSize.Medium,
                         modifier = Modifier.padding(8.dp),
                     )
                     HeartButton(

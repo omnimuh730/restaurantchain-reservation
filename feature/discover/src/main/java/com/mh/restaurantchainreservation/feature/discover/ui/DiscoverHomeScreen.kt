@@ -121,6 +121,7 @@ import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import dev.chrisbanes.haze.rememberHazeState
 import com.mh.restaurantchainreservation.core.designsystem.badge.DiscoverRestaurantCardBadgeChip
+import com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardBadgeChipSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
@@ -1321,6 +1322,7 @@ private fun AirbnbMiniCard(
                     ) {
                         DiscoverRestaurantCardBadgeChip(
                             restaurant = restaurant,
+                            size = RestaurantCardBadgeChipSize.Medium,
                             modifier = Modifier
                                 .align(Alignment.TopStart)
                                 .padding(8.dp),
@@ -2196,7 +2198,7 @@ private fun RestaurantByPriceListRow(
                     RestaurantCardHeroChromeLayer {
                         DiscoverRestaurantCardBadgeChip(
                             restaurant = restaurant,
-                            fontSize = 10.sp,
+                            size = RestaurantCardBadgeChipSize.Small,
                             modifier = Modifier
                                 .align(Alignment.TopStart)
                                 .padding(

@@ -11,12 +11,12 @@ import com.mh.restaurantchainreservation.core.model.discoverCardBadgeLabel
 fun DiscoverRestaurantCardBadgeChip(
     restaurant: Restaurant,
     modifier: Modifier = Modifier,
-    fontSize: TextUnit = 11.sp,
+    size: RestaurantCardBadgeChipSize = RestaurantCardBadgeChipSize.Medium,
 ) {
     val label = restaurant.discoverCardBadgeLabel() ?: return
     RestaurantCardTagChip(
         text = label,
         modifier = modifier,
-        fontSize = fontSize,
+        size = size,
     )
 }

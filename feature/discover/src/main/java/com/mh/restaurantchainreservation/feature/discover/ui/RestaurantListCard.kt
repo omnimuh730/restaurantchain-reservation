@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.mh.restaurantchainreservation.core.designsystem.badge.DiscoverRestaurantCardBadgeChip
+import com.mh.restaurantchainreservation.core.designsystem.badge.RestaurantCardBadgeChipSize
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButton
 import com.mh.restaurantchainreservation.core.designsystem.components.PressableContentScale
 import com.mh.restaurantchainreservation.core.designsystem.components.HeartButtonSize
@@ -75,6 +76,7 @@ fun RestaurantListCard(
     modifier: Modifier = Modifier,
     timeSlots: List<RestaurantTimeSlot>? = null,
     listHorizontalPadding: Dp = DiscoverListHorizontalPadding,
+    badgeSize: RestaurantCardBadgeChipSize = RestaurantCardBadgeChipSize.Medium,
 ) {
     val palette = LocalRestaurantPalette.current
     val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
@@ -141,6 +143,7 @@ fun RestaurantListCard(
                             )
                             DiscoverRestaurantCardBadgeChip(
                                 restaurant = restaurant,
+                                size = badgeSize,
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
                                     .padding(10.dp),
