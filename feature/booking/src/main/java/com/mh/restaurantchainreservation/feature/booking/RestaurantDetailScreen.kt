@@ -1356,7 +1356,7 @@ private fun PopularMenuSection(
         Text(
             "Popular menu",
             color = palette.foreground,
-            fontSize = 28.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 24.dp),
         )
@@ -1400,7 +1400,7 @@ private fun PopularMenuSection(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "Show Full Menu",
+                text = "Show full menu",
                 color = palette.foreground,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
