@@ -1447,14 +1447,14 @@ private fun BookingBar(
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(percent = 50))
-                .background(RestaurantColors.Brand.reservePink)
+                .background(palette.foreground)
                 .clickable(onClick = onBookNow)
-                .padding(horizontal = 28.dp, vertical = 14.dp),
+                .padding(horizontal = 28.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Icon(Icons.Outlined.CalendarMonth, null, tint = RestaurantColors.Base.white, modifier = Modifier.size(18.dp))
-            Text("Reserve", color = RestaurantColors.Base.white, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Icon(Icons.Outlined.CalendarMonth, null, tint = palette.pageBackground, modifier = Modifier.size(18.dp))
+            Text("Reserve", color = palette.pageBackground, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

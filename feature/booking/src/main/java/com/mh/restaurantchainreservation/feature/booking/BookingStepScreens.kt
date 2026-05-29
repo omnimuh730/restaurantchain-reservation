@@ -109,18 +109,18 @@ internal fun BookingDateStep(
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(horizontal = 28.dp),
+                    modifier = Modifier.padding(horizontal = 24.dp),
                 ) {
                     Text(
                         text = guests.toString(),
                         color = palette.foreground,
-                        fontSize = 32.sp,
+                        fontSize = 28.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
                         text = if (guests == 1) "guest" else "guests",
                         color = palette.mutedForeground,
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                     )
                 }
                 GuestStepperButton(icon = Icons.Filled.Add, filled = true) {
@@ -184,11 +184,11 @@ private fun GuestStepperButton(icon: ImageVector, filled: Boolean, onClick: () -
     val palette = LocalRestaurantPalette.current
     Box(
         modifier = Modifier
-            .size(44.dp)
+            .size(40.dp)
             .clip(CircleShape)
             .then(
                 if (filled) {
-                    Modifier.background(palette.brand)
+                    Modifier.background(palette.foreground)
                 } else {
                     Modifier
                         .background(palette.cardSurface)
@@ -201,7 +201,7 @@ private fun GuestStepperButton(icon: ImageVector, filled: Boolean, onClick: () -
         Icon(
             imageVector = icon,
             contentDescription = if (filled) "Increase" else "Decrease",
-            tint = if (filled) RestaurantColors.Base.white else palette.foreground,
+            tint = if (filled) palette.pageBackground else palette.foreground,
             modifier = Modifier.size(18.dp),
         )
     }
@@ -220,18 +220,18 @@ private fun DateChip(
     onClick: () -> Unit,
 ) {
     val palette = LocalRestaurantPalette.current
-    val contentColor = if (selected) RestaurantColors.Base.white else palette.foreground
+    val contentColor = if (selected) palette.pageBackground else palette.foreground
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .width(DateChipWidth)
-            .height(DateChipHeight)
+            .height(DateChipHeight - 8.dp)
             .clip(RoundedCornerShape(18.dp))
-            .background(if (selected) palette.brand else palette.cardSurface)
-            .border(1.dp, if (selected) palette.brand else palette.border, RoundedCornerShape(18.dp))
+            .background(if (selected) palette.foreground else palette.cardSurface)
+            .border(1.dp, if (selected) palette.foreground else palette.border, RoundedCornerShape(18.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 10.dp),
+            .padding(horizontal = 8.dp, vertical = 8.dp),
     ) {
         Box(
             modifier = Modifier
@@ -271,18 +271,18 @@ private fun TimeChip(time: String, selected: Boolean, onClick: () -> Unit) {
     val palette = LocalRestaurantPalette.current
     Text(
         text = time,
-        color = if (selected) RestaurantColors.Base.white else palette.foreground,
+        color = if (selected) palette.pageBackground else palette.foreground,
         fontSize = 13.sp,
         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
         textAlign = TextAlign.Center,
         modifier = Modifier
             .fillMaxWidth()
-            .height(40.dp)
+            .height(34.dp)
             .clip(RoundedCornerShape(999.dp))
-            .background(if (selected) palette.brand else palette.cardSurface)
-            .border(1.dp, if (selected) palette.brand else palette.border, RoundedCornerShape(999.dp))
+            .background(if (selected) palette.foreground else palette.cardSurface)
+            .border(1.dp, if (selected) palette.foreground else palette.border, RoundedCornerShape(999.dp))
             .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
+            .padding(vertical = 6.dp),
     )
 }
 
@@ -439,14 +439,14 @@ private fun OccasionChip(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .clip(RoundedCornerShape(18.dp))
-            .background(if (selected) palette.brand else palette.cardSurface)
-            .border(1.dp, if (selected) palette.brand else palette.border, RoundedCornerShape(18.dp))
+            .background(if (selected) palette.foreground else palette.cardSurface)
+            .border(1.dp, if (selected) palette.foreground else palette.border, RoundedCornerShape(18.dp))
             .clickable(onClick = onClick)
-            .padding(vertical = 12.dp, horizontal = 6.dp),
+            .padding(vertical = 8.dp, horizontal = 6.dp),
     ) {
-        Icon(icon, contentDescription = null, tint = if (selected) RestaurantColors.Base.white else palette.foreground, modifier = Modifier.size(20.dp))
+        Icon(icon, contentDescription = null, tint = if (selected) palette.pageBackground else palette.foreground, modifier = Modifier.size(20.dp))
         Spacer(Modifier.height(6.dp))
-        Text(label, color = if (selected) RestaurantColors.Base.white else palette.foreground, fontSize = 12.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center)
+        Text(label, color = if (selected) palette.pageBackground else palette.foreground, fontSize = 12.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center)
     }
 }
 
@@ -473,12 +473,12 @@ internal fun BookingPreferencesStep(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(24.dp))
-                .background(palette.brand.copy(alpha = 0.08f))
-                .border(1.dp, palette.brand.copy(alpha = 0.2f), RoundedCornerShape(24.dp))
+                .background(palette.foreground.copy(alpha = 0.05f))
+                .border(1.dp, palette.foreground.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
                 .padding(16.dp),
             verticalAlignment = Alignment.Top,
         ) {
-            Icon(Icons.Outlined.Tune, contentDescription = null, tint = palette.brand, modifier = Modifier.size(18.dp))
+            Icon(Icons.Outlined.Tune, contentDescription = null, tint = palette.foreground, modifier = Modifier.size(18.dp))
             Text(
                 "Customize the visit so the restaurant can prepare the right table, pace, and atmosphere.",
                 color = palette.mutedForeground,
@@ -512,11 +512,11 @@ private fun PreferenceSectionBlock(
             if (selected.isNotEmpty()) {
                 Text(
                     selected.size.toString(),
-                    color = RestaurantColors.Base.white,
+                    color = palette.pageBackground,
                     fontSize = 11.sp,
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(palette.brand)
+                        .background(palette.foreground)
                         .padding(horizontal = 10.dp, vertical = 4.dp),
                 )
             }

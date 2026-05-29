@@ -33,7 +33,7 @@ data class PlaceOfferChipCategory(
 
 private val PlaceOfferChipShape = RoundedCornerShape(percent = 50)
 private val PlaceOfferChipHorizontalPadding = 16.dp
-private val PlaceOfferChipVerticalPadding = 10.dp
+private val PlaceOfferChipVerticalPadding = 6.dp
 private val PlaceOfferChipIconSize = 18.dp
 
 @Composable

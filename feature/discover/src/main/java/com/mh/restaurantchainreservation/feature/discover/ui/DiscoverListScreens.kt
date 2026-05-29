@@ -351,8 +351,8 @@ private fun DateStripRow(
     ) {
         items(days, key = { it.timeInMillis }) { day ->
             val selected = sameDay(day, selectedDay)
-            val borderColor = if (selected) palette.brand.copy(alpha = 0.5f) else palette.border
-            val bg = if (selected) palette.brandSoftSurface else palette.mutedSurface
+            val borderColor = if (selected) palette.foreground else palette.border
+            val bg = if (selected) palette.foreground else palette.mutedSurface
             Column(
                 modifier = Modifier
                     .width(72.dp)
@@ -360,12 +360,12 @@ private fun DateStripRow(
                     .border(1.dp, borderColor, RoundedCornerShape(14.dp))
                     .background(bg)
                     .clickable { onSelectDay(day.clone() as Calendar) }
-                    .padding(vertical = 10.dp, horizontal = 6.dp),
+                    .padding(vertical = 8.dp, horizontal = 6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
                     text = dayFormat.format(day.time),
-                    color = if (selected) palette.brandStrong else palette.mutedForeground,
+                    color = if (selected) palette.pageBackground else palette.mutedForeground,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
@@ -373,7 +373,7 @@ private fun DateStripRow(
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = dateFormat.format(day.time),
-                    color = if (selected) palette.foreground else palette.mutedForeground,
+                    color = if (selected) palette.pageBackground else palette.mutedForeground,
                     fontSize = 11.sp,
                     textAlign = TextAlign.Center,
                 )
@@ -451,8 +451,8 @@ private fun TimeRangeRow(
     ) {
         items(options, key = { it.id }) { opt ->
             val selected = opt.id == selectedId
-            val borderColor = if (selected) palette.brand.copy(alpha = 0.45f) else palette.border
-            val bg = if (selected) palette.brandSoftSurface else palette.cardSurface
+            val borderColor = if (selected) palette.foreground else palette.border
+            val bg = if (selected) palette.foreground else palette.cardSurface
             Text(
                 text = opt.label,
                 modifier = Modifier
@@ -460,8 +460,8 @@ private fun TimeRangeRow(
                     .border(1.dp, borderColor, RoundedCornerShape(999.dp))
                     .background(bg)
                     .clickable { onSelect(opt.id) }
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-                color = if (selected) palette.brandStrong else palette.mutedForeground,
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
+                color = if (selected) palette.pageBackground else palette.mutedForeground,
                 fontSize = 13.sp,
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             )

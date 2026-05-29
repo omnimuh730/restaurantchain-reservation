@@ -593,15 +593,15 @@ private fun ConfirmPayButton(
             .fillMaxWidth()
             .height(48.dp)
             .clip(RoundedCornerShape(999.dp))
-            .background(palette.brand)
+            .background(palette.foreground)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Check, contentDescription = null, tint = RestaurantColors.Base.white, modifier = Modifier.size(18.dp))
+            Icon(Icons.Filled.Check, contentDescription = null, tint = palette.pageBackground, modifier = Modifier.size(18.dp))
             Text(
                 "Confirm and pay $${fmtMoney(totalAmount)}",
-                color = RestaurantColors.Base.white,
+                color = palette.pageBackground,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
             )
@@ -620,21 +620,21 @@ private fun BookingContinueWithBadge(
         modifier = modifier
             .height(48.dp)
             .clip(RoundedCornerShape(999.dp))
-            .background(palette.brand)
+            .background(palette.foreground)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Continue", color = RestaurantColors.Base.white, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            Text("Continue", color = palette.pageBackground, fontSize = 15.sp, fontWeight = FontWeight.Medium)
             if (totalPrefs > 0) {
                 Text(
                     totalPrefs.toString(),
-                    color = palette.brand,
+                    color = palette.foreground,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .clip(RoundedCornerShape(999.dp))
-                        .background(RestaurantColors.Base.white)
+                        .background(palette.pageBackground)
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                 )
             }
