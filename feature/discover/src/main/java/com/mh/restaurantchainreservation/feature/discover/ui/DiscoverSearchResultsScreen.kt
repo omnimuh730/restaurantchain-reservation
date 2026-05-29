@@ -127,6 +127,7 @@ import com.mh.restaurantchainreservation.core.designsystem.components.Restaurant
 import com.mh.restaurantchainreservation.core.designsystem.tokens.BrandPink
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.designsystem.transition.LocalRestaurantSharedTransitionScope
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceBottomUnderlineShadow
 import com.mh.restaurantchainreservation.core.designsystem.components.PressableContentScale
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantCardHeroChromeLayer
 import com.mh.restaurantchainreservation.core.designsystem.transition.RestaurantSharedTitleRole
@@ -1121,7 +1122,8 @@ private fun ResultsSheet(
         Column(
             Modifier
                 .fillMaxSize()
-                .background(palette.cardSurface),
+                .background(palette.cardSurface)
+                .graphicsLayer { clip = false },
         ) {
             ResultsSheetDragHeader(
                 resultsLabel = resultsLabel,
@@ -1136,6 +1138,14 @@ private fun ResultsSheet(
                     onSheetDragEnd()
                 },
             )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .hubSurfaceBottomUnderlineShadow(),
+            )
+
             if (showListContent) {
                 if (restaurants.isEmpty()) {
                     EmptyResults(query = query, modifier = Modifier.weight(1f))
@@ -1151,13 +1161,15 @@ private fun ResultsSheet(
                         modifier = Modifier
                             .weight(1f)
                             .nestedScroll(sheetListNestedScroll),
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = listBottom),
+                        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = listBottom),
                         verticalArrangement = Arrangement.spacedBy(22.dp),
                     ) {
                         items(restaurants, key = { it.id }) { restaurant ->
-                            RestaurantResultCard(
+                            RestaurantListCard(
                                 restaurant = restaurant,
-                                onOpen = { onOpenRestaurant(restaurant.id) },
+                                onClick = { onOpenRestaurant(restaurant.id) },
+                                timeSlots = null,
+                                listHorizontalPadding = 0.dp,
                             )
                         }
                     }
@@ -1187,130 +1199,6 @@ private fun ResultsSheet(
     }
 }
 
-@Composable
-private fun RestaurantResultCard(
-    restaurant: Restaurant,
-    onOpen: () -> Unit,
-) {
-    val palette = LocalRestaurantPalette.current
-    val savedIds by WishlistStore.savedRestaurantIds.collectAsState()
-    val saved = restaurant.id in savedIds
-    val shared = LocalRestaurantSharedTransitionScope.current
-    val animatedContent = LocalAnimatedContentScope.current
-    val heroShape = RoundedCornerShape(24.dp)
-    val heroModifier = rememberRestaurantSharedHeroModifier(
-        restaurant.id,
-        shared,
-        animatedContent,
-        shape = heroShape,
-    )
-    val titleVisibilityModifier = rememberRestaurantSharedTitleVisibilityModifier(
-        restaurantId = restaurant.id,
-        sharedTransitionScope = shared,
-        animatedVisibilityScope = animatedContent,
-        role = RestaurantSharedTitleRole.Card,
-    )
-    val contentPanelModifier = rememberRestaurantSharedContentPanelModifier(
-        restaurant.id,
-        shared,
-        animatedContent,
-    )
-    val contentMetaAlpha = rememberRestaurantCardContentMetaAlpha(restaurant.id, shared)
-    val heroChromeAlpha = rememberRestaurantHeroChromeAlpha(restaurant.id, shared)
-    PressableContentScale(
-        onClick = onOpen,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(DiscoverRestaurantImageAspectWidthOverHeight)
-                    .clip(heroShape)
-                    .background(palette.mutedSurface),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .then(heroModifier),
-                ) {
-                    AsyncImage(
-                        model = restaurant.image,
-                        contentDescription = restaurant.name,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    RestaurantCardHeroChromeLayer(
-                        modifier = Modifier.graphicsLayer { alpha = heroChromeAlpha },
-                    ) {
-                        DiscoverRestaurantCardBadgeChip(
-                            restaurant = restaurant,
-                            fontSize = 12.sp,
-                            modifier = Modifier
-                                .align(Alignment.TopStart)
-                                .padding(12.dp),
-                        )
-                        HeartButton(
-                            active = saved,
-                            onClick = { WishlistStore.onHeartTap(restaurant) },
-                            size = HeartButtonSize.Large,
-                            style = HeartButtonStyle.Overlay,
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(12.dp),
-                        )
-                    }
-                }
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .restaurantSharedContentPanelLayer(restaurant.id, shared)
-                    .then(contentPanelModifier)
-                    .padding(top = 12.dp, bottom = 4.dp),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.Top,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            restaurant.name,
-                            color = palette.foreground,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            modifier = titleVisibilityModifier,
-                        )
-                        Column(
-                            modifier = Modifier.graphicsLayer { alpha = contentMetaAlpha },
-                        ) {
-                            Text(
-                                text = "${restaurant.cuisine} - ${restaurant.area ?: restaurant.distance}",
-                                color = palette.mutedForeground,
-                                fontSize = 13.sp,
-                                maxLines = 1,
-                            )
-                            Text(
-                                text = "Tables tonight - ${restaurant.price} for tonight",
-                                color = palette.mutedForeground,
-                                fontSize = 13.sp,
-                                maxLines = 1,
-                            )
-                        }
-                    }
-                    Row(
-                        modifier = Modifier.graphicsLayer { alpha = contentMetaAlpha },
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(RestaurantIcons.Star, contentDescription = null, tint = RestaurantColors.Semantic.starGold, modifier = Modifier.size(15.dp))
-                        Spacer(Modifier.width(3.dp))
-                        Text("%.1f".format(restaurant.rating), color = palette.foreground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

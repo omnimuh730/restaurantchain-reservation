@@ -46,12 +46,14 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mh.restaurantchainreservation.core.designsystem.components.hubSurfaceBottomUnderlineShadow
 import com.mh.restaurantchainreservation.core.designsystem.components.trackBottomNavScroll
 import com.mh.restaurantchainreservation.core.designsystem.tokens.LocalRestaurantPalette
 import com.mh.restaurantchainreservation.core.model.DiscoverData
@@ -239,22 +241,36 @@ private fun ListScaffold(
             }
             HorizontalDivider(color = palette.border)
 
-            DateStripRow(
-                days = dateStripDays,
-                selectedDay = selectedDay,
-                dayFormat = dayFormat,
-                dateFormat = dateFormat,
-                onSelectDay = { selectedDay = it },
-                onPickDateClick = { showDatePicker = true },
-                modifier = Modifier.padding(vertical = 10.dp),
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(palette.pageBackground)
+                    .graphicsLayer { clip = false },
+            ) {
+                DateStripRow(
+                    days = dateStripDays,
+                    selectedDay = selectedDay,
+                    dayFormat = dayFormat,
+                    dateFormat = dateFormat,
+                    onSelectDay = { selectedDay = it },
+                    onPickDateClick = { showDatePicker = true },
+                    modifier = Modifier.padding(vertical = 10.dp),
+                )
 
-            TimeRangeRow(
-                options = defaultTimeRanges,
-                selectedId = selectedTimeRangeId,
-                onSelect = { selectedTimeRangeId = it },
-                modifier = Modifier.padding(bottom = 6.dp),
-            )
+                TimeRangeRow(
+                    options = defaultTimeRanges,
+                    selectedId = selectedTimeRangeId,
+                    onSelect = { selectedTimeRangeId = it },
+                    modifier = Modifier.padding(bottom = 10.dp),
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .hubSurfaceBottomUnderlineShadow(),
+                )
+            }
 
             if (restaurants.isEmpty()) {
                 Box(
@@ -279,7 +295,7 @@ private fun ListScaffold(
                         top = 20.dp,
                         bottom = 120.dp,
                     ),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
                     items(restaurants, key = { it.id }) { item ->
                         val slots = remember(item.id, selectedDayMillis, selectedTimeRangeId) {
@@ -352,7 +368,7 @@ private fun DateStripRow(
         items(days, key = { it.timeInMillis }) { day ->
             val selected = sameDay(day, selectedDay)
             val borderColor = if (selected) palette.foreground else palette.border
-            val bg = if (selected) palette.foreground else palette.mutedSurface
+            val bg = if (selected) palette.foreground else palette.cardSurface
             Column(
                 modifier = Modifier
                     .width(72.dp)
@@ -366,15 +382,16 @@ private fun DateStripRow(
                 Text(
                     text = dayFormat.format(day.time),
                     color = if (selected) palette.pageBackground else palette.mutedForeground,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 13.sp,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = dateFormat.format(day.time),
                     color = if (selected) palette.pageBackground else palette.mutedForeground,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
                     textAlign = TextAlign.Center,
                 )
             }
