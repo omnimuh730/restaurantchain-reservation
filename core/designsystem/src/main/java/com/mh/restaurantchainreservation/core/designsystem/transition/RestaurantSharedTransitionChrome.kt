@@ -19,9 +19,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 
 /** Timeline for discover ↔ detail shared-element choreography. */
 object RestaurantSharedTransitionMotion {
-    const val durationMillis = 500
+    const val durationMillis = 400
     val easing = FastOutSlowInEasing
-    val contentRevealTween = tween<Float>(durationMillis = 350, easing = easing)
+    val contentRevealTween = tween<Float>(durationMillis = 300, easing = easing)
 
     val boundsProgressTween = tween<Float>(durationMillis = durationMillis, easing = easing)
 
